@@ -235,3 +235,49 @@ def test_active_sos_returns_is_synthetic_provenance(monkeypatch):
     assert len(events) == 2
     assert events[0]['id'] == 1 and events[0]['is_synthetic'] is False
     assert events[1]['id'] == 2 and events[1]['is_synthetic'] is True
+
+
+def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
+    """A gateway reports whatever buoy id it was flashed with.
+
+    sos_events.buoy_id is a foreign key into buoys, so an unregistered id used
+    to fail the insert with a 500 - the gateway then withheld its ack and the
+    SOS never reached the dashboard.
+    """
+    from app import db as app_db
+    from app.api import sos as sos_api
+
+    class _IngestFakePool:
+        def __init__(self):
+            self.statements = []
+        async def execute(self, query, *args):
+            self.statements.append((query, args))
+        async def fetchrow(self, query, *args):
+            self.statements.append((query, args))
+            return {
+                'id': 7, 'was_inserted': True, 'vessel_id': args[0], 'client_ts': args[1],
+                'delivered_direct': False, 'delivered_via_buoy': True, 'acknowledged_at': None,
+            }
+        def acquire(self):
+            return self
+        def transaction(self):
+            return self
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _IngestFakePool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(sos_api, 'get_pool', lambda: pool)
+    body = _payload(source='buoy', buoy_id='SHORE01', src_id=255, seq=1)
+    del body['local_id']
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/sos', json=body)
+
+    assert response.status_code == 200
+    queries = [q for q, _ in pool.statements]
+    buoy_insert = next(i for i, q in enumerate(queries) if 'INSERT INTO buoys' in q)
+    sos_insert = next(i for i, q in enumerate(queries) if 'INSERT INTO sos_events' in q)
+    assert buoy_insert < sos_insert
+    assert pool.statements[buoy_insert][1] == ('SHORE01',)

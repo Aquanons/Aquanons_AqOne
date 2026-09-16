@@ -147,6 +147,20 @@ async def ingest_sos(payload: SosIn) -> dict[str, object]:
             payload.boat or payload.vessel_id,
         )
 
+        # Same reasoning for the relaying buoy. sos_events.buoy_id is a foreign
+        # key into buoys, and a gateway reports whatever id its board was
+        # flashed with - often one no one has registered. Without this, the
+        # insert fails, the gateway never acks, and the SOS never lands.
+        if payload.buoy_id:
+            await conn.execute(
+                '''
+                    INSERT INTO buoys (id, label)
+                    VALUES ($1, $1)
+                    ON CONFLICT (id) DO NOTHING
+                    ''',
+                payload.buoy_id,
+            )
+
         row = await conn.fetchrow(
             '''
                 INSERT INTO sos_events (

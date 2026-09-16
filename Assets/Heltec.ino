@@ -67,7 +67,7 @@ static const char* UPLINK_SSID  = "YOUR_UPLINK_SSID";
 static const char* UPLINK_PASS  = "YOUR_UPLINK_PASS";
 
 static const char* BACKEND_HOST =
-    "https://incredible-liberation-production-aad7.up.railway.app";
+    "https://aqone-backend.onrender.com";
 
 // ===========================================================================
 
