@@ -231,8 +231,16 @@
         // dispatcher opening the dashboard should not be hit with a klaxon for
         // events they already handled before the page refreshed.
         if (!liveSosFirstLoad) {
+          // The klaxon mirrors the toast gating: it rings only for calls that
+          // arrive while the dashboard is open, never on the first load for
+          // events handled before the page refreshed. sync() then keeps it
+          // ringing until every call in the feed has been acknowledged.
+          if (ns.sosAlarm) ns.sosAlarm.sync(events);
           events.forEach(function (ev) {
             if (!knownSosIds[ev.id]) {
+              if (ns.sosAlarm && !(ev.acknowledged_at != null || ev.status === 'acknowledged')) {
+                ns.sosAlarm.start();
+              }
               showToast(
                 'SOS received',
                 (ev.boat || ev.vessel_id || 'A vessel') + ' · ' + sosPosition(ev),
