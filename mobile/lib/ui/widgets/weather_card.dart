@@ -187,7 +187,7 @@ class WeatherCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    condition.label,
+                    condition.label(t),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -240,7 +240,7 @@ class WeatherCard extends StatelessWidget {
                             'threshold. Source: Open-Meteo. '
                             'This is not a PAGASA warning. '
                             'Always check the official sea condition and advisories.'
-                        : '${value.condition.label} forecast — '
+                        : '${value.condition.label(t)} forecast — '
                             'adverse condition. Source: Open-Meteo. '
                             'This is not a PAGASA warning. '
                             'Always check the official sea condition and advisories.',
@@ -821,7 +821,7 @@ class _DayChip extends StatelessWidget {
     final String low = day.tempMin == null ? '' : '${day.tempMin!.round()}°';
 
     return Semantics(
-      label: '$label, ${day.condition.label}, ${level.label(t)}.'
+      label: '$label, ${day.condition.label(t)}, ${level.label(t)}.'
           '${day.risk.reason == null ? '' : ' ${day.risk.reason}.'}'
           '${isOutlook ? ' Longer-range outlook, lower confidence.' : ''}',
       child: Tooltip(

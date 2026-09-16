@@ -10,6 +10,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Widget wrap(SquallWatch watch, {VoidCallback? onAcknowledge}) {
     return MaterialApp(
+      locale: const Locale('en'),
+      supportedLocales: kSupportedLocales,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        ...kFallbackDelegates,
+      ],
       home: SquallAlertPage(
         watch: watch,
         onAcknowledge: onAcknowledge ?? () {},

@@ -242,7 +242,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
               child: Column(
                 children: <Widget>[
                   Text(
-                    overdue ? 'ARRIVAL OVERDUE' : 'ARRIVING IN',
+                    overdue ? t.etaArrivalOverdue : t.etaArrivingIn,
                     style: TextStyle(
                       fontSize: 11,
                       letterSpacing: 1,
@@ -282,8 +282,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
           _buildReplySection(context, t, isDark),
           const SizedBox(height: 14),
           Text(
-            'Stay with your boat if it is still afloat. It is easier to spot '
-            'than a person in the water.',
+            t.stayWithBoat,
             style: TextStyle(
               fontSize: 12,
               height: 1.35,
@@ -296,7 +295,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
           style: FilledButton.styleFrom(backgroundColor: accent),
-          child: const Text('Understood'),
+          child: Text(t.understoodButton),
         ),
       ],
     );

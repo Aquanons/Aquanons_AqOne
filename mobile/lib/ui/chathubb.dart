@@ -1190,7 +1190,7 @@ class _ChathubbState extends State<Chathubb> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 18, vertical: 10),
-                  hintText: 'Type a message…',
+                  hintText: AppLocalizations.of(context).chatHint,
                   hintStyle: TextStyle(
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),

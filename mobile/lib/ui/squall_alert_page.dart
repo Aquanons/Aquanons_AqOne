@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/squall_watch.dart';
 
 /// Full-screen RETURN NOW alert.
@@ -116,11 +117,10 @@ class SquallAlertPage extends StatelessWidget {
                     // detector is calibrated on simulated data, and a warning
                     // that overstates its own certainty is how a safety tool
                     // loses the trust it needs.
-                    child: const Text(
-                      'This model is still being calibrated on simulated '
-                      'data. Use your own judgement.',
+                    child: Text(
+                      AppLocalizations.of(context).squallModelDisclaimer,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
                 ],
@@ -135,9 +135,9 @@ class SquallAlertPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    "I'm heading back",
-                    style: TextStyle(
+                  child: Text(
+                    AppLocalizations.of(context).squallAckButton,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -145,7 +145,7 @@ class SquallAlertPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'The warning stays on your screen until the squall passes.',
+                  AppLocalizations.of(context).squallWarningStays,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),

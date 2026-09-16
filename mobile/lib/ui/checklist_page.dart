@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/tokens.dart';
 import '../data/checklist_store.dart';
+import '../l10n/app_localizations.dart';
 import '../models/checklist_item.dart';
 
 /// Trip gear checklist as its own page: a list, a way to add/remove rows,
@@ -73,19 +74,16 @@ class _ChecklistPageState extends State<ChecklistPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Start a new trip?'),
-        content: const Text(
-          'This unchecks everything on the list so you can go through your '
-          'gear again. Your items stay - nothing is deleted.',
-        ),
+        title: Text(AppLocalizations.of(ctx).checklistNewTripTitle),
+        content: Text(AppLocalizations.of(ctx).checklistNewTripBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx).actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Start new trip'),
+            child: Text(AppLocalizations.of(ctx).checklistStartNewTrip),
           ),
         ],
       ),
@@ -97,7 +95,9 @@ class _ChecklistPageState extends State<ChecklistPage> {
     await _load();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Checklist reset for the next trip.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).checklistResetSnackBar),
+        ),
       );
     }
   }
@@ -112,7 +112,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
         backgroundColor: palette.surface,
         elevation: 0,
         title: Text(
-          'Trip checklist',
+          AppLocalizations.of(context).checklistTripTitle,
           style: TextStyle(color: palette.primaryText, fontWeight: FontWeight.w700),
         ),
         iconTheme: IconThemeData(color: palette.primaryText),
@@ -120,7 +120,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
           TextButton.icon(
             onPressed: _items.isEmpty ? null : _confirmNewTrip,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text('New trip'),
+            label: Text(AppLocalizations.of(context).checklistNewTripButton),
           ),
         ],
       ),
@@ -142,8 +142,10 @@ class _ChecklistPageState extends State<ChecklistPage> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            '$doneCount of ${_items.length} packed',
-                            style: TextStyle(fontSize: 12.5, color: palette.dimText),
+                            AppLocalizations.of(context)
+                                .checklistPackedLabel(doneCount, _items.length),
+                            style: TextStyle(
+                                fontSize: 12.5, color: palette.dimText),
                           ),
                         ),
                       ),
@@ -154,7 +156,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                                 const SizedBox(height: 120),
                                 Center(
                                   child: Text(
-                                    'No checklist items yet.',
+                                    AppLocalizations.of(context).checklistEmpty,
                                     style: TextStyle(color: palette.dimText),
                                   ),
                                 ),
@@ -186,10 +188,11 @@ class _ChecklistPageState extends State<ChecklistPage> {
                           Expanded(
                             child: TextField(
                               controller: _newItem,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 isDense: true,
-                                hintText: 'Add an item',
-                                border: OutlineInputBorder(),
+                                hintText:
+                                    AppLocalizations.of(context).checklistAddItem,
+                                border: const OutlineInputBorder(),
                               ),
                               onSubmitted: (_) => _addItem(),
                             ),

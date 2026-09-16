@@ -1,3 +1,4 @@
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../core/config.dart';
@@ -80,24 +81,23 @@ class WeatherSnapshot {
 /// thunderstorm on Thursday looked exactly like light drizzle on Tuesday.
 /// A forecast strip is useless if the days do not look different.
 enum WeatherCondition {
-  sunny('Sunny & Clear', Icons.wb_sunny_rounded),
-  partlyCloudy('Partly Cloudy', Icons.wb_cloudy_rounded),
-  overcast('Overcast', Icons.cloud_rounded),
-  foggy('Foggy', Icons.foggy),
+  sunny(Icons.wb_sunny_rounded),
+  partlyCloudy(Icons.wb_cloudy_rounded),
+  overcast(Icons.cloud_rounded),
+  foggy(Icons.foggy),
   // Icons are deliberately drawn from the long-standing Material set rather
   // than the newer weather symbols (Icons.rainy and friends), which do not
   // exist on every Flutter version this has to build against.
-  drizzle('Light Drizzle', Icons.blur_on_rounded),
-  rainy('Rainy', Icons.umbrella_rounded),
-  heavyRain('Heavy Rain', Icons.water_drop_rounded),
-  showers('Showers', Icons.grain_rounded),
-  thunderstorm('Thunderstorm', Icons.thunderstorm_rounded),
-  severeThunderstorm('Severe Storm', Icons.flash_on_rounded),
-  calm('Sunny & Calm', Icons.wb_sunny_rounded);
+  drizzle(Icons.blur_on_rounded),
+  rainy(Icons.umbrella_rounded),
+  heavyRain(Icons.water_drop_rounded),
+  showers(Icons.grain_rounded),
+  thunderstorm(Icons.thunderstorm_rounded),
+  severeThunderstorm(Icons.flash_on_rounded),
+  calm(Icons.wb_sunny_rounded);
 
-  const WeatherCondition(this.label, this.icon);
+  const WeatherCondition(this.icon);
 
-  final String label;
   final IconData icon;
 
   /// WMO 4677 interpretation codes as served by Open-Meteo. Returns null
@@ -158,4 +158,20 @@ enum WeatherCondition {
   /// for legacy backwards-compatibility when a non-null enum is required.
   static WeatherCondition fromCode(int code) =>
       tryFromCode(code) ?? WeatherCondition.calm;
+}
+
+extension WeatherConditionL10n on WeatherCondition {
+  String label(AppLocalizations t) => switch (this) {
+        WeatherCondition.sunny => t.weatherConditionSunny,
+        WeatherCondition.partlyCloudy => t.weatherConditionPartlyCloudy,
+        WeatherCondition.overcast => t.weatherConditionOvercast,
+        WeatherCondition.foggy => t.weatherConditionFoggy,
+        WeatherCondition.drizzle => t.weatherConditionDrizzle,
+        WeatherCondition.rainy => t.weatherConditionRainy,
+        WeatherCondition.heavyRain => t.weatherConditionHeavyRain,
+        WeatherCondition.showers => t.weatherConditionShowers,
+        WeatherCondition.thunderstorm => t.weatherConditionThunderstorm,
+        WeatherCondition.severeThunderstorm => t.weatherConditionSevereStorm,
+        WeatherCondition.calm => t.weatherConditionCalm,
+      };
 }

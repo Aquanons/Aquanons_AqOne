@@ -22,24 +22,20 @@ class AqOneConfig {
   /// again.
   static String buoyWsUrl(String host) => 'ws://$host:81';
 
-  /// The deployed Railway service. Override at build time with
+  /// The deployed Render service. Override at build time with
   /// `--dart-define=BACKEND_BASE_URL=https://...` when pointing a build at a
   /// different environment.
   ///
-  /// This default was previously `aqone-backend.up.railway.app`, a name taken
-  /// from the docs that was never provisioned. Every direct SOS delivery
-  /// failed host lookup, and because the error was swallowed the app reported
-  /// only the buoy's timeout - so a phone with working internet showed
-  /// "no buoy nearby, will send automatically" and never sent anything.
-  ///
-  /// Then briefly `incredible-liberation-production-aad7.up.railway.app`,
-  /// which `/healthz` now answers with Railway's own 404 "Application not
-  /// found" - that Railway service no longer exists. The live deployment,
-  /// confirmed against `/healthz` and matching `docs/05_PUBLIC_API.md`, is
-  /// `aihackathon2026aquanonsaqone-production.up.railway.app`.
+  /// Railway (`aqone-backend.up.railway.app`, then
+  /// `incredible-liberation-production-aad7.up.railway.app`, then
+  /// `aihackathon2026aquanonsaqone-production.up.railway.app`) answered
+  /// `/healthz` with Railway's own 404 "Application not found" - those
+  /// services no longer exist. The live deployment, confirmed against
+  /// `/health/ready` and matching `docs/05_PUBLIC_API.md`, is
+  /// `aqone-backend.onrender.com`.
   static const String backendBaseUrl = String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: 'https://aihackathon2026aquanonsaqone-production.up.railway.app',
+    defaultValue: 'https://aqone-backend.onrender.com',
   );
 
   static const bool pitchMode = bool.fromEnvironment(

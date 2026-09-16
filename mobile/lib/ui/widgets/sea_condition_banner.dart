@@ -170,9 +170,9 @@ class _StaleChip extends StatelessWidget {
         color: const Color(0xFF6B7280).withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: const Text(
-        'may be outdated',
-        style: TextStyle(
+      child: Text(
+        AppLocalizations.of(context).seaConditionStaleLabel,
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
           color: Color(0xFF475569),

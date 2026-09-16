@@ -387,9 +387,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     icon: const Icon(Icons.check_circle_outline),
-                    label: const Text(
-                      "I'm heading back",
-                      style: TextStyle(
+                    label: Text(
+                      t.squallAckButton,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                       ),
@@ -546,7 +546,8 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
       setState(() => item.isConnected = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Disconnected from ${item.ssid}'),
+          content:
+              Text(AppLocalizations.of(context).buoyDisconnectSnack(item.ssid)),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -563,7 +564,8 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Connected to ${item.ssid}'),
+          content:
+              Text(AppLocalizations.of(context).buoyConnectSnack(item.ssid)),
           backgroundColor: Colors.green.shade700,
           duration: const Duration(seconds: 2),
         ),

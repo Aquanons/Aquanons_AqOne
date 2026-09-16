@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// Pan-and-zoom circular cropper for the profile photo.
 ///
 /// Hand-rolled rather than pulled from a package. The two obvious candidates
@@ -59,7 +61,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
       setState(() => _image = frame.image);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'That image could not be opened.');
+        setState(() => _error = AppLocalizations.of(context).cropPhotoError);
       }
     }
   }
@@ -133,7 +135,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
       if (png == null) {
         setState(() {
           _saving = false;
-          _error = 'That image could not be processed.';
+          _error = AppLocalizations.of(context).cropPhotoError;
         });
         return;
       }
@@ -142,7 +144,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'That image could not be processed.';
+          _error = AppLocalizations.of(context).cropPhotoError;
         });
       }
     }
@@ -157,7 +159,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
-        title: const Text('Position your photo'),
+        title: Text(AppLocalizations.of(context).cropPhotoTitle),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -207,9 +209,9 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
                     ),
                   ),
                 const SizedBox(height: 18),
-                const Text(
-                  'Drag to move · pinch to zoom',
-                  style: TextStyle(color: Colors.white54, fontSize: 12.5),
+                Text(
+                  AppLocalizations.of(context).cropPhotoHint,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12.5),
                 ),
                 const Spacer(),
                 Padding(
@@ -225,7 +227,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
                             foregroundColor: Colors.white70,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(AppLocalizations.of(context).actionCancel),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -248,7 +250,7 @@ class _AvatarCropPageState extends State<AvatarCropPage> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Use photo'),
+                              : Text(AppLocalizations.of(context).cropPhotoUse),
                         ),
                       ),
                     ],

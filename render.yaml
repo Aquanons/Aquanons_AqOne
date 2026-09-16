@@ -1,4 +1,5 @@
 databases:
+  # aqone-db created 2026-09-15 (free plan, Singapore)
   - name: aqone-db
     plan: free
     databaseName: aqone

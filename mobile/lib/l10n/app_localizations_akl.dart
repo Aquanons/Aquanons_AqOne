@@ -112,35 +112,35 @@ class AppLocalizationsAkl extends AppLocalizations {
       'Indi mabuksan ining parte it screen. Subuki nga magbalik, o i-restart ro app kon padayon ini.';
 
   @override
-  String get forecastStripTitle => '7-day outlook';
+  String get forecastStripTitle => '7-adlaw nga panan-awon';
 
   @override
   String forecastAsOf(String time) {
-    return 'as of $time';
+    return 'hangtod sa $time';
   }
 
   @override
-  String get forecastToday => 'Today';
+  String get forecastToday => 'Subong';
 
   @override
   String get forecastDisclaimerNoSeaState =>
-      'Forecast guidance from wind and rain only — sea state not available. Not an official PAGASA or MDRRMO call.';
+      'Tantiya base sa hangin ag ulan lamang — waeay kahimtangan it dagat. Indi ini opisyal nga tawag it PAGASA ukon MDRRMO.';
 
   @override
   String get forecastDisclaimer =>
-      'Forecast guidance, not an official PAGASA or MDRRMO call. Always check the sea condition above.';
+      'Tantiya lamang, indi opisyal nga tawag it PAGASA ukon MDRRMO. Kanunay nga basaha ro kahimtangan it dagat sa ibabaw.';
 
   @override
-  String get riskLevelSafe => 'Safe';
+  String get riskLevelSafe => 'Ligtas';
 
   @override
-  String get riskLevelCaution => 'Caution';
+  String get riskLevelCaution => 'Mag-anam';
 
   @override
-  String get riskLevelDanger => 'Dangerous';
+  String get riskLevelDanger => 'Delikado';
 
   @override
-  String get riskLevelUnknown => 'No data';
+  String get riskLevelUnknown => 'Waeay datos';
 
   @override
   String get compassNorth => 'N';
@@ -155,19 +155,19 @@ class AppLocalizationsAkl extends AppLocalizations {
   String get compassWest => 'W';
 
   @override
-  String get compassUnavailable => 'Compass unavailable on this device';
+  String get compassUnavailable => 'Waeay kompas sa device nga ini';
 
   @override
   String get compassNeedsCalibration =>
-      'Compass needs calibrating — move the phone in a figure 8';
+      'Kailangan i-calibrate ro kompas — ilihok ro telepono sa porma it 8';
 
   @override
   String compassHeading(int degrees) {
-    return 'Heading $degrees°';
+    return '$degrees° nga agianan';
   }
 
   @override
-  String get hotspotLegendTitle => 'Likely fishing areas';
+  String get hotspotLegendTitle => 'Mga lugar nga may isda';
 
   @override
   String get hotspotLegendDisclaimer =>
@@ -292,7 +292,7 @@ class AppLocalizationsAkl extends AppLocalizations {
 
   @override
   String validatorLicenseRequired(String type, String noneLabel) {
-    return 'Isueod ro numero it $type, ukon pilia ro ‘$noneLabel’';
+    return 'Isueod ro numero it $type, ukon pilia ro \'$noneLabel\'';
   }
 
   @override
@@ -440,44 +440,45 @@ class AppLocalizationsAkl extends AppLocalizations {
       'Waeay ipakita nga kahimtangan it unos subong.';
 
   @override
-  String get weatherWindowTitle => 'Fishing weather window';
+  String get weatherWindowTitle => 'Panahon it pagpangisda';
 
   @override
-  String get weatherWindowLowerRisk => 'Lower forecast risk';
+  String get weatherWindowLowerRisk => 'Mas ubos nga peligro sa tantiya';
 
   @override
-  String get weatherWindowCautionNow => 'Conditions need caution now';
+  String get weatherWindowCautionNow => 'Kinahanglan ro pag-anam subong';
 
   @override
-  String get weatherWindowCautionSubtitle => 'Prepare and check advisories.';
+  String get weatherWindowCautionSubtitle =>
+      'Mag-andam ag basaha ro mga abiso.';
 
   @override
-  String get weatherWindowDangerNow => 'High-risk conditions now';
+  String get weatherWindowDangerNow => 'Taas nga peligro subong';
 
   @override
-  String get weatherWindowDangerSubtitle => 'Follow MDRRMO guidance.';
+  String get weatherWindowDangerSubtitle => 'Sunda ro instructions it MDRRMO.';
 
   @override
   String weatherWindowWorsenPrefix(String duration) {
-    return 'Conditions may worsen in about $duration';
+    return 'Mahimong mag-usab ro kahimtangan sa sobra $duration';
   }
 
   @override
-  String get weatherWindowWithinHour => 'within an hour';
+  String get weatherWindowWithinHour => 'sa sulod it sangka oras';
 
   @override
   String weatherWindowDurationDaysHours(int days, int hours) {
     String _temp0 = intl.Intl.pluralLogic(
       days,
       locale: localeName,
-      other: '$days days',
-      one: '1 day',
+      other: '$days ka adlaw',
+      one: '1 ka adlaw',
     );
     String _temp1 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: '$hours hours',
-      one: '1 hour',
+      other: '$hours ka oras',
+      one: '1 ka oras',
     );
     return '$_temp0 $_temp1';
   }
@@ -487,8 +488,8 @@ class AppLocalizationsAkl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       days,
       locale: localeName,
-      other: '$days days',
-      one: '1 day',
+      other: '$days ka adlaw',
+      one: '1 ka adlaw',
     );
     return '$_temp0';
   }
@@ -498,128 +499,128 @@ class AppLocalizationsAkl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: '$hours hours',
-      one: '1 hour',
+      other: '$hours ka oras',
+      one: '1 ka oras',
     );
     return '$_temp0';
   }
 
   @override
   String weatherWindowUpcoming(String time, String cause) {
-    return 'From $time: $cause';
+    return 'Gikan sa $time: $cause';
   }
 
   @override
   String get weatherWindowReturnTravelDisclaimer =>
-      'Does not include return travel or preparation time.';
+      'Indi isama ro pagbalik ukon pag-andam.';
 
   @override
   String weatherWindowNoWorsening(String time) {
-    return 'No worsening forecast through $time';
+    return 'Waeay pag-usab hangtod sa $time';
   }
 
   @override
   String get weatherWindowNoWorseningSubtitle =>
-      'Near-term forecast remains low risk.';
+      'Ubos pa ro peligro sa tantiya.';
 
   @override
-  String get weatherWindowEarlierMissing => 'Earlier conditions unavailable';
+  String get weatherWindowEarlierMissing => 'Waeay datos sa nauna nga oras';
 
   @override
   String get weatherWindowEarlierMissingSubtitle =>
-      'Earlier hourly conditions unavailable — continuous window cannot be calculated.';
+      'Waeay datos sa nauna nga oras — indi makuha ro bug-os nga tantiya.';
 
   @override
   String get weatherWindowDailyOnly =>
-      'Hourly estimate unavailable from daily forecast';
+      'Waeay tantiya per oras, adlaw-adlaw lamang';
 
   @override
   String weatherWindowDailyAdverse(String day) {
-    return 'Higher risk forecast on $day; hourly estimate unavailable';
+    return 'Taas nga peligro sa $day; waeay tantiya per oras';
   }
 
   @override
-  String get weatherWindowIncomplete => 'Forecast estimate incomplete';
+  String get weatherWindowIncomplete => 'Kulang pa ro tantiya';
 
   @override
   String get weatherWindowIncompleteSubtitle =>
-      'Missing hourly wave or wind data. Tap to refresh.';
+      'Waeay datos it alon ukon hangin per oras. Pislita agud ma-refresh.';
 
   @override
-  String get weatherWindowRefreshNeeded => 'Forecast refresh needed';
+  String get weatherWindowRefreshNeeded => 'Kailangan i-refresh ro tantiya';
 
   @override
   String get weatherWindowRefreshNeededSubtitle =>
-      'Forecast is over 30 minutes old. Tap to refresh.';
+      'Labaw sa 30 ka minuto na ro tantiya. Pislita agud ma-refresh.';
 
   @override
-  String get weatherWindowExpired => 'Forecast expired';
+  String get weatherWindowExpired => 'Natapos na ro tantiya';
 
   @override
   String get weatherWindowExpiredSubtitle =>
-      'Cached forecast is over 12 hours old. Refresh needed.';
+      'Labaw sa 12 ka oras na ro tantiya. Kailangan i-refresh.';
 
   @override
-  String get weatherWindowClockSkew => 'Forecast timestamp unavailable';
+  String get weatherWindowClockSkew => 'Waeay oras it tantiya';
 
   @override
   String get weatherWindowClockSkewSubtitle =>
-      'Device clock or forecast timestamp is out of sync.';
+      'Indi tugma ro oras it device ukon tantiya.';
 
   @override
-  String get weatherWindowNoForecast => 'Weather window unavailable';
+  String get weatherWindowNoForecast => 'Waeay tantiya it panahon';
 
   @override
   String get weatherWindowNoForecastSubtitle =>
-      'No forecast data available. Tap to load.';
+      'Waeay datos it panahon. Pislita agud magsueod.';
 
   @override
   String weatherWindowLocationLabel(String location) {
-    return 'Forecast location: $location';
+    return 'Lokasyon it tantiya: $location';
   }
 
   @override
-  String get deteriorationReasonStrongWinds => 'stronger winds';
+  String get deteriorationReasonStrongWinds => 'mas kusog nga hangin';
 
   @override
-  String get deteriorationReasonHighWaves => 'higher waves';
+  String get deteriorationReasonHighWaves => 'mas taas nga alon';
 
   @override
-  String get deteriorationReasonThunderstorm => 'thunderstorms';
+  String get deteriorationReasonThunderstorm => 'uran ag kilat';
 
   @override
-  String get deteriorationReasonHeavyRain => 'heavy rain';
+  String get deteriorationReasonHeavyRain => 'bug-at nga ulan';
 
   @override
-  String get deteriorationReasonPoorVisibility => 'poor visibility';
+  String get deteriorationReasonPoorVisibility => 'hinaay nga pagtan-aw';
 
   @override
-  String get deteriorationReasonDailyRain => 'heavy daily rain';
+  String get deteriorationReasonDailyRain => 'bug-at nga adlaw-adlaw nga ulan';
 
   @override
-  String get deteriorationReasonOfficialCaution => 'official caution';
+  String get deteriorationReasonOfficialCaution => 'opisyal nga pag-anam';
 
   @override
   String get deteriorationReasonOfficialDanger =>
-      'official warning: not advised';
+      'opisyal nga babala: indi magguwa';
 
   @override
-  String get deteriorationReasonSquallWatch => 'squall watch';
+  String get deteriorationReasonSquallWatch => 'bantay it unos';
 
   @override
-  String get deteriorationReasonSquallDanger => 'squall danger: return now';
+  String get deteriorationReasonSquallDanger => 'unos: pauli na';
 
   @override
-  String get weatherLoading => 'Loading weather…';
+  String get weatherLoading => 'Nagsueod it panahon…';
 
   @override
-  String get weatherUnavailable => 'Weather unavailable';
+  String get weatherUnavailable => 'Waeay panahon';
 
   @override
-  String get weatherRetry => 'Retry';
+  String get weatherRetry => 'Sueod liwat';
 
   @override
-  String get weatherLocationYourPosition => 'your position';
+  String get weatherLocationYourPosition => 'imong lokasyon';
 
   @override
   String get weatherLocationDefault => 'Aklan (default)';
@@ -666,4 +667,135 @@ class AppLocalizationsAkl extends AppLocalizations {
   @override
   String get resolvedDescription =>
       'Gin-pundoe ron it MDRRMO ining insidente. Indi na kinahanglan ro pagsagip.';
+
+  @override
+  String get cropPhotoTitle => 'Ibutang ro imong litrato';
+
+  @override
+  String get cropPhotoHint => 'Igiuot agud malihok · gipit agud mag-zoom';
+
+  @override
+  String get cropPhotoUse => 'Gamiton ro litrato';
+
+  @override
+  String get cropPhotoError => 'Indi maproseso ro litrato.';
+
+  @override
+  String get checklistNewTripTitle => 'Magbag-o nga paglayag?';
+
+  @override
+  String get checklistNewTripBody =>
+      'Tanggungon ro tanan sa lista agud masusi liwat ro imong kagamitan. Magapabilin ro imong mga items — waeay mabutang.';
+
+  @override
+  String get checklistStartNewTrip => 'Bag-o nga paglayag';
+
+  @override
+  String get checklistResetSnackBar =>
+      'Gin-reset ro checklist para sa sunod nga paglayag.';
+
+  @override
+  String get checklistTripTitle => 'Checklist it Paglayag';
+
+  @override
+  String get checklistNewTripButton => 'Bag-o';
+
+  @override
+  String checklistPackedLabel(int done, int total) {
+    return '$done sa $total ka nahuhimus';
+  }
+
+  @override
+  String get checklistEmpty => 'Waeay pa nga items sa checklist.';
+
+  @override
+  String get checklistAddItem => 'Dugang item';
+
+  @override
+  String get squallAckButton => 'Pauli na ako';
+
+  @override
+  String get squallModelDisclaimer =>
+      'Ginakalibrate pa ining modelo base sa simulaasyon. Gamiton ro imong kaugalingong hukom.';
+
+  @override
+  String get squallWarningStays =>
+      'Magapabilin ro babala sa imong screen hangtod mauli ang unos.';
+
+  @override
+  String buoyDisconnectSnack(String ssid) {
+    return 'Naputol ang koneksyon sa $ssid';
+  }
+
+  @override
+  String buoyConnectSnack(String ssid) {
+    return 'Nakonektar sa $ssid';
+  }
+
+  @override
+  String get gotItButton => 'Nakasabot';
+
+  @override
+  String get myLocationTooltip => 'Akong lokasyon';
+
+  @override
+  String get tripChecklistTooltip => 'Checklist it Paglayag';
+
+  @override
+  String get chatWithBoatsTooltip => 'I-chat ang mga baroto nga duol';
+
+  @override
+  String get sosDescribeWrong => 'Isaysay kung ano ang mali';
+
+  @override
+  String get etaArrivalOverdue => 'NAULANG ANG ABOT';
+
+  @override
+  String get etaArrivingIn => 'MADANGAT SA';
+
+  @override
+  String get stayWithBoat =>
+      'Pabilin sa imong sakayan kon buhi pa. Mas hilyo ini makuha kaysa tawo sa tubig.';
+
+  @override
+  String get understoodButton => 'Nakasabot';
+
+  @override
+  String get chatHint => 'Sulat ug mensahe…';
+
+  @override
+  String get weatherConditionSunny => 'Adlaw ag Klaro';
+
+  @override
+  String get weatherConditionPartlyCloudy => 'Bahin nga Makapuron';
+
+  @override
+  String get weatherConditionOvercast => 'Kapuron';
+
+  @override
+  String get weatherConditionFoggy => 'Mabugnaw';
+
+  @override
+  String get weatherConditionDrizzle => 'Ga-ulan nga Hinaay';
+
+  @override
+  String get weatherConditionRainy => 'Ulanon';
+
+  @override
+  String get weatherConditionHeavyRain => 'Bug-at nga Ulan';
+
+  @override
+  String get weatherConditionShowers => 'Ulan';
+
+  @override
+  String get weatherConditionThunderstorm => 'Uran ag Kilat';
+
+  @override
+  String get weatherConditionSevereStorm => 'Grabe nga Unos';
+
+  @override
+  String get weatherConditionCalm => 'Adlaw ag Kumuyom';
+
+  @override
+  String get seaConditionStaleLabel => 'mahimong outdated na';
 }
