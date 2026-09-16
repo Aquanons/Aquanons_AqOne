@@ -1,2 +1,0 @@
-948b54dc424efac2ba188ba7dcee0cc16e5b8596b2593d3b36cefaae7620f4e4  aqone-release-arm64-v8a.apk
-d3fb49b8e4fafab9636957f5baf6acca4aaa6430e869914ecc35f0c36941249c  aqone-release-armeabi-v7a.apk
