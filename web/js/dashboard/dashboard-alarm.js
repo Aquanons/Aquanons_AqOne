@@ -36,33 +36,19 @@
     if (!AC || ctx) return;
     try {
       ctx = new AC();
-      if (ctx.resume) ctx.resume();
     } catch (e) {
       ctx = null;
     }
   }
 
-  // Browsers block sound until the user has interacted with the page. The
-  // dashboard is driven by clicks by definition (opening the console, the
-  // drawer, ack), so the first gesture primes the context; the alarm itself
-  // also tries resume() lazily, which resolves on the next interaction.
-  if (window && window.addEventListener) {
-    var unlock = function () { prime(); };
-    ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
-      window.addEventListener(eventName, unlock, { once: true, passive: true });
-    });
-  }
-
-  function start() {
-    if (running) return;
-    running = true;
-    if (!AC || !ctx) {
-      prime();
-      if (!ctx) return;
-    }
+  // Build the two-tone siren into an already-running context. Preferring to
+  // create the oscillator only once the context can actually be heard avoids
+  // starting an oscillator inside a suspended context, which would otherwise
+  // silently do nothing and lock the alarm into a "ringing" state that never
+  // makes a sound.
+  function buildOscillator() {
+    if (!ctx || ctx.state !== 'running' || osc) return;
     try {
-      if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
-      if (osc) return;
       osc = ctx.createOscillator();
       osc.type = 'square';
       osc.frequency.value = LOW_HZ;
@@ -80,6 +66,48 @@
           );
         } catch (e) {}
       }, TOGGLE_MS);
+    } catch (e) {
+      running = false;
+    }
+  }
+
+  // Browsers block sound until the user has interacted with the page. A
+  // context created before any gesture (e.g. the SOS arrived while nobody had
+  // clicked yet) starts suspended. Every gesture retries resume() so the
+  // klaxon builds the moment the context is unblocked - by browser policy it
+  // cannot ring before then. Not `{ once: true }`: a suspended context may
+  // need more than one interaction before it is released.
+  function unlock() {
+    if (!AC) return;
+    prime();
+    if (!ctx) return;
+    if (ctx.state === 'suspended' && ctx.resume) {
+      try { ctx.resume(); } catch (e) {}
+    }
+    if (running && ctx.state === 'running') {
+      buildOscillator();
+    }
+  }
+
+  if (window && window.addEventListener) {
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
+      window.addEventListener(eventName, unlock, { passive: true });
+    });
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    if (!AC || !ctx) {
+      prime();
+      if (!ctx) return;
+    }
+    try {
+      if (ctx.state === 'suspended' && ctx.resume) {
+        try { ctx.resume(); } catch (e) {}
+        return;
+      }
+      buildOscillator();
     } catch (e) {
       running = false;
     }
