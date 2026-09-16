@@ -656,4 +656,134 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get resolvedDescription =>
       'MDRRMO has closed this incident. Rescue is no longer needed.';
+
+  @override
+  String get cropPhotoTitle => 'Position your photo';
+
+  @override
+  String get cropPhotoHint => 'Drag to move · pinch to zoom';
+
+  @override
+  String get cropPhotoUse => 'Use photo';
+
+  @override
+  String get cropPhotoError => 'That image could not be processed.';
+
+  @override
+  String get checklistNewTripTitle => 'Start a new trip?';
+
+  @override
+  String get checklistNewTripBody =>
+      'This unchecks everything on the list so you can go through your gear again. Your items stay - nothing is deleted.';
+
+  @override
+  String get checklistStartNewTrip => 'Start new trip';
+
+  @override
+  String get checklistResetSnackBar => 'Checklist reset for the next trip.';
+
+  @override
+  String get checklistTripTitle => 'Trip checklist';
+
+  @override
+  String get checklistNewTripButton => 'New trip';
+
+  @override
+  String checklistPackedLabel(int done, int total) {
+    return '$done of $total packed';
+  }
+
+  @override
+  String get checklistEmpty => 'No checklist items yet.';
+
+  @override
+  String get checklistAddItem => 'Add an item';
+
+  @override
+  String get squallAckButton => 'I\'m heading back';
+
+  @override
+  String get squallModelDisclaimer =>
+      'This model is still being calibrated on simulated data. Use your own judgement.';
+
+  @override
+  String get squallWarningStays =>
+      'The warning stays on your screen until the squall passes.';
+
+  @override
+  String buoyDisconnectSnack(String ssid) {
+    return 'Disconnected from $ssid';
+  }
+
+  @override
+  String buoyConnectSnack(String ssid) {
+    return 'Connected to $ssid';
+  }
+
+  @override
+  String get gotItButton => 'Got it';
+
+  @override
+  String get myLocationTooltip => 'My location';
+
+  @override
+  String get tripChecklistTooltip => 'Trip checklist';
+
+  @override
+  String get chatWithBoatsTooltip => 'Chat with nearby boats';
+
+  @override
+  String get sosDescribeWrong => 'Describe what is wrong';
+
+  @override
+  String get etaArrivalOverdue => 'ARRIVAL OVERDUE';
+
+  @override
+  String get etaArrivingIn => 'ARRIVING IN';
+
+  @override
+  String get stayWithBoat =>
+      'Stay with your boat if it is still afloat. It is easier to spot than a person in the water.';
+
+  @override
+  String get understoodButton => 'Understood';
+
+  @override
+  String get chatHint => 'Type a message…';
+
+  @override
+  String get weatherConditionSunny => 'Sunny & Clear';
+
+  @override
+  String get weatherConditionPartlyCloudy => 'Partly Cloudy';
+
+  @override
+  String get weatherConditionOvercast => 'Overcast';
+
+  @override
+  String get weatherConditionFoggy => 'Foggy';
+
+  @override
+  String get weatherConditionDrizzle => 'Light Drizzle';
+
+  @override
+  String get weatherConditionRainy => 'Rainy';
+
+  @override
+  String get weatherConditionHeavyRain => 'Heavy Rain';
+
+  @override
+  String get weatherConditionShowers => 'Showers';
+
+  @override
+  String get weatherConditionThunderstorm => 'Thunderstorm';
+
+  @override
+  String get weatherConditionSevereStorm => 'Severe Storm';
+
+  @override
+  String get weatherConditionCalm => 'Sunny & Calm';
+
+  @override
+  String get seaConditionStaleLabel => 'may be outdated';
 }

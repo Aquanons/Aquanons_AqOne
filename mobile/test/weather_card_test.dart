@@ -685,7 +685,10 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Fishing weather window'), findsOneWidget);
+      expect(
+        find.text(lookupAppLocalizations(locale).weatherWindowTitle),
+        findsOneWidget,
+      );
     }
   });
 

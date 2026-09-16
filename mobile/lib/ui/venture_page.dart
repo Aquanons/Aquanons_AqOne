@@ -457,6 +457,7 @@ class _VenturePageState extends State<VenturePage> {
   }
 
   void _showSafetyDialog() {
+    final AppLocalizations t = AppLocalizations.of(context);
     final weather = _weather;
     final bool unsafe = weather?.looksUnsafe ?? true;
     final bool highWind = weather?.hasHighWind ?? false;
@@ -468,7 +469,7 @@ class _VenturePageState extends State<VenturePage> {
     } else if (highWind) {
       titleText = 'Wind above threshold';
     } else if (unsafe) {
-      titleText = '${weather.condition.label} forecast';
+      titleText = '${weather.condition.label(t)} forecast';
     } else {
       titleText = 'Conditions look calm';
     }
@@ -512,7 +513,7 @@ class _VenturePageState extends State<VenturePage> {
             Text(
               weather == null
                   ? 'Weather could not be loaded, so this cannot be assessed.'
-                  : '${weather.condition.label} · '
+                  : '${weather.condition.label(t)} · '
                       '${weather.temperature.toStringAsFixed(0)}°C · '
                       'wind ${weather.windSpeed.toStringAsFixed(0)} km/h',
               style: const TextStyle(fontSize: 14, height: 1.4),
@@ -538,7 +539,7 @@ class _VenturePageState extends State<VenturePage> {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Got it'),
+            child: Text(t.gotItButton),
           ),
         ],
       ),
@@ -739,10 +740,11 @@ class _VenturePageState extends State<VenturePage> {
   }
 
   Widget _buildWeatherCapsule(bool isDark) {
+    final AppLocalizations t = AppLocalizations.of(context);
     final weather = _weather;
     final label = _weatherFailed
-        ? 'Weather unavailable'
-        : weather?.condition.label ?? 'Loading…';
+        ? t.weatherUnavailable
+        : weather?.condition.label(t) ?? 'Loading…';
     final icon = weather?.condition.icon ?? Icons.wb_sunny_rounded;
 
     return GestureDetector(
@@ -818,13 +820,14 @@ class _VenturePageState extends State<VenturePage> {
   }
 
   Widget _buildActionRail(bool isDark) {
+    final AppLocalizations t = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         _RoundButton(
           icon: Icons.my_location_rounded,
-          tooltip: 'My location',
+          tooltip: t.myLocationTooltip,
           isActive: false,
           isDark: isDark,
           onTap: _locate,
@@ -832,7 +835,7 @@ class _VenturePageState extends State<VenturePage> {
         const SizedBox(height: 10),
         _RoundButton(
           icon: Icons.checklist_rounded,
-          tooltip: 'Trip checklist',
+          tooltip: t.tripChecklistTooltip,
           isActive: false,
           isDark: isDark,
           onTap: _openChecklist,
@@ -842,7 +845,7 @@ class _VenturePageState extends State<VenturePage> {
         // every action on this screen is reachable from one thumb position.
         _RoundButton(
           icon: Icons.chat_bubble_rounded,
-          tooltip: 'Chat with nearby boats',
+          tooltip: t.chatWithBoatsTooltip,
           isActive: false,
           isDark: isDark,
           onTap: () => Navigator.of(context).push(
@@ -1394,6 +1397,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations t = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? _canvasDark : Colors.white;
     final fg = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -1480,8 +1484,8 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
                   maxLength: AqOneConfig.maxNoteLength,
                   textCapitalization: TextCapitalization.sentences,
                   enabled: !_submitting && !_standingDown,
-                  decoration: const InputDecoration(
-                    hintText: 'Describe what is wrong',
+                  decoration: InputDecoration(
+                    hintText: t.sosDescribeWrong,
                     counterText: '',
                     isDense: true,
                   ),

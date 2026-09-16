@@ -1191,6 +1191,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'MDRRMO has closed this incident. Rescue is no longer needed.'**
   String get resolvedDescription;
+
+  /// AppBar title on the avatar crop screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Position your photo'**
+  String get cropPhotoTitle;
+
+  /// Hint text under the crop circle on the avatar crop screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move · pinch to zoom'**
+  String get cropPhotoHint;
+
+  /// Button to confirm the cropped avatar photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Use photo'**
+  String get cropPhotoUse;
+
+  /// Error shown when the image processing fails on the crop screen.
+  ///
+  /// In en, this message translates to:
+  /// **'That image could not be processed.'**
+  String get cropPhotoError;
+
+  /// Dialog title when resetting the trip checklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new trip?'**
+  String get checklistNewTripTitle;
+
+  /// Dialog body explaining the trip checklist reset.
+  ///
+  /// In en, this message translates to:
+  /// **'This unchecks everything on the list so you can go through your gear again. Your items stay - nothing is deleted.'**
+  String get checklistNewTripBody;
+
+  /// Confirm button in the new-trip dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Start new trip'**
+  String get checklistStartNewTrip;
+
+  /// SnackBar confirmation after checklist reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist reset for the next trip.'**
+  String get checklistResetSnackBar;
+
+  /// AppBar title of the checklist screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip checklist'**
+  String get checklistTripTitle;
+
+  /// AppBar action button to start a new trip.
+  ///
+  /// In en, this message translates to:
+  /// **'New trip'**
+  String get checklistNewTripButton;
+
+  /// Label showing checklist progress. {done} and {total} are integers.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} packed'**
+  String checklistPackedLabel(int done, int total);
+
+  /// Empty state text when the checklist has no items.
+  ///
+  /// In en, this message translates to:
+  /// **'No checklist items yet.'**
+  String get checklistEmpty;
+
+  /// Hint text in the add-item text field.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an item'**
+  String get checklistAddItem;
+
+  /// SAFETY CRITICAL. Button text on the squall full-screen alert and home-page squall banner. The fisher taps this to acknowledge the squall warning.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m heading back'**
+  String get squallAckButton;
+
+  /// Disclaimer under the squall alert. Must not overstate confidence.
+  ///
+  /// In en, this message translates to:
+  /// **'This model is still being calibrated on simulated data. Use your own judgement.'**
+  String get squallModelDisclaimer;
+
+  /// Note under the squall acknowledge button.
+  ///
+  /// In en, this message translates to:
+  /// **'The warning stays on your screen until the squall passes.'**
+  String get squallWarningStays;
+
+  /// SnackBar shown when the phone disconnects from a buoy WiFi. {ssid} is the network name.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from {ssid}'**
+  String buoyDisconnectSnack(String ssid);
+
+  /// SnackBar shown when the phone connects to a buoy WiFi. {ssid} is the network name.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {ssid}'**
+  String buoyConnectSnack(String ssid);
+
+  /// Dismiss button on informational dialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotItButton;
+
+  /// Tooltip for the re-center map button on the Venture screen.
+  ///
+  /// In en, this message translates to:
+  /// **'My location'**
+  String get myLocationTooltip;
+
+  /// Tooltip for the checklist button on the Venture action rail.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip checklist'**
+  String get tripChecklistTooltip;
+
+  /// Tooltip for the chat button on the Venture action rail.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with nearby boats'**
+  String get chatWithBoatsTooltip;
+
+  /// Hint text in the SOS free-text note field.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what is wrong'**
+  String get sosDescribeWrong;
+
+  /// SAFETY CRITICAL. Label above the countdown timer in the responder ETA dialog when the ETA has passed.
+  ///
+  /// In en, this message translates to:
+  /// **'ARRIVAL OVERDUE'**
+  String get etaArrivalOverdue;
+
+  /// SAFETY CRITICAL. Label above the countdown timer in the responder ETA dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'ARRIVING IN'**
+  String get etaArrivingIn;
+
+  /// SAFETY CRITICAL. Safety reminder shown below the responder reply section.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay with your boat if it is still afloat. It is easier to spot than a person in the water.'**
+  String get stayWithBoat;
+
+  /// Button to dismiss the responder ETA dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Understood'**
+  String get understoodButton;
+
+  /// Hint text in the chat compose field.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message…'**
+  String get chatHint;
+
+  /// Display label for WeatherCondition.sunny. Must go through AppLocalizations, not remain as a const on the enum.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunny & Clear'**
+  String get weatherConditionSunny;
+
+  /// Display label for WeatherCondition.partlyCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly Cloudy'**
+  String get weatherConditionPartlyCloudy;
+
+  /// Display label for WeatherCondition.overcast.
+  ///
+  /// In en, this message translates to:
+  /// **'Overcast'**
+  String get weatherConditionOvercast;
+
+  /// Display label for WeatherCondition.foggy.
+  ///
+  /// In en, this message translates to:
+  /// **'Foggy'**
+  String get weatherConditionFoggy;
+
+  /// Display label for WeatherCondition.drizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Light Drizzle'**
+  String get weatherConditionDrizzle;
+
+  /// Display label for WeatherCondition.rainy.
+  ///
+  /// In en, this message translates to:
+  /// **'Rainy'**
+  String get weatherConditionRainy;
+
+  /// Display label for WeatherCondition.heavyRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy Rain'**
+  String get weatherConditionHeavyRain;
+
+  /// Display label for WeatherCondition.showers.
+  ///
+  /// In en, this message translates to:
+  /// **'Showers'**
+  String get weatherConditionShowers;
+
+  /// Display label for WeatherCondition.thunderstorm.
+  ///
+  /// In en, this message translates to:
+  /// **'Thunderstorm'**
+  String get weatherConditionThunderstorm;
+
+  /// Display label for WeatherCondition.severeThunderstorm.
+  ///
+  /// In en, this message translates to:
+  /// **'Severe Storm'**
+  String get weatherConditionSevereStorm;
+
+  /// Display label for WeatherCondition.calm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunny & Calm'**
+  String get weatherConditionCalm;
+
+  /// Small chip label on the sea condition banner when data is older than the freshness threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'may be outdated'**
+  String get seaConditionStaleLabel;
 }
 
 class _AppLocalizationsDelegate

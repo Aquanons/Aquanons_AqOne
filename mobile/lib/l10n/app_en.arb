@@ -856,5 +856,187 @@
   "resolvedDescription": "MDRRMO has closed this incident. Rescue is no longer needed.",
   "@resolvedDescription": {
     "description": "SAFETY CRITICAL. Line under the Incident resolved heading on the SOS status card. Must not read as 'stay put, help is coming'."
+  },
+  "cropPhotoTitle": "Position your photo",
+  "@cropPhotoTitle": {
+    "description": "AppBar title on the avatar crop screen."
+  },
+  "cropPhotoHint": "Drag to move · pinch to zoom",
+  "@cropPhotoHint": {
+    "description": "Hint text under the crop circle on the avatar crop screen."
+  },
+  "cropPhotoUse": "Use photo",
+  "@cropPhotoUse": {
+    "description": "Button to confirm the cropped avatar photo."
+  },
+  "cropPhotoError": "That image could not be processed.",
+  "@cropPhotoError": {
+    "description": "Error shown when the image processing fails on the crop screen."
+  },
+  "checklistNewTripTitle": "Start a new trip?",
+  "@checklistNewTripTitle": {
+    "description": "Dialog title when resetting the trip checklist."
+  },
+  "checklistNewTripBody": "This unchecks everything on the list so you can go through your gear again. Your items stay - nothing is deleted.",
+  "@checklistNewTripBody": {
+    "description": "Dialog body explaining the trip checklist reset."
+  },
+  "checklistStartNewTrip": "Start new trip",
+  "@checklistStartNewTrip": {
+    "description": "Confirm button in the new-trip dialog."
+  },
+  "checklistResetSnackBar": "Checklist reset for the next trip.",
+  "@checklistResetSnackBar": {
+    "description": "SnackBar confirmation after checklist reset."
+  },
+  "checklistTripTitle": "Trip checklist",
+  "@checklistTripTitle": {
+    "description": "AppBar title of the checklist screen."
+  },
+  "checklistNewTripButton": "New trip",
+  "@checklistNewTripButton": {
+    "description": "AppBar action button to start a new trip."
+  },
+  "checklistPackedLabel": "{done} of {total} packed",
+  "@checklistPackedLabel": {
+    "description": "Label showing checklist progress. {done} and {total} are integers.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "checklistEmpty": "No checklist items yet.",
+  "@checklistEmpty": {
+    "description": "Empty state text when the checklist has no items."
+  },
+  "checklistAddItem": "Add an item",
+  "@checklistAddItem": {
+    "description": "Hint text in the add-item text field."
+  },
+  "squallAckButton": "I'm heading back",
+  "@squallAckButton": {
+    "description": "SAFETY CRITICAL. Button text on the squall full-screen alert and home-page squall banner. The fisher taps this to acknowledge the squall warning."
+  },
+  "squallModelDisclaimer": "This model is still being calibrated on simulated data. Use your own judgement.",
+  "@squallModelDisclaimer": {
+    "description": "Disclaimer under the squall alert. Must not overstate confidence."
+  },
+  "squallWarningStays": "The warning stays on your screen until the squall passes.",
+  "@squallWarningStays": {
+    "description": "Note under the squall acknowledge button."
+  },
+  "buoyDisconnectSnack": "Disconnected from {ssid}",
+  "@buoyDisconnectSnack": {
+    "description": "SnackBar shown when the phone disconnects from a buoy WiFi. {ssid} is the network name.",
+    "placeholders": {
+      "ssid": {
+        "type": "String",
+        "example": "AqOne-Buoy-01"
+      }
+    }
+  },
+  "buoyConnectSnack": "Connected to {ssid}",
+  "@buoyConnectSnack": {
+    "description": "SnackBar shown when the phone connects to a buoy WiFi. {ssid} is the network name.",
+    "placeholders": {
+      "ssid": {
+        "type": "String",
+        "example": "AqOne-Buoy-01"
+      }
+    }
+  },
+  "gotItButton": "Got it",
+  "@gotItButton": {
+    "description": "Dismiss button on informational dialogs."
+  },
+  "myLocationTooltip": "My location",
+  "@myLocationTooltip": {
+    "description": "Tooltip for the re-center map button on the Venture screen."
+  },
+  "tripChecklistTooltip": "Trip checklist",
+  "@tripChecklistTooltip": {
+    "description": "Tooltip for the checklist button on the Venture action rail."
+  },
+  "chatWithBoatsTooltip": "Chat with nearby boats",
+  "@chatWithBoatsTooltip": {
+    "description": "Tooltip for the chat button on the Venture action rail."
+  },
+  "sosDescribeWrong": "Describe what is wrong",
+  "@sosDescribeWrong": {
+    "description": "Hint text in the SOS free-text note field."
+  },
+  "etaArrivalOverdue": "ARRIVAL OVERDUE",
+  "@etaArrivalOverdue": {
+    "description": "SAFETY CRITICAL. Label above the countdown timer in the responder ETA dialog when the ETA has passed."
+  },
+  "etaArrivingIn": "ARRIVING IN",
+  "@etaArrivingIn": {
+    "description": "SAFETY CRITICAL. Label above the countdown timer in the responder ETA dialog."
+  },
+  "stayWithBoat": "Stay with your boat if it is still afloat. It is easier to spot than a person in the water.",
+  "@stayWithBoat": {
+    "description": "SAFETY CRITICAL. Safety reminder shown below the responder reply section."
+  },
+  "understoodButton": "Understood",
+  "@understoodButton": {
+    "description": "Button to dismiss the responder ETA dialog."
+  },
+  "chatHint": "Type a message…",
+  "@chatHint": {
+    "description": "Hint text in the chat compose field."
+  },
+  "weatherConditionSunny": "Sunny & Clear",
+  "@weatherConditionSunny": {
+    "description": "Display label for WeatherCondition.sunny. Must go through AppLocalizations, not remain as a const on the enum."
+  },
+  "weatherConditionPartlyCloudy": "Partly Cloudy",
+  "@weatherConditionPartlyCloudy": {
+    "description": "Display label for WeatherCondition.partlyCloudy."
+  },
+  "weatherConditionOvercast": "Overcast",
+  "@weatherConditionOvercast": {
+    "description": "Display label for WeatherCondition.overcast."
+  },
+  "weatherConditionFoggy": "Foggy",
+  "@weatherConditionFoggy": {
+    "description": "Display label for WeatherCondition.foggy."
+  },
+  "weatherConditionDrizzle": "Light Drizzle",
+  "@weatherConditionDrizzle": {
+    "description": "Display label for WeatherCondition.drizzle."
+  },
+  "weatherConditionRainy": "Rainy",
+  "@weatherConditionRainy": {
+    "description": "Display label for WeatherCondition.rainy."
+  },
+  "weatherConditionHeavyRain": "Heavy Rain",
+  "@weatherConditionHeavyRain": {
+    "description": "Display label for WeatherCondition.heavyRain."
+  },
+  "weatherConditionShowers": "Showers",
+  "@weatherConditionShowers": {
+    "description": "Display label for WeatherCondition.showers."
+  },
+  "weatherConditionThunderstorm": "Thunderstorm",
+  "@weatherConditionThunderstorm": {
+    "description": "Display label for WeatherCondition.thunderstorm."
+  },
+  "weatherConditionSevereStorm": "Severe Storm",
+  "@weatherConditionSevereStorm": {
+    "description": "Display label for WeatherCondition.severeThunderstorm."
+  },
+  "weatherConditionCalm": "Sunny & Calm",
+  "@weatherConditionCalm": {
+    "description": "Display label for WeatherCondition.calm."
+  },
+  "seaConditionStaleLabel": "may be outdated",
+  "@seaConditionStaleLabel": {
+    "description": "Small chip label on the sea condition banner when data is older than the freshness threshold."
   }
 }
