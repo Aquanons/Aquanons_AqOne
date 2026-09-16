@@ -32,6 +32,7 @@ function createStubElement(tag, id) {
     _innerHTML: '', _textContent: '',
     addEventListener(event, fn) { (listeners[event] = listeners[event] || []).push(fn); },
     removeEventListener() {},
+    dispatchEvent(event) { (listeners[event] = listeners[event] || []).forEach((fn) => fn({ type: event })); return true; },
     appendChild(child) { children.push(child); return child; },
     get innerHTML() { return this._innerHTML; },
     set innerHTML(v) { this._innerHTML = String(v); this._textContent = this._innerHTML.replace(/<[^>]*>/g, ''); },
@@ -69,6 +70,7 @@ function createDOMContext(elements = {}, ns = { ready: true }) {
     clearInterval() {},
     setTimeout(fn) { return 1; },
     addEventListener(event, fn) { (windowListeners[event] = windowListeners[event] || []).push(fn); },
+    dispatchEvent(event) { (windowListeners[event] = windowListeners[event] || []).forEach((fn) => fn({ type: event })); return true; },
     removeEventListener() {},
     Date, JSON, Number, String, Array, Object, Math
   };
@@ -82,6 +84,8 @@ function loadAlarm(ns, opts) {
   const fakeWindow = Object.assign({}, window);
   if (opts.AudioContext === null) {
     delete fakeWindow.AudioContext;
+  } else if (typeof opts.AudioContext === 'function') {
+    fakeWindow.AudioContext = opts.AudioContext;
   }
   const context = vm.createContext(Object.assign({}, fakeWindow, {
     window: fakeWindow, document, AqOneDashboard: ns
@@ -89,6 +93,44 @@ function loadAlarm(ns, opts) {
   const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-alarm.js'), 'utf8');
   vm.runInContext(code, context);
   return context;
+}
+
+// A Web Audio context that starts suspended (the state a browser creates
+// before the user has interacted with the page) and only releases on
+// ctx.resume() issued from inside a user gesture - matching the autoplay
+// policy a real browser enforces. Lets the tests exercise the
+// unlock-on-gesture path.
+function createSuspendedAudioContext() {
+  let latest = null;
+  let inGesture = false;
+  function FakeAudioContext() {
+    this.state = 'suspended';
+    this.currentTime = 0;
+    this.destination = {};
+    this.resumed = 0;
+    this.oscillators = 0;
+    latest = this;
+  }
+  FakeAudioContext.prototype.resume = function () {
+    this.resumed++;
+    if (inGesture) this.state = 'running';
+    return Promise.resolve(this.state);
+  };
+  FakeAudioContext.prototype.createOscillator = function () {
+    this.oscillators++;
+    return { type: '', frequency: { value: 0, setValueAtTime() {} }, connect() {}, start() {}, disconnect() { } };
+  };
+  FakeAudioContext.prototype.createGain = function () {
+    return { gain: { value: 0 }, connect() {}, disconnect() {} };
+  };
+  return {
+    FakeAudioContext,
+    latest: () => latest,
+    dispatchGesture(context, eventName) {
+      inGesture = true;
+      try { context.window.dispatchEvent(eventName); } finally { inGesture = false; }
+    }
+  };
 }
 
 test('dashboard-alarm: module registers sosAlarm and hasUnacknowledgedSos', () => {
@@ -166,6 +208,51 @@ test('dashboard-alarm: start/stop are idempotent and tolerate no AudioContext', 
   assert.equal(ns.sosAlarm.isRunning(), true);
   ns.sosAlarm.stop();
   assert.equal(ns.sosAlarm.isRunning(), false);
+});
+
+test('dashboard-alarm: suspended context rings after a user gesture', () => {
+  const ns = { ready: true };
+  const { FakeAudioContext, latest, dispatchGesture } = createSuspendedAudioContext();
+  const context = loadAlarm(ns, { AudioContext: FakeAudioContext });
+
+  // First SOS arrives before the dispatcher has ever clicked: the context is
+  // created suspended (browsers block sound until a gesture), so no oscillator
+  // is built and nothing rings yet.
+  ns.sosAlarm.start();
+  const ctx = latest();
+  assert.equal(ctx.state, 'suspended', 'context created suspended pre-gesture');
+  assert.equal(ctx.oscillators, 0, 'must not start a silent oscillator into a suspended context');
+  assert.equal(ns.sosAlarm.isRunning(), true, 'alarm is armed');
+
+  // The first real gesture releases the context and rings the siren.
+  dispatchGesture(context, 'pointerdown');
+  assert.ok(ctx.resumed >= 1, 'a user gesture resumes the context');
+  assert.equal(ctx.state, 'running');
+  assert.ok(ctx.oscillators >= 1, 'unlock builds the oscillator once running');
+  assert.equal(ns.sosAlarm.isRunning(), true);
+
+  // Acknowledging stops the siren.
+  ns.sosAlarm.sync([{ id: 'S1', acknowledged_at: '2026-09-16T00:00:00Z' }]);
+  assert.equal(ns.sosAlarm.isRunning(), false, 'ack stops the siren');
+});
+
+test('dashboard-alarm: start/stop still work when the context is suspended', () => {
+  const ns = { ready: true };
+  const { FakeAudioContext, latest } = createSuspendedAudioContext();
+  loadAlarm(ns, { AudioContext: FakeAudioContext });
+
+  ns.sosAlarm.start();
+  const ctx = latest();
+  assert.equal(ns.sosAlarm.isRunning(), true, 'armed while blocked');
+  assert.equal(ctx.state, 'suspended', 'still blocked until a gesture');
+
+  // start() twice is idempotent even mid-suspend.
+  ns.sosAlarm.start();
+  assert.equal(ns.sosAlarm.isRunning(), true);
+  assert.equal(ctx.oscillators, 0, 'idempotent start does not double-build');
+
+  ns.sosAlarm.stop();
+  assert.equal(ns.sosAlarm.isRunning(), false, 'ack/resolve stops even while suspended');
 });
 
 test('dashboard-live-sos: rings on a new unacknowledged SOS and stops once acknowledged', async () => {
