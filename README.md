@@ -265,9 +265,9 @@ fixtures/      Shared contract fixtures
 | Member | Responsibility |
 |---|---|
 | Lenard | Backend, architecture, and deployment |
-| Arnold | Ingest pipeline and gateway |
+| Arnold | Website Dashboard |
 | Daniel | Hardware and buoy firmware |
-| Jade | Dashboard |
+| Jade | Flutter Application |
 | Doreen Kay | Pitching, Company branding and business direction |
 | Kc Condes | Pitching and business development support |
 
