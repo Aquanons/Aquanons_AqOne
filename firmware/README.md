@@ -1,27 +1,31 @@
 # AqOne firmware — Heltec WiFi LoRa 32 V3
 
-**Two sketches, one per kind of board.** Nothing to configure to pick a role —
-open the folder that matches the board in front of you.
+**Two sketches, one per kind of board.** The field sketch is used in the
+strap-on boat safety pod and can also serve as the basis for a stationary relay
+buoy. Nothing to configure to pick a role — open the folder that matches the
+board in front of you.
 
 | Sketch | Flash it to | Radios |
 |---|---|---|
-| [`buoy/AqOneBuoy/`](buoy/AqOneBuoy/) | The boards that float | WiFi **AP only** + LoRa |
+| [`buoy/AqOneBuoy/`](buoy/AqOneBuoy/) | Boat safety pod or optional stationary relay buoy | WiFi **AP only** + LoRa |
 | [`shore/AqOneShore/`](shore/AqOneShore/) | The board on the mast with the internet | LoRa + WiFi **station only** |
 
 ```
-phone --WiFi--> BUOY --LoRa--> (relay buoys) --LoRa--> SHORE --HTTPS--> backend
-phone <--WiFi-- BUOY <--LoRa-- (relay buoys) <--LoRa-- SHORE <--HTTPS-- backend
+phone --WiFi--> BOAT POD --direct LoRa--> SHORE --HTTPS--> backend
+                         \--optional relay--> STATIONARY BUOY --LoRa--/
+phone <--WiFi-- BOAT POD <--LoRa-- SHORE <--HTTPS-- backend
 ```
 
-**Buoy** — hosts the phones' network, accepts SOS and chat over HTTP/WebSocket,
-puts them on the radio, plays back what the mesh sends down, and relays other
-buoys' frames. **No internet of its own.** If the radio is quiet, an SOS sits in
-flash until it is not — never silently dropped, never reported as sent.
+**Boat pod** — hosts the phone's local network, accepts SOS and chat over
+HTTP/WebSocket, puts them on the radio, and stores them in flash until a direct
+or relayed shore path is available. **No internet of its own.** A stationary
+field node can use the same LoRa role for fixed sensor telemetry and optional
+relay forwarding.
 
 **Shore** — hears the mesh, posts to the backend, polls the backend, sends the
 answers back down. **No access point**, which is `docs/19_HELTEC_DATA_FLOW.md`
 option 1, "dedicate the gateway": a station-only board can never kick a fisher's
-phone off a buoy by dragging its AP onto another channel. Gateways never
+phone off a pod by dragging its AP onto another channel. Gateways never
 re-transmit mesh frames.
 
 ## The shared header
@@ -57,10 +61,10 @@ loudly instead of half-decoding them.
 
 ```cpp
 #define AQONE_NODE_ID   0x00010001    // MUST be unique across the deployment
-#define AQONE_NODE_NAME "BUOY01"      // BUOY01, BUOY02, ... / SHORE01
+#define AQONE_NODE_NAME "POD01"       // POD01, RELAY01, ... / SHORE01
 ```
 
-Buoys use `0x0001xxxx`, gateways `0x000000xx`. Two nodes sharing a `NODE_ID`
+Field nodes use `0x0001xxxx`, gateways `0x000000xx`. Two nodes sharing a `NODE_ID`
 make the seen-set drop one of them as a duplicate — at the console that is
 indistinguishable from a dead radio.
 
@@ -75,16 +79,16 @@ LORA_SYNC_WORD = 0x34
 LOAM_KEY       = "aqone-dev-key-change-me"
 ```
 
-**Buoy only:** `AP_SSID` is `Aquan` on **every** buoy — only the node name
-differs. A shared SSID lets a phone roam between buoys as the boat moves;
-`GET /v1/status` reports which buoy it is actually on. Putting the buoy id in
-the SSID breaks roaming.
+**Field sketch:** `AP_SSID` is `Aquan` on **every** boat pod — only the node
+name differs. A shared SSID lets the phone use any participating pod without a
+new app configuration. Stationary sensor-only nodes do not need to expose the
+phone API unless that is explicitly added later.
 
 **Shore only:** `UPLINK_SSID`/`UPLINK_PASS`, `BACKEND_HOST` (already set to the
 Railway deployment), and `OPS_TOKEN` **or** `OPS_EMAIL`/`OPS_PASSWORD` — see
 "The acknowledgement path needs a credential" below.
 
-### Why the buoy network is open
+### Why the pod network is open
 
 A person in distress cannot be asked for a WiFi password. This matches the
 existing decision that fisherman identity is a device-local id with no login.
@@ -133,7 +137,7 @@ mbedTLS (the HMAC) ship with the ESP32 core.
 Installing `Adafruit SSD1306` prompts to pull in `Adafruit BusIO` — accept it,
 or the sketch fails to link.
 
-### `build_opt.h` is part of the BUOY sketch — do not delete it
+### `build_opt.h` is part of the field sketch — do not delete it
 
 It contains one line, `-DWEBSOCKETS_SERVER_CLIENT_MAX=10`. The WebSockets
 library defaults that to 5 while the AP accepts 10 phones, so without it boats
@@ -173,7 +177,7 @@ lib_deps =
 
 Drop `links2004/WebSockets` and the `build_flags` line for the shore env.
 
-Last verified: both sketches compile clean on 2026-09-12 — buoy 866 KB flash /
+Last verified: both sketches compile clean on 2026-09-12 — field sketch 866 KB flash /
 59 KB RAM, shore 984 KB / 51 KB. **Compiling is not the same as working on the
 water** — see "Test it in this order".
 
@@ -231,7 +235,7 @@ The ETA payload also omits `kind` and `client_ts` — `TYPE 0x06` in the
 authenticated header already says what the frame is, and `RemoteSos.fromJson`
 never reads `client_ts`.
 
-## What the buoy exposes to phones (`192.168.4.1`)
+## What the boat pod exposes to phones (`192.168.4.1`)
 
 Unchanged from the WiFi-gateway build — **the Flutter app needs no changes.**
 
@@ -239,16 +243,16 @@ Unchanged from the WiFi-gateway build — **the Flutter app needs no changes.**
 |---|---|
 | `POST /v1/sos` | Accept an SOS. Replies immediately, transmits in the background. A duplicate `(vessel_id, client_ts)` returns the original ack rather than queuing twice. |
 | `GET /v1/sos/status?vessel_id=` | The dispatcher's ETA once it arrives over the mesh. Same shape as the backend's `GET /api/sos/vessel/{id}`, so the app parses both with one parser. |
-| `GET /v1/status` | Buoy health, queue depth, **mesh** state, last RSSI/SNR. |
+| `GET /v1/status` | Pod health, queue depth, **LoRa** state, last RSSI/SNR. |
 | `GET /history` | Chat backfill — `{"messages":[{"from","text","time"}]}`, last 20 lines, RAM only. |
 | `ws://192.168.4.1:81` | Chat WebSocket. Relayed to every phone **except** the sender, and onto the radio. Pushes `sos_update` when an ETA lands. |
 | `GET /portal` | Captive-portal page showing whether the radio link to shore is up. |
 | `/generate_204`, `/ncsi.txt`, `/hotspot-detect.html` | OS connectivity probes. |
 
-`uplink` in `GET /v1/status` reports the **mesh**, not an internet connection
-this board does not have: `true` means a frame handed to this buoy has a live
+`uplink` in `GET /v1/status` reports the **LoRa path**, not an internet connection
+this board does not have: `true` means a frame handed to this pod has a live
 path to shore right now. That is the question the app's copy actually asks, and
-`docs/06_DELIVERY_STATES.md` requires the buoy to report mesh ok/degraded rather
+`docs/06_DELIVERY_STATES.md` requires the pod to report mesh ok/degraded rather
 than claiming anything was "sent".
 
 ### The connectivity probes are not optional
@@ -310,14 +314,14 @@ Should appear on the dashboard within 10 seconds. As of 2026-09-10 the
 deployment returned `404 Application not found` — if it still does, fix that
 before blaming a radio.
 
-**2. Flash both boards.** Buoy sketch to one, shore sketch to the other. Watch
+**2. Flash both boards.** Field sketch to one, shore sketch to the other. Watch
 Serial at 115200. On each you want:
 
 ```
 [lora] up  915.0 MHz  SF10  BW125  CR4/5  id=0x00010001
 ```
 
-Then on the buoy:
+Then on the boat pod:
 
 ```
 [wifi] OPEN AP 'Aquan' up on 192.168.4.1 ch=6 max=10
@@ -330,7 +334,7 @@ to `Mesh: to shore`, and Serial should show `[lora] rx type=0x03`. If this never
 happens, nothing below will work: run the `diff` on the two `AqOneLoam.h` copies
 and re-check the band before touching anything else.
 
-**4. Post an SOS from a laptop** joined to the buoy's AP — no phone app needed:
+**4. Post an SOS from a laptop** joined to the pod's AP — no phone app needed:
 
 ```bash
 curl -X POST http://192.168.4.1/v1/sos -H "Content-Type: application/json" -d '{"vessel_id":"BANCA-7","client_ts":1754300500,"boat":"Maria Gracia","lat":11.6839,"lon":122.4471,"note":"engine dead"}'
@@ -380,8 +384,9 @@ modelled.
 
 ## Known limitations — do not overstate these
 
-**No range has been measured.** The firmware implements the mesh; nobody has put
-it on the water. `docs/33` models SF10 at ~7.5 km buoy-to-buoy against a 10.1 km
+**No range has been measured.** The firmware implements the direct and optional
+relay paths; nobody has put it on the water. `docs/33` models SF10 at ~7.5 km
+low-node-to-low-node against a 10.1 km
 horizon at 1.5 m antenna height, and explicitly warns that free-space numbers
 are ~5× too optimistic. Do not quote a range until step 8 is done.
 

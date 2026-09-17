@@ -15,10 +15,11 @@ Consequences today:
 
 ## The solution
 
-Anchored buoys carrying an ESP32-S3, an SX1262 LoRa radio, and a WiFi access
-point. A fisherman's phone joins the nearest buoy's WiFi and hands off a
-message. Buoys relay it over LoRa toward a gateway node with internet, which
-forwards it to the backend, which pushes it to the regulator dashboard.
+Boat-mounted safety pods carrying an ESP32-S3 and an SX1262 LoRa radio give each
+fisherman's phone a short local WiFi handoff. The pod sends the SOS directly over
+LoRa to a tall shoreline gateway, which forwards it to the backend and pushes it
+to the MDRRMO dashboard. Stationary navigational buoys remain as fixed sensor
+stations and optional LoRa relays where measured coverage requires them.
 
 The phone never needs cellular signal.
 
@@ -26,21 +27,21 @@ The phone never needs cellular signal.
 
 ```
 ┌───────────────┐  WiFi SoftAP   ┌──────────────────────┐
-│ Vessel phone  │ ─────────────► │ Buoy (ESP32-S3)      │
+│ Vessel phone  │ ─────────────► │ Boat pod (ESP32-S3)  │
 │ Flutter       │                │ • SX1262 LoRa        │
-│ • SQLite      │ ◄───────────── │ • MPU6050 (optional) │
-│   outbox      │   buoy ack     │ • store & forward    │
+│ • SQLite      │ ◄───────────── │ • physical SOS btn   │
+│   outbox      │   pod ack      │ • store & forward    │
 │ • airplane    │                │ • signs packets      │
 │   mode OK     │                └──────────┬───────────┘
 └───────────────┘                           │ LoRa
                                             ▼
                                  ┌──────────────────────┐
-                                 │ Buoy N (relay, TTL--)│
+                                 │ Optional sensor/relay │
                                  └──────────┬───────────┘
                                             │ LoRa
                                             ▼
                                  ┌──────────────────────┐
-                                 │ GATEWAY (has internet)│
+                                 │ TALL GATEWAY (internet)│
                                  │ • verify signature   │
                                  │ • external ID → UUID │
                                  │ • HTTPS to backend   │
@@ -75,12 +76,12 @@ BFAR/LGU regulator roles existed in v1 and are **out of scope** for this build.
 |---|---|
 | Lenard | Lead dev — backend, architecture, deployment |
 | Arnold | Full stack — ingest pipeline, gateway |
-| Daniel | **Hardware/firmware — buoy. Critical path.** |
+| Daniel | **Hardware/firmware — boat pod, sensor buoy, and relay hardware. Critical path.** |
 | Jade | Dashboard |
 | Doreen Kay | UI/UX, pitch deck |
 
-Daniel is on the critical path. The buoy is the product; if firmware slips,
-everything else is decoration.
+Daniel is on the critical path. The field hardware is the product; if firmware
+or the enclosure slips, everything else is decoration.
 
 ## Build order
 
@@ -91,12 +92,13 @@ works.
    run. (~1 hr)
 2. **Two radios talk** — raw LoRa packet between two ESP32s, no protocol yet.
    (~1 hr, parallel with 1)
-3. **Buoy → gateway → backend** — button press on a buoy creates a real SOS
-   row via radio. (~1.5 hr)
-4. **Phone → buoy → backend** — phone in airplane mode, SOS lands. (~2 hr)
+3. **Boat pod → shore gateway → backend** — a pod button press creates a real
+   SOS row via direct LoRa. (~1.5 hr)
+4. **Phone → boat pod → backend** — phone in airplane mode, SOS lands. (~2 hr)
 5. **Dashboard live feed + acknowledge** — full path visible. (~1 hr)
 6. **Range test outdoors** — record the actual metres achieved. (~1 hr)
-7. **Freeze, rehearse ×3, record screencast.**
+7. **Add a stationary sensor or relay buoy only where testing justifies it.**
+8. **Freeze, rehearse ×3, record screencast.**
 
 ## Definition of done for the whole build
 

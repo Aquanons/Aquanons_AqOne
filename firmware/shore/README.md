@@ -1,12 +1,13 @@
-# Shore gateway sketch
+# Tall shoreline gateway sketch
 
 `AqOneShore/AqOneShore.ino` — the board on the mast with the internet.
 
-LoRa plus a WiFi station, and **no access point**: it hears the mesh, posts to
-the backend, polls for the dispatcher's acknowledgement, and sends the answers
-back down. No phone ever connects to it, and it never re-transmits mesh frames.
+LoRa plus a WiFi station, and **no access point**: it hears direct boat-pod
+frames and optional stationary-relay traffic, posts to the backend, polls for
+the dispatcher's acknowledgement, and sends the answers back down. No phone
+ever connects to it, and it never re-transmits LoRa frames.
 
-Its partner is [`../buoy/AqOneBuoy`](../buoy/AqOneBuoy).
+Its field-node partner is [`../buoy/AqOneBuoy`](../buoy/AqOneBuoy).
 
 Two files, both part of the sketch:
 

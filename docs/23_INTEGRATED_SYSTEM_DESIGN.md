@@ -12,7 +12,13 @@ AqOne is a shared maritime platform for municipal fishing communities. It combin
 1. **AqOne Safety** — offshore communication, localized weather warnings, manual SOS, overdue-vessel detection, and drift-informed search-and-rescue support; and
 2. **AqOne Fisheries Intelligence** — voluntary catch logging, fish-hotspot guidance, catch-decline decision support, and regulator-declared zone advisories.
 
-Both systems use the same anchored buoy network, mobile application, backend, and operations platform, but they do **not** share all data by default. Safety functions are the trust anchor and must work without enrollment in fisheries monitoring. Catch data is collected only through separate, informed opt-in consent and is never required to send an SOS, receive a warning, or obtain rescue assistance.
+Both systems use the same hybrid radio infrastructure, mobile application,
+backend, and operations platform, but they do **not** share all data by default.
+Boat pods provide the primary SOS path; stationary buoys provide fixed
+environmental observations and optional relay coverage. Safety functions are the
+trust anchor and must work without enrollment in fisheries monitoring. Catch data
+is collected only through separate, informed opt-in consent and is never
+required to send an SOS, receive a warning, or obtain rescue assistance.
 
 The integrated design keeps the strongest idea from each source document: the proposal's focused, low-cost search-and-rescue infrastructure and the technical profile's longer-term fisheries and livelihood intelligence. Integration occurs at the infrastructure and user-experience layers, while purpose separation is preserved at the data, permission, and governance layers.
 
@@ -24,7 +30,7 @@ AqOne addresses these problems through one field infrastructure with two bounded
 
 | Need | AqOne response | Primary beneficiary |
 |---|---|---|
-| Communication beyond cellular coverage | Phone-to-buoy connection and buoy-to-buoy LoRa store-and-forward mesh | Fishers and families |
+| Communication beyond cellular coverage | Phone-to-boat-pod WiFi, direct pod-to-shore LoRa, and optional stationary-buoy relay | Fishers and families |
 | Faster distress reporting | Manual SOS, last-known position, and confidence-scored overdue alerts | MDRRMO and PCG |
 | Localized hazardous-weather warning | Barometric and motion observations fused with official weather data | Fishers and responders |
 | Smaller, prioritized search area | OpenDrift/Leeway probability field with local observations and responder updates | MDRRMO and PCG |
@@ -52,7 +58,7 @@ AqOne provides decision support. It does not autonomously declare a vessel lost,
 
 ### 3.4 Confidence and uncertainty are visible
 
-Weather, overdue, hotspot, catch-decline, and drift outputs must show confidence, data age, coverage, and relevant limitations. Missing contact outside measured buoy coverage is not treated as an emergency by itself.
+Weather, overdue, hotspot, catch-decline, and drift outputs must show confidence, data age, coverage, and relevant limitations. Missing contact outside measured pod/fixed-node coverage is not treated as an emergency by itself.
 
 ### 3.5 Store first, synchronize when possible
 
@@ -63,9 +69,9 @@ The system assumes intermittent connectivity. Phones, buoys, gateways, and the b
 ```mermaid
 flowchart LR
     F["Fisher mobile app<br/>Flutter + local SQLite"]
-    B1["Anchored buoy node<br/>ESP32-S3 + sensors + WiFi/BLE + LoRa"]
-    B2["Anchored buoy relay<br/>LoRa mesh"]
-    G["Shore gateway<br/>LoRa + internet backhaul"]
+    B1["Boat safety pod<br/>ESP32-S3 + WiFi + LoRa"]
+    B2["Optional stationary sensor/relay buoys<br/>LoRa + fixed observations"]
+    G["Tall shoreline gateway<br/>LoRa + internet backhaul"]
     API["FastAPI services<br/>ingest, identity, events, alerts"]
     DB["PostgreSQL<br/>purpose-separated schemas"]
     AI1["Safety models<br/>squall, anomaly, drift"]
@@ -73,8 +79,9 @@ flowchart LR
     OPS["Operations platform<br/>role-based views"]
     EXT["External data<br/>PAGASA, NASA, weather, BFAR, charts"]
 
-    F <-->|"WiFi; BLE only where validated"| B1
-    B1 <-->|"LoRa store-and-forward"| B2
+    F <-->|"Local WiFi"| B1
+    B1 <-->|"Direct LoRa when possible"| G
+    B1 <-->|"Optional relay"| B2
     B2 <-->|"LoRa"| G
     G <-->|"authenticated internet link"| API
     API <--> DB
@@ -85,7 +92,9 @@ flowchart LR
     API --> F
 ```
 
-The **shore gateway** is the standard bridge from the offshore mesh to the backend. A vessel-mounted or mobile gateway may be evaluated as an optional redundancy measure, but it is not assumed in the core design and must not become a single point of failure.
+The **tall shoreline gateway** is the standard bridge from the field radios to
+the backend. A direct boat-pod link is the default path; a stationary buoy is
+added as a relay only where field measurements or fixed-sensor needs justify it.
 
 ### 4.1 Mobile application
 
@@ -100,30 +109,37 @@ The Flutter application provides:
 - hotspot and regulator-declared zone overlays; and
 - accessible interaction through large targets, simple navigation, and English/Aklanon localization.
 
-The phone does not contain a LoRa radio. It reaches the mesh through a nearby buoy using WiFi. BLE may be retained for provisioning or short-range fallback only after field testing; design claims about offshore phone-to-buoy range must be based on measured results.
+The phone does not contain a LoRa radio. It reaches the network through the
+nearby boat pod using short-range WiFi. BLE may be retained for provisioning or
+short-range fallback only after field testing; design claims about the pod's
+phone-contact range must be based on measured results.
 
-### 4.2 Buoy node
+### 4.2 Field nodes
 
-Each anchored, solar-powered buoy is public or shared infrastructure rather than fisher-owned equipment. The reference node includes:
+The boat pod is shared removable equipment rather than a personal subscription
+device. Stationary solar-powered buoys remain public/shared infrastructure when
+their sensing or relay position is useful.
+
+The boat-pod reference node includes:
 
 - ESP32-S3-class microcontroller;
 - SX1262-class LoRa radio and marine-suitable antenna;
 - WiFi access point and optional BLE;
-- GNSS receiver for surveyed position, watch-circle movement, and tamper/drift detection;
-- barometer for local pressure observations;
-- MPU6050-class IMU for motion and mooring-response observations;
-- battery, solar charging, and power monitoring;
-- weather-resistant enclosure; and
-- guarded physical SOS/assistance control only if stakeholder testing demonstrates a safe use case.
+- GNSS receiver for the boat/pod position;
+- physical SOS button;
+- battery, power monitoring, and flash-backed queue;
+- external LoRa antenna suitable for the pod mounting position; and
+- weather-resistant strap-on enclosure.
 
-The buoy has four roles:
+The stationary sensor/relay buoy includes the relevant subset of:
 
-1. **Access point:** accepts compact packets from nearby phones.
-2. **Mesh relay:** stores and forwards packets toward the gateway using bounded hop counts and duplicate suppression.
-3. **Environmental station:** records pressure, motion, location, radio quality, and device health.
-4. **Edge alert source:** emits low-bandwidth hazard and infrastructure events even when raw telemetry cannot immediately reach the backend.
+1. **Mesh relay:** stores and forwards packets toward the gateway using bounded hop counts and duplicate suppression.
+2. **Environmental station:** records pressure, motion, location, radio quality, and device health.
+3. **Edge alert source:** emits low-bandwidth hazard and infrastructure events even when raw telemetry cannot immediately reach the backend.
 
-Buoy motion indicates **conditions at the buoy's fixed location**, not the capsize of a particular boat. The UI must label these events as `Dangerous Wave Zone` or `Capsizing-Risk Conditions`, never as a confirmed vessel capsize.
+Stationary-buoy motion indicates **conditions at the buoy's fixed location**, not
+the capsize of a particular boat. The UI must label these events as `Dangerous
+Wave Zone` or `Capsizing-Risk Conditions`, never as a confirmed vessel capsize.
 
 ### 4.3 Mesh and gateway
 
@@ -143,7 +159,7 @@ Suggested priority order is:
 2. high-confidence distress escalation;
 3. severe localized weather warning;
 4. routine vessel check-in and safety message;
-5. buoy health telemetry;
+5. field-node health telemetry;
 6. catch log and other delay-tolerant data.
 
 The gateway authenticates to the backend, uploads queued packets idempotently, receives acknowledgements and outbound warnings, and preserves messages during internet outages.
@@ -153,7 +169,7 @@ The gateway authenticates to the backend, uploads queued packets idempotently, r
 The backend uses FastAPI and PostgreSQL with an append-only event log, idempotent ingest, background workers, and Server-Sent Events or an equivalent lightweight channel for operations updates. Core services are:
 
 - identity, roles, consent, and trip management;
-- device registry and buoy-network health;
+- device registry and field-network health;
 - packet ingest, validation, deduplication, and acknowledgement;
 - safety-event projection and incident workflow;
 - environmental-data ingestion and feature preparation;
@@ -169,19 +185,27 @@ Safety and fisheries records use separate schemas or stores, encryption keys, re
 
 ### 5.1 Manual SOS
 
-A fisher triggers SOS in the app. The app packages the fisher/vessel pseudonymous ID, event time, current or last reliable position, trip ID, and optional incident category. It attempts cellular delivery if available and buoy delivery in parallel or priority order. Relays retain the packet until acknowledged or expired.
+A fisher triggers SOS in the app or presses the pod's physical button. The app
+packages the fisher/vessel pseudonymous ID, event time, current or last reliable
+position, trip ID, and optional incident category. It attempts cellular delivery
+if available and boat-pod delivery in parallel or priority order. The pod sends
+directly to the shore gateway when possible; optional relays retain the packet
+until acknowledged or expired.
 
 The operations platform distinguishes:
 
 - **Created:** stored safely on the phone;
-- **Relayed:** accepted by a buoy or internet endpoint;
+- **Relayed:** accepted by a boat pod or internet endpoint;
 - **Delivered:** accepted by the backend;
 - **Acknowledged:** seen and accepted by an authorized responder; and
 - **Resolved:** closed with a reason and audit record.
 
 ### 5.2 Localized squall nowcasting
 
-The nowcasting pipeline combines buoy pressure sequences, position/time, motion observations, official PAGASA warnings, and available wind or sea-state products. It estimates the probability and expected lead time of a hazardous localized squall for defined zones.
+The nowcasting pipeline combines stationary-buoy pressure sequences,
+position/time, motion observations, official PAGASA warnings, and available wind
+or sea-state products. It estimates the probability and expected lead time of a
+hazardous localized squall for defined zones.
 
 Development starts with transparent baselines such as pressure-tendency thresholds and forecast persistence. More complex spatiotemporal models are adopted only if they improve time-separated and location-separated validation. Warnings are geographically targeted and may use severity levels such as `Advisory`, `Prepare to Return`, and `Return Now`. Official PAGASA warnings remain clearly attributed and are never visually presented as AqOne predictions.
 
@@ -294,8 +318,8 @@ Integration does not mean attempting every model at once. The 24-month program u
 
 - Validate fisher and responder requirements.
 - Freeze packet, API, event, consent, and role contracts.
-- Prototype buoy, power system, antennas, phone access point, LoRa mesh, and shore gateway.
-- Demonstrate airplane-mode phone → buoy → mesh → gateway → backend → operations platform delivery.
+- Prototype the strap-on boat pod, power system, antennas, optional fixed sensor/relay buoy, LoRa transport, and tall shoreline gateway.
+- Demonstrate airplane-mode phone → boat pod → direct LoRa → gateway → backend → operations platform delivery.
 - Implement manual SOS, message states, network health, offline outbox, and access auditing.
 
 **Exit gate:** repeatable delivery and acknowledgement under documented range, latency, loss, and power conditions.
@@ -303,7 +327,7 @@ Integration does not mean attempting every model at once. The 24-month program u
 ### Phase 2 — Safety intelligence
 
 - Deploy environmental sensors and establish transparent baselines.
-- Calibrate squall and buoy-motion advisories.
+- Calibrate squall and stationary-buoy-motion advisories.
 - Launch coverage-aware overdue detection, then learned trip profiles when enough history exists.
 - Integrate and validate OpenDrift/Leeway search fields and responder re-tasking.
 
@@ -330,7 +354,7 @@ Integration does not mean attempting every model at once. The 24-month program u
 
 ### 10.1 Network and hardware
 
-- phone-to-buoy and buoy-to-buoy range distributions under real sea conditions;
+- phone-to-pod, direct pod-to-shore, and optional pod/relay range distributions under real sea conditions;
 - end-to-end delivery rate and latency by priority;
 - duplicate rate and successful acknowledgement rate;
 - store-and-forward recovery after outages;
@@ -370,10 +394,10 @@ Integration does not mean attempting every model at once. The 24-month program u
 
 | Risk | Consequence | Control |
 |---|---|---|
-| Phone cannot reliably reach an anchored buoy | Safety path fails before LoRa relay | Field-measure WiFi/BLE; improve antenna/placement; publish actual coverage; add nodes rather than claim nominal range |
-| Sparse buoy placement or gateway outage | Delayed delivery | Coverage-led deployment, multiple routes, durable queues, gateway redundancy |
+| Phone cannot reliably reach the boat pod | Safety path fails before LoRa transmission | Field-measure local WiFi; improve pod placement; publish actual contact range; keep a shared spare pod |
+| Direct pod-to-shore gap or gateway outage | Delayed delivery | Tall gateway antenna, durable pod queues, measured optional relay buoys, and gateway redundancy |
 | Excessive automatic alerts | Responder alert fatigue | Coverage-aware baseline, confidence tiers, verification queue, responder-set thresholds |
-| Buoy motion mistaken for vessel distress | False incident | Label as zone condition; validate patterns; never bind buoy tilt to a specific boat |
+| Stationary-buoy motion mistaken for vessel distress | False incident | Label as zone condition; validate patterns; never bind buoy tilt to a specific boat |
 | Current proxy is inaccurate | Misleading drift correction | Validate against reference measurements; retain uncorrected baseline; reject correction if it does not improve results |
 | Catch participation is geographically biased | Unfair hotspot or decline outputs | Minimum reporter counts, coverage display, aggregation, BFAR baseline comparison, withhold low-confidence zones |
 | Safety telemetry is repurposed for enforcement | Loss of trust and possible harm | Technical separation, policy prohibition, audit logs, separate consent and legal review |
@@ -384,22 +408,22 @@ Integration does not mean attempting every model at once. The 24-month program u
 
 1. **Safety-only versus all-in-one scope:** Both become parts of one program, but fisheries intelligence enters through a gated module after the safety foundation and its trust safeguards are proven.
 2. **Shared dashboard versus surveillance risk:** The solution is one application shell with purpose-specific workspaces, separate permissions, and separated data—not one unrestricted regulator view.
-3. **Fixed buoy hazard versus vessel capsize detection:** Buoy motion generates zone-condition advisories only. Vessel distress comes from manual SOS or confidence-scored trip anomalies. Boat-mounted capsize hardware remains a possible later extension.
+3. **Fixed buoy hazard versus vessel capsize detection:** Stationary-buoy motion generates zone-condition advisories only. Vessel distress comes from manual SOS or confidence-scored trip anomalies. The boat pod can carry a physical SOS button, but it is not a guaranteed capsize detector.
 4. **Simple timeout versus behavioral anomaly detection:** Coverage-aware timeout is the interpretable cold-start baseline; learned per-vessel anomaly scoring is layered on when adequate trip history exists.
 5. **Mothership/mobile gateway versus shore gateway:** The shore gateway is the normal path. Mobile gateways are optional redundancy and are never the only tracked or connected node.
-6. **Fleet-density versus buoy-density dependency:** The core mesh depends on buoy and gateway coverage. Fleet density matters only if a separately validated opportunistic vessel-relay mode is introduced.
+6. **Fleet-density versus fixed-node density:** The core path depends on pod and gateway coverage. Relay-buoy density matters only where direct links fail or fixed sensing justifies it; vessel density matters for shared-pod availability and trip-history quality.
 7. **Direct current sensing versus inferred current:** GNSS/IMU mooring behavior is treated as a research proxy requiring validation, not a direct measurement.
-8. **WiFi/BLE ambiguity:** WiFi is the primary phone-to-buoy path because the phone lacks LoRa. BLE is limited to provisioning or validated short-range fallback.
+8. **WiFi/BLE ambiguity:** WiFi is the primary phone-to-boat-pod path because the phone lacks LoRa. BLE is limited to provisioning or validated short-range fallback.
 9. **One AI label for unlike problems:** Squall nowcasting, trip anomaly, physical drift, hotspot prediction, and catch-decline analysis are separate models with separate baselines and evaluation criteria.
 10. **Automatic restriction language:** AqOne may display an official restriction after BFAR/LGU declares it; model output alone is only a review flag.
 
 ## 13. Explicit non-goals for the initial integrated program
 
 - replacing PCG/MDRRMO command authority or official PAGASA warnings;
-- guaranteeing continuous coverage outside the measured buoy footprint;
+- guaranteeing continuous coverage outside the measured pod/fixed-node footprint;
 - voice communication over the LoRa mesh;
 - identifying a precise drift location without uncertainty;
-- requiring each fisher to purchase boat-mounted hardware;
+- requiring each fisher to personally purchase boat-mounted hardware; shared pods remain part of the deployment model;
 - using safety data for catch enforcement;
 - guaranteeing catch or recommending fishing inside unsafe or restricted waters; and
 - autonomous rescue dispatch, fisheries penalties, or zone closure.

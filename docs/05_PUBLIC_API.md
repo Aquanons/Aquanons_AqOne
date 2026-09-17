@@ -237,7 +237,7 @@ data: {"event": "acknowledged", "sos": { ... }}
 
 ## Delivery-state reporting for the app
 
-The phone learns nothing beyond its buoy (`docs/03_PHONE_BUOY_WIFI.md`) unless
+The phone learns nothing beyond its serving boat pod (`docs/03_PHONE_BUOY_WIFI.md`) unless
 it has internet. If it does, it can reconcile its outbox:
 
 ### `GET /api/sos/ack/{local_id}`

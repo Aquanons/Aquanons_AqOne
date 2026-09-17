@@ -70,7 +70,7 @@ above the card. The thresholds (30/50 km/h gusts, 1.5/2.5 m waves) are our own
 provisional numbers and have not been reviewed by MDRRMO or by a fisherman —
 that review is listed under known gaps below.
 
-The intended source is a fused backend score combining buoy sensor telemetry
+The intended source is a fused backend score combining stationary sensor-buoy telemetry
 with the weather feed. The contract for it is written
 (`docs/05_PUBLIC_API.md`) and the app already prefers it when present, but the
 endpoint is **not built**. Do not describe the colours as buoy-driven today.
@@ -141,32 +141,35 @@ map controls and the mobile weather card.
 
 ## 03 — Hardware disclosures
 
-### Bill of materials (₱100,000 → 3 LoRa nodes: 1 gateway + 2 buoys)
+### Bill of materials (₱100,000 → 3 LoRa nodes: 1 gateway + 2 field nodes)
 
 | Component | Unit | Qty |
 |---|---|---|
-| Navigation buoy hull | ₱25,000 | 2 |
-| Barometer | ₱5,000 | 2 |
+| Navigation buoy hull / mooring platform (optional fixed station) | ₱25,000 | 0–2 |
+| Barometer for fixed sensor stations | ₱5,000 | 0–2 |
 | Heltec WiFi LoRa 32 V3 (ESP32-S3 + SX1262) | ₱2,000 | 3 |
 | Monocrystalline solar panel, 5–10 W | ₱1,000 | 3 |
 | 18650 battery holder | ₱1,000 | 3 |
 | TP4056 charge controller | ₱1,000 | 3 |
 | 915 MHz antenna | ₱1,000 | 3 |
-| Polycarbonate sheet, enclosures | ₱10,000 | — |
+| Polycarbonate sheet, waterproof pod/relay enclosures, straps | ₱10,000 | — |
 | Soldering + development materials | ₱12,000 | — |
 
-Marginal cost per additional buoy: **₱36,000**.
+The old per-buoy marginal-cost figure is retired. An additional boat pod needs
+the Heltec, power system, antenna, and a waterproof strap-on enclosure; an
+additional stationary buoy also needs a hull, mooring, and service access. Price
+the two deployment types separately after the first enclosure prototype.
 
 ### How hardware data feeds the system
 
 - **Barometer → squall nowcasting.** Pressure drop rate across the array is the
   primary feature. This is the one sensor→model path that is fully specified.
-- **LoRa (SX1262, 915 MHz) → mesh transport.** 64-byte frame limit is why the
-  SOS de-duplication key is `(vessel_id, client_ts)` rather than a UUID — a UUID
-  will not fit.
-- **WiFi SoftAP (~1 km) → phone handoff.** The phone joins the buoy's access
-  point and POSTs to `/v1/sos`. Two radios per buoy: WiFi for phones, LoRa for
-  buoy-to-buoy.
+- **LoRa (SX1262, 915 MHz) → hybrid transport.** Boat pods send directly to the
+  tall shore gateway when possible; stationary buoys can relay when needed. The
+  64-byte frame limit is why the SOS de-duplication key is `(vessel_id, client_ts)` rather than a UUID — a UUID will not fit.
+- **WiFi SoftAP → phone handoff.** The phone joins the boat pod's local access
+  point and POSTs to `/v1/sos`. WiFi is intentionally short range; LoRa carries
+  the message from the pod to shore or through an optional relay buoy.
 
 ### Be honest about these three
 
@@ -195,12 +198,11 @@ real structure independent of our data. Every eval result is tagged
 `calibration: "synthetic"` in the output. The 90-day pilot exists specifically
 to break this circularity.
 
-**2. Coverage bias runs opposite to risk.** Buoys chain outward from a
-shore-connected gateway, so coverage is densest near shore and thinnest far
-out — while the fishers in greatest danger are the ones furthest out. The
-system protects best exactly where it is needed least. *Mitigation:* none yet;
-this is a physical constraint of a mesh anchored to shore internet. It is an
-argument for more buoys, not a flaw we can code around.
+**2. Coverage bias runs opposite to risk.** A direct boat-pod link reduces the
+need to place a buoy around every phone-contact zone, but low antennas and sea
+state can still create dead zones farther offshore. *Mitigation:* test the
+direct pod-to-shore link, add relay buoys only where measurements justify them,
+and retain fixed sensor buoys where their data has independent value.
 
 **3. Cold-start and irregularity bias in trip profiles.** Anomaly detection
 learns each vessel's own pattern, so a new fisher has no baseline, and a fisher
@@ -211,10 +213,12 @@ Irregular is not the same as reckless. *Mitigation:* confidence scoring and a
 four-stage escalation ladder rather than a binary alarm, so low-confidence
 anomalies trigger a silent check-in rather than a dispatch.
 
-**4. Smartphone ownership bias.** AqOne protects fishers who own a smartphone.
-The poorest fishers — plausibly the highest-risk group, in the oldest boats —
-are excluded by the entry requirement. *Mitigation (roadmap):* a physical SOS
-button on the buoy itself requires no phone.
+**4. Equipment-access bias.** AqOne protects fishers who can use a smartphone
+with a boat-mounted safety pod. Fishers without a smartphone, or on a boat
+without a pod, may still be outside the primary path. *Mitigation:* make the
+pod easy to share and strap on, keep a physical SOS button on the pod, and use
+fixed sensor/relay buoys as additional coverage and sensing points where they
+already exist.
 
 **5. Hazard labels are environmental proxies, not outcomes.** The danger-zone
 model is trained on "was there a cyclone within 350 km, or waves ≥2 m, or gusts
@@ -293,8 +297,9 @@ could creep in later.
 
 ```
 Phone (Flutter, SQLite outbox, works in airplane mode)
-   ├── WiFi SoftAP ──► Buoy (ESP32-S3 + SX1262)
-   │                      └── LoRa, TTL flood ──► Buoy N ──► Gateway (internet)
+   ├── WiFi SoftAP ──► Boat pod (ESP32-S3 + SX1262)
+   │                      ├── Direct LoRa ──► Gateway (internet)
+   │                      └── Optional relay ──► Stationary buoy ──► Gateway
    └── Direct HTTPS ─────────────────────────────────────────────┐
                                                                   ▼
                                           FastAPI + PostgreSQL (Railway)
@@ -307,9 +312,10 @@ Phone (Flutter, SQLite outbox, works in airplane mode)
 ### Points worth raising if asked
 
 **Three-path SOS with de-duplication.** Every SOS attempts local storage, the
-backend directly, and the buoy mesh — in parallel, not in sequence, because
-waiting out a 6-second buoy timeout before trying the internet would delay a
-distress call for no reason. De-duplication is an idempotent upsert on
+backend directly when internet is available, and the boat-pod/LoRa path — in
+parallel, not in sequence, because waiting out a relay timeout before trying the
+internet would delay a distress call for no reason. De-duplication is an
+idempotent upsert on
 `(vessel_id, client_ts)` with `ON CONFLICT ... DO UPDATE` and a `COALESCE`
 merge, so two transports delivering the same emergency produce **one** incident
 with the union of what each path knew. The key is that pair rather than a UUID
@@ -322,10 +328,10 @@ promised time passes the app says "delayed — still en route" rather than showi
 a negative number, because a countdown expiring into silence reads as "nobody is
 coming."
 
-**Mesh topology.** Buoys are placed as a connected chain from a shore gateway at
-55–90% of nominal LoRa range, so the array is a relay path to the internet
-rather than isolated islands — the WiFi-repeater analogy, with overlapping
-coverage circles.
+**Hybrid topology.** Boat pods are the primary SOS origin nodes and attempt a
+direct LoRa link to the tall shore gateway. Stationary buoys form an optional
+relay chain only where direct tests show a gap; their fixed sensor readings are
+valuable independently of their relay role.
 
 **Bayesian search re-tasking.** `POST /api/ai/drift/incident/{id}/searched`
 applies a searched sector's detection probability to the posterior probability
@@ -350,7 +356,7 @@ leeway models do.
   status over the internet, not over the mesh.
 - The forecast strip's safety colours are threshold rules over a public
   weather API, not a trained model and not buoy-derived. The fused
-  buoy + weather scorer is specified but unbuilt, and the thresholds
+  stationary-sensor + weather scorer is specified but unbuilt, and the thresholds
   themselves are unreviewed by anyone who fishes these waters.
 - **There is no hotspot model.** The contract is written
   (`docs/05_PUBLIC_API.md`) and the app renders the layer the moment the

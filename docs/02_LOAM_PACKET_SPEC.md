@@ -1,12 +1,14 @@
 # 02 — LoAM Packet Spec (LoRa binary frame)
 
-The radio contract between buoy firmware (Daniel) and the gateway (Arnold).
+The radio contract between boat pods, stationary sensor-relay buoys, and the
+shore gateway. The firmware owner is Daniel and the gateway owner is Arnold.
 Any packet that does not parse and verify is dropped; there is no negotiation.
 
 ## Scope
 
-This doc defines the wire format for every LoRa frame in the mesh: SOS,
-mesh ACK, ping, and status. It does **not** cover the phone↔buoy WiFi hop
+This doc defines the wire format for every LoRa frame in the hybrid network:
+SOS, mesh ACK, ping, status, sensor telemetry, and downlink advisories. It does
+**not** cover the phone↔boat pod WiFi hop
 (`docs/03_PHONE_BUOY_WIFI.md`) or the gateway→backend hop
 (`docs/04_INGEST_API.md`).
 
@@ -33,6 +35,19 @@ trailing signature.
 
 Max frame size = 22 + 64 + 8 = **94 bytes**, comfortably inside a LoRa packet
 at the radio settings below.
+
+## Node roles
+
+- **Boat pod:** Originates SOS and optional boat telemetry, then sends directly
+  to the shore gateway whenever possible.
+- **Stationary sensor buoy:** Provides fixed-location telemetry and may relay
+  frames when a direct boat-to-gateway path is unavailable.
+- **Relay buoy:** Forwards new frames using TTL flooding and the seen-set.
+- **Shore gateway:** Receives and acknowledges frames, forwards accepted events
+  to the backend, and sends downlink warnings or responder updates.
+
+Direct boat-pod frames use `HOPS = 0`. Relay buoys mutate `RELAY_ID`, decrement
+`TTL`, and increment `HOPS` without re-signing the origin frame.
 
 ## Frame types (`TYPE`)
 
@@ -200,12 +215,12 @@ agree or packets never decode.
 
 ## Relay rules
 
-- On receive, a buoy verifies `MAGIC`/`VERSION`, parses, checks the seen-set,
-  and if new: stores it, decrements `TTL` by 1, increments `HOPS` by 1, and
-  re-transmits **only if** `TTL > 0`.
+- On receive, a stationary relay buoy verifies `MAGIC`/`VERSION`, parses,
+  checks the seen-set, and if new: stores it, decrements `TTL` by 1, increments
+  `HOPS` by 1, and re-transmits **only if** `TTL > 0`.
 - Duplicate `(SRC_ID, SEQ, TYPE)` frames are dropped (small recent seen-set).
-- If `WANTS_ACK` is set and the receiving endpoint is the destination (a
-  gateway for `SOS`), it sends an `ACK` back. Buoys may also ack to claim
+- If `WANTS_ACK` is set and the receiving endpoint is the destination (the shore
+  gateway for `SOS`), it sends an `ACK` back. Relay buoys may also ack to claim
   receipt; the ack travels the same flooding rules.
 - Gateways never re-transmit; on receipt they verify the signature, then
   hand the frame to the ingest pipeline (`docs/04_INGEST_API.md`).

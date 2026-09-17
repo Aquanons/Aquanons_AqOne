@@ -1,12 +1,13 @@
 # 04 — Ingest API (gateway → backend)
 
-The HTTPS contract between the gateway node (Arnold) and the FastAPI backend
-(Lenard). The gateway is the only mesh edge with internet and the only caller
-of this API.
+The HTTPS contract between the tall shoreline gateway (Arnold) and the FastAPI
+backend (Lenard). The gateway is the only LoRa edge with internet and the only
+caller of this API. It may receive a frame directly from a boat pod or through
+an optional stationary sensor/relay buoy.
 
 ## Scope
 
-- Authenticated submission of mesh frames.
+- Authenticated submission of direct or relayed LoRa frames.
 - Device / vessel registration (external id → UUID mapping).
 - Dedupe semantics.
 
@@ -90,7 +91,9 @@ Errors: `401` bad/missing API key; `400` malformed body; `429` rate limit.
 ### `GET /api/v1/devices/lookup?ext_id=<n>` — resolve an external id
 
 Returns `200` with `{"id": "<uuid>", "kind": "buoy"|"vessel", "known": true}`
-or `{"known": false}`. The gateway caches lookups; on `known: false` it may
+or `{"known": false}`. The existing `buoy` kind covers a boat pod or a
+stationary field node at this contract boundary. The gateway caches lookups; on
+`known: false` it may
 call `POST /api/v1/devices/register`.
 
 ### `POST /api/v1/devices/register` — first sighting

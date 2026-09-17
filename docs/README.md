@@ -13,6 +13,7 @@ page for naming, status, and authoring rules.
 | Current product priorities | [`../README.md`](../README.md) |
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) |
+| Current hybrid transport decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) |
 | Honest demo status and evidence | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) |
 | Current executable pitch plan | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) |

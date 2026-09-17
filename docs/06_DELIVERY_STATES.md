@@ -1,7 +1,7 @@
 # 06 — Delivery States
 
 The four states are the shared product language. Every surface — the mobile
-outbox, the buoy, the backend, the dashboard — must show a message's real
+outbox, the boat pod, the backend, the dashboard — must show a message's real
 state and must never fake a later one. This is a definition of done:
 "the four delivery states are visible and honest in the app."
 
@@ -13,8 +13,8 @@ saved ──► relayed ──► delivered ──► acknowledged
 
 | State | Meaning | Where it is observed |
 |---|---|---|
-| `saved` | The SOS exists on the phone and is waiting to be handed to a buoy. No WiFi reachable, or the phone is offline. | Mobile app outbox |
-| `relayed` | A buoy accepted the SOS into its store-and-forward queue and acked the phone. It is now on the mesh (LoRa) heading for a gateway — or waiting on a buoy. | Mobile app, after buoy ack |
+| `saved` | The SOS exists on the phone and is waiting to be handed to a boat pod. No pod WiFi reachable, or the phone is offline. | Mobile app outbox |
+| `relayed` | A boat pod accepted the SOS into its store-and-forward queue and acked the phone. It is now on the LoRa path to shore — directly or through relay buoys. | Mobile app, after pod ack |
 | `delivered` | The backend ingested the SOS and pushed it to the dashboard. An MDRRMO responder can see it. | Dashboard feed, backend |
 | `acknowledged` | An MDRRMO responder acknowledged it; the ack is persisted. | Dashboard, backend |
 
@@ -24,8 +24,9 @@ saved ──► relayed ──► delivered ──► acknowledged
 - The phone can only observe `saved` and `relayed` by itself; it learns
   `delivered`/`acknowledged` only if it later has internet to reconcile
   (`docs/05_PUBLIC_API.md`).
-- The buoy knows it accepted a message but not whether a gateway ever heard it.
-  It reports `mesh: ok` / `mesh: degraded` and its queue depth, never "sent".
+- The boat pod knows it accepted a message but not whether a gateway ever heard
+  it. It reports `mesh: ok` / `mesh: degraded` and its queue depth, never
+  "sent".
 - The backend is the only authority for `delivered` and `acknowledged`.
 - If a message is stuck, the UI shows the stuck state honestly — the whole
   point of the app is that an SOS in a dead zone may sit at `relayed`.
@@ -34,7 +35,7 @@ saved ──► relayed ──► delivered ──► acknowledged
 
 | From | To | Trigger | Authority |
 |---|---|---|---|
-| `saved` | `relayed` | Buoy `POST /v1/sos` returns `accepted: true` | Buoy |
+| `saved` | `relayed` | Boat pod `POST /v1/sos` returns `accepted: true` | Boat pod |
 | `relayed` | `delivered` | Backend dedupes a `sos` ingest and updates the projection | Backend |
 | `delivered` | `acknowledged` | MDRRMO `POST /api/v1/sos/{id}/ack` | Backend |
 
@@ -49,8 +50,8 @@ message-return path over the mesh) is scope we are not building
 ## Display conventions (all surfaces)
 
 - Show the state as a word and a short line, never a raw enum.
-- `saved` → "Not sent — no buoy nearby. Will send automatically."
-- `relayed` → "Handed to the buoy. Waiting for the mesh."
+- `saved` → "Not sent — no boat pod nearby. Will send automatically."
+- `relayed` → "Handed to the boat pod. Waiting for the mesh."
 - `delivered` → "Received by the MDRRMO dashboard."
 - `acknowledged` → "Responder acknowledged this SOS."
 
@@ -73,7 +74,7 @@ The dashboard and backend remain English-only.
   (`docs/05_PUBLIC_API.md`).
 - The phone keeps the state in SQLite keyed by a local id, and can reconcile
   `delivered`/`acknowledged` from `GET /api/v1/vessels/{id}/sos`.
-- The buoy's ack payload carries the `seq` the phone records so later
+- The boat pod's ack payload carries the `seq` the phone records so later
   reconciliation can match rows.
 
 ## Warning delivery states (downlink)
