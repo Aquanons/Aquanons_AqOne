@@ -54,8 +54,8 @@ Overridable at build time:
 
 | Define | Default |
 |---|---|
-| `BUOY_BASE_URL` | `http://10.0.0.1` |
-| `BACKEND_BASE_URL` | `https://aihackathon2026aquanonsaqone-production.up.railway.app` |
+| `BUOY_BASE_URL` | `http://192.168.4.1` |
+| `BACKEND_BASE_URL` | `https://aqone-backend.onrender.com` |
 
 ## Languages
 
@@ -128,7 +128,7 @@ android:networkSecurityConfig="@xml/network_security_config"
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="false">10.0.0.1</domain>
+    <domain includeSubdomains="false">192.168.4.1</domain>
   </domain-config>
 </network-security-config>
 ```

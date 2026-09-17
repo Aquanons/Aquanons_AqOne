@@ -173,7 +173,7 @@ Get-ChildItem web/js, web/test -Recurse -Filter *.js | ForEach-Object { node --c
 
 The Android platform files are already tracked.
 The current source accepts the buoy HTTP endpoint `http://192.168.4.1` and requires an absolute HTTPS backend URL.
-The default backend URL currently points to the unavailable Railway service, so a real run must override `BACKEND_BASE_URL` with a reachable HTTPS deployment.
+The default backend URL is the Render deployment (`https://aqone-backend.onrender.com`). The old Railway services are gone, so an APK built with a Railway `BACKEND_BASE_URL` cannot deliver a direct SOS.
 
 ```bash
 cd mobile
@@ -187,7 +187,7 @@ Build the focused Phase 1 pitch version only after those checks pass:
 ```bash
 flutter build apk --release \
   --dart-define=PITCH_MODE=true \
-  --dart-define=BACKEND_BASE_URL=https://your-verified-backend.example
+  --dart-define=BACKEND_BASE_URL=https://aqone-backend.onrender.com
 ```
 
 The bundled [`mobile/AqOne.apk`](mobile/AqOne.apk) predates the September 5 pitch build.
