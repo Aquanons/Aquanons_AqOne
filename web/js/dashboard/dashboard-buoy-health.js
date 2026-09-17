@@ -51,8 +51,13 @@
         // previously indexed the unfiltered array, so a click could pan to a
         // different incident than the one clicked.
         var a = shown[row.dataset.idx];
-        if (!a || a.lat == null || a.lng == null) return;
-        map.setView([a.lat, a.lng], 14, { animate: true, duration: 1 });
+        if (!a) return;
+        if (a.lat != null && a.lng != null) {
+          map.setView([a.lat, a.lng], 14, { animate: true, duration: 1 });
+        }
+        if (a.drawerData && (a.sosEventId != null || a.type === 'sos') && typeof ns.openIncidentDrawer === 'function') {
+          ns.openIncidentDrawer(a.drawerData, (ns.liveSosMarkers && a.sosEventId != null && ns.liveSosMarkers[a.sosEventId]) || null);
+        }
       });
     });
   }
