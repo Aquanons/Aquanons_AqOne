@@ -114,6 +114,7 @@
 
   function liveAlertFromEvent(ev) {
     const boat = ev.boat || ev.vessel_id || 'Unidentified vessel';
+    const skipperName = ev.skipper_name || null;
     const hasFix = typeof ev.latitude === 'number' && typeof ev.longitude === 'number';
     const provenance = ev.is_synthetic === false ? 'real' : (ev.is_synthetic === true ? 'synthetic' : 'unknown');
     const isRealLive = provenance === 'real';
@@ -130,6 +131,11 @@
       lng: hasFix ? Number(ev.longitude.toFixed(4)) : null,
       status: ev.acknowledged_at ? 'acknowledged' : 'active',
       vesselId: ev.vessel_id || null,
+      // The declared owner identity from POST /api/vessel-profile, carried on
+      // the event itself so the received-call row/toast can name the person
+      // who pressed the button, not just the boat id.
+      owner: skipperName,
+      phone: ev.phone || null,
       confidence: null,
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
@@ -252,7 +258,8 @@
               }
               showToast(
                 'SOS received',
-                (ev.boat || ev.vessel_id || 'A vessel') + ' · ' + sosPosition(ev),
+                (ev.skipper_name ? ev.skipper_name + ' · ' : '') +
+                  (ev.boat || ev.vessel_id || 'A vessel') + ' · ' + sosPosition(ev),
                 true
               );
             }
