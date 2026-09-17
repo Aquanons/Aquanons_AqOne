@@ -1287,6 +1287,13 @@ body {
   line-height: 1.3;
 }
 
+.alert-sender {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent, #38bdf8);
+  margin-top: 2px;
+}
+
 .alert-meta {
   font-size: 9px;
   opacity: 0.45;
@@ -4779,6 +4786,12 @@ h3.buoy-drawer-title {
   font-weight: 600;
   color: var(--text);
   line-height: 1.3;
+}
+.incident-feed-sender {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent, #38bdf8);
+  margin-top: 2px;
 }
 .incident-feed-meta {
   font-size: 9px;

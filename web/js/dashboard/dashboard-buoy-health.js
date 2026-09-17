@@ -37,6 +37,10 @@
         alertIcon(a.type) +
         '<div class="incident-feed-info">' +
           '<div class="incident-feed-desc">' + badgeHtml + escapeHtml(a.desc) + '</div>' +
+          ((a.owner || a.phone)
+            ? '<div class="incident-feed-sender">Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
+              (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</div>'
+            : '') +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +
       '</div>';
