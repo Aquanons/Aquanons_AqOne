@@ -70,7 +70,7 @@ static const char* UPLINK_SSID = "Converge_2.4GHz_30D7";
 static const char* UPLINK_PASS = "4eHfak6E";
 
 static const char* BACKEND_HOST =
-    "https://incredible-liberation-production-aad7.up.railway.app";
+    "https://aqone-backend.onrender.com";
 
 // Responder acknowledgements and ETAs come from GET /api/sos/active, which is
 // behind require_user — unlike POST /api/sos, which is deliberately open.
