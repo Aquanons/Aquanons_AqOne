@@ -181,6 +181,7 @@ class SosService {
       // succeeded above, its metadata is already saved and copyWith() keeps
       // it; if not, there is none to record.
       await _outbox.advance(localId, DeliveryState.delivered);
+      unawaited(_refreshVesselProfile());
     }
 
     if (buoySucceeded || directOk) {
@@ -219,6 +220,15 @@ class SosService {
       _changes.add(null);
     }
     return false;
+  }
+
+  Future<void> _refreshVesselProfile() async {
+    try {
+      final identity = await _identity.read();
+      if (identity != null && identity.isComplete) {
+        await _backend.registerVesselProfile(identity);
+      }
+    } catch (_) {}
   }
 
   /// Send the fisher's one-tap answer to a responder acknowledgement.

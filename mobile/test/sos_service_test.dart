@@ -345,4 +345,48 @@ void main() {
     expect(updated.etaAt, isNull);
     expect(updated.remoteId, isNull);
   });
+
+  test('a direct SOS success re-pushes the vessel profile', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(
+      boat: 'BG-123',
+      skipperName: 'Jade N. Salvador',
+      phone: '+639950588358',
+    );
+    final record = _record('local-profile-repush');
+    await outbox.insert(record);
+
+    final profileBodies = <String>[];
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path.endsWith('/api/vessel-profile') &&
+            request is http.Request) {
+          profileBodies.add(request.body);
+        }
+        return _direct(200);
+      }),
+    );
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((request) async {
+        throw const FormatException('no buoy in range');
+      }),
+    );
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: buoy,
+      backend: backend,
+      location: LocationService(),
+    );
+    await service.retryPending();
+
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (profileBodies.isEmpty && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(profileBodies, hasLength(1));
+    expect(profileBodies.single, contains('Jade N. Salvador'));
+  });
 }
