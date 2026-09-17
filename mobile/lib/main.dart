@@ -256,6 +256,7 @@ class _AqOneAppState extends State<AqOneApp> {
         if (!AqOneConfig.pitchMode) {
           _spots.start();
         }
+        _pushVesselProfile(identity);
       }
       setState(() {
         _identity = identity;
@@ -332,6 +333,15 @@ class _AqOneAppState extends State<AqOneApp> {
     setState(() => _identity = null);
   }
 
+  /// Best-effort profile sync: declares/refreshes the owner identity so a
+  /// dispatcher can identify who raised an SOS. Never blocking - a push that
+  /// fails offline is retried on the next launch or profile edit.
+  void _pushVesselProfile(VesselIdentity? identity) {
+    if (identity != null && identity.isComplete) {
+      unawaited(_backend.registerVesselProfile(identity));
+    }
+  }
+
   Future<void> _enterApp() async {
     VesselIdentity? identity;
     try {
@@ -348,6 +358,7 @@ class _AqOneAppState extends State<AqOneApp> {
     if (!AqOneConfig.pitchMode) {
       _spots.start();
     }
+    _pushVesselProfile(identity);
     setState(() {
       _identity = identity;
       _entered = true;
@@ -382,7 +393,10 @@ class _AqOneAppState extends State<AqOneApp> {
       onThemeModeChanged: _setThemeMode,
       localeController: _locale,
       onLogout: _logout,
-      onIdentityUpdated: (updated) => setState(() => _identity = updated),
+      onIdentityUpdated: (updated) {
+        setState(() => _identity = updated);
+        _pushVesselProfile(updated);
+      },
     );
   }
 }
