@@ -205,6 +205,7 @@
             }
             return '<span class="' + badge.cssClass + '"' + title + '>' + badge.text + '</span>';
           })()}${escapeHtml(a.desc)}</div>
+          ${(a.owner || a.phone || a.avatar) ? `<div class="alert-sender">${(typeof a.avatar === 'string' && a.avatar.indexOf('data:image/') === 0) ? `<img class="alert-avatar" src="${a.avatar}" alt="" />` : ''}<span>Sender: ${escapeHtml(a.owner || 'Unnamed vessel')}${a.phone ? ' &middot; ' + escapeHtml(a.phone) : ''}</span></div>` : ''}
           <div class="alert-meta">${a.time} &middot; ${
             a.lat == null || a.lng == null
               ? '<span class="alert-nofix">no GPS fix</span>'

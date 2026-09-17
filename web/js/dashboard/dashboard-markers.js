@@ -430,14 +430,10 @@
   // Add layers to map (checked toggles by default)
   gatewayLayer.addTo(map);
   incidentLayer.addTo(map);
-  buoyLayer.addTo(map);
   pinLayer.addTo(map);
-  vesselLayer.addTo(map);
-  coverageLayer.addTo(map);
   squallLayer.addTo(map);
   driftLayer.addTo(map);
   boundaryLayer.addTo(map);
-  dangerZoneLayer.addTo(map);
   refreshDangerZones();
 
   ns.createMarkerIcon = createMarkerIcon;

@@ -21,7 +21,7 @@ the older spec docs.
 ```
 [1] Fisher's phone
      │  WiFi (phone joins the boat pod's access point)
-     │  POST http://10.0.0.1/v1/sos
+     │  POST http://192.168.4.1/v1/sos
      ▼
 [2] BOAT POD  (Heltec V3 — SoftAP + LoRa)
      │  Direct LoRa 915 MHz, binary frame
@@ -51,7 +51,7 @@ coverage gaps, or redundancy.
 | **Relay buoy** | LoRa RX + TX | Receives a frame, checks it has not seen it before, decrements TTL, re-transmits |
 | **Gateway** | LoRa RX + WiFi station | Receives frames, decodes them, POSTs JSON to the backend over the internet |
 
-A single Heltec can do all three, but **the gateway is the awkward one** — see the
+A single Heltec can perform the field-node roles, but **the gateway is the awkward one** — see the
 radio constraint below.
 
 ---
@@ -65,10 +65,10 @@ mode.
 |---|---|
 | SSID | `Aquan` |
 | Pod IP | `192.168.4.1` |
-| Phone DHCP | `10.0.0.2` – `10.0.0.62` |
-| Protocol | Plain HTTP — no TLS. The hop is one metre of air; certificates on a buoy are not worth the flash. |
+| Phone DHCP | Assigned by the ESP32 SoftAP |
+| Protocol | Plain HTTP — no TLS. The hop is local; certificates on a pod are not worth the flash. |
 
-### The buoy must serve two routes
+### The boat pod must serve two routes
 
 **`POST /v1/sos`** — the phone sends:
 

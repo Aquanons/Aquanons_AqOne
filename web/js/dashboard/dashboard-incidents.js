@@ -66,7 +66,20 @@
     }
 
     document.getElementById('sos-vessel-id').textContent = data.vesselId;
-    document.getElementById('sos-owner').textContent     = data.owner;
+    document.getElementById('sos-owner').textContent     = data.skipperName || data.owner || 'Unknown';
+    var avatarEl = document.getElementById('sos-avatar');
+    if (avatarEl) {
+      if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/') === 0) {
+        avatarEl.src = data.avatar;
+        avatarEl.hidden = false;
+      } else {
+        avatarEl.removeAttribute('src');
+        avatarEl.hidden = true;
+      }
+    }
+    document.getElementById('sos-boat').textContent      = data.boat || '—';
+    document.getElementById('sos-registration').textContent = data.license || 'Not declared';
+    document.getElementById('sos-contact').textContent      = data.phone || 'Not provided';
     document.getElementById('sos-position').textContent  = data.position;
     document.getElementById('sos-buoy').textContent      = data.buoy;
     document.getElementById('sos-coverage').textContent  = data.coverage;

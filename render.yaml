@@ -10,7 +10,7 @@ services:
     name: aqone-backend
     runtime: docker
     repo: https://github.com/Aquanons/Aquanons_AqOne
-    branch: Jade-branch
+    branch: master
     plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health/ready

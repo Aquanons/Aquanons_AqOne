@@ -277,7 +277,7 @@ than the phone silently leaving.
 | `POST /api/mesh/chat` | On every chat frame received, tagged `origin: "mesh"` | none |
 | `GET /api/mesh/chat?since_id=` | Every 20 s | none |
 | `GET /api/sos/active` | Every 45 s | **bearer required** |
-| `POST /api/auth/login` | Once, if `OPS_EMAIL`/`OPS_PASSWORD` are set | — |
+| `POST /api/login` | Once, if `OPS_EMAIL`/`OPS_PASSWORD` are set | — |
 
 ### The acknowledgement path needs a credential
 

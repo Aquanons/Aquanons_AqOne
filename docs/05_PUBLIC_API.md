@@ -194,10 +194,59 @@ subsequent reply from the dispatcher. Each row carries `acknowledged_at`,
 `responder_note`, `fisher_reply`, `fisher_replied_at`, `resolved_at`
 (always `null` here, since a resolved row has left the feed), and `is_synthetic`
 (boolean, `true` for scripted/demo scenario events and `false` for genuine distress
-calls) alongside the fields `GET /api/v1/sos` documents above. Clients must derive
+calls) alongside the fields `GET /api/v1/sos` documents above. Each event also
+carries the vessel's declared owner identity from `POST /api/vessel-profile`
+below when one is on file: `skipper_name`, `license_type`, `license_number`
+and `phone` (empty strings / `none` when the fleet has not registered that
+vessel yet — never fabricated). Clients must derive
 display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
+
+### `POST /api/vessel-profile` — declare a vessel's owner identity
+
+Unauthenticated, for the same reason SOS ingest is (`POST /api/sos`): a
+fisherman at sea has no account to hold, and this is the same self-declared
+identity as the distress call itself. The read side — `GET /api/sos/active`
+above — stays dispatcher-gated, so an unauthenticated write only ever
+describes the one vessel its caller claims to be.
+
+The handset (`mobile/lib/data/identity_store.dart` `toRegistrationPayload()`)
+pushes this once when onboarding completes, again at startup for a remembered
+skipper, and again on every profile edit (`mobile/lib/main.dart`, best-effort
+and never blocking an SOS). It is an idempotent upsert keyed on `vessel_id`, so
+retries converge and the vessel may already exist as the skeleton an SOS made.
+
+```
+POST /api/vessel-profile
+{
+  "vessel_id": "V001",                // 1..32 chars, the same id the SOS uses
+  "boat": "NW-001",                   // 0..32 chars
+  "skipper_name": "Juan Dela Cruz",   // 0..64 chars
+  "license_type": "boatr",            // boatr | fishr | cfvgl | none
+  "license_number": "NWB-2026-08412", // 0..24 chars
+  "phone": "+639171234567"            // 0..20 chars
+}
+```
+
+`trust_tier` is deliberately not accepted here: the trusted-status model
+(`docs/16_QA_DISCLOSURES.md`) only lets a responder/verification path upgrade
+a vessel, and an unauthenticated claim cannot confirm itself. The SOS ingest
+snapshots the tier on the incident itself, which is what the dashboard shows.
+Length caps mirror the handset's own (`mobile/lib/core/config.dart`); anything
+beyond them is rejected with 422 before any DB write.
+
+```json
+{
+  "vessel_id": "V001",
+  "boat": "NW-001",
+  "skipper_name": "Juan Dela Cruz",
+  "license_type": "boatr",
+  "license_number": "NWB-2026-08412",
+  "phone": "+639171234567",
+  "profile_updated_at": "2026-08-03T22:20:00Z"
+}
+```
 
 ### `POST /api/sos/{id}/acknowledge` and `POST /api/sos/{id}/resolve`
 

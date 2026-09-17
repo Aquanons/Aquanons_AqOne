@@ -114,6 +114,7 @@
 
   function liveAlertFromEvent(ev) {
     const boat = ev.boat || ev.vessel_id || 'Unidentified vessel';
+    const skipperName = ev.skipper_name || null;
     const hasFix = typeof ev.latitude === 'number' && typeof ev.longitude === 'number';
     const provenance = ev.is_synthetic === false ? 'real' : (ev.is_synthetic === true ? 'synthetic' : 'unknown');
     const isRealLive = provenance === 'real';
@@ -130,6 +131,13 @@
       lng: hasFix ? Number(ev.longitude.toFixed(4)) : null,
       status: ev.acknowledged_at ? 'acknowledged' : 'active',
       vesselId: ev.vessel_id || null,
+      // The declared owner identity from POST /api/vessel-profile, carried on
+      // the event itself so the received-call row/toast can name the person
+      // who pressed the button, not just the boat id. `avatar` is a base64 PNG
+      // data URL (`data:image/png;base64,...`), rendered by an <img>.
+      owner: skipperName,
+      phone: ev.phone || null,
+      avatar: ev.avatar || null,
       confidence: null,
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
@@ -145,7 +153,16 @@
       isSynthetic: isSynthetic,
       provenance: provenance,
       vesselId: ev.vessel_id || 'Unknown',
-      owner: boat,
+      // The declared owner identity (POST /api/vessel-profile): person first,
+      // boat as fallback until the profile arrives, so the drawer tells the
+      // dispatcher who raised the call - not just which boat id did.
+      skipperName: ev.skipper_name || null,
+      owner: ev.skipper_name || null,
+      boat: boat,
+      license: (ev.license_type && ev.license_type !== 'none')
+        ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
+        : (ev.license_number || null),
+      phone: ev.phone || null,
       position: sosPosition(ev),
       lat: alert.lat,
       lng: alert.lng,
@@ -243,7 +260,8 @@
               }
               showToast(
                 'SOS received',
-                (ev.boat || ev.vessel_id || 'A vessel') + ' · ' + sosPosition(ev),
+                (ev.skipper_name ? ev.skipper_name + ' · ' : '') +
+                  (ev.boat || ev.vessel_id || 'A vessel') + ' · ' + sosPosition(ev),
                 true
               );
             }

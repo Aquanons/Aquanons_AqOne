@@ -19,7 +19,7 @@ it to `192.168.4.1:8080/tx`, with delivery states named
 
 That design was superseded. The live design is:
 
-- The phone posts **JSON** to the buoy at `http://10.0.0.1/v1/sos`
+- The phone posts **JSON** to the buoy at `http://192.168.4.1/v1/sos`
   (`docs/03_PHONE_BUOY_WIFI.md`). The phone holds no signing keys.
 - The **buoy** builds and signs the LoRa frame
   (`docs/02_LOAM_PACKET_SPEC.md`), using per-endpoint keys resolved by
