@@ -133,9 +133,11 @@
       vesselId: ev.vessel_id || null,
       // The declared owner identity from POST /api/vessel-profile, carried on
       // the event itself so the received-call row/toast can name the person
-      // who pressed the button, not just the boat id.
+      // who pressed the button, not just the boat id. `avatar` is a base64 PNG
+      // data URL (`data:image/png;base64,...`), rendered by an <img>.
       owner: skipperName,
       phone: ev.phone || null,
+      avatar: ev.avatar || null,
       confidence: null,
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
@@ -156,6 +158,7 @@
       // dispatcher who raised the call - not just which boat id did.
       skipperName: ev.skipper_name || null,
       owner: ev.skipper_name || boat,
+      avatar: ev.avatar || null,
       boat: boat,
       license: (ev.license_type && ev.license_type !== 'none')
         ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
