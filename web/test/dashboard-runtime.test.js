@@ -555,6 +555,9 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
       'sos-position': createStubElement('span', 'sos-position'),
       'sos-buoy': createStubElement('span', 'sos-buoy'),
       'sos-coverage': createStubElement('span', 'sos-coverage'),
+      'sos-boat': createStubElement('span', 'sos-boat'),
+      'sos-registration': createStubElement('span', 'sos-registration'),
+      'sos-contact': createStubElement('span', 'sos-contact'),
       'sos-responder-block': createStubElement('div', 'sos-responder-block')
     };
 
@@ -568,13 +571,29 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
       id: 'SOS-TEST',
       vesselName: 'Bangka One',
       confidence: 85,
-      stage: 'STAGE 2 - alert'
+      stage: 'STAGE 2 - alert',
+      owner: 'Bangka One',
+      skipperName: 'Juan Dela Cruz',
+      boat: 'Bangka One',
+      license: 'boatr NWB-2026-08412',
+      phone: '+639171234567'
     });
 
     assert.equal(confValue.textContent, '85%');
     assert.equal(confValue.style.color, '#e74c3c');
     assert.equal(confFill.style.width, '85%');
     assert.equal(confFill.style.background, '#e74c3c');
+    assert.equal(elements['sos-owner'].textContent, 'Juan Dela Cruz', 'owner row shows the skipper, not the boat');
+    assert.equal(elements['sos-boat'].textContent, 'Bangka One');
+    assert.equal(elements['sos-registration'].textContent, 'boatr NWB-2026-08412');
+    assert.equal(elements['sos-contact'].textContent, '+639171234567');
+
+    // Without any identity data every row still renders an honest placeholder.
+    ns.openIncidentDrawer({ alertType: 'sos', id: 'BLANK-TEST', headerText: 'BLANK' });
+    assert.equal(elements['sos-owner'].textContent, 'Unknown');
+    assert.equal(elements['sos-boat'].textContent, '—');
+    assert.equal(elements['sos-registration'].textContent, 'Not declared');
+    assert.equal(elements['sos-contact'].textContent, 'Not provided');
   });
 
   await t.test('populated AI risk rows render without ns._escHtml exception and escape content', () => {
@@ -1069,12 +1088,21 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
       latitude: 11.71,
       longitude: 122.42,
       created_at: new Date().toISOString(),
-      is_synthetic: false
+      is_synthetic: false,
+      skipper_name: 'Juan Dela Cruz',
+      license_type: 'boatr',
+      license_number: 'NWB-2026-08412',
+      phone: '+639171234567'
     });
     assert.equal(realAlert.isLive, true, 'is_synthetic: false must be marked isLive: true');
     assert.equal(realAlert.isSynthetic, false);
     assert.equal(realAlert.sosEventId, 'real-sos-1');
     assert.equal(realAlert.drawerData.headerText, 'SOS — DISTRESS CALL RECEIVED');
+    assert.equal(realAlert.drawerData.skipperName, 'Juan Dela Cruz');
+    assert.equal(realAlert.drawerData.owner, 'Juan Dela Cruz', 'owner must be the skipper once a profile is on file');
+    assert.equal(realAlert.drawerData.boat, 'Elena Real');
+    assert.equal(realAlert.drawerData.license, 'boatr NWB-2026-08412');
+    assert.equal(realAlert.drawerData.phone, '+639171234567');
 
     // Synthetic event: is_synthetic === true
     const demoAlert = ns.liveAlertFromEvent({
@@ -1089,6 +1117,11 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
     assert.equal(demoAlert.isSynthetic, true);
     assert.equal(demoAlert.sosEventId, 'demo-sos-2', 'real backend ID must be preserved on synthetic row');
     assert.equal(demoAlert.drawerData.headerText, 'DEMO SOS — SIMULATED DISTRESS CALL');
+    assert.equal(demoAlert.drawerData.skipperName, null);
+    assert.equal(demoAlert.drawerData.owner, 'Scripted Demo Boat', 'owner falls back to the boat without a profile');
+    assert.equal(demoAlert.drawerData.boat, 'Scripted Demo Boat');
+    assert.equal(demoAlert.drawerData.license, null, 'no license claim is shown when none is on file');
+    assert.equal(demoAlert.drawerData.phone, null);
 
     // Missing provenance: is_synthetic undefined
     const unknownAlert = ns.liveAlertFromEvent({

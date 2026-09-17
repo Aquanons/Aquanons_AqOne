@@ -32,6 +32,7 @@ from app.api.spots import router as spots_router
 from app.api.squall import router as squall_router
 from app.api.trips import router as trips_router
 from app.api.vessel_auth import router as vessel_auth_router
+from app.api.vessel_profile import router as vessel_profile_router
 from app.auth import require_user
 from app.db import get_pool, shutdown_db, startup_db
 
@@ -63,6 +64,12 @@ app.include_router(mesh_router)
 # distress has no token, and the LoRa gateway relays frames it cannot
 # authenticate. Reading and acknowledging SOS events stays protected.
 app.include_router(sos_ingest_router)
+
+# Vessel identity registration is unauthenticated for the same reason SOS
+# ingest is - the handset has no account, and it is the same self-declared
+# identity as the call itself. The read side (GET /api/sos/active) stays
+# protected. See app/api/vessel_profile.py.
+app.include_router(vessel_profile_router)
 
 # Catch logging now sits behind a vessel-bound device credential rather than a
 # dispatcher token. Keeping it off the blanket operator dependency here lets

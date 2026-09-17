@@ -145,7 +145,16 @@
       isSynthetic: isSynthetic,
       provenance: provenance,
       vesselId: ev.vessel_id || 'Unknown',
-      owner: boat,
+      // The declared owner identity (POST /api/vessel-profile): person first,
+      // boat as fallback until the profile arrives, so the drawer tells the
+      // dispatcher who raised the call - not just which boat id did.
+      skipperName: ev.skipper_name || null,
+      owner: ev.skipper_name || boat,
+      boat: boat,
+      license: (ev.license_type && ev.license_type !== 'none')
+        ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
+        : (ev.license_number || null),
+      phone: ev.phone || null,
       position: sosPosition(ev),
       lat: alert.lat,
       lng: alert.lng,

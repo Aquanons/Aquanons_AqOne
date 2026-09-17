@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/config.dart';
 import '../core/endpoint_guard.dart';
+import '../data/identity_store.dart';
 import '../data/secure_credential_store.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
@@ -296,6 +297,26 @@ class BackendClient {
     } catch (error) {
       lastDirectError = _describeNetworkError(error);
       return false;
+    }
+  }
+
+  /// Declares/refreshes this vessel's owner identity so a dispatcher can see
+  /// who raised an SOS. Best-effort and never blocking: the profile is
+  /// dispatcher context, not part of getting the distress call through, so a
+  /// failure here is simply retried on the next app start or profile edit.
+  Future<void> registerVesselProfile(VesselIdentity identity) async {
+    try {
+      await _send(
+        _request(
+          'POST',
+          EndpointGuard.backend(_baseUrl, '/api/vessel-profile'),
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode(identity.toRegistrationPayload()),
+        ),
+      ).timeout(AqOneConfig.backendTimeout);
+    } catch (_) {
+      // Silent by design - see the docstring. The upsert is idempotent, so a
+      // retried push converges with whatever the backend already holds.
     }
   }
 

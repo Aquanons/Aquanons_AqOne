@@ -279,20 +279,28 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     otherwise an acknowledgement makes the incident disappear before the
     dispatcher can see the fisher's reply to it. An incident leaves this feed
     only once a dispatcher resolves it or the fisher sends SAFE_NOW.
+
+    Each event carries the vessel's declared owner identity
+    (`POST /api/vessel-profile`) alongside its snapshot fields, so a
+    dispatcher can see who raised the call. The trust tier that sits on the
+    incident is the same self-declared claim, shown next to it (docs/16).
     """
     pool = get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT id, vessel_id, boat, latitude, longitude, note, trust_tier,
-                   client_ts, delivered_direct, delivered_via_buoy,
-                   buoy_id, created_at, acknowledged_at, acked_by,
-                   eta_at, responder_status, responder_note,
-                   fisher_reply, fisher_replied_at, resolved_at,
-                   is_synthetic
-            FROM sos_events
-            WHERE resolved_at IS NULL
-            ORDER BY created_at DESC
+            SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
+                   e.trust_tier,
+                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
+                   e.eta_at, e.responder_status, e.responder_note,
+                   e.fisher_reply, e.fisher_replied_at, e.resolved_at,
+                   e.is_synthetic,
+                   v.skipper_name, v.license_type, v.license_number, v.phone
+            FROM sos_events e
+            LEFT JOIN vessels v ON v.id = e.vessel_id
+            WHERE e.resolved_at IS NULL
+            ORDER BY e.created_at DESC
             LIMIT 100
             '''
         )

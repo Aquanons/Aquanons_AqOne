@@ -100,7 +100,7 @@ class _FakePool:
         return 'OK'
 
     async def fetch(self, query: str, *args):
-        if 'FROM sos_events' in query and 'WHERE resolved_at IS NULL' in query:
+        if 'FROM sos_events' in query and 'resolved_at IS NULL' in query:
             return [row for row in self.sos_events.values() if row['resolved_at'] is None]
         return []
 
