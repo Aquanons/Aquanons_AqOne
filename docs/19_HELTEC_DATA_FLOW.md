@@ -20,7 +20,7 @@ Practical wiring guide for the buoy firmware. Written against what the backend
 ```
 [1] Fisher's phone
      │  WiFi (phone joins buoy's access point)
-     │  POST http://10.0.0.1/v1/sos
+     │  POST http://192.168.4.1/v1/sos
      ▼
 [2] BUOY  (Heltec V3 — SoftAP + LoRa)
      │  LoRa 915 MHz, binary frame, TTL flood
@@ -60,8 +60,8 @@ mode.
 | Setting | Value |
 |---|---|
 | SSID | `AqOne-<buoy id>` e.g. `AqOne-BUOY01` |
-| Buoy IP | `10.0.0.1` |
-| Phone DHCP | `10.0.0.2` – `10.0.0.62` |
+| Buoy IP | `192.168.4.1` |
+| Phone DHCP | `192.168.4.2` and up (ESP32 SoftAP default) |
 | Protocol | Plain HTTP — no TLS. The hop is one metre of air; certificates on a buoy are not worth the flash. |
 
 ### The buoy must serve two routes
