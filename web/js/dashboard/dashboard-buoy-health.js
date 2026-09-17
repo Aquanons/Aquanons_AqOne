@@ -37,9 +37,9 @@
         alertIcon(a.type) +
         '<div class="incident-feed-info">' +
           '<div class="incident-feed-desc">' + badgeHtml + escapeHtml(a.desc) + '</div>' +
-          ((a.owner || a.phone)
-            ? '<div class="incident-feed-sender">Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
-              (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</div>'
+          ((a.owner || a.phone || a.avatar)
+            ? '<div class="incident-feed-sender">' + ((typeof a.avatar === 'string' && a.avatar.indexOf('data:image/') === 0) ? '<img class="alert-avatar" src="' + a.avatar + '" alt="" />' : '') + '<span>Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
+              (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
             : '') +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +

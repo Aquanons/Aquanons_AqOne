@@ -1292,6 +1292,17 @@ body {
   font-weight: 600;
   color: var(--accent, #38bdf8);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.alert-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .alert-meta {
@@ -2998,6 +3009,21 @@ body {
   text-align: right;
   color: var(--text);
   word-break: break-word;
+}
+
+.sos-owner-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sos-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .sos-timer {
@@ -4792,6 +4818,9 @@ h3.buoy-drawer-title {
   font-weight: 600;
   color: var(--accent, #38bdf8);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .incident-feed-meta {
   font-size: 9px;
