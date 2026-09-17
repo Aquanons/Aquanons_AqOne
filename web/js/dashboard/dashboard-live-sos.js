@@ -157,8 +157,7 @@
       // boat as fallback until the profile arrives, so the drawer tells the
       // dispatcher who raised the call - not just which boat id did.
       skipperName: ev.skipper_name || null,
-      owner: ev.skipper_name || boat,
-      avatar: ev.avatar || null,
+      owner: ev.skipper_name || null,
       boat: boat,
       license: (ev.license_type && ev.license_type !== 'none')
         ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
