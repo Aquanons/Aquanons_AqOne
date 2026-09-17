@@ -226,6 +226,39 @@ submitted without `DEMO_MODE` and a valid `X-Demo-Key`; `422` malformed body
 (bad/future timestamp, empty/oversized id, pressure outside sanity range,
 missing/invalid `source`); `400` unknown `buoy_id`.
 
+## Warning delivery tracking
+
+Warning events track the hop-by-hop delivery of safety advisories down to the
+fisher:
+
+### `POST /api/advisories/delivery` — record a warning delivery state
+
+Request body (JSON):
+
+```json
+{
+  "warning_id": 101,
+  "vessel_id": "NW-001",
+  "buoy_id": "BUOY01",
+  "delivery_state": "buoy_received",
+  "occurred_at": "2026-09-15T01:15:00Z",
+  "details": {}
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `warning_id` | yes | Identifier of the advisory. |
+| `delivery_state` | yes | One of: `generated`, `gateway_accepted`, `buoy_received`, `phone_received`, `user_acknowledged`. |
+| `vessel_id` | conditional | Required for `user_acknowledged` and `phone_received`. |
+| `buoy_id` | conditional | Gateway or buoy external identifier. |
+| `occurred_at` | no | Occurrence timestamp in RFC 3339; defaults to server time. |
+| `details` | no | Arbitrary JSON metadata (hop count, RSSI, SNR). |
+
+Deduplication: submissions for `(warning_id, delivery_state, buoy_id, vessel_id)`
+are idempotent (`deduped: true`), preserving the earliest occurrence and
+authoritative receipt time.
+
 ## Dedupe and ordering
 
 - Dedupe key: `(src_ext_id, seq)`. The first accepted submission wins; later

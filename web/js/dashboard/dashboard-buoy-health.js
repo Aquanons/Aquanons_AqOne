@@ -37,6 +37,10 @@
         alertIcon(a.type) +
         '<div class="incident-feed-info">' +
           '<div class="incident-feed-desc">' + badgeHtml + escapeHtml(a.desc) + '</div>' +
+          ((a.owner || a.phone || a.avatar)
+            ? '<div class="incident-feed-sender">' + ((typeof a.avatar === 'string' && a.avatar.indexOf('data:image/') === 0) ? '<img class="alert-avatar" src="' + a.avatar + '" alt="" />' : '') + '<span>Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
+              (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
+            : '') +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +
       '</div>';
@@ -47,8 +51,13 @@
         // previously indexed the unfiltered array, so a click could pan to a
         // different incident than the one clicked.
         var a = shown[row.dataset.idx];
-        if (!a || a.lat == null || a.lng == null) return;
-        map.setView([a.lat, a.lng], 14, { animate: true, duration: 1 });
+        if (!a) return;
+        if (a.lat != null && a.lng != null) {
+          map.setView([a.lat, a.lng], 14, { animate: true, duration: 1 });
+        }
+        if (a.drawerData && (a.sosEventId != null || a.type === 'sos') && typeof ns.openIncidentDrawer === 'function') {
+          ns.openIncidentDrawer(a.drawerData, (ns.liveSosMarkers && a.sosEventId != null && ns.liveSosMarkers[a.sosEventId]) || null);
+        }
       });
     });
   }

@@ -55,6 +55,7 @@ from app.ai.squall import (
     _ensure_tz,
     _top_features,
     _train_pipeline,
+    _window_score,
     assess_array_quality,
     build_buoys,
     build_history,
@@ -168,6 +169,7 @@ def evaluate(
     test_leads: list[int | None] = []
     test_drops: list[float] = []
     test_features: list[list[float]] = []
+    test_bundles: list[Any] = []
     excluded = {'train': 0, 'test': 0}
 
     for window in windows:
@@ -189,15 +191,20 @@ def evaluate(
             test_leads.append(window.lead_minutes)
             test_drops.append(bundle.to_features()['array_drop_hpa'])
             test_features.append(bundle.values)
+            test_bundles.append(bundle)
 
     if not train_x or not test_features:
         raise ValueError('not enough quality-passing windows on one or both sides of the time split to evaluate')
 
     pipeline = _train_pipeline(np.asarray(train_x), np.asarray(train_y), seed)
-    model_probabilities = pipeline.predict_proba(np.asarray(test_features))[:, 1].tolist()
+    raw_probabilities = pipeline.predict_proba(np.asarray(test_features))[:, 1].tolist()
+    composed_probabilities = [
+        max(p, _window_score(b))
+        for p, b in zip(raw_probabilities, test_bundles, strict=True)
+    ]
     baseline_probabilities = [1.0 if drop >= BASELINE_ARRAY_DROP_THRESHOLD_HPA else 0.0 for drop in test_drops]
 
-    model_metrics = _metrics(test_labels, model_probabilities, test_leads, threshold=threshold)
+    model_metrics = _metrics(test_labels, composed_probabilities, test_leads, threshold=threshold)
     baseline_metrics = _metrics(test_labels, baseline_probabilities, test_leads, threshold=0.5)
 
     # Simple dominance rule: the model only replaces the transparent

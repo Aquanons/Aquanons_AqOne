@@ -33,10 +33,13 @@ enum AdvisoryPriority {
 /// A published notice from the MDRRMO or LGU.
 class Advisory {
   const Advisory({
+    this.id,
     required this.title,
     required this.description,
     required this.priority,
     required this.municipality,
+    this.source,
+    this.revision,
     this.category,
     this.publishDate,
     this.expirationDate,
@@ -46,10 +49,13 @@ class Advisory {
     this.byline,
   });
 
+  final int? id;
   final String title;
   final String description;
   final AdvisoryPriority priority;
   final String municipality;
+  final String? source;
+  final int? revision;
   final String? category;
   final DateTime? publishDate;
   final DateTime? expirationDate;
@@ -80,18 +86,27 @@ class Advisory {
 
   /// Whether this advisory is still in force.
   ///
-  /// Expiration is treated as inclusive - an advisory expiring today is live
-  /// all day. The source compared against the raw parsed date, and because
-  /// date-only strings parse to midnight, an advisory would vanish at 00:00
-  /// on the very day it was still meant to apply. For a safety notice that
-  /// is the wrong way to be wrong.
+  /// For exact instants (hours/minutes/seconds non-zero), expiry honors the
+  /// exact instant. For date-only calendar days, it extends to 23:59:59 of that
+  /// day.
+  /// Missing expiry on official advisories is bounded by a 48-hour retention
+  /// policy from publish date rather than being silently immortal.
   bool get isActive {
+    final now = DateTime.now();
     final expiry = expirationDate;
-    if (expiry == null) {
+    if (expiry != null) {
+      if (expiry.hour != 0 || expiry.minute != 0 || expiry.second != 0) {
+        return expiry.isAfter(now);
+      }
+      final endOfDay = DateTime(expiry.year, expiry.month, expiry.day, 23, 59, 59);
+      return endOfDay.isAfter(now);
+    }
+    if (!isOfficial) {
       return true;
     }
-    final endOfDay = DateTime(expiry.year, expiry.month, expiry.day, 23, 59, 59);
-    return endOfDay.isAfter(DateTime.now());
+    final effectivePub = publishDate ?? now;
+    final maxRetention = effectivePub.add(const Duration(hours: 48));
+    return maxRetention.isAfter(now);
   }
 
   static Advisory? tryParse(Object? value) {
@@ -105,23 +120,43 @@ class Advisory {
     final description = value['description'];
     final municipality = value['municipality'];
     final category = value['category'];
+    final int? id = _id(value['id']);
+    final String? source = _text(value['source'] ?? value['src']);
+    final int? revision = _int(value['revision'] ?? value['rev']);
+    final bool isOfficial = value['is_official'] as bool? ??
+        (source != null && source.toLowerCase().contains('research') ? false : true);
+
     return Advisory(
+      id: id,
       title: title.trim(),
       description: description is String ? description.trim() : '',
       priority: AdvisoryPriority.fromWire(value['priority'] as String?),
       municipality: municipality is String && municipality.trim().isNotEmpty
           ? municipality.trim()
           : 'All',
+      source: source,
+      revision: revision,
       category: category is String && category.trim().isNotEmpty
           ? category.trim()
           : null,
-      publishDate: _date(value['publish_date']),
-      expirationDate: _date(value['expiration_date']),
-      // image_url is the documented public field (docs/05_PUBLIC_API.md).
-      // cover_image is accepted only as a fallback for a cached snapshot
-      // saved before the backend serialised the canonical name.
+      publishDate: _date(value['publish_date'] ?? value['iss']),
+      expirationDate: _date(value['expiration_date'] ?? value['exp']),
       imageUrl: _text(value['image_url']) ?? _text(value['cover_image']),
+      isOfficial: isOfficial,
+      byline: _text(value['byline']),
     );
+  }
+
+  static int? _id(Object? value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  static int? _int(Object? value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value.trim());
+    return null;
   }
 
   static String? _text(Object? value) {
@@ -133,14 +168,23 @@ class Advisory {
   }
 
   static DateTime? _date(Object? value) {
+    if (value == null) return null;
+    if (value is int) {
+      if (value <= 0) return null;
+      return DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true).toLocal();
+    }
     if (value is! String || value.trim().isEmpty) {
       return null;
     }
-    return DateTime.tryParse(value.trim());
+    final trimmed = value.trim();
+    return DateTime.tryParse(trimmed);
   }
 
   /// Parses, drops expired entries, and sorts by urgency then recency.
   static List<Advisory> parseList(Object? decoded) {
+    if (decoded is String) {
+      throw const FormatException('Expected decoded JSON Map or List, not raw String');
+    }
     final rows = decoded is Map && decoded['advisories'] is List
         ? decoded['advisories'] as List
         : decoded is List

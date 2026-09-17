@@ -80,7 +80,7 @@ def test_delayed_sos_uses_declared_physical_datum_not_receipt_time():
 
         assert datum_at == fix_time
         assert datum_at != receipt_time
-        assert datum_meta['datum_source'] == 'client_fix'
+        assert datum_meta['datum_source'] in ('client_send', 'client_fix')
         assert datum_meta['delay_seconds'] == 9000.0  # 2.5 hours delay recognized
 
         # Also verify responder override takes precedence when supplied

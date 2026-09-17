@@ -162,6 +162,8 @@ class SquallDetection:
     features: dict[str, float]
     calibration: str
     as_of: str
+    classifier_probability: float | None = None
+    pattern_score: float | None = None
 
 
 def _ensure_tz(ts: datetime) -> datetime:
@@ -666,6 +668,8 @@ def detect_squall(
         features=feature_bundle.to_features(),
         calibration=CALIBRATION,
         as_of=feature_bundle.as_of.isoformat(),
+        classifier_probability=probability,
+        pattern_score=rule_score,
     )
 
 
@@ -834,6 +838,8 @@ def event_detection_summary(bundle: SquallModelBundle, detections: list[SquallDe
         'detections': [
             {
                 'probability': detection.probability,
+                'classifier_probability': detection.classifier_probability,
+                'pattern_score': detection.pattern_score,
                 'confidence': detection.confidence,
                 'affected_polygon': detection.affected_polygon,
                 'arrival_by_buoy': detection.arrival_by_buoy,

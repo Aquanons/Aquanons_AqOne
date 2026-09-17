@@ -92,8 +92,9 @@ or overwrite it.
 
 ## Working constraints
 
-- **~15 hours of real build time total**, across Aug 3–5. Not three days.
-- Deliverables may be due **5:00 pm Aug 4**. Assume that until told otherwise.
+- External event deadlines are maintained in [`docs/53_EXTERNAL_DEADLINES.md`](../53_EXTERNAL_DEADLINES.md).
+- Do not infer implementation deadlines from external events; keep code work
+  aligned with the active implementation plan and current status evidence.
 - Stack is fixed: FastAPI + PostgreSQL/PostGIS on Railway · Flutter (native
   Android) · plain HTML/CSS/JS dashboard · ESP32-S3 + SX1262 via Arduino IDE +
   RadioLib.

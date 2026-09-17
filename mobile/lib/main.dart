@@ -145,10 +145,11 @@ class _AqOneAppState extends State<AqOneApp> {
     _identityStore = IdentityStore(_db);
     _location = LocationService();
     _backend = BackendClient(credentials: _secureStore);
+    final buoyClient = BuoyClient();
     _service = SosService(
       outbox: OutboxStore(_db),
       identity: _identityStore,
-      buoy: BuoyClient(),
+      buoy: buoyClient,
       backend: _backend,
       location: _location,
     );
@@ -168,6 +169,7 @@ class _AqOneAppState extends State<AqOneApp> {
     // the app offshore shows buoys and coverage rather than empty sea.
     _feeds = VentureFeeds(
       backend: _backend,
+      buoy: buoyClient,
       snapshots: MapSnapshotStore(_db),
     );
     // Keystore before the rest of restore, so a returning skipper's profile
@@ -254,6 +256,7 @@ class _AqOneAppState extends State<AqOneApp> {
         if (!AqOneConfig.pitchMode) {
           _spots.start();
         }
+        _pushVesselProfile(identity);
       }
       setState(() {
         _identity = identity;
@@ -330,6 +333,15 @@ class _AqOneAppState extends State<AqOneApp> {
     setState(() => _identity = null);
   }
 
+  /// Best-effort profile sync: declares/refreshes the owner identity so a
+  /// dispatcher can identify who raised an SOS. Never blocking - a push that
+  /// fails offline is retried on the next launch or profile edit.
+  void _pushVesselProfile(VesselIdentity? identity) {
+    if (identity != null && identity.isComplete) {
+      unawaited(_backend.registerVesselProfile(identity));
+    }
+  }
+
   Future<void> _enterApp() async {
     VesselIdentity? identity;
     try {
@@ -346,6 +358,7 @@ class _AqOneAppState extends State<AqOneApp> {
     if (!AqOneConfig.pitchMode) {
       _spots.start();
     }
+    _pushVesselProfile(identity);
     setState(() {
       _identity = identity;
       _entered = true;
@@ -380,7 +393,10 @@ class _AqOneAppState extends State<AqOneApp> {
       onThemeModeChanged: _setThemeMode,
       localeController: _locale,
       onLogout: _logout,
-      onIdentityUpdated: (updated) => setState(() => _identity = updated),
+      onIdentityUpdated: (updated) {
+        setState(() => _identity = updated);
+        _pushVesselProfile(updated);
+      },
     );
   }
 }

@@ -9,6 +9,66 @@
 > dashboard/Flutter contract sprint" section and
 > [`20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md`](20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md).
 
+## 2026-09-16 — AI Safety Remediation Phase 5: Field Readiness, Measurement Protocols & Collection Handoff
+
+Recorded per `docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md` and `docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md`.
+Environment: Windows 11, Python 3.11.9, pytest-9.1.1, Node.js v22.22.3, Ruff 0.15.5.
+
+**Field Readiness, Measurement Protocols & Collection Handoff (Tasks 5.1–5.9, F1–F8):**
+- **Instrument Inventory (Task 5.1):** Separated software-verified codebase assets (manifest validator, causal trip profiler, shoreline-bounded particle drift simulator, gated squall detector) from proposed physical assets (anchored marine buoys, seabed ADCP, directional wave buoy, shore tower ultrasonic anemometer) that remain pending in-water deployment.
+- **Operating Domain & Independent Events (Task 5.2):** Formally defined the New Washington and Batan Bay geographic domain ($11.60^\circ\text{--}11.75^\circ\text{N}$, $122.40^\circ\text{--}122.55^\circ\text{E}$), artisanal vessel classes (Class A non-motorized, Class B motorized pumpboat), and independent event adjudication standards.
+- **Pre-Registered Acceptance Protocols (F1–F8):** Established frozen decision rules, baselines, and denominators for collocated sensor commissioning (F1), handset WiFi contact logging (F2), prospective weather onset (F3), delayed return drills (F4), drifter containment (F5), blinded search trials (F6), integrated before/during/after storyline (F7), and frozen model evaluation (F8).
+- **Delivered Lead Accounting Standard (Task 5.8):** Formulated delivered lead as $T_{\text{hazard\_onset}} - T_{\text{handset\_display}}$; unreceived or undelivered alerts are strictly accounted as missed lead in denominators, never excluded from statistics.
+- **Canonical Manifest Fixture (Tasks 5.5, 5.9):** Created and verified [`manifests/field_eval_manifest_v1.json`](../manifests/field_eval_manifest_v1.json) with SHA-256 evidence checksums, disjoint event splits, and diverse evaluation outcomes, verified by `test_canonical_field_eval_manifest_validates_cleanly`.
+- **Concrete Blockers & Handoff:** Documented prerequisites (LGU/Coast Guard permits, mooring installation, surrogate target construction, safety escort vessels) and defined collection handoff for hardware (Daniel), gateway (Arnold), and backend (Lenard).
+- **Honest Status:** In accordance with Phase 5 rules, Phase 5 remains **Preparation & Protocol Complete; Physical In-Water Collection Pending Handoff**. Software gates pass completely; physical in-water claims remain unmeasured until real maritime collection is executed.
+
+**Verification Results:**
+- Backend: **362 passed, 5 skipped, 1 xfailed** (`python -m pytest -q`); Ruff check clean (`All checks passed!`).
+- Manifest & Replay suite (`tests/test_calibration_and_replay.py`): **9/9 passed**.
+- Web: **141 passed, 0 failed** (`node --test web/test/*.test.js`).
+
+## 2026-09-15 — AI Safety Remediation Phase 4: Calibration Lineage, Historical Replay & Claim Boundaries
+
+Recorded per `docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md`.
+Environment: Windows 11, Python 3.11.9, pytest-9.1.1, Node.js v22.22.3, Ruff 0.15.5.
+
+**Calibration Lineage, Historical Replay & Behavioral Scenarios (C1–C8):**
+- **C1 (Gated Squall Promotion):** `build_squall_status` checks model calibration; unvalidated or synthetic calibration bundles (`calibration == 'synthetic'`) are strictly capped at `watch` with explicit reason (`unvalidated_synthetic_calibration`), preventing automated promotion to operational `return_now` during live operations.
+- **C2 (Composed Decision & Distinct Probabilities):** Squall detector exposes `classifier_probability` and `pattern_score` as separate fields rather than conflating them into a single score; threshold selection and offline evaluation scripts evaluate the composed decision rule `max(p, rule_score)`.
+- **C3 & C4 (Event-Level Dataset Manifest Validation):** Implemented `validate_manifest` (`app/ai/manifest.py`) enforcing disjoint event partitions across development/test splits (preventing leaking time windows from the same storm), rejecting empty datasets, placeholder SHA-256 hashes, and single-class target sets.
+- **C5 (Overdue Open Trips Under Outage):** Open vessel trips with zero buoy contacts during gateway outages remain fully visible and reviewable as overdue when `expected_return_at < as_of`, preserving expected return obligations with `low_confidence = True`.
+- **C6 (Robust Trip Loading & Historical Baselines):** Removed silent error swallowing in `_load_trip_states`; historical normal baselines filter strictly for completed, normal trips (`status == 'completed'`), preventing unfinished or abnormal trips from contaminating normal vessel duration profiles.
+- **C7 (Database & Manual SOS Survival Under Model Outage):** Model crashes or numerical explosions in particle integration during drift case creation leave underlying incident records and manual SOS intake (`POST /api/sos`) 100% operational.
+- **C8 (Controlled Drift Evaluation with Supported Horizons):** Implemented `evaluate_drift_track` (`app/ai/drift_eval.py`) computing exact polygon containment, area, reduction factor, and miss distance; horizons exceeding the model's supported horizon are reported as unsupported (`is_supported = False`) and not counted as containment successes.
+
+**Verification Results:**
+- Backend: **361 passed, 5 skipped, 1 xfailed** (`python -m pytest -q`); Ruff check clean (`All checks passed!`).
+- Dedicated calibration and replay suite (`tests/test_calibration_and_replay.py`): **8/8 passed**.
+- Web: **141 passed, 0 failed** (`node --test web/test/*.test.js`).
+
+## 2026-09-15 — AI Safety Remediation Phase 1: Offline Warning Delivery & Verification
+
+Recorded per `docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md`.
+Environment: Windows 11, Python 3.11.9, pytest-9.1.1, Flutter 3.44.7, Node.js v22.22.3.
+
+**Offline Warning Delivery & Mesh Codec Verification (W1–W10):**
+- **W1 (Offline Warning Feed):** Mobile `VentureFeeds.advisories()` connected to `BuoyClient.warnings()` so handset in airplane mode fetches and renders active advisories over buoy WiFi SoftAP when backend cellular HTTP is unreachable.
+- **W2 (Calendar & Expiry Policy):** Publication dates and active queries adhere strictly to Philippine Standard Time (PHT, UTC+8); advisories missing explicit expiration dates are bounded by 48-hour retention from publication rather than remaining silently immortal.
+- **W3 (LoAM Codec & HMAC Tamper Rejection):** Implemented reference Python LoAM binary frame codec and verified round-trip serialization; HMAC-SHA256 neutralizes relay-mutable bytes (`RELAY_ID` at offsets 8..11, and `TTL`/`HOPS` at offsets 18..19); tampered bytes, invalid HMAC keys, or excessive hops (> 15) are strictly dropped.
+- **W4 (Bounded Retries & Backoff):** Gateway rebroadcast retry queue enforces exponential backoff (30s, 60s, 120s) and terminates at 3 maximum attempts, preventing permanent channel saturation.
+- **W5 (Revision Superseding & Cancellation Tombstones):** Warning cache enforces 6 maximum slots, expiration pruning, and revision ordering; cancelled warnings store tombstones that prevent resurrected display by older delayed frames.
+- **W6 (Delivery State Deduplication):** `POST /api/advisories/delivery` enforces deduplication on `(warning_id, delivery_state, vessel_id, buoy_id)` returning `deduped: true` on replay, and requires `vessel_id` for `user_acknowledged`.
+- **W7 (SOS Radio Priority):** Emergency distress SOS packets (`0x01`) take absolute priority over warning frames (`0x07`); warning rebroadcasts yield immediately when SOS traffic arrives.
+- **W8 (Disconnected Handset Honesty):** Handset preserves last-known status while out of range; cache age remains honest without claiming false delivery while offline.
+- **W9 (Explicit Downlink & Attribution):** Research alerts retain explicit `sig_type: "research"` and uncalibrated status, preventing automated return commands or confusion with official human-authored LGU directives.
+- **W10 (Strict Parser Validation):** Mobile `Advisory.parseList` rejects malformed strings with `FormatException` rather than silently presenting a clear list; honors exact second-precision expiration for instants and 23:59:59 PHT for date-only calendar days.
+
+**Verification Results:**
+- Backend: 338 passed, 5 skipped, 1 xfailed (`python -m pytest -q`); Ruff check clean.
+- Mobile: 256 passed, 0 failed (`flutter test`); `flutter analyze` clean (0 issues).
+- Web: 141 passed, 0 failed (`node --test web/test/*.test.js`).
+
 ## 2026-09-15 — AI Layer Calibration, Physical Drift Boundaries & Prospective Verification (Phases 1–5)
 
 Recorded per `docs/AI_ACCURACY_IMPLEMENTATION_PLAN.md` and `docs/45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md`.
@@ -887,28 +947,10 @@ false claim invalidates every true one.
 
 ---
 
-## Submission checklist — treat as due 5:00 pm Aug 4
+## Historical event materials
 
-- [ ] Deadline confirmed **in writing** with organisers (the two documents disagree)
-- [ ] GitHub repo **public** — private links are stated grounds for immediate disqualification
-- [ ] Secret scan clean (`07_SECURITY.md`)
-- [ ] README: setup instructions + this status table
-- [ ] Demo URL live and reachable **from outside the venue network** — test on mobile data
-- [ ] Pitch deck: problem-solution fit, AI architecture, data strategy & ethics
-- [ ] **Hardware declared** in the deck, and how its data is used (explicitly required)
-- [ ] External models/libraries cited (RadioLib, FastAPI, etc.)
-- [ ] Screencast recorded and uploaded
-- [ ] Status table matches reality
+The completed AI Fest submission checklist and Day 3 logistics are archived in
+[`archive/AI_FEST_2026_DEADLINES.md`](archive/AI_FEST_2026_DEADLINES.md).
 
----
-
-## Day 3 logistics
-
-Closing Ceremony is **1:00–4:00 pm at Iloilo Convention Center** — a different
-venue from Sam's 21 Hotel.
-
-- Hard stop on code ~10:30 am.
-- Pack hardware in something padded. Bring spares and the antennas.
-- Confirm whether you pitch at Sam's 21 before moving venues.
-- Bring: laptop chargers, phone chargers, a power strip, USB cables, the
-  hotspot, and a printed copy of the status table.
+Current external event deadlines live in
+[`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md).

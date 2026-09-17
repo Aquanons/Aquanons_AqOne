@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta, timezone
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.audit import record_audit_event
 from app.auth import require_responder_roles
@@ -44,8 +44,11 @@ class DangerAlertPayload(BaseModel):
     observedAt: str
 
 
+PHT = timezone(timedelta(hours=8))
+
+
 def _today() -> date:
-    return datetime.now(UTC).date()
+    return datetime.now(PHT).date()
 
 
 def _normalise_payload(payload: AdvisoryIn) -> dict[str, Any]:
@@ -408,6 +411,12 @@ class WarningDeliveryIn(BaseModel):
     occurred_at: datetime | None = None
     details: dict[str, Any] = {}
 
+    @model_validator(mode='after')
+    def validate_vessel_for_ack(self) -> WarningDeliveryIn:
+        if self.delivery_state == 'user_acknowledged' and not self.vessel_id:
+            raise ValueError('vessel_id is required for user_acknowledged delivery state')
+        return self
+
 
 @router.post('/delivery', status_code=200)
 async def record_warning_delivery(payload: WarningDeliveryIn) -> dict[str, Any]:
@@ -418,6 +427,32 @@ async def record_warning_delivery(payload: WarningDeliveryIn) -> dict[str, Any]:
         adv = await conn.fetchrow('SELECT id FROM advisories WHERE id = $1', payload.warning_id)
         if adv is None:
             raise HTTPException(status_code=404, detail='warning/advisory not found')
+
+        # Check for duplicate delivery event (idempotency)
+        existing = await conn.fetchrow(
+            '''
+            SELECT id, warning_id, delivery_state, occurred_at, recorded_at
+              FROM warning_delivery_events
+             WHERE warning_id = $1
+               AND delivery_state = $2
+               AND vessel_id IS NOT DISTINCT FROM $3
+               AND buoy_id IS NOT DISTINCT FROM $4
+            ''',
+            payload.warning_id,
+            payload.delivery_state,
+            payload.vessel_id,
+            payload.buoy_id,
+        )
+        if existing is not None:
+            return {
+                'accepted': True,
+                'deduped': True,
+                'delivery_id': existing['id'],
+                'warning_id': existing['warning_id'],
+                'delivery_state': existing['delivery_state'],
+                'occurred_at': existing['occurred_at'].isoformat(),
+                'recorded_at': existing['recorded_at'].isoformat(),
+            }
 
         row = await conn.fetchrow(
             '''
@@ -437,6 +472,7 @@ async def record_warning_delivery(payload: WarningDeliveryIn) -> dict[str, Any]:
 
     return {
         'accepted': True,
+        'deduped': False,
         'delivery_id': row['id'],
         'warning_id': row['warning_id'],
         'delivery_state': row['delivery_state'],

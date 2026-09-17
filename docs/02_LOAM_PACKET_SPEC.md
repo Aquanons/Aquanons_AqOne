@@ -38,10 +38,13 @@ at the radio settings below.
 
 | Value | Name | Payload |
 |---|---|---|
-| `0x01` | `SOS` | Distress report (schema below). |
+| `0x01` | `SOS` | Distress report (schema below). Highest radio priority. |
 | `0x02` | `ACK` | Mesh-level ack for a previous frame. |
 | `0x03` | `PING` | Presence / heartbeat. |
-| `0x04` | `STATUS` | Non-SOS status update (future use). |
+| `0x04` | `STATUS` | Non-SOS status update. |
+| `0x05` | `CHAT` | Local mesh chat message. |
+| `0x06` | `ETA` | Dispatcher acknowledgement and ETA downlink. |
+| `0x07` | `WARN` | Weather warning / advisory downlink (schema below). Subordinate to SOS. |
 
 ## Flags (`FLAGS`)
 
@@ -115,21 +118,59 @@ detected before parsing the rest.
 
 `batt` is battery percent 0–100.
 
+### WARN (`0x07`)
+
+```json
+{
+  "v": 1,
+  "id": 101,
+  "rev": 1,
+  "src": "MDRRMO",
+  "pr": "Warning",
+  "area": "New Washington",
+  "iss": 1789401600,
+  "exp": 1789487999,
+  "ttl": "Gale Warning",
+  "txt": "Rough seas expected over eastern seaboard.",
+  "sig_type": "official"
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `v` | yes | `1` |
+| `id` | yes | Integer advisory/warning identifier. |
+| `rev` | no | Revision number (default `1`). Newer revision replaces older; older revision cannot resurrect a cancelled warning. |
+| `src` | yes | Origin authority, e.g. `"MDRRMO"`, `"LGU"`, or `"AqOne Research"`. |
+| `pr` | yes | Priority level: `"Emergency"`, `"Warning"`, `"Information"`, `"Community"`. |
+| `area` | yes | Geographic applicability, e.g. `"All"`, `"New Washington"`. |
+| `iss` | no | Issue timestamp epoch seconds (UTC). |
+| `exp` | no | Expiry timestamp epoch seconds (UTC). If missing/zero, bounded retention policy applies (max 48h), never immortal. |
+| `ttl` | no | Title string, truncated to ≤ 48 chars. |
+| `txt` | no | Description text, truncated to ≤ 80 chars. |
+| `sig_type` | no | `"official"` for MDRRMO/LGU authored notices, `"research"` for automated/uncalibrated models. |
+
+### Radio priority rules
+
+SOS distress traffic (`0x01`) has absolute priority over the LoRa channel.
+Warning broadcasts (`0x07`), chat (`0x05`), and routine beacons (`0x03`) are
+strictly subordinate: queued warning frames yield immediately if an SOS frame
+is received or pending transmission. Warning retries/rebroadcasts are rate-limited
+and must never saturate the radio channel.
+
 ## Signature scheme
 
 - Algorithm: HMAC-SHA256, truncated to the first 8 bytes.
 - Key: the **origin endpoint's** HMAC key, looked up by `SRC_ID` in a key
   registry on the gateway (external id → key). Relays do **not** re-sign; they
   forward the frame as-is.
-- Signed region: the whole frame with the two hop bytes neutralized so relays
-  may mutate them. Compute HMAC over:
+- Signed region: the frame with relay-mutable bytes (RELAY_ID at offsets 8..11, and TTL/HOPS at offsets 18..19) neutralized to zeroes so relays may mutate them without invalidating the origin's signature. Compute HMAC over:
 
   ```
-  frame[0..17] ++ { 0x00, 0x00 } ++ frame[20 .. 22+N]
+  frame[0..7] ++ { 0x00, 0x00, 0x00, 0x00 } ++ frame[12..17] ++ { 0x00, 0x00 } ++ frame[20 .. 21+N]
   ```
 
-  i.e. `MAGIC`..`TS` and `PAYLOAD_LEN`..payload, with `TTL` and `HOPS`
-  (offsets 18–19) replaced by zeroes.
+  i.e. `MAGIC`..`SRC_ID`, zeroed `RELAY_ID`, `SEQ`..`TS`, zeroed `TTL` and `HOPS`, and `PAYLOAD_LEN`..payload.
 - If `FLAGS.SIGNED` is clear, `SIG` is all zeroes and the frame is accepted
   without verification (development mode only — gateways must log any unsigned
   packet they forward).

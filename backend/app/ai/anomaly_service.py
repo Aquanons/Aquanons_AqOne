@@ -103,17 +103,14 @@ def _trip_is_synthetic(rows: list[dict[str, object]]) -> dict[tuple[str, str], b
 
 
 async def _load_trip_states(conn) -> dict[str, dict[str, object]]:
-    try:
-        rows = await conn.fetch(
-            '''
-            SELECT trip_id, vessel_id, status, welfare_status, departure_at,
-                   expected_return_at, expected_checkin_interval_minutes, amendments
-            FROM vessel_trips
-            '''
-        )
-        return {str(r['trip_id']): dict(r) for r in rows}
-    except Exception:
-        return {}
+    rows = await conn.fetch(
+        '''
+        SELECT trip_id, vessel_id, status, welfare_status, departure_at,
+               expected_return_at, expected_checkin_interval_minutes, amendments
+        FROM vessel_trips
+        '''
+    )
+    return {str(r['trip_id']): dict(r) for r in rows}
 
 
 def eligible_latest_trips(
@@ -124,15 +121,18 @@ def eligible_latest_trips(
 ) -> list[tuple[str, str, list[ContactPoint]]]:
     """The latest trip per vessel.
 
-    Task 3.5: Determine eligibility from open/unresolved trip state rather
+    Task 3.5 & Scenario C5: Determine eligibility from open/unresolved trip state rather
     than an arbitrary 12-hour latest-contact cutoff. An open/unresolved trip
     persists beyond 12 hours without silent expiration, while completed or
-    cancelled trips are excluded. Unrecorded legacy/synthetic trips fall back
-    to OPEN_TRIP_FRESHNESS_WINDOW.
+    cancelled trips are excluded. Open trips with zero contacts (e.g. during an outage)
+    remain eligible rather than being silently ignored. Unrecorded legacy/synthetic
+    trips fall back to OPEN_TRIP_FRESHNESS_WINDOW.
     """
     trip_states = trip_states or {}
     cutoff = as_of - OPEN_TRIP_FRESHNESS_WINDOW
     eligible: list[tuple[str, str, list[ContactPoint]]] = []
+    seen_trips: set[str] = set()
+
     for vessel_id, trip_id, contacts in _group_latest_trips(rows):
         state = trip_states.get(trip_id)
         if state is not None:
@@ -141,9 +141,22 @@ def eligible_latest_trips(
                 continue
             if status in {'open', 'overdue', 'unresolved'}:
                 eligible.append((vessel_id, trip_id, contacts))
+                seen_trips.add(trip_id)
                 continue
         if contacts[-1].observed_at >= cutoff:
             eligible.append((vessel_id, trip_id, contacts))
+            seen_trips.add(trip_id)
+
+    # Scenario C5: include open/overdue trips that have zero buoy contacts
+    for trip_id, state in trip_states.items():
+        if trip_id in seen_trips:
+            continue
+        status = str(state.get('status') or '')
+        if status in {'open', 'overdue', 'unresolved'}:
+            vessel_id = str(state.get('vessel_id') or 'unknown')
+            eligible.append((vessel_id, trip_id, []))
+            seen_trips.add(trip_id)
+
     return eligible
 
 
@@ -162,7 +175,7 @@ async def evaluate_and_persist(conn, *, as_of: datetime, include_synthetic: bool
     eligible = eligible_latest_trips(rows, as_of=as_of, trip_states=trip_states)
     candidate_trip_ids = {trip_id for _, trip_id, _ in eligible}
     profiles = build_profiles_from_contacts(
-        rows, built_at=as_of, as_of=as_of, exclude_trip_ids=candidate_trip_ids
+        rows, built_at=as_of, as_of=as_of, exclude_trip_ids=candidate_trip_ids, trip_states=trip_states,
     )
     trip_is_synthetic = _trip_is_synthetic(rows)
 

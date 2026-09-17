@@ -51,6 +51,8 @@ CASE_AT = datetime(2026, 8, 29, 8, tzinfo=UTC)
 
 def _fake_prediction(*, degraded: bool = False) -> DriftResult:
     ring = [[122.0, 11.0], [122.1, 11.0], [122.1, 11.1], [122.0, 11.1], [122.0, 11.0]]
+    from app.ai.drift import _to_latlon
+    lats, lons = _to_latlon(np.array([250.0, 750.0]), np.array([250.0, 250.0]), 11.0, 122.0)
     return DriftResult(
         grid={
             'type': 'DensityGrid',
@@ -67,6 +69,18 @@ def _fake_prediction(*, degraded: bool = False) -> DriftResult:
         runtime_ms=1.23,
         wind_source='synthetic' if degraded else 'open-meteo',
         object_class='person_in_water',
+        trajectories=[
+            {
+                'at': CASE_AT.isoformat(),
+                'lat': lats.copy(),
+                'lon': lons.copy(),
+            },
+            {
+                'at': (CASE_AT + timedelta(hours=24)).isoformat(),
+                'lat': lats.copy(),
+                'lon': lons.copy(),
+            },
+        ],
     )
 
 
@@ -246,7 +260,9 @@ class _FakePool:
                 observed_coverage, current_max_age_seconds, nearby_buoy_count,
                 wind_source, wind_degraded, max_wind_age_seconds,
                 prior_grid, posterior_grid,
+                *extra,
             ) = args
+            trajectory_data = extra[-1] if extra else None
             run_id = self._next_run_id
             self._next_run_id += 1
             self.drift_runs.setdefault(incident_id, []).append({
@@ -267,13 +283,18 @@ class _FakePool:
                 'max_wind_age_seconds': max_wind_age_seconds,
                 'prior_grid': prior_grid,
                 'posterior_grid': posterior_grid,
+                'trajectory_data': trajectory_data,
             })
         elif 'UPDATE drift_runs SET posterior_grid' in query:
-            grid_json, run_id = args
+            grid_json = args[0]
+            traj_json = args[1] if len(args) > 2 else None
+            run_id = args[-1]
             for runs in self.drift_runs.values():
                 for run in runs:
                     if run['id'] == run_id:
                         run['posterior_grid'] = grid_json
+                        if traj_json is not None:
+                            run['trajectory_data'] = traj_json
         elif 'UPDATE incidents SET prior_grid' in query:
             grid_json, incident_id = args
             incident = self.incidents[incident_id]
@@ -286,7 +307,13 @@ class _FakePool:
             (
                 incident_id, x_min, x_max, y_min, y_max, pod,
                 run_id, reported_by, method, notes, idempotency_key,
+                *rest,
             ) = args
+            south = rest[0] if len(rest) > 0 else None
+            west = rest[1] if len(rest) > 1 else None
+            north = rest[2] if len(rest) > 2 else None
+            east = rest[3] if len(rest) > 3 else None
+            searched_at = rest[4] if len(rest) > 4 else datetime.now(UTC)
             self.search_sectors.append({
                 'id': len(self.search_sectors) + 1,
                 'incident_id': incident_id,
@@ -294,7 +321,8 @@ class _FakePool:
                 'detection_probability': pod,
                 'run_id': run_id, 'reported_by': reported_by, 'method': method,
                 'notes': notes, 'idempotency_key': idempotency_key,
-                'searched_at': datetime.now(UTC),
+                'south': south, 'west': west, 'north': north, 'east': east,
+                'searched_at': searched_at,
             })
         elif 'INSERT INTO search_sectors' in query:
             incident_id, x_min, x_max, y_min, y_max, pod = args
@@ -370,11 +398,12 @@ def _open_sos_case(client, *, source_id=1) -> dict:
 # origin (11.0, 122.0) - this rectangle safely covers the whole thing.
 def _report_body(
     *, run_number=1, method='moderate', idempotency_key='key-1', notes=None,
-    south=11.0, west=122.0, north=11.01, east=122.01,
+    south=11.0, west=122.0, north=11.01, east=122.01, searched_at=CASE_AT,
 ) -> dict:
     body = {
         'run_number': run_number, 'south': south, 'west': west, 'north': north, 'east': east,
         'method': method, 'idempotency_key': idempotency_key,
+        'searched_at': searched_at.isoformat() if searched_at else None,
     }
     if notes is not None:
         body['notes'] = notes

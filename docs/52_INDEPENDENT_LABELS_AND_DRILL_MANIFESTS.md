@@ -65,6 +65,7 @@ Every curated dataset partition is cataloged in a version-controlled JSON manife
   "records": [
     {
       "record_id": "TRIP-2026-09-NW-001",
+      "event_id": "EVENT-TRIP-001",
       "record_type": "normal_trip",
       "split": "development",
       "vessel_id": "BANCA-04",
@@ -72,10 +73,11 @@ Every curated dataset partition is cataloged in a version-controlled JSON manife
       "ended_at": "2026-09-15T10:30:00Z",
       "outcome": "completed_safe",
       "unusable_intervals": [],
-      "raw_evidence_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "raw_evidence_sha256": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
     },
     {
       "record_id": "DRIFT-2026-09-DR-001",
+      "event_id": "EVENT-DRIFT-001",
       "record_type": "controlled_drill_drift",
       "split": "held_out_test",
       "vessel_id": "SURROGATE-BANCA-01",
@@ -86,10 +88,23 @@ Every curated dataset partition is cataloged in a version-controlled JSON manife
         {"from": "2026-09-15T08:00:00Z", "to": "2026-09-15T08:15:00Z", "reason": "deployment_settling"}
       ],
       "raw_evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "record_id": "DRIFT-2026-09-DR-002",
+      "event_id": "EVENT-DRIFT-002",
+      "record_type": "controlled_drill_drift",
+      "split": "held_out_test",
+      "vessel_id": "SURROGATE-BANCA-02",
+      "started_at": "2026-09-16T08:00:00Z",
+      "ended_at": "2026-09-16T14:00:00Z",
+      "outcome": "beached_sandbar",
+      "unusable_intervals": [],
+      "raw_evidence_sha256": "7f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b947"
     }
   ]
 }
 ```
+*Note: `validate_manifest` (`app/ai/manifest.py`) rejects empty files, all-zero hashes, and the empty-string SHA-256 (`e3b0c4...`), requires explicit disjoint `event_id` partitions across splits, and verifies multi-class outcome diversity in evaluation splits.*
 
 ---
 

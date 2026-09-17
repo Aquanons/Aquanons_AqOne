@@ -46,21 +46,28 @@ async def _load_buoy_observations(
     conn: asyncpg.Connection,
     include_synthetic: bool = False,
     as_of: datetime | None = None,
+    max_depth_m: float = 2.5,
 ) -> dict[str, dict[str, Any]]:
     """Load buoy positions and their observation time-series from the DB.
 
     Only ``observed_u_mps`` / ``observed_v_mps`` are loaded.  The ``true_*``
     columns are never selected.
     Synthetic rows are excluded unless ``include_synthetic=True``.
-    Observations after ``as_of`` are excluded to prevent future leakage in replay.
+    Uncalibrated and deep currents are excluded for surface drift.
+    Observations arriving or observed after ``as_of`` are excluded to prevent future leakage in replay.
     """
     conditions = ["b.lat IS NOT NULL", "b.lon IS NOT NULL"]
     args: list[Any] = []
     if not include_synthetic:
-        conditions.append("co.is_synthetic = FALSE")
+        conditions.append("(co.is_synthetic = FALSE AND (co.source IS NULL OR co.source = 'live'))")
+        conditions.append("(co.calibration_status IS NULL OR co.calibration_status = 'qualified')")
+    if max_depth_m is not None:
+        conditions.append(f"(co.depth_m IS NULL OR co.depth_m <= {float(max_depth_m)})")
     if as_of is not None:
         args.append(as_of)
         conditions.append(f"co.observed_at <= ${len(args)}")
+        args.append(as_of)
+        conditions.append(f"(co.created_at IS NULL OR co.created_at <= ${len(args)})")
 
     where_clause = " AND ".join(conditions)
     query = f"""
@@ -69,7 +76,11 @@ async def _load_buoy_observations(
                b.lon AS buoy_lon,
                co.observed_at,
                co.observed_u_mps,
-               co.observed_v_mps
+               co.observed_v_mps,
+               co.depth_m,
+               co.source,
+               co.calibration_status,
+               co.created_at
         FROM current_observations co
         JOIN buoys b ON b.id = co.buoy_id
         WHERE {where_clause}
@@ -78,18 +89,41 @@ async def _load_buoy_observations(
     rows = await conn.fetch(query, *args)
     buoys: dict[str, dict[str, Any]] = {}
     for row in rows:
-        bid = row['buoy_id']
+        r = dict(row)
+        depth = r.get('depth_m')
+        if max_depth_m is not None and depth is not None and float(depth) > max_depth_m:
+            continue
+
+        if not include_synthetic:
+            if r.get('is_synthetic') is True or r.get('source') == 'synthetic':
+                continue
+            if r.get('calibration_status') is not None and r.get('calibration_status') != 'qualified':
+                continue
+
+        if as_of is not None:
+            created_at = r.get('created_at')
+            if created_at is not None and created_at > as_of:
+                continue
+            observed_at = r.get('observed_at')
+            if observed_at is not None and observed_at > as_of:
+                continue
+
+        bid = r['buoy_id']
         if bid not in buoys:
             buoys[bid] = {
-                'lat': float(row['buoy_lat']),
-                'lon': float(row['buoy_lon']),
+                'lat': float(r['buoy_lat']),
+                'lon': float(r['buoy_lon']),
                 'times': [],
                 'u': [],
                 'v': [],
             }
-        buoys[bid]['times'].append(row['observed_at'].timestamp())
-        buoys[bid]['u'].append(float(row['observed_u_mps']))
-        buoys[bid]['v'].append(float(row['observed_v_mps']))
+        obs_at = r['observed_at']
+        if hasattr(obs_at, 'timestamp'):
+            buoys[bid]['times'].append(obs_at.timestamp())
+        else:
+            buoys[bid]['times'].append(float(obs_at))
+        buoys[bid]['u'].append(float(r['observed_u_mps']))
+        buoys[bid]['v'].append(float(r['observed_v_mps']))
     for buoy in buoys.values():
         buoy['times'] = np.array(buoy['times'], dtype=float)
         buoy['u'] = np.array(buoy['u'], dtype=float)
@@ -103,22 +137,28 @@ async def count_nearby_fresh_buoys(
     lon: float,
     at: datetime,
     include_synthetic: bool = False,
+    max_depth_m: float = 2.5,
+    min_separation_m: float = 0.0,
 ) -> int:
-    """How many distinct buoys have a current observation within
+    """How many distinct buoys have a qualified surface observation within
     ``MAX_RADIUS_M`` of ``(lat, lon)`` and within ``MAX_AGE_SECONDS`` of
     ``at``.
 
     The field-geometry half of the docs/40 Phase 2 production quality gate.
     One buoy gives a single point value, not a spatial gradient - a
     production run needs more than one to interpolate a direction rather
-    than extrapolate blindly from a lone reading.
+    than extrapolate blindly from a lone reading. Co-located buoys (within
+    ``min_separation_m``) are deduplicated so they do not falsely masquerade
+    as 2D spatial support.
     Observations after ``at`` are excluded.
     """
     async with pool.acquire() as conn:
-        buoys = await _load_buoy_observations(conn, include_synthetic=include_synthetic, as_of=at)
+        buoys = await _load_buoy_observations(
+            conn, include_synthetic=include_synthetic, as_of=at, max_depth_m=max_depth_m,
+        )
 
     target_time = at.astimezone(UTC).timestamp()
-    count = 0
+    qualifying: list[dict[str, Any]] = []
     for buoy in buoys.values():
         if len(buoy['times']) == 0:
             continue
@@ -127,8 +167,24 @@ async def count_nearby_fresh_buoys(
             continue
         nearest_age = float(np.min(np.abs(buoy['times'] - target_time)))
         if nearest_age <= MAX_AGE_SECONDS:
-            count += 1
-    return count
+            qualifying.append(buoy)
+
+    if min_separation_m <= 0.0:
+        return len(qualifying)
+
+    retained: list[dict[str, Any]] = []
+    for candidate in qualifying:
+        c_lat = candidate['lat']
+        c_lon = candidate['lon']
+        is_colocated = False
+        for r in retained:
+            sep_m = _haversine_m(np.array([c_lat]), np.array([c_lon]), r['lat'], r['lon'])[0]
+            if sep_m < min_separation_m:
+                is_colocated = True
+                break
+        if not is_colocated:
+            retained.append(candidate)
+    return len(retained)
 
 
 async def create_current_field_factory(
@@ -136,6 +192,7 @@ async def create_current_field_factory(
     include_synthetic: bool = False,
     allow_synthetic: bool = True,
     as_of: datetime | None = None,
+    max_depth_m: float = 2.5,
 ) -> Callable[[np.ndarray, np.ndarray, datetime], tuple[np.ndarray, np.ndarray]]:
     """Load observations once and return a vectorised current-field callable.
 
@@ -149,7 +206,9 @@ async def create_current_field_factory(
     Whole-run observation fraction is tracked across all particle steps.
     """
     async with pool.acquire() as conn:
-        buoys = await _load_buoy_observations(conn, include_synthetic=include_synthetic, as_of=as_of)
+        buoys = await _load_buoy_observations(
+            conn, include_synthetic=include_synthetic, as_of=as_of, max_depth_m=max_depth_m,
+        )
 
     buoy_list = list(buoys.values())
     n_buoys = len(buoy_list)

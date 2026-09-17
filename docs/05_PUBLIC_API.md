@@ -194,10 +194,59 @@ subsequent reply from the dispatcher. Each row carries `acknowledged_at`,
 `responder_note`, `fisher_reply`, `fisher_replied_at`, `resolved_at`
 (always `null` here, since a resolved row has left the feed), and `is_synthetic`
 (boolean, `true` for scripted/demo scenario events and `false` for genuine distress
-calls) alongside the fields `GET /api/v1/sos` documents above. Clients must derive
+calls) alongside the fields `GET /api/v1/sos` documents above. Each event also
+carries the vessel's declared owner identity from `POST /api/vessel-profile`
+below when one is on file: `skipper_name`, `license_type`, `license_number`
+and `phone` (empty strings / `none` when the fleet has not registered that
+vessel yet — never fabricated). Clients must derive
 display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
+
+### `POST /api/vessel-profile` — declare a vessel's owner identity
+
+Unauthenticated, for the same reason SOS ingest is (`POST /api/sos`): a
+fisherman at sea has no account to hold, and this is the same self-declared
+identity as the distress call itself. The read side — `GET /api/sos/active`
+above — stays dispatcher-gated, so an unauthenticated write only ever
+describes the one vessel its caller claims to be.
+
+The handset (`mobile/lib/data/identity_store.dart` `toRegistrationPayload()`)
+pushes this once when onboarding completes, again at startup for a remembered
+skipper, and again on every profile edit (`mobile/lib/main.dart`, best-effort
+and never blocking an SOS). It is an idempotent upsert keyed on `vessel_id`, so
+retries converge and the vessel may already exist as the skeleton an SOS made.
+
+```
+POST /api/vessel-profile
+{
+  "vessel_id": "V001",                // 1..32 chars, the same id the SOS uses
+  "boat": "NW-001",                   // 0..32 chars
+  "skipper_name": "Juan Dela Cruz",   // 0..64 chars
+  "license_type": "boatr",            // boatr | fishr | cfvgl | none
+  "license_number": "NWB-2026-08412", // 0..24 chars
+  "phone": "+639171234567"            // 0..20 chars
+}
+```
+
+`trust_tier` is deliberately not accepted here: the trusted-status model
+(`docs/16_QA_DISCLOSURES.md`) only lets a responder/verification path upgrade
+a vessel, and an unauthenticated claim cannot confirm itself. The SOS ingest
+snapshots the tier on the incident itself, which is what the dashboard shows.
+Length caps mirror the handset's own (`mobile/lib/core/config.dart`); anything
+beyond them is rejected with 422 before any DB write.
+
+```json
+{
+  "vessel_id": "V001",
+  "boat": "NW-001",
+  "skipper_name": "Juan Dela Cruz",
+  "license_type": "boatr",
+  "license_number": "NWB-2026-08412",
+  "phone": "+639171234567",
+  "profile_updated_at": "2026-08-03T22:20:00Z"
+}
+```
 
 ### `POST /api/sos/{id}/acknowledge` and `POST /api/sos/{id}/resolve`
 
@@ -974,25 +1023,42 @@ applies to a real case). Response shape matches `POST /cases`' tail:
 ### `POST /api/ai/drift/incident/{id}/searched` — report a searched sector (Phase 3)
 
 Real cases only — a case with no drift run (demo/synthetic, or a case that
-predates Phase 2) cannot report through this route. The responder draws a
-rectangle on the map; the backend converts it to the grid's local metre
-space, not the other way around:
+predates Phase 2) cannot report through this route. The responder specifies the
+geodetic footprint (`south`, `west`, `north`, `east`) and optional search occurrence
+timing (`searched_at` or `search_start_at`/`search_end_at`):
 
 ```json
-{ "run_number": 1, "south": 11.65, "west": 122.30, "north": 11.68, "east": 122.34, "method": "moderate", "idempotency_key": "b1e2c3-...", "notes": "surface pattern, calm seas" }
+{
+  "run_number": 1,
+  "south": 11.65,
+  "west": 122.30,
+  "north": 11.68,
+  "east": 122.34,
+  "method": "moderate",
+  "searched_at": "2026-08-29T10:00:00Z",
+  "search_start_at": null,
+  "search_end_at": null,
+  "detection_probability": null,
+  "dependent": false,
+  "idempotency_key": "b1e2c3-...",
+  "notes": "surface pattern, calm seas"
+}
 ```
 
 `run_number` is whatever the client last saw from `GET /incident/{id}` — a
 report against a run that has since been superseded by a rerun is rejected.
 `method` is one of the responder-approved detection-probability presets
-(docs/05 table below); the UI submits the preset name, never a raw
-probability. `idempotency_key` is client-generated (e.g. a UUID); a retry
-with the same key against the same case is a no-op, returning the current
-state (`"duplicate": true`) rather than applying the negative evidence
-twice. `notes` is optional, ≤ 280 characters.
+(docs/05 table below) or an operational label; optional explicit `detection_probability`
+is accepted for illustrative testing or calibrated instruments (0.0 to 1.0).
+`searched_at` or `search_start_at`/`search_end_at` specify the search occurrence
+time; if omitted or outside the modeled trajectory interval, the report is recorded
+as unassimilated (`is_unassimilated: true`) rather than substituted with the latest step.
+`dependent` indicates correlated repeat sweeps and discounts effective probability.
+`idempotency_key` is client-generated (e.g. a UUID); a retry with the same key
+against the same case is a no-op, returning the current state (`"duplicate": true`)
+rather than applying the negative evidence twice. `notes` is optional, ≤ 280 characters.
 
-**Detection-method presets** — approved by the project owner alongside the
-Phase 2 policy, same date/source:
+**Detection-method presets** — policy approximations for responder review:
 
 | `method` | Probability | Meaning |
 |---|---|---|
@@ -1003,13 +1069,13 @@ Phase 2 policy, same date/source:
 No preset reaches 1.0 — a search is never perfect.
 
 Atomic: locks the case and its current run, rejects a stale/superseded run,
-deduplicates the idempotency key, applies the Bayesian update exactly once,
-saves the new posterior, and appends the audit record (`reported_by`,
-`method`, `notes`, `idempotency_key`) — all in one transaction. Rejects with
-`409` if the case is `resolved`/`cancelled`, the run is stale, or the
-current run is `insufficient_environmental_data` (no field to search), and
-`422` for a reversed/degenerate rectangle or one that doesn't overlap the
-grid at all. Response `200`:
+deduplicates the idempotency key, applies the time-aligned trajectory update,
+saves the new posterior and trajectory weights, and appends the audit record
+(`reported_by`, `method`, `notes`, `idempotency_key`, `searched_at`) — all in one transaction.
+Rejects with `409` if the case is `resolved`/`cancelled`, the run is stale, the
+current run is `insufficient_environmental_data` (no field to search), or the
+run lacks trajectory state, and `422` for a reversed/degenerate rectangle or invalid probability.
+Response `200`:
 
 ```json
 {

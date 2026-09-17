@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import os
+from typing import Any
 
 import asyncpg
 
@@ -171,6 +173,73 @@ def _polygon_area_m2(ring: list[list[float]]) -> float:
     for i in range(len(ring) - 1):
         area += x[i] * y[i + 1] - x[i + 1] * y[i]
     return abs(area) / 2.0
+
+
+def evaluate_drift_track(
+    prediction: Any,
+    true_track: list[dict[str, Any]],
+    horizon_hours: float,
+) -> dict[str, Any]:
+    """Evaluate containment, area, and miss distance for a true track at horizon_hours."""
+    if not true_track:
+        return {
+            'contained': False,
+            'is_supported': False,
+            'miss_distance_m': None,
+            'area_m2': 0.0,
+            'reduction_factor': 0.0,
+        }
+
+    supported_horizon = getattr(prediction, 'supported_horizon_hours', None)
+    if supported_horizon is None and isinstance(prediction, dict):
+        supported_horizon = prediction.get('supported_horizon_hours')
+
+    is_supported = True
+    if supported_horizon is not None and horizon_hours > float(supported_horizon):
+        is_supported = False
+
+    contours = getattr(prediction, 'contours', None)
+    if contours is None and isinstance(prediction, dict):
+        contours = prediction.get('contours', [])
+
+    if not contours:
+        return {
+            'contained': False,
+            'is_supported': is_supported,
+            'miss_distance_m': None,
+            'area_m2': 0.0,
+            'reduction_factor': 0.0,
+        }
+
+    outer_contour = contours[-1]
+    ring = outer_contour['geometry']['coordinates'][0]
+    area_m2 = abs(_polygon_area_m2(ring))
+    reduction = _independent_baseline_area_m2(horizon_hours) / area_m2 if area_m2 > 1e-9 else 1.0
+
+    target_point = true_track[-1]
+    t_lat = float(target_point['lat'])
+    t_lon = float(target_point['lon'])
+
+    contained = contour_contains(outer_contour, t_lat, t_lon) if is_supported else False
+
+    miss_distance_m = 0.0
+    if not contained:
+        min_dist = float('inf')
+        for lon, lat in ring:
+            dx = (lon - t_lon) * 111_320.0 * math.cos(math.radians(t_lat))
+            dy = (lat - t_lat) * 110_574.0
+            dist = math.hypot(dx, dy)
+            if dist < min_dist:
+                min_dist = dist
+        miss_distance_m = min_dist
+
+    return {
+        'contained': contained,
+        'is_supported': is_supported,
+        'miss_distance_m': miss_distance_m,
+        'area_m2': area_m2,
+        'reduction_factor': reduction,
+    }
 
 
 if __name__ == '__main__':

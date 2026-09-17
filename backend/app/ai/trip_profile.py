@@ -230,20 +230,25 @@ def build_profiles_from_contacts(
     built_at: datetime | None = None,
     as_of: datetime | None = None,
     exclude_trip_ids: set[str] | list[str] | None = None,
+    trip_states: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, VesselProfile]:
     built_at = _ensure_tz(built_at or datetime.now(MANILA_TZ))
     as_of_tz = _ensure_tz(as_of) if as_of else None
     exclude_set = set(exclude_trip_ids) if exclude_trip_ids else set()
 
-    # Leakage prevention (Task 3.6): only use historical contacts strictly
-    # before as_of, and exclude candidate trip_ids so the candidate trip
-    # never leaks into its own historical profile baseline.
+    # Leakage prevention (Task 3.6 & Scenario C6): only use historical contacts strictly
+    # before as_of, exclude candidate trip_ids, and exclude trips known to be non-completed
+    # (abnormal, open, cancelled) so they do not contaminate the normal profile baseline.
     filtered_rows = rows
-    if as_of_tz or exclude_set:
+    if as_of_tz or exclude_set or trip_states:
         filtered_rows = [
             r for r in rows
             if (as_of_tz is None or _ensure_tz(r['observed_at']) < as_of_tz)
             and (not exclude_set or str(r.get('trip_id')) not in exclude_set)
+            and (
+                not trip_states
+                or trip_states.get(str(r.get('trip_id')), {}).get('status', 'completed') == 'completed'
+            )
         ]
 
     grouped = _group_trip_samples(filtered_rows)
@@ -494,6 +499,40 @@ def score_trip(
     as_of = _ensure_tz(as_of or (contacts[-1].observed_at if contacts else datetime.now(MANILA_TZ)))
     effective_trip_id = trip_id or (contacts[0].observed_at.date().isoformat() if contacts else 'unknown')
     if not contacts:
+        dep_at = trip_state.get('departure_at') if trip_state else None
+        dep_tz = (
+            _ensure_tz(dep_at)
+            if isinstance(dep_at, datetime)
+            else (_ensure_tz(datetime.fromisoformat(str(dep_at))) if dep_at else as_of)
+        )
+        exp_ret = trip_state.get('expected_return_at') if trip_state else None
+        if exp_ret:
+            exp_ret_tz = (
+                _ensure_tz(exp_ret)
+                if isinstance(exp_ret, datetime)
+                else _ensure_tz(datetime.fromisoformat(str(exp_ret)))
+            )
+            overdue_minutes = max(0.0, (as_of - exp_ret_tz).total_seconds() / 60.0)
+            if overdue_minutes > 0:
+                ret_factor = 1.0 - math.exp(-overdue_minutes / 30.0)
+                score_val = max(0.55, min(1.0, ret_factor))
+                status = 'alert' if score_val >= ANOMALY_CONFIG['thresholds']['alert'] else 'overdue'
+                time_str = exp_ret_tz.strftime("%H:%M")
+                explanation = f'Overdue past expected return deadline ({time_str}) with zero contacts observed.'
+                factor = _score_factor(score_val, 1.0, explanation, 'overdue')
+                expected = ExpectedContact(None, dep_tz, exp_ret_tz, exp_ret_tz, 0)
+                return AnomalyScore(
+                    profile.vessel_id,
+                    effective_trip_id,
+                    score_val,
+                    status,
+                    [factor],
+                    expected,
+                    True,
+                    as_of,
+                    as_of,
+                    profile,
+                )
         expected = ExpectedContact(None, as_of, as_of, as_of, 0)
         factor = _score_factor(0.0, 1.0, 'No contacts observed yet.', 'empty')
         return AnomalyScore(

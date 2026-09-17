@@ -12,7 +12,13 @@ from pydantic import BaseModel, Field, model_validator
 from app.ai import environment
 from app.ai.current_field import count_nearby_fresh_buoys, create_current_field_factory
 from app.ai.drift import MODEL_VERSION, ObjectClass, _to_xy, predict_drift
-from app.ai.search import contours_from_grid, recommend_next_area, update_posterior
+from app.ai.search import (
+    contours_from_grid,
+    grid_from_trajectories,
+    recommend_next_area,
+    update_posterior,
+    update_trajectory_weights,
+)
 from app.audit import record_audit_event
 from app.auth import require_responder_roles
 from app.db import get_pool
@@ -31,7 +37,7 @@ _RUN_COLUMNS = '''
     id, run_number, object_class, forecast_hours, model_version, computed_at, computed_by,
     environmental_status, insufficiency_reason, observed_coverage,
     current_max_age_seconds, nearby_buoy_count, wind_source, wind_degraded,
-    max_wind_age_seconds, prior_grid, posterior_grid
+    max_wind_age_seconds, prior_grid, posterior_grid, trajectory_data
 '''
 
 # Responder-approved detection-probability presets (docs/40 Phase 3 item 2).
@@ -68,6 +74,11 @@ class SectorReportRequest(BaseModel):
     method: Literal['poor', 'moderate', 'good']
     idempotency_key: str = Field(..., min_length=1, max_length=64)
     notes: str | None = Field(default=None, max_length=280)
+    searched_at: datetime | None = None
+    search_start_at: datetime | None = None
+    search_end_at: datetime | None = None
+    detection_probability: float | None = Field(default=None, ge=0.0, le=1.0)
+    dependent: bool = False
 
     @model_validator(mode='after')
     def _validate_rectangle(self) -> SectorReportRequest:
@@ -75,6 +86,12 @@ class SectorReportRequest(BaseModel):
             raise ValueError('north must be greater than south')
         if self.east <= self.west:
             raise ValueError('east must be greater than west')
+        if (
+            self.search_start_at is not None
+            and self.search_end_at is not None
+            and self.search_end_at < self.search_start_at
+        ):
+            raise ValueError('search_end_at must be >= search_start_at')
         return self
 
 
@@ -115,24 +132,46 @@ async def _fetch_sectors(pool, incident_id: int) -> list[dict[str, object]]:
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             'SELECT x_min_m, x_max_m, y_min_m, y_max_m, detection_probability, searched_at, '
-            'method, reported_by, notes '
-            'FROM search_sectors WHERE incident_id = $1 ORDER BY searched_at',
+            'method, reported_by, notes, south, west, north, east, search_start_at, search_end_at, '
+            'dependent, is_unassimilated, unassimilated_reason '
+            'FROM search_sectors WHERE incident_id = $1 ORDER BY searched_at ASC, id ASC',
             incident_id,
         )
     return [
         {
-            'x_min_m': float(row['x_min_m']),
-            'x_max_m': float(row['x_max_m']),
-            'y_min_m': float(row['y_min_m']),
-            'y_max_m': float(row['y_max_m']),
+            'x_min_m': float(row['x_min_m']) if row.get('x_min_m') is not None else 0.0,
+            'x_max_m': float(row['x_max_m']) if row.get('x_max_m') is not None else 0.0,
+            'y_min_m': float(row['y_min_m']) if row.get('y_min_m') is not None else 0.0,
+            'y_max_m': float(row['y_max_m']) if row.get('y_max_m') is not None else 0.0,
+            'south': float(row['south']) if row.get('south') is not None else None,
+            'west': float(row['west']) if row.get('west') is not None else None,
+            'north': float(row['north']) if row.get('north') is not None else None,
+            'east': float(row['east']) if row.get('east') is not None else None,
             'detection_probability': float(row['detection_probability']),
-            'searched_at': row['searched_at'].isoformat(),
+            'searched_at': (
+                row['searched_at'].isoformat()
+                if hasattr(row['searched_at'], 'isoformat')
+                else str(row['searched_at'])
+            ),
+            'search_start_at': (
+                row['search_start_at'].isoformat()
+                if hasattr(row.get('search_start_at'), 'isoformat')
+                else (str(row['search_start_at']) if row.get('search_start_at') else None)
+            ),
+            'search_end_at': (
+                row['search_end_at'].isoformat()
+                if hasattr(row.get('search_end_at'), 'isoformat')
+                else (str(row['search_end_at']) if row.get('search_end_at') else None)
+            ),
             # Only present on a Phase 3 protected report; a legacy/demo
             # sector (app/demo/scenarios.py) leaves these NULL.
             'method': row['method'],
             'method_label': DETECTION_METHOD_LABELS.get(row['method']),
             'reported_by': row['reported_by'],
             'notes': row['notes'],
+            'dependent': bool(row.get('dependent', False)),
+            'is_unassimilated': bool(row.get('is_unassimilated', False)),
+            'unassimilated_reason': row.get('unassimilated_reason'),
         }
         for row in rows
     ]
@@ -181,6 +220,7 @@ async def _compute_and_persist_run(
     last_lat: float, last_lon: float, last_at: datetime,
     object_class: ObjectClass, forecast_hours: float, actor: str,
     initial_spread_m: float = 250.0,
+    decision_cutoff_at: datetime | None = None,
 ) -> environment.EnvironmentAssessment:
     """The production quality-gated prediction (docs/40 Phase 2 items 2-3).
 
@@ -190,13 +230,18 @@ async def _compute_and_persist_run(
     sufficient, `insufficient_environmental_data` (with its diagnostic
     snapshot) otherwise. Never falls back to the synthetic current field.
     """
-    nearby = await count_nearby_fresh_buoys(pool, last_lat, last_lon, last_at, include_synthetic=False)
+    cutoff = decision_cutoff_at or datetime.now(UTC)
+    nearby = await count_nearby_fresh_buoys(
+        pool, last_lat, last_lon, last_at, include_synthetic=False, max_depth_m=2.5,
+    )
     assessment = environment.assess_geometry(nearby)
     prior_grid = posterior_grid = None
+    result = None
+    trajectory_data = None
 
     if assessment is None:
         current_fn = await create_current_field_factory(
-            pool, include_synthetic=False, allow_synthetic=False, as_of=last_at
+            pool, include_synthetic=False, allow_synthetic=False, as_of=cutoff, max_depth_m=2.5,
         )
         result = predict_drift(
             last_lat=last_lat,
@@ -207,32 +252,101 @@ async def _compute_and_persist_run(
             current_vector_fn=current_fn,
             initial_spread_m=initial_spread_m,
             enable_stranding=True,
+            record_trajectories=True,
         )
         coverage = getattr(current_fn, 'observation_fraction', 0.0)
         assessment = environment.assess_result(nearby, coverage, result)
-        if assessment.sufficient:
+        if assessment.sufficient and result is not None:
             prior_grid = result.grid
-            # Replay all previous search sectors chronologically for this incident
+            # Replay all previous search sectors chronologically for this incident (Task 3.4 & S7)
             async with pool.acquire() as conn:
-                existing_sectors = await conn.fetch(
-                    'SELECT x_min_m, x_max_m, y_min_m, y_max_m, detection_probability '
-                    'FROM search_sectors WHERE incident_id = $1 ORDER BY searched_at ASC, id ASC',
-                    incident_id,
-                )
-            if existing_sectors:
-                sec_dicts = [
-                    {
-                        'x_min_m': float(s['x_min_m']),
-                        'x_max_m': float(s['x_max_m']),
-                        'y_min_m': float(s['y_min_m']),
-                        'y_max_m': float(s['y_max_m']),
-                        'detection_probability': float(s['detection_probability']),
-                    }
-                    for s in existing_sectors
-                ]
-                posterior_grid = update_posterior(result.grid, sec_dicts)
+                if decision_cutoff_at is not None:
+                    existing_sectors = await conn.fetch(
+                        'SELECT x_min_m, x_max_m, y_min_m, y_max_m, south, west, north, east, '
+                        'detection_probability, searched_at, search_start_at, search_end_at, '
+                        'dependent, is_unassimilated '
+                        'FROM search_sectors WHERE incident_id = $1 AND created_at <= $2 '
+                        'ORDER BY searched_at ASC, id ASC',
+                        incident_id, decision_cutoff_at,
+                    )
+                else:
+                    existing_sectors = await conn.fetch(
+                        'SELECT x_min_m, x_max_m, y_min_m, y_max_m, south, west, north, east, '
+                        'detection_probability, searched_at, search_start_at, search_end_at, '
+                        'dependent, is_unassimilated '
+                        'FROM search_sectors WHERE incident_id = $1 '
+                        'ORDER BY searched_at ASC, id ASC',
+                        incident_id,
+                    )
+
+            if result.trajectories:
+                step_times = [step['at'] for step in result.trajectories]
+                n_particles = len(result.trajectories[0]['lat'])
+                traj_lats = np.array([step['lat'] for step in result.trajectories])
+                traj_lons = np.array([step['lon'] for step in result.trajectories])
+                weights = np.ones(n_particles, dtype=float) / n_particles
+
+                if existing_sectors:
+                    sec_dicts = [
+                        {
+                            'south': float(s['south']) if s.get('south') is not None else None,
+                            'north': float(s['north']) if s.get('north') is not None else None,
+                            'west': float(s['west']) if s.get('west') is not None else None,
+                            'east': float(s['east']) if s.get('east') is not None else None,
+                            'x_min_m': float(s['x_min_m']) if s.get('x_min_m') is not None else None,
+                            'x_max_m': float(s['x_max_m']) if s.get('x_max_m') is not None else None,
+                            'y_min_m': float(s['y_min_m']) if s.get('y_min_m') is not None else None,
+                            'y_max_m': float(s['y_max_m']) if s.get('y_max_m') is not None else None,
+                            'detection_probability': float(s['detection_probability']),
+                            'searched_at': s.get('searched_at'),
+                            'search_start_at': s.get('search_start_at'),
+                            'search_end_at': s.get('search_end_at'),
+                            'dependent': bool(s.get('dependent', False)),
+                            'is_unassimilated': bool(s.get('is_unassimilated', False)),
+                            'origin_lat': last_lat,
+                            'origin_lon': last_lon,
+                        }
+                        for s in existing_sectors
+                    ]
+                    try:
+                        weights = update_trajectory_weights(traj_lats, traj_lons, step_times, sec_dicts, weights)
+                        posterior_grid = grid_from_trajectories(
+                            traj_lats, traj_lons, weights, origin_lat=last_lat, origin_lon=last_lon,
+                            reference_grid=prior_grid,
+                        )
+                    except Exception:
+                        posterior_grid = result.grid
+                else:
+                    posterior_grid = result.grid
+
+                trajectory_data = json.dumps({
+                    'step_times': step_times,
+                    'lats': traj_lats.tolist(),
+                    'lons': traj_lons.tolist(),
+                    'weights': weights.tolist(),
+                })
             else:
                 posterior_grid = result.grid
+
+    afloat_count = None
+    stranded_count = None
+    outside_domain_count = None
+    support_lost_at = None
+    supported_horizon_hours = None
+    if assessment.sufficient and result is not None:
+        stranded_count = result.stranded_count
+        afloat_count = max(0, 2000 - stranded_count)
+        outside_domain_count = 0
+        if result.support_lost_at:
+            try:
+                support_lost_at = datetime.fromisoformat(result.support_lost_at)
+                supported_horizon_hours = max(0.0, (support_lost_at - last_at).total_seconds() / 3600.0)
+            except (ValueError, TypeError):
+                pass
+        else:
+            supported_horizon_hours = forecast_hours
+    elif not assessment.sufficient:
+        supported_horizon_hours = 0.0
 
     async with pool.acquire() as conn:
         await conn.execute(
@@ -242,8 +356,11 @@ async def _compute_and_persist_run(
               computed_by, environmental_status, insufficiency_reason,
               observed_coverage, current_max_age_seconds, nearby_buoy_count,
               wind_source, wind_degraded, max_wind_age_seconds,
-              prior_grid, posterior_grid
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+              prior_grid, posterior_grid,
+              decision_cutoff_at, is_retrospective, supported_horizon_hours,
+              support_lost_at, afloat_count, stranded_count, outside_domain_count,
+              trajectory_data
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
             ''',
             incident_id, run_number, object_class.value, forecast_hours, MODEL_VERSION,
             actor, 'ok' if assessment.sufficient else 'insufficient_environmental_data',
@@ -252,6 +369,14 @@ async def _compute_and_persist_run(
             assessment.max_wind_age_seconds,
             json.dumps(prior_grid) if prior_grid is not None else None,
             json.dumps(posterior_grid) if posterior_grid is not None else None,
+            cutoff,
+            False,
+            supported_horizon_hours,
+            support_lost_at,
+            afloat_count,
+            stranded_count,
+            outside_domain_count,
+            trajectory_data,
         )
     return assessment
 
@@ -312,7 +437,8 @@ async def _sos_case_inputs(
 ) -> tuple[str, float, float, datetime, dict[str, Any]]:
     row = await conn.fetchrow(
         '''
-        SELECT vessel_id, latitude, longitude, created_at, client_ts, acknowledged_at, resolved_at
+        SELECT vessel_id, latitude, longitude, created_at, client_ts, acknowledged_at, resolved_at,
+               fix_acquired_at, fix_accuracy_m
         FROM sos_events WHERE id = $1
         ''',
         source_id,
@@ -335,26 +461,40 @@ async def _sos_case_inputs(
         datum_source = 'responder_override'
         delay_seconds = max(0.0, (receipt_at - datum_at).total_seconds())
     else:
-        client_ts = None
+        fix_acquired_at = None
         try:
-            client_ts = row['client_ts']
+            fix_acquired_at = row['fix_acquired_at']
         except (KeyError, TypeError, IndexError):
-            client_ts = None
+            fix_acquired_at = None
 
-        if client_ts is not None and client_ts > 0:
-            try:
-                client_dt = datetime.fromtimestamp(client_ts, tz=UTC)
-                # Client timestamp is accepted as physical datum when it is not in the distant future
-                if client_dt <= receipt_at + timedelta(minutes=5):
-                    datum_at = client_dt
-                    datum_source = 'client_fix'
-                    delay_seconds = max(0.0, (receipt_at - client_dt).total_seconds())
-                else:
-                    datum_at = receipt_at
-            except (ValueError, OverflowError, OSError):
-                datum_at = receipt_at
+        if fix_acquired_at is not None:
+            datum_at = fix_acquired_at
+            datum_source = 'gnss_fix'
+            delay_seconds = max(0.0, (receipt_at - datum_at).total_seconds())
         else:
-            datum_at = receipt_at
+            client_ts = None
+            try:
+                client_ts = row['client_ts']
+            except (KeyError, TypeError, IndexError):
+                client_ts = None
+
+            if client_ts is not None and client_ts > 0:
+                try:
+                    client_dt = datetime.fromtimestamp(client_ts, tz=UTC)
+                    # Handset transmission time is distinct from an authenticated GNSS fix
+                    if client_dt <= receipt_at + timedelta(minutes=5):
+                        datum_at = client_dt
+                        datum_source = 'client_send'
+                        delay_seconds = max(0.0, (receipt_at - client_dt).total_seconds())
+                    else:
+                        datum_at = receipt_at
+                        datum_source = 'receipt_time'
+                except (ValueError, OverflowError, OSError):
+                    datum_at = receipt_at
+                    datum_source = 'receipt_time'
+            else:
+                datum_at = receipt_at
+                datum_source = 'receipt_time'
 
     datum_meta = {
         'datum_at': datum_at.isoformat(),
@@ -362,6 +502,13 @@ async def _sos_case_inputs(
         'datum_source': datum_source,
         'delay_seconds': delay_seconds,
     }
+    try:
+        fix_acc = row['fix_accuracy_m']
+        if fix_acc is not None:
+            datum_meta['fix_accuracy_m'] = float(fix_acc)
+    except (KeyError, TypeError, IndexError):
+        pass
+
     return row['vessel_id'], float(row['latitude']), float(row['longitude']), datum_at, datum_meta
 
 
@@ -846,6 +993,20 @@ async def record_searched_sector(
 
         posterior_grid = _grid(run['posterior_grid'])
 
+        trajectory_data_raw = run.get('trajectory_data')
+        if trajectory_data_raw is None:
+            # Check S6: historical run has grids only, cannot update time-aligned search
+            raise HTTPException(
+                status_code=409,
+                detail='historical run does not contain trajectory data; cannot assimilate time-aligned search',
+            )
+
+        traj_dict = json.loads(trajectory_data_raw) if isinstance(trajectory_data_raw, str) else trajectory_data_raw
+        step_times = traj_dict['step_times']
+        traj_lats = np.array(traj_dict['lats'], dtype=float)
+        traj_lons = np.array(traj_dict['lons'], dtype=float)
+        weights = np.array(traj_dict['weights'], dtype=float)
+
         existing = await conn.fetchrow(
             'SELECT id FROM search_sectors WHERE incident_id = $1 AND idempotency_key = $2',
             incident_id, body.idempotency_key,
@@ -872,6 +1033,25 @@ async def record_searched_sector(
                 'duplicate': True,
             }
 
+        # Check search occurrence timing (Task 3.1 & S2)
+        searched_at = body.searched_at
+        if searched_at is None and body.search_start_at is None:
+            searched_at = datetime.now(UTC)
+        elif searched_at is not None and searched_at.tzinfo is None:
+            raise HTTPException(status_code=422, detail='searched_at must be timezone-aware')
+        if body.search_start_at is not None and body.search_start_at.tzinfo is None:
+            raise HTTPException(status_code=422, detail='search_start_at must be timezone-aware')
+        if body.search_end_at is not None and body.search_end_at.tzinfo is None:
+            raise HTTPException(status_code=422, detail='search_end_at must be timezone-aware')
+
+        # Check detection probability (Task 3.5 & S5)
+        if body.detection_probability is not None:
+            pod = float(body.detection_probability)
+            if not np.isfinite(pod) or pod < 0.0 or pod > 1.0:
+                raise HTTPException(status_code=422, detail='detection_probability must be between 0.0 and 1.0')
+        else:
+            pod = DETECTION_PRESETS[body.method]
+
         origin = posterior_grid['origin']
         x_min, x_max, y_min, y_max = _rect_to_metres(
             body.south, body.west, body.north, body.east, origin['lat'], origin['lon'],
@@ -882,26 +1062,49 @@ async def record_searched_sector(
                 status_code=422, detail='searched rectangle does not overlap the search grid',
             )
 
-        detection_probability = DETECTION_PRESETS[body.method]
-        sector = {
-            'x_min_m': x_min, 'x_max_m': x_max, 'y_min_m': y_min, 'y_max_m': y_max,
-            'detection_probability': detection_probability,
+        sector_entry = {
+            'south': body.south,
+            'north': body.north,
+            'west': body.west,
+            'east': body.east,
+            'searched_at': searched_at,
+            'search_start_at': body.search_start_at,
+            'search_end_at': body.search_end_at,
+            'detection_probability': pod,
+            'dependent': body.dependent,
         }
-        updated_grid = update_posterior(posterior_grid, [sector])
+
+        try:
+            updated_weights = update_trajectory_weights(
+                traj_lats, traj_lons, step_times, [sector_entry], weights=weights,
+            )
+        except ValueError as err:
+            err_msg = str(err)
+            raise HTTPException(status_code=422, detail=err_msg) from err
+
+        updated_grid = grid_from_trajectories(
+            traj_lats, traj_lons, updated_weights, origin_lat=origin['lat'], origin_lon=origin['lon'],
+            reference_grid=posterior_grid,
+        )
+        traj_dict['weights'] = updated_weights.tolist()
 
         await conn.execute(
-            'UPDATE drift_runs SET posterior_grid = $1 WHERE id = $2',
-            json.dumps(updated_grid), run['id'],
+            'UPDATE drift_runs SET posterior_grid = $1, trajectory_data = $2 WHERE id = $3',
+            json.dumps(updated_grid), json.dumps(traj_dict), run['id'],
         )
         await conn.execute(
             '''
             INSERT INTO search_sectors
                 (incident_id, x_min_m, x_max_m, y_min_m, y_max_m, detection_probability,
-                 run_id, reported_by, method, notes, idempotency_key)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+                 run_id, reported_by, method, notes, idempotency_key,
+                 south, west, north, east, searched_at, search_start_at, search_end_at,
+                 dependent, is_unassimilated, unassimilated_reason)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
             ''',
-            incident_id, x_min, x_max, y_min, y_max, detection_probability,
+            incident_id, x_min, x_max, y_min, y_max, pod,
             run['id'], user.get('email') or 'unknown', body.method, body.notes, body.idempotency_key,
+            body.south, body.west, body.north, body.east, searched_at, body.search_start_at, body.search_end_at,
+            body.dependent, False, None,
         )
 
         # Never the searched rectangle or free-text notes (docs/41 Phase 2).

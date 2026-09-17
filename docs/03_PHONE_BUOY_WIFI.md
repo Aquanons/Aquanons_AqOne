@@ -98,6 +98,44 @@ Response `200 OK`:
 `"degraded"`. `queued` is the number of SOS messages still waiting to be
 forwarded on LoRa. The app uses this for the honest signal meter.
 
+### `GET /v1/warnings` — active weather warnings & advisories
+
+Offline handsets poll this endpoint when connected to buoy WiFi to retrieve
+active warnings relayed from shore over LoRa.
+
+Response `200 OK`:
+
+```json
+{
+  "advisories": [
+    {
+      "id": 101,
+      "title": "Gale Warning",
+      "priority": "Warning",
+      "municipality": "New Washington",
+      "description": "Rough seas expected over eastern seaboard.",
+      "source": "MDRRMO",
+      "publish_date": "2026-09-15T00:00:00Z",
+      "expiration_date": "2026-09-16T23:59:59Z"
+    }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `advisories` | Array of active, unexpired advisories currently cached on the buoy. |
+| `id` | Advisory identifier. |
+| `title` | Short summary title. |
+| `priority` | `"Emergency"`, `"Warning"`, `"Information"`, or `"Community"`. |
+| `municipality` | Applicable area or `"All"`. |
+| `description` | Full text instruction or warning description. |
+| `source` | Authority (`"MDRRMO"`, `"LGU"`, `"AqOne Research"`). |
+| `publish_date` | RFC 3339 timestamp or Philippine date string (`YYYY-MM-DD`). |
+| `expiration_date` | RFC 3339 timestamp or Philippine date string. If absent, handset bounds retention to max 48h. |
+
+Expired advisories are automatically pruned by the buoy cache and not returned.
+
 ## Phone-side rules
 
 - Keep the SOS in a local **outbox** (SQLite) until a `200` changes its state

@@ -9,7 +9,7 @@
 > **Handoff target:** Gemini 3.8
 > **Status:** Phase 1 ready, not started
 > **Target Branch:** `codex/phase1-pitch-build`
-> **Pitch Date:** September 15, 2026
+> **External event deadlines:** [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md)
 > **Test Command:** `flutter test` plus the pitch-mode test command in each phase
 > **Lint/Check Command:** `flutter analyze`
 

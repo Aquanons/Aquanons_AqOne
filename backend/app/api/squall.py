@@ -137,8 +137,18 @@ def build_squall_status(
         if isinstance(threshold, (int, float)) and float(row.get('probability') or 0.0) >= float(threshold)
     ]
 
+    status_reason = None
     if triggered:
-        level = 'return_now' if allow_return_now else 'watch'
+        # Phase 4 Task 4.2 / Scenario C1:
+        # Live detector cannot promote itself to an operational calibrated return instruction
+        # if the model bundle is synthetic or unvalidated.
+        bundle_calibration = getattr(model, 'calibration', None) or summary.get('calibration')
+        is_synthetic_bundle = bundle_calibration == 'synthetic'
+        if source == 'live' and is_synthetic_bundle:
+            level = 'watch'
+            status_reason = 'live squall capped at watch: empirical field validation pending'
+        else:
+            level = 'return_now' if allow_return_now else 'watch'
     elif detection_rows:
         level = 'watch'
     else:
@@ -156,7 +166,7 @@ def build_squall_status(
                 lead_minutes = eta if lead_minutes is None else min(lead_minutes, eta)
 
     return base | {
-        'status_reason': None,
+        'status_reason': status_reason,
         'level': level,
         'return_now': level == 'return_now',
         'detections': detection_rows,

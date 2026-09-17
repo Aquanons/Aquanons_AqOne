@@ -157,8 +157,11 @@ static int32_t daysFromCivil(int32_t y, uint32_t m, uint32_t d) {
 // which every caller treats as "absent" rather than 1970.
 uint32_t iso8601ToEpoch(const char* s) {
   if (!s || !*s) return 0;
-  int Y, M, D, h, mi, se;
-  if (sscanf(s, "%d-%d-%dT%d:%d:%d", &Y, &M, &D, &h, &mi, &se) != 6) return 0;
+  int Y, M, D, h = 0, mi = 0, se = 0;
+  if (sscanf(s, "%d-%d-%dT%d:%d:%d", &Y, &M, &D, &h, &mi, &se) != 6) {
+    if (sscanf(s, "%d-%d-%d", &Y, &M, &D) != 3) return 0;
+    h = 0; mi = 0; se = 0;
+  }
   int32_t days = daysFromCivil(Y, (uint32_t)M, (uint32_t)D);
   if (days < 0) return 0;
   return (uint32_t)days * 86400UL + (uint32_t)h * 3600UL + (uint32_t)mi * 60UL + (uint32_t)se;
@@ -237,9 +240,10 @@ static uint32_t get32(const uint8_t* p) {
          ((uint32_t)p[2] << 8)  | p[3];
 }
 
-// HMAC-SHA256 truncated to 8 bytes, over the frame with the two hop bytes
-// zeroed so relays may mutate TTL/HOPS without invalidating the origin's
-// signature: frame[0..17] ++ {0,0} ++ frame[20 .. 21+N].
+// HMAC-SHA256 truncated to 8 bytes, over the frame with the relay-mutable bytes
+// zeroed (RELAY_ID at 8..11, and TTL/HOPS at 18..19) so relays may mutate them
+// without invalidating the origin's signature:
+// frame[0..7] ++ {0,0,0,0} ++ frame[12..17] ++ {0,0} ++ frame[20 .. 21+N].
 //
 // `out` is a plain pointer rather than uint8_t[LOAM_SIG_LEN] on purpose: the
 // array bound decays anyway, and spelling a constant in the signature would
@@ -252,8 +256,11 @@ static void loamSign(const uint8_t* frame, size_t payloadLen, uint8_t* out) {
   mbedtls_md_setup(&ctx, info, 1);
   mbedtls_md_hmac_starts(&ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));
 
-  static const uint8_t zeroHops[2] = { 0, 0 };
-  mbedtls_md_hmac_update(&ctx, frame, 18);
+  static const uint8_t zeroRelay[4] = { 0, 0, 0, 0 };
+  static const uint8_t zeroHops[2]  = { 0, 0 };
+  mbedtls_md_hmac_update(&ctx, frame, 8);
+  mbedtls_md_hmac_update(&ctx, zeroRelay, 4);
+  mbedtls_md_hmac_update(&ctx, frame + 12, 6);
   mbedtls_md_hmac_update(&ctx, zeroHops, 2);
   mbedtls_md_hmac_update(&ctx, frame + 20, 2 + payloadLen);
 

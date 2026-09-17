@@ -75,3 +75,26 @@ The dashboard and backend remain English-only.
   `delivered`/`acknowledged` from `GET /api/v1/vessels/{id}/sos`.
 - The buoy's ack payload carries the `seq` the phone records so later
   reconciliation can match rows.
+
+## Warning delivery states (downlink)
+
+Distinct from the four canonical SOS delivery states above. Warning delivery
+tracks downlink advisories propagating from MDRRMO to fishermen:
+
+```
+generated ──► gateway_accepted ──► buoy_received ──► phone_received ──► user_acknowledged
+```
+
+| State | Meaning | Authority |
+|---|---|---|
+| `generated` | Warning created in the system (MDRRMO authored or research). | Backend |
+| `gateway_accepted` | Gateway received advisory from backend and queued for LoRa broadcast. | Gateway |
+| `buoy_received` | Buoy received and cached the warning frame over LoRa mesh. | Buoy |
+| `phone_received` | Offline phone connected to buoy WiFi and retrieved the warning. | Handset |
+| `user_acknowledged` | Fisherman deliberately acknowledged reading the warning on screen. | Handset / Fisherman |
+
+Rules:
+- Byte receipt (`buoy_received`, `phone_received`) does NOT prove display, comprehension, or compliance.
+- `user_acknowledged` requires deliberate user interaction on the handset.
+- Unconnected handsets remain honestly un-delivered; no speculative acknowledgement.
+

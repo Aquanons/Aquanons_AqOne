@@ -1,5 +1,10 @@
 # Implementation Plan: Fishing Weather Window
 
+> **Active Gemini 3.8 handoff:** [AI safety remediation implementation plan](docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md).
+> Prepared 2026-09-15 for offline warnings, qualified drift support, time-aligned search, calibration and field validation.
+> Every production change requires a failing behavioral test first; implementation has not started under this handoff.
+> Earlier plans and completion statements below are historical records; the new plan identifies claims that still require verification.
+
 > **Status:** Prepared for Gemini handoff; no implementation phase started.  
 > **Target Branch:** `codex/fishing-weather-window` (create from the current checkout after inspecting local changes).  
 > **Test Command:** Mobile: `flutter test`; backend: `python -m pytest -q`.  

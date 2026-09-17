@@ -15,6 +15,7 @@ import '../models/sea_condition.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
 import 'backend_client.dart';
+import 'buoy_client.dart';
 import 'forecast_provider.dart';
 
 /// Read-only feeds behind the Venture map.
@@ -25,10 +26,12 @@ import 'forecast_provider.dart';
 class VentureFeeds {
   VentureFeeds({
     required BackendClient backend,
+    BuoyClient? buoy,
     http.Client? weatherClient,
     ForecastProvider? forecastProvider,
     MapSnapshotStore? snapshots,
   })  : _backend = backend,
+        _buoy = buoy,
         _snapshots = snapshots,
         _weatherClient = weatherClient ?? http.Client(),
         _forecast = forecastProvider ??
@@ -38,6 +41,7 @@ class VentureFeeds {
             );
 
   final BackendClient _backend;
+  final BuoyClient? _buoy;
   final http.Client _weatherClient;
   final ForecastProvider _forecast;
 
@@ -206,9 +210,38 @@ class VentureFeeds {
   Future<List<Advisory>?> advisories() async {
     final decoded = await _cachedJson(
       MapSnapshotStore.feedAdvisories,
-      () async =>
-          await _backend.getJson(AqOneConfig.advisoriesPath) ??
-          await _backend.getJson(AqOneConfig.publicAdvisoriesPath),
+      () async {
+        final live = await _backend.getJson(AqOneConfig.advisoriesPath) ??
+            await _backend.getJson(AqOneConfig.publicAdvisoriesPath);
+        if (live != null) {
+          return live;
+        }
+        final buoy = _buoy;
+        if (buoy != null) {
+          try {
+            final buoyWarnings = await buoy.warnings();
+            return <String, Object?>{
+              'advisories': buoyWarnings
+                  .map((Advisory a) => <String, Object?>{
+                        'id': a.id,
+                        'title': a.title,
+                        'description': a.description,
+                        'priority': a.priority.label,
+                        'municipality': a.municipality,
+                        'source': a.source,
+                        'revision': a.revision,
+                        'publish_date': a.publishDate?.toIso8601String(),
+                        'expiration_date': a.expirationDate?.toIso8601String(),
+                        'is_official': a.isOfficial,
+                      })
+                  .toList(),
+            };
+          } catch (_) {
+            // Buoy unreachable or error
+          }
+        }
+        return null;
+      },
     );
     // null means the fetch failed (and no cached snapshot exists) - callers
     // must show that as "could not load", not as "no active advisories".

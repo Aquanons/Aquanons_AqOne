@@ -224,7 +224,7 @@ bool opsLogin() {
 
   WiFiClientSecure client;
   HTTPClient https;
-  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/auth/login")) return false;
+  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/login")) return false;
   https.addHeader("Content-Type", "application/json");
   https.setTimeout(12000);
 

@@ -13,6 +13,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) | Foundation |
 | Demo evidence and implementation status | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) | Evidence ledger |
 | Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active |
+| External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) | Active |
 
 ## Shared contracts
 
@@ -30,6 +31,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Field measurement & commissioning | [`50_FIELD_MEASUREMENT_AND_COMMISSIONING_PROTOCOL.md`](50_FIELD_MEASUREMENT_AND_COMMISSIONING_PROTOCOL.md) |
 | Communication opportunity & delivered lead | [`51_COMMUNICATION_OPPORTUNITY_AND_DELIVERY_LEAD.md`](51_COMMUNICATION_OPPORTUNITY_AND_DELIVERY_LEAD.md) |
 | Independent labels & drill manifests | [`52_INDEPENDENT_LABELS_AND_DRILL_MANIFESTS.md`](52_INDEPENDENT_LABELS_AND_DRILL_MANIFESTS.md) |
+| Field readiness & measurement handoff | [`54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md`](54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md) |
 
 ## Find documents by lifecycle
 

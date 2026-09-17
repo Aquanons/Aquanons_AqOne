@@ -120,14 +120,8 @@ scoped out and have since been built — `docs/07_SCOPE_OUT.md` records where ea
 now lives. The canonical scope is `Aqone_PRD (2).md` (v3.0), where anything not
 yet built is tagged `[Roadmap — not implemented]`.
 
-## Time budget
+## External deadlines
 
-| Block | Hours |
-|---|---|
-| Day 1 afternoon (Aug 3, post-orientation) | 2.5 |
-| **Night 1 (Aug 3→4) — main integration push** | **7.0** |
-| Day 2 build (Aug 4, 1–5 pm) | 4.0 |
-| Day 3 (Aug 5, hard stop ~10:30 am) | 2.0 |
-| **Total** | **~15.5** |
-
-Deliverables may be due 5:00 pm Aug 4. Plan for that.
+Event deadlines are maintained separately from the implementation brief in
+[`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md). The completed AI Fest
+schedule is archived in [`archive/AI_FEST_2026_DEADLINES.md`](archive/AI_FEST_2026_DEADLINES.md).

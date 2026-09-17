@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from base64 import b64encode
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -279,36 +280,60 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     otherwise an acknowledgement makes the incident disappear before the
     dispatcher can see the fisher's reply to it. An incident leaves this feed
     only once a dispatcher resolves it or the fisher sends SAFE_NOW.
+
+    Each event carries the vessel's declared owner identity
+    (`POST /api/vessel-profile`) alongside its snapshot fields, so a
+    dispatcher can see who raised the call. That identity includes the owner's
+    profile photo (`avatar`, a base64 PNG data URL) and contact number. The
+    trust tier that sits on the incident is the same self-declared claim,
+    shown next to it (docs/16).
+
+    The photo is inlined rather than served from a URL so it stays behind this
+    protected endpoint - a static file route would expose every fisherman's
+    face without a token. `ponytail:` the whole image rides every 3s poll for
+    every event; fine at demo scale, and the upgrade path is a thumbnail plus
+    a token-checked GET /api/vessel/{id}/avatar if the feed grows.
     """
     pool = get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT id, vessel_id, boat, latitude, longitude, note, trust_tier,
-                   client_ts, delivered_direct, delivered_via_buoy,
-                   buoy_id, created_at, acknowledged_at, acked_by,
-                   eta_at, responder_status, responder_note,
-                   fisher_reply, fisher_replied_at, resolved_at,
-                   is_synthetic
-            FROM sos_events
-            WHERE resolved_at IS NULL
-            ORDER BY created_at DESC
+            SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
+                   e.trust_tier,
+                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
+                   e.eta_at, e.responder_status, e.responder_note,
+                   e.fisher_reply, e.fisher_replied_at, e.resolved_at,
+                   e.is_synthetic,
+                   v.skipper_name, v.license_type, v.license_number, v.phone,
+                   v.avatar_png
+            FROM sos_events e
+            LEFT JOIN vessels v ON v.id = e.vessel_id
+            WHERE e.resolved_at IS NULL
+            ORDER BY e.created_at DESC
             LIMIT 100
             '''
         )
     timestamp_columns = (
         'created_at', 'acknowledged_at', 'eta_at', 'fisher_replied_at', 'resolved_at',
     )
-    return {
-        'events': [
-            {
-                **{k: v for k, v in dict(row).items() if k not in timestamp_columns},
-                **{col: _iso(row[col]) for col in timestamp_columns},
-                'responder_status_label': RESPONDER_STATUS_LABELS.get(row['responder_status']),
-            }
-            for row in rows
-        ]
-    }
+
+    events: list[dict[str, object]] = []
+    for row in rows:
+        data = dict(row)
+        # Raw bytes are not JSON-serializable; swap them for the data URL the
+        # dashboard's <img> can consume directly.
+        avatar_png = data.pop('avatar_png', None)
+        for col in timestamp_columns:
+            data[col] = _iso(row[col])
+        data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
+        data['avatar'] = (
+            'data:image/png;base64,' + b64encode(bytes(avatar_png)).decode()
+            if avatar_png else None
+        )
+        events.append(data)
+
+    return {'events': events}
 
 
 class AcknowledgeIn(BaseModel):

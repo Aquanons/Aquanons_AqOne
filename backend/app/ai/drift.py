@@ -267,21 +267,35 @@ def _fetch_wind_series(lat: float, lon: float, start_at: datetime, horizon_hours
 
 
 def _interpolate_series(series: WindSeries, at: datetime) -> tuple[float, float]:
+    u_arr = np.asarray(series.u_mps)
+    v_arr = np.asarray(series.v_mps)
+    if not np.all(np.isfinite(u_arr)) or not np.all(np.isfinite(v_arr)):
+        raise ValueError("Wind series contains NaN or nonfinite values")
+
     if len(series.times) == 1:
-        return float(series.u_mps[0]), float(series.v_mps[0])
-    at = at.astimezone(MANILA_TZ)
-    times = np.array([item.timestamp() for item in series.times], dtype=float)
+        return float(u_arr[0]), float(v_arr[0])
+
+    if at.tzinfo is None:
+        at = at.replace(tzinfo=UTC)
     target = at.timestamp()
+
+    times = []
+    for item in series.times:
+        if item.tzinfo is None:
+            item = item.replace(tzinfo=UTC)
+        times.append(item.timestamp())
+    times = np.array(times, dtype=float)
+
     if target <= times[0]:
-        return float(series.u_mps[0]), float(series.v_mps[0])
+        return float(u_arr[0]), float(v_arr[0])
     if target >= times[-1]:
-        return float(series.u_mps[-1]), float(series.v_mps[-1])
+        return float(u_arr[-1]), float(v_arr[-1])
     index = int(np.searchsorted(times, target))
     t0 = times[index - 1]
     t1 = times[index]
-    alpha = (target - t0) / (t1 - t0)
-    u = float(series.u_mps[index - 1] * (1.0 - alpha) + series.u_mps[index] * alpha)
-    v = float(series.v_mps[index - 1] * (1.0 - alpha) + series.v_mps[index] * alpha)
+    alpha = (target - t0) / (t1 - t0) if t1 != t0 else 0.0
+    u = float(u_arr[index - 1] * (1.0 - alpha) + u_arr[index] * alpha)
+    v = float(v_arr[index - 1] * (1.0 - alpha) + v_arr[index] * alpha)
     return u, v
 
 

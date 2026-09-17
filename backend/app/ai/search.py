@@ -10,12 +10,20 @@ The grid is the state — the particle simulation is not re-run on each update.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import numpy as np
 
-from app.ai.drift import _contour_polygon, _to_latlon
+from app.ai.drift import _contour_polygon, _to_latlon, _to_xy
+
+
+def _normalize_dt(dt: datetime | str) -> datetime:
+    if isinstance(dt, str):
+        dt = datetime.fromisoformat(dt)
+    if dt.tzinfo is None:
+        raise ValueError("Timestamp must be timezone-aware")
+    return dt.astimezone(UTC)
 
 
 def _grid_from_dict(grid_dict: dict[str, Any]) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
@@ -50,53 +58,125 @@ def _grid_to_dict(
 def update_trajectory_weights(
     trajectory_lats: np.ndarray,
     trajectory_lons: np.ndarray,
-    step_times: list[datetime],
+    step_times: list[datetime | str],
     sectors: list[dict[str, Any]],
     weights: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Apply Bayesian likelihood updates to particle trajectory weights (Task 4.7).
+    """Apply Bayesian likelihood updates to particle trajectory weights (Task 3.3).
 
     trajectory_lats and trajectory_lons have shape (n_steps, n_particles).
     For each sector, applies (1 - detection_probability) only to particles that were
-    within the searched footprint during the search time.
+    within the searched footprint during the search time or interval.
 
     A moving target that was outside the sector at search time but drifts into that
     location at a later horizon is NOT attenuated, preserving unrelated present mass.
-    Unsupported detection likelihood (dp <= 0.0) leaves weights quantitatively unchanged.
     """
     n_steps, n_particles = trajectory_lats.shape
-    w = np.ones(n_particles, dtype=float) / n_particles if weights is None else weights.copy()
+    w = np.ones(n_particles, dtype=float) / n_particles if weights is None else np.array(weights, dtype=float).copy()
+    norm_step_times = [_normalize_dt(t) for t in step_times]
 
     for sector in sectors:
-        dp = float(sector.get('detection_probability', 0.0))
-        if dp <= 0.0:
+        if sector.get('is_unassimilated', False):
             continue
 
+        raw_dp = sector.get('detection_probability')
+        if raw_dp is None:
+            raw_dp = 0.0
+        dp = float(raw_dp)
+        if not np.isfinite(dp) or dp < 0.0 or dp > 1.0:
+            raise ValueError("detection_probability must be between 0.0 and 1.0")
+        if dp == 0.0:
+            continue
+
+        effective_dp = dp * 0.25 if sector.get('dependent', False) else dp
+
+        # Determine active steps
         searched_at = sector.get('searched_at')
-        if searched_at is not None:
-            s_dt = datetime.fromisoformat(searched_at) if isinstance(searched_at, str) else searched_at
-            diffs = [abs((t - s_dt).total_seconds()) for t in step_times]
-            t_idx = int(np.argmin(diffs))
+        start_at = sector.get('search_start_at')
+        end_at = sector.get('search_end_at')
+
+        if start_at is not None and end_at is not None:
+            start_dt = _normalize_dt(start_at)
+            end_dt = _normalize_dt(end_at)
+            if end_dt < start_dt:
+                raise ValueError("search_end_at must be >= search_start_at")
+            if start_dt > norm_step_times[-1] or end_dt < norm_step_times[0]:
+                raise ValueError("searched interval is outside trajectory time range")
+            active_steps = [
+                i for i, t in enumerate(norm_step_times)
+                if (start_dt <= t <= end_dt) or (i > 0 and norm_step_times[i - 1] <= end_dt and t >= start_dt)
+            ]
+            if not active_steps:
+                active_steps = [int(np.argmin([abs((t - start_dt).total_seconds()) for t in norm_step_times]))]
+        elif searched_at is not None:
+            s_dt = _normalize_dt(searched_at)
+            if s_dt < norm_step_times[0] - timedelta(seconds=1) or s_dt > norm_step_times[-1] + timedelta(seconds=1):
+                raise ValueError("searched_at is outside trajectory time range")
+            diffs = [abs((t - s_dt).total_seconds()) for t in norm_step_times]
+            active_steps = [int(np.argmin(diffs))]
         else:
-            t_idx = n_steps - 1
+            raise ValueError("search occurrence time (searched_at or search_start_at/end_at) is required")
 
-        lats = trajectory_lats[t_idx]
-        lons = trajectory_lons[t_idx]
-
+        in_sector = np.zeros(n_particles, dtype=bool)
         if 'south' in sector and 'north' in sector:
-            in_sector = (
-                (lats >= sector['south']) & (lats <= sector['north']) &
-                (lons >= sector['west']) & (lons <= sector['east'])
-            )
-        else:
-            in_sector = np.zeros(n_particles, dtype=bool)
+            for step_idx in active_steps:
+                step_lats = trajectory_lats[step_idx]
+                step_lons = trajectory_lons[step_idx]
+                in_step = (
+                    (step_lats >= sector['south']) & (step_lats <= sector['north']) &
+                    (step_lons >= sector['west']) & (step_lons <= sector['east'])
+                )
+                in_sector |= in_step
+        elif 'x_min_m' in sector and 'x_max_m' in sector:
+            # Metre bounding box against origin if provided
+            origin_lat = float(sector.get('origin_lat', norm_step_times[0]))
+            origin_lon = float(sector.get('origin_lon', norm_step_times[0]))
+            for step_idx in active_steps:
+                xs, ys = _to_xy(trajectory_lats[step_idx], trajectory_lons[step_idx], origin_lat, origin_lon)
+                in_step = (
+                    (xs >= sector['x_min_m']) & (xs <= sector['x_max_m']) &
+                    (ys >= sector['y_min_m']) & (ys <= sector['y_max_m'])
+                )
+                in_sector |= in_step
 
-        w[in_sector] *= 1.0 - dp
+        w[in_sector] *= 1.0 - effective_dp
 
-    total = w.sum()
-    if total > 0:
-        w /= total
+    total = float(w.sum())
+    if not np.isfinite(total) or total <= 1e-12:
+        raise ValueError("All particle mass rejected by search evidence")
+    w /= total
     return w
+
+
+def grid_from_trajectories(
+    trajectory_lats: np.ndarray,
+    trajectory_lons: np.ndarray,
+    weights: np.ndarray,
+    origin_lat: float,
+    origin_lon: float,
+    grid_resolution_m: float = 500.0,
+    reference_grid: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a DensityGrid dict from final particle positions and their posterior weights."""
+    final_lats = trajectory_lats[-1]
+    final_lons = trajectory_lons[-1]
+    if reference_grid is not None:
+        _, x_edges, y_edges, origin_lat, origin_lon = _grid_from_dict(reference_grid)
+    else:
+        x, y = _to_xy(final_lats, final_lons, origin_lat, origin_lon)
+        x_min = float(np.min(x)) - grid_resolution_m
+        x_max = float(np.max(x)) + grid_resolution_m
+        y_min = float(np.min(y)) - grid_resolution_m
+        y_max = float(np.max(y)) + grid_resolution_m
+        x_edges = np.arange(x_min, x_max + grid_resolution_m, grid_resolution_m)
+        y_edges = np.arange(y_min, y_max + grid_resolution_m, grid_resolution_m)
+
+    x, y = _to_xy(final_lats, final_lons, origin_lat, origin_lon)
+    hist, y_edges, x_edges = np.histogram2d(y, x, bins=[y_edges, x_edges], weights=weights)
+    if hist.sum() > 0:
+        hist = hist / hist.sum()
+
+    return _grid_to_dict(hist, x_edges, y_edges, origin_lat, origin_lon)
 
 
 def update_posterior(

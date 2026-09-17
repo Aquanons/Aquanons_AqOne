@@ -85,6 +85,7 @@ The app must never display a later state without observing evidence for it.
 | Work on localization | [`mobile/lib/l10n/README.md`](mobile/lib/l10n/README.md) and [`docs/22_LOCALIZATION_PLAN.md`](docs/22_LOCALIZATION_PLAN.md) |
 | Work on visual design | [`docs/47_VISUAL_DESIGN_GUIDE.md`](docs/47_VISUAL_DESIGN_GUIDE.md) |
 | Find active and historical project records | [`docs/README.md`](docs/README.md) |
+| Find external event deadlines | [`docs/53_EXTERNAL_DEADLINES.md`](docs/53_EXTERNAL_DEADLINES.md) |
 
 When documents conflict, do not choose a winner by filename or age alone.
 Use the PRD for product scope, the relevant contract for an interface, the newest dated verification for observed results, and source plus tests for current implementation evidence.
@@ -172,7 +173,7 @@ Get-ChildItem web/js, web/test -Recurse -Filter *.js | ForEach-Object { node --c
 
 The Android platform files are already tracked.
 The current source accepts the buoy HTTP endpoint `http://192.168.4.1` and requires an absolute HTTPS backend URL.
-The default backend URL currently points to the unavailable Railway service, so a real run must override `BACKEND_BASE_URL` with a reachable HTTPS deployment.
+The default backend URL is the Render deployment (`https://aqone-backend.onrender.com`). The old Railway services are gone, so an APK built with a Railway `BACKEND_BASE_URL` cannot deliver a direct SOS.
 
 ```bash
 cd mobile
@@ -186,7 +187,7 @@ Build the focused Phase 1 pitch version only after those checks pass:
 ```bash
 flutter build apk --release \
   --dart-define=PITCH_MODE=true \
-  --dart-define=BACKEND_BASE_URL=https://your-verified-backend.example
+  --dart-define=BACKEND_BASE_URL=https://aqone-backend.onrender.com
 ```
 
 The bundled [`mobile/AqOne.apk`](mobile/AqOne.apk) predates the September 5 pitch build.
@@ -264,9 +265,9 @@ fixtures/      Shared contract fixtures
 | Member | Responsibility |
 |---|---|
 | Lenard | Backend, architecture, and deployment |
-| Arnold | Ingest pipeline and gateway |
+| Arnold | Website Dashboard |
 | Daniel | Hardware and buoy firmware |
-| Jade | Dashboard |
+| Jade | Flutter Application |
 | Doreen Kay | Pitching, Company branding and business direction |
 | Kc Condes | Pitching and business development support |
 
