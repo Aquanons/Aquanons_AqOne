@@ -485,31 +485,11 @@
   }
 
   ns.sosDrawer = sosDrawer;
-  ns.sosDrawerHeader = sosDrawerHeader;
-  ns.sosDrawerTitle = sosDrawerTitle;
-  ns.sosDrawerClose = sosDrawerClose;
-  ns.sosTimerEl = sosTimerEl;
-  ns.sosBtnZoom = sosBtnZoom;
-  ns.sosBtnAcknowledge = sosBtnAcknowledge;
-  ns.sosBtnResolve = sosBtnResolve;
-  ns.sosBtnBroadcast = sosBtnBroadcast;
-  ns.sosBtnCheckin = sosBtnCheckin;
-  ns.sosBroadcastMsg = sosBroadcastMsg;
-  ns.sosTimerInterval = sosTimerInterval;
-  ns.sosAlertStartTime = sosAlertStartTime;
   ns.openIncidentDrawer = openIncidentDrawer;
   ns.closeSOSDrawer = closeSOSDrawer;
-  ns.sosTickTimer = sosTickTimer;
   ns.ackOverlay = ackOverlay;
-  ns.ackVesselEl = ackVesselEl;
-  ns.ackStatusEl = ackStatusEl;
-  ns.ackEtaEl = ackEtaEl;
-  ns.ackNoteEl = ackNoteEl;
-  ns.ackConfirmBtn = ackConfirmBtn;
   ns.closeAckModal = closeAckModal;
   ns.openAckModal = openAckModal;
-  ns.ackQuick = ackQuick;
-  ns.renderResponderSection = renderResponderSection;
   ns.refreshOpenDrawer = refreshOpenDrawer;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
 

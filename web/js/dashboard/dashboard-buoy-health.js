@@ -286,20 +286,6 @@
   });
 
   ns.renderIncidentFeed = renderIncidentFeed;
-  ns.buoyMonitorData = buoyMonitorData;
-  ns.buoyRailBtn = buoyRailBtn;
-  ns.buoyRailBadge = buoyRailBadge;
-  ns.buoyDrawerBadge = buoyDrawerBadge;
-  ns.buoyListEl = buoyListEl;
-  ns.buoyFooter = buoyFooter;
-  ns.buoySyncTime = buoySyncTime;
-  ns.buoyOnlineCount = buoyOnlineCount;
-  ns.buoyTotal = buoyTotal;
-  ns.renderBuoyList = renderBuoyList;
-  ns.renderBuoyHealthCard = renderBuoyHealthCard;
-  ns.renderBuoyHealth = renderBuoyHealth;
   ns.updateStats = updateStats;
-  ns.formatCoord = formatCoord;
-  ns.compassWidget = compassWidget;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

@@ -17,18 +17,16 @@ import math
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import pairwise
 from statistics import mean
 from typing import Any
 
-import httpx
 import numpy as np
 
 CENTER_LAT = 11.6892
 CENTER_LON = 122.3667
 MANILA_TZ = timezone(timedelta(hours=8))
-WIND_CACHE_TTL_SECONDS = 20 * 60
 
 ANOMALY_CONFIG = {
     'thresholds': {'normal': 0.25, 'watch': 0.35, 'overdue': 0.55, 'alert': 0.65},
@@ -389,55 +387,6 @@ def score_to_status(score: float) -> str:
     if score >= thresholds['watch']:
         return 'watch'
     return 'normal'
-
-
-_weather_cache: dict[tuple[float, float, str], tuple[float, WeatherSnapshot]] = {}
-
-
-def get_weather_snapshot(lat: float, lon: float, at: datetime) -> WeatherSnapshot:
-    key = (
-        round(lat, 2),
-        round(lon, 2),
-        at.astimezone(MANILA_TZ).replace(minute=0, second=0, microsecond=0).isoformat(),
-    )
-    cached = _weather_cache.get(key)
-    now = datetime.now(UTC).timestamp()
-    if cached and now - cached[0] < WIND_CACHE_TTL_SECONDS:
-        return cached[1]
-    try:
-        with httpx.Client(timeout=5.0) as client:
-            response = client.get(
-                'https://api.open-meteo.com/v1/forecast',
-                params={
-                    'latitude': lat,
-                    'longitude': lon,
-                    'hourly': 'wind_speed_10m,wind_direction_10m,weather_code',
-                    'wind_speed_unit': 'ms',
-                    'forecast_days': 3,
-                    'timezone': 'Asia/Manila',
-                },
-            )
-            response.raise_for_status()
-            payload = response.json()
-        hourly = payload.get('hourly') or {}
-        times = hourly.get('time') or []
-        wind_speeds = hourly.get('wind_speed_10m') or []
-        wind_dirs = hourly.get('wind_direction_10m') or []
-        codes = hourly.get('weather_code') or []
-        if not times:
-            raise ValueError('missing weather data')
-        target = at.astimezone(MANILA_TZ).replace(minute=0, second=0, microsecond=0).isoformat()
-        idx = min(
-        range(len(times)),
-        key=lambda i: abs(
-            datetime.fromisoformat(times[i]).timestamp() - datetime.fromisoformat(target).timestamp()
-        ),
-    )
-        snapshot = WeatherSnapshot('open-meteo', False, float(wind_speeds[idx]), float(wind_dirs[idx]), int(codes[idx]))
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        snapshot = _synthetic_weather_snapshot(lat, lon, at)
-    _weather_cache[key] = (now, snapshot)
-    return snapshot
 
 
 def _synthetic_weather_snapshot(lat: float, lon: float, at: datetime) -> WeatherSnapshot:

@@ -300,21 +300,10 @@
   loadActiveSos();
   setInterval(loadActiveSos, LIVE_SOS_POLL_MS);
 
-  ns.relativeTime = relativeTime;
-  ns.LIVE_SOS_POLL_MS = LIVE_SOS_POLL_MS;
   ns.liveSosLayer = liveSosLayer;
   ns.liveSosMarkers = liveSosMarkers;
-  ns.liveSosFirstLoad = liveSosFirstLoad;
-  ns.knownSosIds = knownSosIds;
-  ns.syncStatusEl = syncStatusEl;
-  ns.syncTextEl = syncTextEl;
-  ns.bannerTimeEl = bannerTimeEl;
   ns.updateSyncStatus = updateSyncStatus;
-  ns.liveSosIcon = liveSosIcon;
-  ns.deliveryPath = deliveryPath;
-  ns.sosPosition = sosPosition;
   ns.liveAlertFromEvent = liveAlertFromEvent;
-  ns.syncLiveSosMarkers = syncLiveSosMarkers;
   ns.loadActiveSos = loadActiveSos;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

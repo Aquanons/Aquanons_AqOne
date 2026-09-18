@@ -292,7 +292,5 @@
     var savedLang = localStorage.getItem('aqone_lang') || 'en';
     applyLanguage(savedLang);
   })();
-  ns.userProfilePill = userProfilePill;
-  ns.hideLoadingOverlay = hideLoadingOverlay;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

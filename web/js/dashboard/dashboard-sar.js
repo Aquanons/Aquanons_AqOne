@@ -127,9 +127,5 @@
   loadSarMetrics();
   document.getElementById('badge-sar').textContent = incidentDrawerData.filter(function (d) { return d.alertType === 'overdue' || d.alertType === 'squall'; }).length;
 
-  ns.sarRowsFromResults = sarRowsFromResults;
-  ns.renderSarEmpty = renderSarEmpty;
-  ns.renderSarMetrics = renderSarMetrics;
-  ns.loadSarMetrics = loadSarMetrics;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

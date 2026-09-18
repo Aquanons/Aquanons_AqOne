@@ -264,7 +264,6 @@
       return alert.status === 'active';
     }).length;
     activeAlertCount = unackedCount;
-    ns.activeAlertCount = activeAlertCount;
     const unresolvedCount = liveAlerts.filter(function (alert) {
       return alert.status !== 'resolved';
     }).length;
@@ -299,14 +298,7 @@
   syncAlertIndicators();
 
   ns.vessels = vessels;
-  ns.vesselStatusBadge = vesselStatusBadge;
-  ns.overdueVessels = overdueVessels;
-  ns.overdueDrawerData = overdueDrawerData;
-  ns.vesselMarkers = vesselMarkers;
-  ns.activeVessels = activeVessels;
   ns.renderVessels = renderVessels;
-  ns.vesselFilters = vesselFilters;
-  ns.overdueCount = overdueCount;
   ns.alertData = alertData;
   ns.liveAlerts = liveAlerts;
   ns.allAlerts = allAlerts;
@@ -315,10 +307,6 @@
   ns.confidenceColor = confidenceColor;
   ns.alertConfidenceRow = alertConfidenceRow;
   ns.renderAlerts = renderAlerts;
-  ns.activeAlertCount = activeAlertCount;
-  ns.liveBanner = liveBanner;
-  ns.bannerCountEl = bannerCountEl;
-  ns.squallCountEl = squallCountEl;
   ns.syncAlertIndicators = syncAlertIndicators;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});
