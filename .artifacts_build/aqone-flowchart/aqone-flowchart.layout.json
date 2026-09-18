@@ -1,0 +1,7061 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/ga0yr8",
+    "id": "ga0yr8",
+    "slide": 1,
+    "layoutId": "481e8d69-dc26-481d-a4bf-fafb24b511dc",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "5c3722c0-6cda-4cee-bf38-0c1438d39a9a",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FBFCFE",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1400,
+      "height": 2100
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Arial"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "481e8d69-dc26-481d-a4bf-fafb24b511dc",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "5c3722c0-6cda-4cee-bf38-0c1438d39a9a",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "5c3722c0-6cda-4cee-bf38-0c1438d39a9a",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1kbapw3m",
+      "id": "1",
+      "name": "deck-title",
+      "bbox": [
+        42,
+        17,
+        880,
+        50
+      ],
+      "geometry": "rect",
+      "text": "AqOne Detailed Architecture",
+      "textPreview": "AqOne Detailed Architecture",
+      "resolvedFontSize": 34,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 34,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AqOne Detailed Architecture"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AqOne Detailed Architecture",
+          "resolvedTextStyle": {
+            "fontSize": 34,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AqOne Detailed Architecture",
+              "fontSize": 34,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ehkbuh4b",
+      "id": "2",
+      "name": "deck-subtitle",
+      "bbox": [
+        44,
+        66,
+        980,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Offline SOS transport, safety intelligence and responder loop",
+      "textPreview": "Offline SOS transport, safety intelligence and responder loop",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Offline SOS transport, safety intelligence and responder loop"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Offline SOS transport, safety intelligence and responder loop",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Offline SOS transport, safety intelligence and responder loop",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fitsnmlw",
+      "id": "3",
+      "name": "status-summary",
+      "bbox": [
+        1015,
+        28,
+        330,
+        44
+      ],
+      "geometry": "roundRect",
+      "text": "SOURCE BUILT. FIELD VALIDATION PENDING",
+      "textPreview": "SOURCE BUILT. FIELD VALIDATION PENDING",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SOURCE BUILT. FIELD VALIDATION PENDING"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SOURCE BUILT. FIELD VALIDATION PENDING",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SOURCE BUILT. FIELD VALIDATION PENDING",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF4CC",
+      "lineColor": "#D6B43C",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o72tkb2d",
+      "id": "4",
+      "name": "inputs-boundary",
+      "bbox": [
+        28,
+        110,
+        1344,
+        235
+      ],
+      "geometry": "roundRect",
+      "fillColor": "rgba(255, 255, 255, 0)",
+      "lineColor": "#738096",
+      "lineWidth": 1.5
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8vutg3y",
+      "id": "5",
+      "name": "inputs-title",
+      "bbox": [
+        42,
+        117,
+        450,
+        33
+      ],
+      "geometry": "rect",
+      "text": "Input and Field Layer",
+      "textPreview": "Input and Field Layer",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Input and Field Layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Input and Field Layer",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Input and Field Layer",
+              "fontSize": 22,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2lkbi1k7",
+      "id": "6",
+      "name": "inputs-note",
+      "bbox": [
+        815,
+        118,
+        530,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Evidence sources and human actions",
+      "textPreview": "Evidence sources and human actions",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Evidence sources and human actions"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Evidence sources and human actions",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Evidence sources and human actions",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3mtcr6ls",
+      "id": "7",
+      "name": "transport-boundary",
+      "bbox": [
+        28,
+        365,
+        1344,
+        285
+      ],
+      "geometry": "roundRect",
+      "fillColor": "rgba(255, 255, 255, 0)",
+      "lineColor": "#738096",
+      "lineWidth": 1.5
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4bito7m9",
+      "id": "8",
+      "name": "transport-title",
+      "bbox": [
+        42,
+        372,
+        450,
+        33
+      ],
+      "geometry": "rect",
+      "text": "Edge and Transport Layer",
+      "textPreview": "Edge and Transport Layer",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Edge and Transport Layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Edge and Transport Layer",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Edge and Transport Layer",
+              "fontSize": 22,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5crahc3u",
+      "id": "9",
+      "name": "transport-note",
+      "bbox": [
+        815,
+        373,
+        530,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Store first, forward when a path exists",
+      "textPreview": "Store first, forward when a path exists",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Store first, forward when a path exists"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Store first, forward when a path exists",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Store first, forward when a path exists",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90nat0zi",
+      "id": "10",
+      "name": "backend-boundary",
+      "bbox": [
+        28,
+        670,
+        1344,
+        235
+      ],
+      "geometry": "roundRect",
+      "fillColor": "rgba(255, 255, 255, 0)",
+      "lineColor": "#738096",
+      "lineWidth": 1.5
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8ze90vyx",
+      "id": "11",
+      "name": "backend-title",
+      "bbox": [
+        42,
+        677,
+        450,
+        33
+      ],
+      "geometry": "rect",
+      "text": "Backend and Data Layer",
+      "textPreview": "Backend and Data Layer",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Backend and Data Layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Backend and Data Layer",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Backend and Data Layer",
+              "fontSize": 22,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ny5srqhs",
+      "id": "12",
+      "name": "backend-note",
+      "bbox": [
+        815,
+        678,
+        530,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Provider-neutral logical architecture",
+      "textPreview": "Provider-neutral logical architecture",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Provider-neutral logical architecture"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Provider-neutral logical architecture",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Provider-neutral logical architecture",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mxwrylg7",
+      "id": "13",
+      "name": "decision-boundary",
+      "bbox": [
+        28,
+        925,
+        1344,
+        690
+      ],
+      "geometry": "roundRect",
+      "fillColor": "rgba(255, 255, 255, 0)",
+      "lineColor": "#738096",
+      "lineWidth": 1.5
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x47ax0zu",
+      "id": "14",
+      "name": "decision-title",
+      "bbox": [
+        42,
+        932,
+        450,
+        33
+      ],
+      "geometry": "rect",
+      "text": "Processing and Decision Support Layer",
+      "textPreview": "Processing and Decision Support Layer",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Processing and Decision Support Layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Processing and Decision Support Layer",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Processing and Decision Support Layer",
+              "fontSize": 22,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w3y94fy9",
+      "id": "15",
+      "name": "decision-note",
+      "bbox": [
+        815,
+        933,
+        530,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Manual SOS remains independent of every model",
+      "textPreview": "Manual SOS remains independent of every model",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manual SOS remains independent of every model"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manual SOS remains independent of every model",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manual SOS remains independent of every model",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/v2psvaho",
+      "id": "16",
+      "name": "outputs-boundary",
+      "bbox": [
+        28,
+        1635,
+        1344,
+        305
+      ],
+      "geometry": "roundRect",
+      "fillColor": "rgba(255, 255, 255, 0)",
+      "lineColor": "#738096",
+      "lineWidth": 1.5
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a1wr25g3",
+      "id": "17",
+      "name": "outputs-title",
+      "bbox": [
+        42,
+        1642,
+        450,
+        33
+      ],
+      "geometry": "rect",
+      "text": "Output and Human Response Layer",
+      "textPreview": "Output and Human Response Layer",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Output and Human Response Layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Output and Human Response Layer",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Output and Human Response Layer",
+              "fontSize": 22,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5s7a1kzq",
+      "id": "18",
+      "name": "outputs-note",
+      "bbox": [
+        815,
+        1643,
+        530,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Human authority remains explicit",
+      "textPreview": "Human authority remains explicit",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Human authority remains explicit"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Human authority remains explicit",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Human authority remains explicit",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kry98fy5",
+      "id": "19",
+      "name": "input-mobile",
+      "bbox": [
+        50,
+        172,
+        230,
+        112
+      ],
+      "geometry": "roundRect",
+      "text": "Fisher mobile app\nManual SOS, GPS, timestamp, trip check-ins, optional catch logs",
+      "textPreview": "Fisher mobile app | Manual SOS, GPS, timestamp, trip check-ins, optional catch logs",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fisher mobile app"
+          },
+          {
+            "index": 2,
+            "text": "Manual SOS, GPS, timestamp, trip"
+          },
+          {
+            "index": 3,
+            "text": "check-ins, optional catch logs"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fisher mobile app",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fisher mobile app",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Manual SOS, GPS, timestamp, trip check-ins, optional catch logs",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manual SOS, GPS, timestamp, trip check-ins, optional catch logs",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9EDF2",
+      "lineColor": "#738096",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onqlknat",
+      "id": "20",
+      "name": "input-pod",
+      "bbox": [
+        312,
+        172,
+        230,
+        112
+      ],
+      "geometry": "roundRect",
+      "text": "Boat pod\nPhysical SOS button, GNSS, battery and radio events",
+      "textPreview": "Boat pod | Physical SOS button, GNSS, battery and radio events",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Boat pod"
+          },
+          {
+            "index": 2,
+            "text": "Physical SOS button, GNSS, battery"
+          },
+          {
+            "index": 3,
+            "text": "and radio events"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Boat pod",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Boat pod",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Physical SOS button, GNSS, battery and radio events",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Physical SOS button, GNSS, battery and radio events",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9EDF2",
+      "lineColor": "#738096",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8z2tsbe",
+      "id": "21",
+      "name": "input-sensor",
+      "bbox": [
+        574,
+        172,
+        230,
+        112
+      ],
+      "geometry": "roundRect",
+      "text": "Stationary sensor buoy\nFixed pressure, current observations and device health",
+      "textPreview": "Stationary sensor buoy | Fixed pressure, current observations and device health",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Stationary sensor"
+          },
+          {
+            "index": 2,
+            "text": "buoy"
+          },
+          {
+            "index": 3,
+            "text": "Fixed pressure, current observations"
+          },
+          {
+            "index": 4,
+            "text": "and device health"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Stationary sensor buoy",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Stationary sensor buoy",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Fixed pressure, current observations and device health",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fixed pressure, current observations and device health",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9EDF2",
+      "lineColor": "#738096",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2l83idsn",
+      "id": "22",
+      "name": "input-external",
+      "bbox": [
+        836,
+        172,
+        230,
+        112
+      ],
+      "geometry": "roundRect",
+      "text": "Environmental data\nOpen-Meteo weather and marine observations",
+      "textPreview": "Environmental data | Open-Meteo weather and marine observations",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Environmental data"
+          },
+          {
+            "index": 2,
+            "text": "Open-Meteo weather and marine"
+          },
+          {
+            "index": 3,
+            "text": "observations"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Environmental data",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Environmental data",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Open-Meteo weather and marine observations",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Open-Meteo weather and marine observations",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFE8C5",
+      "lineColor": "#C5872D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3mhkrit8",
+      "id": "23",
+      "name": "input-responder",
+      "bbox": [
+        1098,
+        172,
+        230,
+        112
+      ],
+      "geometry": "roundRect",
+      "text": "Responder actions\nAcknowledge, ETA, resolution and searched sectors",
+      "textPreview": "Responder actions | Acknowledge, ETA, resolution and searched sectors",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Responder actions"
+          },
+          {
+            "index": 2,
+            "text": "Acknowledge, ETA, resolution and"
+          },
+          {
+            "index": 3,
+            "text": "searched sectors"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Responder actions",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Responder actions",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Acknowledge, ETA, resolution and searched sectors",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Acknowledge, ETA, resolution and searched sectors",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFE8C5",
+      "lineColor": "#C5872D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cbalonap",
+      "id": "24",
+      "name": "transport-phone",
+      "bbox": [
+        62,
+        430,
+        238,
+        105
+      ],
+      "geometry": "roundRect",
+      "text": "Mobile SQLite outbox\nPersists an SOS before any network attempt\nDelivery state: SAVED",
+      "textPreview": "Mobile SQLite outbox | Persists an SOS before any network attempt | Delivery state: SAVED",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Mobile SQLite outbox"
+          },
+          {
+            "index": 2,
+            "text": "Persists an SOS before any network"
+          },
+          {
+            "index": 3,
+            "text": "attempt"
+          },
+          {
+            "index": 4,
+            "text": "Delivery state: SAVED"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Mobile SQLite outbox",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Mobile SQLite outbox",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Persists an SOS before any network attempt\nDelivery state: SAVED",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Persists an SOS before any network attempt\nDelivery state: SAVED",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F1F0",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dcj2xsba",
+      "id": "25",
+      "name": "transport-direct",
+      "bbox": [
+        80,
+        557,
+        202,
+        60
+      ],
+      "geometry": "roundRect",
+      "text": "Direct internet path\nHTTPS when cellular or WiFi internet is available",
+      "textPreview": "Direct internet path | HTTPS when cellular or WiFi internet is available",
+      "resolvedFontSize": 20.54,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 0.86,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Direct internet path"
+          },
+          {
+            "index": 2,
+            "text": "HTTPS when cellular or WiFi internet is"
+          },
+          {
+            "index": 3,
+            "text": "available"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Direct internet path",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Direct internet path",
+              "fontSize": 14.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "HTTPS when cellular or WiFi internet is available",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "HTTPS when cellular or WiFi internet is available",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q983mxsj",
+      "id": "26",
+      "name": "transport-pod",
+      "bbox": [
+        350,
+        430,
+        255,
+        105
+      ],
+      "geometry": "roundRect",
+      "text": "Boat pod flash queue\nAccepts before acknowledgement and retries after outages\nDelivery state: RELAYED",
+      "textPreview": "Boat pod flash queue | Accepts before acknowledgement and retries after outages | Delivery state: RELAYED",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Boat pod flash queue"
+          },
+          {
+            "index": 2,
+            "text": "Accepts before acknowledgement and"
+          },
+          {
+            "index": 3,
+            "text": "retries after outages"
+          },
+          {
+            "index": 4,
+            "text": "Delivery state: RELAYED"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Boat pod flash queue",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Boat pod flash queue",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Accepts before acknowledgement and retries after outages\nDelivery state: RELAYED",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Accepts before acknowledgement and retries after outages\nDelivery state: RELAYED",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F1F0",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ba1kv2t4",
+      "id": "27",
+      "name": "transport-relay",
+      "bbox": [
+        630,
+        545,
+        225,
+        76
+      ],
+      "geometry": "roundRect",
+      "text": "Optional relay buoy\nTTL flooding and duplicate suppression only where field tests justify it",
+      "textPreview": "Optional relay buoy | TTL flooding and duplicate suppression only where field tests justify it",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Optional relay buoy"
+          },
+          {
+            "index": 2,
+            "text": "TTL flooding and duplicate suppression"
+          },
+          {
+            "index": 3,
+            "text": "only where field tests justify it"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Optional relay buoy",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Optional relay buoy",
+              "fontSize": 15.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "TTL flooding and duplicate suppression only where field tests justify it",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "TTL flooding and duplicate suppression only where field tests justify it",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F1F0",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sf6lc3al",
+      "id": "28",
+      "name": "transport-gateway",
+      "bbox": [
+        895,
+        430,
+        255,
+        105
+      ],
+      "geometry": "roundRect",
+      "text": "Tall shoreline gateway\nVerifies LoAM signature, maps device identity and forwards over HTTPS",
+      "textPreview": "Tall shoreline gateway | Verifies LoAM signature, maps device identity and forwards over HTTPS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tall shoreline gateway"
+          },
+          {
+            "index": 2,
+            "text": "Verifies LoAM signature, maps device"
+          },
+          {
+            "index": 3,
+            "text": "identity and forwards over HTTPS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tall shoreline gateway",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tall shoreline gateway",
+              "fontSize": 18.67,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Verifies LoAM signature, maps device identity and forwards over HTTPS",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Verifies LoAM signature, maps device identity and forwards over HTTPS",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F1F0",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tgf2l8b6",
+      "id": "29",
+      "name": "transport-return",
+      "bbox": [
+        1168,
+        430,
+        175,
+        105
+      ],
+      "geometry": "roundRect",
+      "text": "Return path\nWarnings, acknowledgement and ETA when radio or internet is available",
+      "textPreview": "Return path | Warnings, acknowledgement and ETA when radio or internet is available",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Return path"
+          },
+          {
+            "index": 2,
+            "text": "Warnings, acknowledgement"
+          },
+          {
+            "index": 3,
+            "text": "and ETA when radio or internet"
+          },
+          {
+            "index": 4,
+            "text": "is available"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Return path",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Return path",
+              "fontSize": 15.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Warnings, acknowledgement and ETA when radio or internet is available",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Warnings, acknowledgement and ETA when radio or internet is available",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/va5or6do",
+      "id": "30",
+      "name": "mobile-input-to-outbox",
+      "bbox": [
+        165,
+        284,
+        16,
+        146
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a9cny1c3",
+      "id": "31",
+      "name": "pod-input-to-queue",
+      "bbox": [
+        427,
+        284,
+        50.5,
+        146
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xcn6tgve",
+      "id": "32",
+      "name": "sensor-input-to-relay",
+      "bbox": [
+        689,
+        284,
+        53.5,
+        261
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 33,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wbe50bu9",
+      "id": "33",
+      "name": "phone-to-pod",
+      "bbox": [
+        300,
+        482.5,
+        50,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 34,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n6lonmdc",
+      "id": "34",
+      "name": "label-wifi",
+      "bbox": [
+        286,
+        456,
+        76,
+        30
+      ],
+      "geometry": "roundRect",
+      "text": "WIFI HTTP",
+      "textPreview": "WIFI HTTP",
+      "resolvedFontSize": 9,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 9,
+        "typeface": "Arial",
+        "color": "#556174",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 4,
+          "bottom": 2,
+          "left": 4
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "WIFI HTTP"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "WIFI HTTP",
+          "resolvedTextStyle": {
+            "fontSize": 9,
+            "typeface": "Arial",
+            "color": "#556174",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "WIFI HTTP",
+              "fontSize": 9,
+              "typeface": "Arial",
+              "color": "#556174",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD2DC",
+      "lineWidth": 0.8
+    },
+    {
+      "order": 35,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m5cnu1cr",
+      "id": "35",
+      "name": "phone-to-direct",
+      "bbox": [
+        181,
+        535,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 36,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9836pwvi",
+      "id": "36",
+      "name": "pod-direct-lora",
+      "bbox": [
+        605,
+        482.5,
+        290,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 37,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87u5wrux",
+      "id": "37",
+      "name": "label-direct-lora",
+      "bbox": [
+        660,
+        438,
+        115,
+        30
+      ],
+      "geometry": "roundRect",
+      "text": "DIRECT LoRa",
+      "textPreview": "DIRECT LoRa",
+      "resolvedFontSize": 9,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 9,
+        "typeface": "Arial",
+        "color": "#556174",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 4,
+          "bottom": 2,
+          "left": 4
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "DIRECT LoRa"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "DIRECT LoRa",
+          "resolvedTextStyle": {
+            "fontSize": 9,
+            "typeface": "Arial",
+            "color": "#556174",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "DIRECT LoRa",
+              "fontSize": 9,
+              "typeface": "Arial",
+              "color": "#556174",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD2DC",
+      "lineWidth": 0.8
+    },
+    {
+      "order": 38,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z2lojmdg",
+      "id": "38",
+      "name": "pod-to-relay",
+      "bbox": [
+        477.5,
+        535,
+        152.5,
+        48
+      ],
+      "geometry": "bentConnector3",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 39,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yhsnqhcv",
+      "id": "39",
+      "name": "relay-to-gateway",
+      "bbox": [
+        855,
+        535,
+        167.5,
+        48
+      ],
+      "verticalFlip": true,
+      "geometry": "bentConnector2",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 40,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/epwrup8f",
+      "id": "40",
+      "name": "label-optional-relay",
+      "bbox": [
+        714,
+        584,
+        126,
+        30
+      ],
+      "geometry": "roundRect",
+      "text": "OPTIONAL RELAY",
+      "textPreview": "OPTIONAL RELAY",
+      "resolvedFontSize": 9,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 9,
+        "typeface": "Arial",
+        "color": "#556174",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 4,
+          "bottom": 2,
+          "left": 4
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OPTIONAL RELAY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OPTIONAL RELAY",
+          "resolvedTextStyle": {
+            "fontSize": 9,
+            "typeface": "Arial",
+            "color": "#556174",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "OPTIONAL RELAY",
+              "fontSize": 9,
+              "typeface": "Arial",
+              "color": "#556174",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD2DC",
+      "lineWidth": 0.8
+    },
+    {
+      "order": 41,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fa5snu90",
+      "id": "41",
+      "name": "gateway-return",
+      "bbox": [
+        1150,
+        482.5,
+        18,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 42,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbe9wfql",
+      "id": "42",
+      "name": "backend-api",
+      "bbox": [
+        105,
+        732,
+        760,
+        115
+      ],
+      "geometry": "roundRect",
+      "text": "FastAPI application services\nAuthentication and roles, validation and deduplication, SOS and sensor ingest, incident and advisory workflows",
+      "textPreview": "FastAPI application services | Authentication and roles, validation and deduplication, SOS and sensor ingest, incident and advisory workf...",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "FastAPI application services"
+          },
+          {
+            "index": 2,
+            "text": "Authentication and roles, validation and deduplication, SOS and sensor ingest, incident and advisory workflows"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "FastAPI application services",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "FastAPI application services",
+              "fontSize": 21.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Authentication and roles, validation and deduplication, SOS and sensor ingest, incident and advisory workflows",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Authentication and roles, validation and deduplication, SOS and sensor ingest, incident and advisory workflows",
+              "fontSize": 13.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#DDE7FF",
+      "lineColor": "#395EB7",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 43,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cnapkr6",
+      "id": "43",
+      "name": "backend-db",
+      "bbox": [
+        962,
+        732,
+        315,
+        115
+      ],
+      "geometry": "roundRect",
+      "text": "PostgreSQL\nSOS and responder actions\nTrips and contact events\nSensor, advisory, model and audit records",
+      "textPreview": "PostgreSQL | SOS and responder actions | Trips and contact events | Sensor, advisory, model and audit records",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PostgreSQL"
+          },
+          {
+            "index": 2,
+            "text": "SOS and responder actions"
+          },
+          {
+            "index": 3,
+            "text": "Trips and contact events"
+          },
+          {
+            "index": 4,
+            "text": "Sensor, advisory, model and audit records"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PostgreSQL",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PostgreSQL",
+              "fontSize": 21.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "SOS and responder actions\nTrips and contact events\nSensor, advisory, model and audit records",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SOS and responder actions\nTrips and contact events\nSensor, advisory, model and audit records",
+              "fontSize": 12.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#DDE7FF",
+      "lineColor": "#395EB7",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 44,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6lcrq58j",
+      "id": "44",
+      "name": "backend-polling",
+      "bbox": [
+        310,
+        860,
+        455,
+        36
+      ],
+      "geometry": "roundRect",
+      "text": "Current dashboard path: protected REST polling every 3 seconds",
+      "textPreview": "Current dashboard path: protected REST polling every 3 seconds",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Current dashboard path: protected REST polling every 3 seconds"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Current dashboard path: protected REST polling every 3 seconds",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Current dashboard path: protected REST polling every 3 seconds",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#EEF3FF",
+      "lineColor": "#395EB7",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 45,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmlsja94",
+      "id": "45",
+      "name": "gateway-to-api",
+      "bbox": [
+        485,
+        535,
+        537.5,
+        197
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#395EB7",
+      "lineWidth": 2
+    },
+    {
+      "order": 46,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/snu9sfq9",
+      "id": "46",
+      "name": "label-https",
+      "bbox": [
+        740,
+        636,
+        180,
+        30
+      ],
+      "geometry": "roundRect",
+      "text": "AUTHENTICATED HTTPS",
+      "textPreview": "AUTHENTICATED HTTPS",
+      "resolvedFontSize": 9,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 9,
+        "typeface": "Arial",
+        "color": "#556174",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 4,
+          "bottom": 2,
+          "left": 4
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AUTHENTICATED HTTPS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AUTHENTICATED HTTPS",
+          "resolvedTextStyle": {
+            "fontSize": 9,
+            "typeface": "Arial",
+            "color": "#556174",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AUTHENTICATED HTTPS",
+              "fontSize": 9,
+              "typeface": "Arial",
+              "color": "#556174",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD2DC",
+      "lineWidth": 0.8
+    },
+    {
+      "order": 47,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tonalkru",
+      "id": "47",
+      "name": "direct-to-api",
+      "bbox": [
+        105,
+        617,
+        76,
+        172.5
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector3",
+      "lineColor": "#395EB7",
+      "lineWidth": 2
+    },
+    {
+      "order": 48,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ihcrm587",
+      "id": "48",
+      "name": "external-to-api",
+      "bbox": [
+        485,
+        284,
+        466,
+        448
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#C5872D",
+      "lineWidth": 2
+    },
+    {
+      "order": 49,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jil8fq9s",
+      "id": "49",
+      "name": "responder-to-api",
+      "bbox": [
+        865,
+        284,
+        348,
+        505.5
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector3",
+      "lineColor": "#C5872D",
+      "lineWidth": 2
+    },
+    {
+      "order": 50,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lcrul8ba",
+      "id": "50",
+      "name": "api-to-db",
+      "bbox": [
+        865,
+        789.5,
+        97,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#395EB7",
+      "lineWidth": 2
+    },
+    {
+      "order": 51,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbids3ap",
+      "id": "51",
+      "name": "lane-sos-header",
+      "bbox": [
+        50,
+        988,
+        238,
+        70
+      ],
+      "geometry": "roundRect",
+      "text": "Manual SOS\nAI-independent emergency path",
+      "textPreview": "Manual SOS | AI-independent emergency path",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manual SOS"
+          },
+          {
+            "index": 2,
+            "text": "AI-independent emergency path"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manual SOS",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manual SOS",
+              "fontSize": 17.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "AI-independent emergency path",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI-independent emergency path",
+              "fontSize": 11.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 52,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/za9cjyt4",
+      "id": "52",
+      "name": "lane-weather-header",
+      "bbox": [
+        310,
+        988,
+        238,
+        70
+      ],
+      "geometry": "roundRect",
+      "text": "Environmental warning\nSquall and marine danger",
+      "textPreview": "Environmental warning | Squall and marine danger",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Environmental warning"
+          },
+          {
+            "index": 2,
+            "text": "Squall and marine danger"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Environmental warning",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Environmental warning",
+              "fontSize": 17.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Squall and marine danger",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Squall and marine danger",
+              "fontSize": 11.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 53,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y90vqtsz",
+      "id": "53",
+      "name": "lane-trip-header",
+      "bbox": [
+        570,
+        988,
+        238,
+        70
+      ],
+      "geometry": "roundRect",
+      "text": "Trip anomaly\nOverdue verification support",
+      "textPreview": "Trip anomaly | Overdue verification support",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Trip anomaly"
+          },
+          {
+            "index": 2,
+            "text": "Overdue verification support"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Trip anomaly",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Trip anomaly",
+              "fontSize": 17.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Overdue verification support",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Overdue verification support",
+              "fontSize": 11.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 54,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x8ruhobe",
+      "id": "54",
+      "name": "lane-drift-header",
+      "bbox": [
+        830,
+        988,
+        238,
+        70
+      ],
+      "geometry": "roundRect",
+      "text": "Drift and search\nPhysics-based decision support",
+      "textPreview": "Drift and search | Physics-based decision support",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Drift and search"
+          },
+          {
+            "index": 2,
+            "text": "Physics-based decision support"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Drift and search",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Drift and search",
+              "fontSize": 17.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Physics-based decision support",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Physics-based decision support",
+              "fontSize": 11.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 55,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/c7itojat",
+      "id": "55",
+      "name": "lane-catch-header",
+      "bbox": [
+        1090,
+        988,
+        238,
+        70
+      ],
+      "geometry": "roundRect",
+      "text": "Consented catch activity\nSeparate optional data purpose",
+      "textPreview": "Consented catch activity | Separate optional data purpose",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Consented catch activity"
+          },
+          {
+            "index": 2,
+            "text": "Separate optional data purpose"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Consented catch activity",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Consented catch activity",
+              "fontSize": 17.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Separate optional data purpose",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Separate optional data purpose",
+              "fontSize": 11.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 56,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/b6pcfet8",
+      "id": "56",
+      "name": "sos-validate",
+      "bbox": [
+        50,
+        1080,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Validate and deduplicate\nAccept distress even before vessel registration",
+      "textPreview": "Validate and deduplicate | Accept distress even before vessel registration",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Validate and deduplicate"
+          },
+          {
+            "index": 2,
+            "text": "Accept distress even before vessel"
+          },
+          {
+            "index": 3,
+            "text": "registration"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Validate and deduplicate",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Validate and deduplicate",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Accept distress even before vessel registration",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Accept distress even before vessel registration",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 57,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a5gbmtsn",
+      "id": "57",
+      "name": "sos-persist",
+      "bbox": [
+        50,
+        1190,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Persist incident\nBackend becomes authority for DELIVERED",
+      "textPreview": "Persist incident | Backend becomes authority for DELIVERED",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Persist incident"
+          },
+          {
+            "index": 2,
+            "text": "Backend becomes authority for DELIVERED"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Persist incident",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Persist incident",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Backend becomes authority for DELIVERED",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Backend becomes authority for DELIVERED",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 58,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p47udob2",
+      "id": "58",
+      "name": "sos-dispatch",
+      "bbox": [
+        50,
+        1300,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Responder workflow\nAcknowledge, ETA, reply and resolution",
+      "textPreview": "Responder workflow | Acknowledge, ETA, reply and resolution",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Responder workflow"
+          },
+          {
+            "index": 2,
+            "text": "Acknowledge, ETA, reply and resolution"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Responder workflow",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Responder workflow",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Acknowledge, ETA, reply and resolution",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Acknowledge, ETA, reply and resolution",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 59,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ojytkjah",
+      "id": "59",
+      "name": "sos-result",
+      "bbox": [
+        57,
+        1420,
+        224,
+        46
+      ],
+      "geometry": "roundRect",
+      "text": "DELIVERED / ACKNOWLEDGED",
+      "textPreview": "DELIVERED / ACKNOWLEDGED",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "DELIVERED / ACKNOWLEDGED"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "DELIVERED / ACKNOWLEDGED",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "DELIVERED / ACKNOWLEDGED",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 60,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0zmlgnmp",
+      "id": "60",
+      "name": "weather-quality",
+      "bbox": [
+        310,
+        1080,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Quality and freshness gate\nReject stale, missing or insufficient observations",
+      "textPreview": "Quality and freshness gate | Reject stale, missing or insufficient observations",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Quality and freshness gate"
+          },
+          {
+            "index": 2,
+            "text": "Reject stale, missing or insufficient"
+          },
+          {
+            "index": 3,
+            "text": "observations"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Quality and freshness gate",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Quality and freshness gate",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Reject stale, missing or insufficient observations",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Reject stale, missing or insufficient observations",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 61,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/10vmp8na",
+      "id": "61",
+      "name": "weather-models",
+      "bbox": [
+        310,
+        1190,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Two distinct models\nBackend squall nowcast\nBrowser danger-zone GBDT",
+      "textPreview": "Two distinct models | Backend squall nowcast | Browser danger-zone GBDT",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Two distinct models"
+          },
+          {
+            "index": 2,
+            "text": "Backend squall nowcast"
+          },
+          {
+            "index": 3,
+            "text": "Browser danger-zone GBDT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Two distinct models",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Two distinct models",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Backend squall nowcast\nBrowser danger-zone GBDT",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Backend squall nowcast\nBrowser danger-zone GBDT",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 62,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/exk3ed4j",
+      "id": "62",
+      "name": "weather-advisory",
+      "bbox": [
+        310,
+        1300,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Advisory candidate\nShows source, age, confidence and limitations",
+      "textPreview": "Advisory candidate | Shows source, age, confidence and limitations",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Advisory candidate"
+          },
+          {
+            "index": 2,
+            "text": "Shows source, age, confidence and"
+          },
+          {
+            "index": 3,
+            "text": "limitations"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Advisory candidate",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Advisory candidate",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Shows source, age, confidence and limitations",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Shows source, age, confidence and limitations",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 63,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fyd4ni54",
+      "id": "63",
+      "name": "weather-result",
+      "bbox": [
+        317,
+        1420,
+        224,
+        46
+      ],
+      "geometry": "roundRect",
+      "text": "WARNING CANDIDATE",
+      "textPreview": "WARNING CANDIDATE",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "WARNING CANDIDATE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "WARNING CANDIDATE",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "WARNING CANDIDATE",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 64,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sv2lc3mt",
+      "id": "64",
+      "name": "trip-history",
+      "bbox": [
+        570,
+        1080,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Contact and trip history\nOnly observations at or before decision time",
+      "textPreview": "Contact and trip history | Only observations at or before decision time",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Contact and trip history"
+          },
+          {
+            "index": 2,
+            "text": "Only observations at or before decision time"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Contact and trip history",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Contact and trip history",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Only observations at or before decision time",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Only observations at or before decision time",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 65,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/twbml8ny",
+      "id": "65",
+      "name": "trip-profile",
+      "bbox": [
+        570,
+        1190,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Per-vessel profile\nCompares duration and route against that vessel",
+      "textPreview": "Per-vessel profile | Compares duration and route against that vessel",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Per-vessel profile"
+          },
+          {
+            "index": 2,
+            "text": "Compares duration and route against that"
+          },
+          {
+            "index": 3,
+            "text": "vessel"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Per-vessel profile",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Per-vessel profile",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Compares duration and route against that vessel",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Compares duration and route against that vessel",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 66,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/69k3at4n",
+      "id": "66",
+      "name": "trip-case",
+      "bbox": [
+        570,
+        1300,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Verification and escalation\nSilence alone never proves distress",
+      "textPreview": "Verification and escalation | Silence alone never proves distress",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Verification and escalation"
+          },
+          {
+            "index": 2,
+            "text": "Silence alone never proves distress"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Verification and escalation",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Verification and escalation",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Silence alone never proves distress",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Silence alone never proves distress",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 67,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ratkjy58",
+      "id": "67",
+      "name": "trip-result",
+      "bbox": [
+        577,
+        1420,
+        224,
+        46
+      ],
+      "geometry": "roundRect",
+      "text": "RESPONDER REVIEW",
+      "textPreview": "RESPONDER REVIEW",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "RESPONDER REVIEW"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "RESPONDER REVIEW",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "RESPONDER REVIEW",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 68,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cr6lo7mx",
+      "id": "68",
+      "name": "drift-datum",
+      "bbox": [
+        830,
+        1080,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Confirmed incident datum\nLast reliable fix, object class, wind, current and coastline",
+      "textPreview": "Confirmed incident datum | Last reliable fix, object class, wind, current and coastline",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Confirmed incident datum"
+          },
+          {
+            "index": 2,
+            "text": "Last reliable fix, object class, wind, current"
+          },
+          {
+            "index": 3,
+            "text": "and coastline"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Confirmed incident datum",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Confirmed incident datum",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Last reliable fix, object class, wind, current and coastline",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Last reliable fix, object class, wind, current and coastline",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 69,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xsfmxsni",
+      "id": "69",
+      "name": "drift-model",
+      "bbox": [
+        830,
+        1190,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Monte Carlo leeway\nParticle paths with land stranding and uncertainty",
+      "textPreview": "Monte Carlo leeway | Particle paths with land stranding and uncertainty",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Monte Carlo leeway"
+          },
+          {
+            "index": 2,
+            "text": "Particle paths with land stranding and"
+          },
+          {
+            "index": 3,
+            "text": "uncertainty"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Monte Carlo leeway",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Monte Carlo leeway",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Particle paths with land stranding and uncertainty",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Particle paths with land stranding and uncertainty",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 70,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mhon6pk",
+      "id": "70",
+      "name": "drift-search",
+      "bbox": [
+        830,
+        1300,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Search posterior update\nNegative search evidence shifts remaining probability",
+      "textPreview": "Search posterior update | Negative search evidence shifts remaining probability",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Search posterior update"
+          },
+          {
+            "index": 2,
+            "text": "Negative search evidence shifts remaining"
+          },
+          {
+            "index": 3,
+            "text": "probability"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Search posterior update",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Search posterior update",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Negative search evidence shifts remaining probability",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Negative search evidence shifts remaining probability",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 71,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ml87u1oz",
+      "id": "71",
+      "name": "drift-result",
+      "bbox": [
+        837,
+        1420,
+        224,
+        46
+      ],
+      "geometry": "roundRect",
+      "text": "SEARCH CONTOURS 50 / 75 / 95%",
+      "textPreview": "SEARCH CONTOURS 50 / 75 / 95%",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SEARCH CONTOURS 50 / 75 / 95%"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SEARCH CONTOURS 50 / 75 / 95%",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "SEARCH CONTOURS 50 / 75 / 95%",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 72,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9oz6pw7q",
+      "id": "72",
+      "name": "catch-consent",
+      "bbox": [
+        1090,
+        1080,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Explicitly consented logs\nSafety access never depends on participation",
+      "textPreview": "Explicitly consented logs | Safety access never depends on participation",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Explicitly consented logs"
+          },
+          {
+            "index": 2,
+            "text": "Safety access never depends on"
+          },
+          {
+            "index": 3,
+            "text": "participation"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Explicitly consented logs",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Explicitly consented logs",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Safety access never depends on participation",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Safety access never depends on participation",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 73,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8nqpwr65",
+      "id": "73",
+      "name": "catch-privacy",
+      "bbox": [
+        1090,
+        1190,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Privacy aggregation\nCoarse cells and minimum independent reporters",
+      "textPreview": "Privacy aggregation | Coarse cells and minimum independent reporters",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Privacy aggregation"
+          },
+          {
+            "index": 2,
+            "text": "Coarse cells and minimum independent"
+          },
+          {
+            "index": 3,
+            "text": "reporters"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Privacy aggregation",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Privacy aggregation",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Coarse cells and minimum independent reporters",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Coarse cells and minimum independent reporters",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 74,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vq1or6pw",
+      "id": "74",
+      "name": "catch-activity",
+      "bbox": [
+        1090,
+        1300,
+        238,
+        86
+      ],
+      "geometry": "roundRect",
+      "text": "Recent activity surface\nNo guaranteed catch and no exact public locations",
+      "textPreview": "Recent activity surface | No guaranteed catch and no exact public locations",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Recent activity surface"
+          },
+          {
+            "index": 2,
+            "text": "No guaranteed catch and no exact public"
+          },
+          {
+            "index": 3,
+            "text": "locations"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Recent activity surface",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Recent activity surface",
+              "fontSize": 16,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "No guaranteed catch and no exact public locations",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "No guaranteed catch and no exact public locations",
+              "fontSize": 10.67,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 75,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ups7y1ob",
+      "id": "75",
+      "name": "catch-result",
+      "bbox": [
+        1097,
+        1420,
+        224,
+        46
+      ],
+      "geometry": "roundRect",
+      "text": "COARSE ACTIVITY",
+      "textPreview": "COARSE ACTIVITY",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "COARSE ACTIVITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "COARSE ACTIVITY",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "COARSE ACTIVITY",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 76,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hsj6tg7m",
+      "id": "76",
+      "name": "sos-flow-1",
+      "bbox": [
+        169,
+        1166,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 77,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wrap0b61",
+      "id": "77",
+      "name": "sos-flow-2",
+      "bbox": [
+        169,
+        1276,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 78,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/buxofmpc",
+      "id": "78",
+      "name": "sos-flow-3",
+      "bbox": [
+        169,
+        1386,
+        0,
+        34
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 79,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/atonmhor",
+      "id": "79",
+      "name": "weather-flow-1",
+      "bbox": [
+        429,
+        1166,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 80,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/el4vqlcr",
+      "id": "80",
+      "name": "weather-flow-2",
+      "bbox": [
+        429,
+        1276,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 81,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z6dwzqtc",
+      "id": "81",
+      "name": "weather-flow-3",
+      "bbox": [
+        429,
+        1386,
+        0,
+        34
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 82,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/07mxsvux",
+      "id": "82",
+      "name": "trip-flow-1",
+      "bbox": [
+        689,
+        1166,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 83,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/18ve10bi",
+      "id": "83",
+      "name": "trip-flow-2",
+      "bbox": [
+        689,
+        1276,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 84,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m94fu5c3",
+      "id": "84",
+      "name": "trip-flow-3",
+      "bbox": [
+        689,
+        1386,
+        0,
+        34
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 85,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nadw3ato",
+      "id": "85",
+      "name": "drift-flow-1",
+      "bbox": [
+        949,
+        1166,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 86,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/obmxwvu9",
+      "id": "86",
+      "name": "drift-flow-2",
+      "bbox": [
+        949,
+        1276,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 87,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cve50be",
+      "id": "87",
+      "name": "drift-flow-3",
+      "bbox": [
+        949,
+        1386,
+        0,
+        34
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 88,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2d0vi1cj",
+      "id": "88",
+      "name": "catch-flow-1",
+      "bbox": [
+        1209,
+        1166,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 89,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3etwr6d4",
+      "id": "89",
+      "name": "catch-flow-2",
+      "bbox": [
+        1209,
+        1276,
+        0,
+        24
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 90,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l8zyx4vm",
+      "id": "90",
+      "name": "catch-flow-3",
+      "bbox": [
+        1209,
+        1386,
+        0,
+        34
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 91,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k7qhozeh",
+      "id": "91",
+      "name": "api-to-sos",
+      "bbox": [
+        169,
+        847,
+        316,
+        141
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#C73F4D",
+      "lineWidth": 2
+    },
+    {
+      "order": 92,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j6hgvudw",
+      "id": "92",
+      "name": "api-to-weather",
+      "bbox": [
+        429,
+        847,
+        56,
+        141
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 93,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y58zm9wb",
+      "id": "93",
+      "name": "api-to-trip",
+      "bbox": [
+        485,
+        847,
+        204,
+        141
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 94,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/twji1ovy",
+      "id": "94",
+      "name": "api-to-drift",
+      "bbox": [
+        485,
+        847,
+        464,
+        141
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 95,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8vqhsjed",
+      "id": "95",
+      "name": "api-to-catch",
+      "bbox": [
+        485,
+        847,
+        724,
+        141
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#2F7D54",
+      "lineWidth": 2
+    },
+    {
+      "order": 96,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ah0zeds",
+      "id": "96",
+      "name": "sos-header-to-flow",
+      "bbox": [
+        169,
+        1058,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 97,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/698zq9w7",
+      "id": "97",
+      "name": "weather-header-to-flow",
+      "bbox": [
+        429,
+        1058,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 98,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90fypkfe",
+      "id": "98",
+      "name": "trip-header-to-flow",
+      "bbox": [
+        689,
+        1058,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 99,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/of6hgfe9",
+      "id": "99",
+      "name": "drift-header-to-flow",
+      "bbox": [
+        949,
+        1058,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#7552A8",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 100,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l4j21czy",
+      "id": "100",
+      "name": "catch-header-to-flow",
+      "bbox": [
+        1209,
+        1058,
+        0,
+        22
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1.8
+    },
+    {
+      "order": 101,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03al87yd",
+      "id": "101",
+      "name": "decision-boundary",
+      "bbox": [
+        420,
+        1530,
+        560,
+        42
+      ],
+      "geometry": "roundRect",
+      "text": "MODEL OUTPUTS ADVISE; AUTHORIZED PEOPLE DECIDE",
+      "textPreview": "MODEL OUTPUTS ADVISE; AUTHORIZED PEOPLE DECIDE",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MODEL OUTPUTS ADVISE; AUTHORIZED PEOPLE DECIDE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MODEL OUTPUTS ADVISE; AUTHORIZED PEOPLE DECIDE",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MODEL OUTPUTS ADVISE; AUTHORIZED PEOPLE DECIDE",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF4CC",
+      "lineColor": "#D6B43C",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 102,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z21kz2h8",
+      "id": "102",
+      "name": "decision-caveat",
+      "bbox": [
+        260,
+        1575,
+        880,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Squall calibration is synthetic. Drift awaits live buoy current telemetry. Catch workflow remains a pilot foundation.",
+      "textPreview": "Squall calibration is synthetic. Drift awaits live buoy current telemetry. Catch workflow remains a pilot foundation.",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 11,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Squall calibration is synthetic. Drift awaits live buoy current telemetry. Catch workflow remains a pilot foundation."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Squall calibration is synthetic. Drift awaits live buoy current telemetry. Catch workflow remains a pilot foundation.",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Squall calibration is synthetic. Drift awaits live buoy current telemetry. Catch workflow remains a pilot foundation.",
+              "fontSize": 11,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 103,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1836xgn",
+      "id": "103",
+      "name": "output-mobile",
+      "bbox": [
+        85,
+        1710,
+        340,
+        145
+      ],
+      "geometry": "roundRect",
+      "text": "Fisher mobile app\nDelivery states and responder ETA\nWarnings and forecast freshness\nOptional coarse activity",
+      "textPreview": "Fisher mobile app | Delivery states and responder ETA | Warnings and forecast freshness | Optional coarse activity",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fisher mobile app"
+          },
+          {
+            "index": 2,
+            "text": "Delivery states and responder ETA"
+          },
+          {
+            "index": 3,
+            "text": "Warnings and forecast freshness"
+          },
+          {
+            "index": 4,
+            "text": "Optional coarse activity"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fisher mobile app",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fisher mobile app",
+              "fontSize": 21.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Delivery states and responder ETA\nWarnings and forecast freshness\nOptional coarse activity",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Delivery states and responder ETA\nWarnings and forecast freshness\nOptional coarse activity",
+              "fontSize": 13.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D6F5FA",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 104,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9sj25cza",
+      "id": "104",
+      "name": "output-dashboard",
+      "bbox": [
+        530,
+        1710,
+        340,
+        145
+      ],
+      "geometry": "roundRect",
+      "text": "MDRRMO / PCG dashboard\nLive SOS and acknowledgement\nOverdue review and drift contours\nNetwork and feed freshness",
+      "textPreview": "MDRRMO / PCG dashboard | Live SOS and acknowledgement | Overdue review and drift contours | Network and feed freshness",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MDRRMO / PCG dashboard"
+          },
+          {
+            "index": 2,
+            "text": "Live SOS and acknowledgement"
+          },
+          {
+            "index": 3,
+            "text": "Overdue review and drift contours"
+          },
+          {
+            "index": 4,
+            "text": "Network and feed freshness"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MDRRMO / PCG dashboard",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MDRRMO / PCG dashboard",
+              "fontSize": 21.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Live SOS and acknowledgement\nOverdue review and drift contours\nNetwork and feed freshness",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Live SOS and acknowledgement\nOverdue review and drift contours\nNetwork and feed freshness",
+              "fontSize": 13.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D6F5FA",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 105,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8ralw7yp",
+      "id": "105",
+      "name": "output-lgu",
+      "bbox": [
+        975,
+        1710,
+        340,
+        145
+      ],
+      "geometry": "roundRect",
+      "text": "LGU / BFAR aggregated view\nConsented coarse catch activity\nNo identifiable safety trip trails\nPilot workflow not field validated",
+      "textPreview": "LGU / BFAR aggregated view | Consented coarse catch activity | No identifiable safety trip trails | Pilot workflow not field validated",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Arial",
+        "color": "tx1",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 8,
+          "right": 9,
+          "bottom": 8,
+          "left": 9
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "LGU / BFAR aggregated view"
+          },
+          {
+            "index": 2,
+            "text": "Consented coarse catch activity"
+          },
+          {
+            "index": 3,
+            "text": "No identifiable safety trip trails"
+          },
+          {
+            "index": 4,
+            "text": "Pilot workflow not field validated"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "LGU / BFAR aggregated view",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "LGU / BFAR aggregated view",
+              "fontSize": 21.33,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "Consented coarse catch activity\nNo identifiable safety trip trails\nPilot workflow not field validated",
+          "resolvedTextStyle": {
+            "typeface": "Arial",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Consented coarse catch activity\nNo identifiable safety trip trails\nPilot workflow not field validated",
+              "fontSize": 13.33,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D6F5FA",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.6
+    },
+    {
+      "order": 106,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n61k32h4",
+      "id": "106",
+      "name": "sos-to-dashboard",
+      "bbox": [
+        169,
+        1466,
+        531,
+        244
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#C73F4D",
+      "lineWidth": 2
+    },
+    {
+      "order": 107,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m5s3uxgj",
+      "id": "107",
+      "name": "weather-to-mobile",
+      "bbox": [
+        255,
+        1466,
+        174,
+        244
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 108,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pwz2tszq",
+      "id": "108",
+      "name": "trip-to-dashboard",
+      "bbox": [
+        689,
+        1466,
+        11,
+        244
+      ],
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 109,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovq10nyl",
+      "id": "109",
+      "name": "drift-to-dashboard",
+      "bbox": [
+        700,
+        1466,
+        249,
+        244
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#7552A8",
+      "lineWidth": 2
+    },
+    {
+      "order": 110,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u14zutw3",
+      "id": "110",
+      "name": "catch-to-lgu",
+      "bbox": [
+        1145,
+        1466,
+        64,
+        244
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#2F7D54",
+      "lineWidth": 2
+    },
+    {
+      "order": 111,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/f2d03exo",
+      "id": "111",
+      "name": "catch-to-mobile",
+      "bbox": [
+        255,
+        1466,
+        954,
+        244
+      ],
+      "horizontalFlip": true,
+      "geometry": "bentConnector4",
+      "lineColor": "#2F7D54",
+      "lineWidth": 2
+    },
+    {
+      "order": 112,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g36hwje9",
+      "id": "112",
+      "name": "dashboard-to-mobile",
+      "bbox": [
+        425,
+        1782.5,
+        105,
+        0
+      ],
+      "horizontalFlip": true,
+      "geometry": "straightConnector1",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 2
+    },
+    {
+      "order": 113,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/14fi5ofu",
+      "id": "113",
+      "name": "label-return-user",
+      "bbox": [
+        335,
+        1868,
+        410,
+        30
+      ],
+      "geometry": "roundRect",
+      "text": "ACK, ETA AND WARNINGS WHEN A RETURN PATH EXISTS",
+      "textPreview": "ACK, ETA AND WARNINGS WHEN A RETURN PATH EXISTS",
+      "resolvedFontSize": 9,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 9,
+        "typeface": "Arial",
+        "color": "#556174",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 4,
+          "bottom": 2,
+          "left": 4
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ACK, ETA AND WARNINGS WHEN A RETURN PATH EXISTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ACK, ETA AND WARNINGS WHEN A RETURN PATH EXISTS",
+          "resolvedTextStyle": {
+            "fontSize": 9,
+            "typeface": "Arial",
+            "color": "#556174",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "ACK, ETA AND WARNINGS WHEN A RETURN PATH EXISTS",
+              "fontSize": 9,
+              "typeface": "Arial",
+              "color": "#556174",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD2DC",
+      "lineWidth": 0.8
+    },
+    {
+      "order": 114,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/25ozytwf",
+      "id": "114",
+      "name": "authority-pill",
+      "bbox": [
+        315,
+        1888,
+        770,
+        40
+      ],
+      "geometry": "roundRect",
+      "text": "Responder acknowledgement creates ACKNOWLEDGED. Resolution remains a separate incident state.",
+      "textPreview": "Responder acknowledgement creates ACKNOWLEDGED. Resolution remains a separate incident state.",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 3,
+          "right": 7,
+          "bottom": 3,
+          "left": 7
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Responder acknowledgement creates ACKNOWLEDGED. Resolution remains a separate incident state."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Responder acknowledgement creates ACKNOWLEDGED. Resolution remains a separate incident state.",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Responder acknowledgement creates ACKNOWLEDGED. Resolution remains a separate incident state.",
+              "fontSize": 12,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#EEF8FA",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1.4
+    },
+    {
+      "order": 115,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36x07yx0",
+      "id": "115",
+      "name": "legend-title",
+      "bbox": [
+        42,
+        1964,
+        110,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Legend",
+      "textPreview": "Legend",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "Arial",
+        "color": "#172033",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Legend"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Legend",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Arial",
+            "color": "#172033",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Legend",
+              "fontSize": 17,
+              "typeface": "Arial",
+              "color": "#172033",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 116,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o76h03e5",
+      "id": "116",
+      "name": "legend-hardware-dot",
+      "bbox": [
+        155,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#D9F1F0",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1
+    },
+    {
+      "order": 117,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8fi98fq",
+      "id": "117",
+      "name": "legend-hardware-label",
+      "bbox": [
+        184,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Field / edge",
+      "textPreview": "Field / edge",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Field / edge"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Field / edge",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Field / edge",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 118,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i9kzm9wv",
+      "id": "118",
+      "name": "legend-backend-dot",
+      "bbox": [
+        315,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#DDE7FF",
+      "lineColor": "#395EB7",
+      "lineWidth": 1
+    },
+    {
+      "order": 119,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jatgvuxg",
+      "id": "119",
+      "name": "legend-backend-label",
+      "bbox": [
+        344,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Backend / data",
+      "textPreview": "Backend / data",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Backend / data"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Backend / data",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Backend / data",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 120,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ne9w3qd8",
+      "id": "120",
+      "name": "legend-ai-dot",
+      "bbox": [
+        490,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#E9DBFA",
+      "lineColor": "#7552A8",
+      "lineWidth": 1
+    },
+    {
+      "order": 121,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/md0fu5cn",
+      "id": "121",
+      "name": "legend-ai-label",
+      "bbox": [
+        519,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Model / simulation",
+      "textPreview": "Model / simulation",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Model / simulation"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Model / simulation",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Model / simulation",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 122,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9gre50ve",
+      "id": "122",
+      "name": "legend-safety-dot",
+      "bbox": [
+        690,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#FFD7DA",
+      "lineColor": "#C73F4D",
+      "lineWidth": 1
+    },
+    {
+      "order": 123,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8fixwvut",
+      "id": "123",
+      "name": "legend-safety-label",
+      "bbox": [
+        719,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Emergency",
+      "textPreview": "Emergency",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Emergency"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Emergency",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Emergency",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 124,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zqpwzqdc",
+      "id": "124",
+      "name": "legend-external-dot",
+      "bbox": [
+        835,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#FFE8C5",
+      "lineColor": "#C5872D",
+      "lineWidth": 1
+    },
+    {
+      "order": 125,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ypgfqlcr",
+      "id": "125",
+      "name": "legend-external-label",
+      "bbox": [
+        864,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "External / human",
+      "textPreview": "External / human",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "External / human"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "External / human",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "External / human",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 126,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lcre10v2",
+      "id": "126",
+      "name": "legend-output-dot",
+      "bbox": [
+        1035,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#D6F5FA",
+      "lineColor": "#1D7C7A",
+      "lineWidth": 1
+    },
+    {
+      "order": 127,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0ryxsvux",
+      "id": "127",
+      "name": "legend-output-label",
+      "bbox": [
+        1064,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Output",
+      "textPreview": "Output",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Output"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Output",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Output",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 128,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jmtwbudg",
+      "id": "128",
+      "name": "legend-fisheries-dot",
+      "bbox": [
+        1165,
+        2005,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#D9F2E2",
+      "lineColor": "#2F7D54",
+      "lineWidth": 1
+    },
+    {
+      "order": 129,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ilkf2pcv",
+      "id": "129",
+      "name": "legend-fisheries-label",
+      "bbox": [
+        1194,
+        1997,
+        145,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Fisheries",
+      "textPreview": "Fisheries",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#172033",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fisheries"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fisheries",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#172033",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fisheries",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#172033",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 130,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gfalgn61",
+      "id": "130",
+      "name": "legend-lines",
+      "bbox": [
+        155,
+        2040,
+        860,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Solid: implemented software path     Dashed: hardware, optional or return path awaiting field verification",
+      "textPreview": "Solid: implemented software path     Dashed: hardware, optional or return path awaiting field verification",
+      "resolvedFontSize": 10.51,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10.51,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Solid: implemented software path     Dashed: hardware, optional or return path awaiting field verification"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Solid: implemented software path     Dashed: hardware, optional or return path awaiting field verification",
+          "resolvedTextStyle": {
+            "fontSize": 10.51,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Solid: implemented software path     Dashed: hardware, optional or return path awaiting field verification",
+              "fontSize": 10.51,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 131,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hg329s7m",
+      "id": "131",
+      "name": "legend-status",
+      "bbox": [
+        805,
+        2038,
+        535,
+        35
+      ],
+      "geometry": "rect",
+      "text": "Current status: software is locally tested; public deployment, real-device LoRa range and local field-model validation remain pending.",
+      "textPreview": "Current status: software is locally tested; public deployment, real-device LoRa range and local field-model validation remain pending.",
+      "resolvedFontSize": 10,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 10,
+        "typeface": "Arial",
+        "color": "#556174",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 2,
+          "right": 3,
+          "bottom": 2,
+          "left": 3
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Current status: software is locally tested; public deployment, real-device LoRa range and local field-model validation"
+          },
+          {
+            "index": 2,
+            "text": "remain pending."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Current status: software is locally tested; public deployment, real-device LoRa range and local field-model validation remain pending.",
+          "resolvedTextStyle": {
+            "fontSize": 10,
+            "typeface": "Arial",
+            "color": "#556174",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Current status: software is locally tested; public deployment, real-device LoRa range and local field-model validation remain pending.",
+              "fontSize": 10,
+              "typeface": "Arial",
+              "color": "#556174",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

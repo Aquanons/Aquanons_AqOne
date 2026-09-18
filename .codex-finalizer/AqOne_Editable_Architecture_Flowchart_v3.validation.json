@@ -1,0 +1,396 @@
+{
+  "schemaVersion": "presentation-finalization.v1",
+  "finalSha256": "4c2c679f5eda3a9223a23cd910facb452c14ce75385efb562c2ebcda228e2710",
+  "byteCount": 23075,
+  "packageIntegrity": {
+    "chart_count": 0,
+    "claim_boundary": "Structural package checks only; no slide text, notes, formulas, chart values, or native PowerPoint execution were inspected.",
+    "finding_count": 0,
+    "findings": [],
+    "notes_parts_skipped": 1,
+    "relationship_part_count": 7,
+    "slide_count": 1,
+    "status": "pass",
+    "exitCode": 0,
+    "findingCount": 0,
+    "warnings": []
+  },
+  "presentationLayout": {
+    "finding_count": 0,
+    "findings": [],
+    "font_policy": {
+      "checked_text_script_count": 109,
+      "native_font_rendering_verified": false,
+      "observed_font_families": [
+        "Arial"
+      ],
+      "observed_font_use_counts": {
+        "Arial": 109
+      },
+      "passed": true,
+      "performed": true
+    },
+    "slide_count": 1,
+    "slide_size_in": [
+      14.5833,
+      21.875
+    ],
+    "warning_count": 33,
+    "warnings": [
+      {
+        "connector_id": "161",
+        "connector_z": 31,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "8",
+        "text_z": 9
+      },
+      {
+        "connector_id": "162",
+        "connector_z": 32,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "8",
+        "text_z": 9
+      },
+      {
+        "connector_id": "176",
+        "connector_z": 46,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "27",
+        "text_z": 28
+      },
+      {
+        "connector_id": "176",
+        "connector_z": 46,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "40",
+        "text_z": 41
+      },
+      {
+        "connector_id": "178",
+        "connector_z": 48,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "11",
+        "text_z": 12
+      },
+      {
+        "connector_id": "179",
+        "connector_z": 49,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "27",
+        "text_z": 28
+      },
+      {
+        "connector_id": "179",
+        "connector_z": 49,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "37",
+        "text_z": 38
+      },
+      {
+        "connector_id": "179",
+        "connector_z": 49,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "40",
+        "text_z": 41
+      },
+      {
+        "connector_id": "180",
+        "connector_z": 50,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "9",
+        "text_z": 10
+      },
+      {
+        "connector_id": "180",
+        "connector_z": 50,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "12",
+        "text_z": 13
+      },
+      {
+        "connector_id": "180",
+        "connector_z": 50,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "28",
+        "text_z": 29
+      },
+      {
+        "connector_id": "180",
+        "connector_z": 50,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "43",
+        "text_z": 44
+      },
+      {
+        "connector_id": "222",
+        "connector_z": 92,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "14",
+        "text_z": 15
+      },
+      {
+        "connector_id": "222",
+        "connector_z": 92,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "44",
+        "text_z": 45
+      },
+      {
+        "connector_id": "223",
+        "connector_z": 93,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "14",
+        "text_z": 15
+      },
+      {
+        "connector_id": "223",
+        "connector_z": 93,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "44",
+        "text_z": 45
+      },
+      {
+        "connector_id": "224",
+        "connector_z": 94,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "44",
+        "text_z": 45
+      },
+      {
+        "connector_id": "225",
+        "connector_z": 95,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "44",
+        "text_z": 45
+      },
+      {
+        "connector_id": "226",
+        "connector_z": 96,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "15",
+        "text_z": 16
+      },
+      {
+        "connector_id": "237",
+        "connector_z": 107,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "17",
+        "text_z": 18
+      },
+      {
+        "connector_id": "237",
+        "connector_z": 107,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "101",
+        "text_z": 102
+      },
+      {
+        "connector_id": "237",
+        "connector_z": 107,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "102",
+        "text_z": 103
+      },
+      {
+        "connector_id": "238",
+        "connector_z": 108,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "17",
+        "text_z": 18
+      },
+      {
+        "connector_id": "238",
+        "connector_z": 108,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "102",
+        "text_z": 103
+      },
+      {
+        "connector_id": "239",
+        "connector_z": 109,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "101",
+        "text_z": 102
+      },
+      {
+        "connector_id": "239",
+        "connector_z": 109,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "102",
+        "text_z": 103
+      },
+      {
+        "connector_id": "240",
+        "connector_z": 110,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "18",
+        "text_z": 19
+      },
+      {
+        "connector_id": "240",
+        "connector_z": 110,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "101",
+        "text_z": 102
+      },
+      {
+        "connector_id": "240",
+        "connector_z": 110,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "102",
+        "text_z": 103
+      },
+      {
+        "connector_id": "241",
+        "connector_z": 111,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "18",
+        "text_z": 19
+      },
+      {
+        "connector_id": "242",
+        "connector_z": 112,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "101",
+        "text_z": 102
+      },
+      {
+        "connector_id": "242",
+        "connector_z": 112,
+        "kind": "connector_over_text",
+        "slide": 1,
+        "text_object_id": "102",
+        "text_z": 103
+      },
+      {
+        "kind": "substantial_text_frame_overlap",
+        "left_object_id": "27",
+        "overlap_height_in": 0.3125,
+        "overlap_width_in": 1.3125,
+        "right_object_id": "40",
+        "slide": 1
+      }
+    ],
+    "exitCode": 0,
+    "findingCount": 0,
+    "fontPolicy": {
+      "checked_text_script_count": 109,
+      "native_font_rendering_verified": false,
+      "observed_font_families": [
+        "Arial"
+      ],
+      "observed_font_use_counts": {
+        "Arial": 109
+      },
+      "passed": true,
+      "performed": true
+    }
+  },
+  "fontSelection": {
+    "basis": "design",
+    "approvedFamilies": [
+      "Arial"
+    ],
+    "scriptFonts": {},
+    "referenceSha256": null,
+    "referenceFontsVerifiedInEncodedText": false,
+    "checked_text_script_count": 109,
+    "native_font_rendering_verified": false,
+    "observed_font_families": [
+      "Arial"
+    ],
+    "observed_font_use_counts": {
+      "Arial": 109
+    },
+    "passed": true,
+    "performed": true
+  },
+  "firstPartyImport": {
+    "performed": true,
+    "passed": true,
+    "slideCount": 1,
+    "sha256": "4c2c679f5eda3a9223a23cd910facb452c14ce75385efb562c2ebcda228e2710",
+    "runtimeNodeModules": "C:\\Users\\User\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\node_modules",
+    "nodeExecutable": "C:\\Users\\User\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe"
+  },
+  "nativeTableArithmetic": {
+    "performed": true,
+    "checked_column_count": 0,
+    "checks": [],
+    "claim_boundary": "Displayed-value arithmetic with rounding tolerance; not source-data verification.",
+    "eligible_table_count": 0,
+    "finding_count": 0,
+    "findings": [],
+    "native_table_count": 0,
+    "passed": true,
+    "schema_version": "presentation-native-table-arithmetic.v1",
+    "skipped_tables": [],
+    "slide_count": 1,
+    "warning_count": 0,
+    "warnings": []
+  },
+  "nativeChartTitles": {
+    "performed": true,
+    "checks": [],
+    "finding_count": 0,
+    "findings": [],
+    "native_chart_count": 0,
+    "native_powerpoint_verified": false,
+    "passed": true,
+    "presentation_sha256": "4c2c679f5eda3a9223a23cd910facb452c14ce75385efb562c2ebcda228e2710",
+    "schema_version": "presentation-native-chart-titles.v1",
+    "slide_count": 1,
+    "source_text_emitted": false,
+    "unresolved_linked_title_count": 0
+  },
+  "sourceDerivedPolicyFlags": [
+    "--expected-slide-size-emu",
+    "13335000,20002500",
+    "--validate-heading-fit",
+    "--cover-role",
+    "none",
+    "--expected-slide-count",
+    "1",
+    "--approved-font-family",
+    "Arial"
+  ],
+  "nativeChartValidation": {
+    "detectedOwnerSlides": [],
+    "detectedChartCount": 0,
+    "targetApplication": "portable",
+    "sourceChartOwnersExplicitlyDeclared": true,
+    "validatorRan": false,
+    "passed": true
+  }
+}
