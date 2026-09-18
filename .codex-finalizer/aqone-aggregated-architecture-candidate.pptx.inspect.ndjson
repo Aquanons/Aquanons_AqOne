@@ -1,0 +1,253 @@
+{"kind":"deck","id":"pr/7hnle3","name":"Deck"}
+{"kind":"layout","layoutId":"0d3b325a-a009-434f-b34c-415a033a20ae","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"67bdbbfd-8917-464e-9ccf-dfe3d5c78d1f","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/57h3aa","slide":1,"title":"AqOne Aggregated Technical Architecture","textShapes":149}
+{"kind":"textbox","id":"sh/bix0zu1g","slide":1,"name":"title","text":"AqOne Aggregated Technical Architecture","textPreview":"AqOne Aggregated Technical Architecture","textChars":39,"textLines":1,"bbox":[54,30,3300,80]}
+{"kind":"textbox","id":"sh/wj61szil","slide":1,"name":"subtitle","text":"Offline SOS transport, safety intelligence, storage, privacy controls and human response","textPreview":"Offline SOS transport, safety intelligence, storage, privacy controls and human response","textChars":88,"textLines":1,"bbox":[58,108,3800,46]}
+{"kind":"textbox","id":"sh/xkzi14j6","slide":1,"name":"status","text":"CURRENT IMPLEMENTATION\nSoftware paths tested locally; public deployment and field validation remain pending","textPreview":"CURRENT IMPLEMENTATION | Software paths tested locally; public deployment and field validation remain pending","textChars":107,"textLines":2,"bbox":[3950,48,1160,98]}
+{"kind":"shape","id":"sh/mdojmp0j","slide":1,"name":"phase-source","bbox":[290,188,820,70]}
+{"kind":"textbox","id":"sh/nex0va14","slide":1,"name":"phase-source-label","text":"SOURCE AND DATA","textPreview":"SOURCE AND DATA","textChars":15,"textLines":1,"bbox":[295,200,810,42]}
+{"kind":"shape","id":"sh/of61ofip","slide":1,"name":"phase-edge","bbox":[1110,188,820,70]}
+{"kind":"textbox","id":"sh/9gfixkja","slide":1,"name":"phase-edge-label","text":"EDGE DEVICE","textPreview":"EDGE DEVICE","textChars":11,"textLines":1,"bbox":[1115,200,810,42]}
+{"kind":"shape","id":"sh/698jy903","slide":1,"name":"phase-transport","bbox":[1930,188,820,70]}
+{"kind":"textbox","id":"sh/7ahk7e18","slide":1,"name":"phase-transport-label","text":"TRANSPORT","textPreview":"TRANSPORT","textChars":9,"textLines":1,"bbox":[1935,200,810,42]}
+{"kind":"shape","id":"sh/7qpsvup8","slide":1,"name":"phase-backend","bbox":[2750,188,820,70]}
+{"kind":"textbox","id":"sh/65wr2p83","slide":1,"name":"phase-backend-label","text":"INGRESS AND STORAGE","textPreview":"INGRESS AND STORAGE","textChars":19,"textLines":1,"bbox":[2755,200,810,42]}
+{"kind":"shape","id":"sh/ts7ax47e","slide":1,"name":"phase-decision","bbox":[3570,188,820,70]}
+{"kind":"textbox","id":"sh/sry94zqt","slide":1,"name":"phase-decision-label","text":"PROCESSING AND DECISION","textPreview":"PROCESSING AND DECISION","textChars":23,"textLines":1,"bbox":[3575,200,810,42]}
+{"kind":"shape","id":"sh/fupszupk","slide":1,"name":"phase-output","bbox":[4390,188,770,70]}
+{"kind":"textbox","id":"sh/utgr698z","slide":1,"name":"phase-output-label","text":"OUTPUT AND HUMAN ACTION","textPreview":"OUTPUT AND HUMAN ACTION","textChars":23,"textLines":1,"bbox":[4395,200,760,42]}
+{"kind":"shape","id":"sh/hw7a147q","slide":1,"name":"EMERGENCY SOS-lane","bbox":[28,280,5144,520]}
+{"kind":"textbox","id":"sh/gvy98zq5","slide":1,"name":"EMERGENCY SOS-tag","text":"EMERGENCY SOS","textPreview":"EMERGENCY SOS","textChars":13,"textLines":1,"bbox":[48,302,220,88]}
+{"kind":"textbox","id":"sh/3y9s3epg","slide":1,"name":"EMERGENCY SOS-subtitle","text":"Manual distress path\nIndependent of every AI model","textPreview":"Manual distress path | Independent of every AI model","textChars":50,"textLines":2,"bbox":[54,396,205,92]}
+{"kind":"textbox","id":"sh/2xgra98v","slide":1,"name":"s-start","text":"Fisher presses SOS\nor pod button","textPreview":"Fisher presses SOS | or pod button","textChars":32,"textLines":2,"bbox":[310,455,260,110]}
+{"kind":"textbox","id":"sh/ytkv2ds3","slide":1,"name":"s-payload","text":"SOS payload\nlocal_id, vessel_id, time, GPS, note","textPreview":"SOS payload | local_id, vessel_id, time, GPS, note","textChars":48,"textLines":2,"bbox":[620,445,300,130]}
+{"kind":"textbox","id":"sh/zutcvi9o","slide":1,"name":"s-internet","text":"Internet\navailable?","textPreview":"Internet | available?","textChars":19,"textLines":2,"bbox":[970,430,240,160]}
+{"kind":"textbox","id":"sh/0v2d4na9","slide":1,"name":"s-direct-post","text":"Direct HTTPS\nPOST /api/sos","textPreview":"Direct HTTPS | POST /api/sos","textChars":26,"textLines":2,"bbox":[1260,308,260,104]}
+{"kind":"textbox","id":"sh/lgbuxsru","slide":1,"name":"s-direct-out","text":"S1","textPreview":"S1","textChars":2,"textLines":1,"bbox":[1550,336,48,48]}
+{"kind":"textbox","id":"sh/qp0byts7","slide":1,"name":"s-pod-reach","text":"Boat pod\nreachable?","textPreview":"Boat pod | reachable?","textChars":19,"textLines":2,"bbox":[1260,430,240,160]}
+{"kind":"textbox","id":"sh/bqtcry9s","slide":1,"name":"s-outbox","text":"Phone SQLite outbox\nState: SAVED; retry later","textPreview":"Phone SQLite outbox | State: SAVED; retry later","textChars":45,"textLines":2,"bbox":[1250,628,270,118]}
+{"kind":"textbox","id":"sh/cr2t03ad","slide":1,"name":"s-retry-end","text":"Wait for a valid path","textPreview":"Wait for a valid path","textChars":21,"textLines":1,"bbox":[1555,646,235,82]}
+{"kind":"textbox","id":"sh/dsbut8ry","slide":1,"name":"s-pod-queue","text":"Boat pod queues first\nFlash queue; state: RELAYED","textPreview":"Boat pod queues first | Flash queue; state: RELAYED","textChars":49,"textLines":2,"bbox":[1580,445,285,130]}
+{"kind":"textbox","id":"sh/al4vax8b","slide":1,"name":"s-lora","text":"Direct LoRa\nreaches shore?","textPreview":"Direct LoRa | reaches shore?","textChars":26,"textLines":2,"bbox":[1915,430,240,160]}
+{"kind":"textbox","id":"sh/vmdc329w","slide":1,"name":"s-relay","text":"Optional relay buoy\nTTL and seen-set forwarding","textPreview":"Optional relay buoy | TTL and seen-set forwarding","textChars":47,"textLines":2,"bbox":[1920,628,285,118]}
+{"kind":"textbox","id":"sh/5sz6p0fa","slide":1,"name":"s-gateway","text":"Tall shore gateway\nVerify HMAC; map identity","textPreview":"Tall shore gateway | Verify HMAC; map identity","textChars":44,"textLines":2,"bbox":[2250,445,285,130]}
+{"kind":"textbox","id":"sh/4rq5gvyp","slide":1,"name":"s-https","text":"Authenticated HTTPS\nSigned frame becomes ingest request","textPreview":"Authenticated HTTPS | Signed frame becomes ingest request","textChars":55,"textLines":2,"bbox":[2580,445,285,130]}
+{"kind":"textbox","id":"sh/jqhonqxk","slide":1,"name":"s-direct-in","text":"S1","textPreview":"S1","textChars":2,"textLines":1,"bbox":[2665,356,48,48]}
+{"kind":"textbox","id":"sh/ip8nelgz","slide":1,"name":"s-backend","text":"FastAPI intake\nValidate, deduplicate, persist","textPreview":"FastAPI intake | Validate, deduplicate, persist","textChars":45,"textLines":2,"bbox":[2910,445,285,130]}
+{"kind":"textbox","id":"sh/hoz6lgfe","slide":1,"name":"s-store","text":"PostgreSQL\nSOS, delivery state, audit trail","textPreview":"PostgreSQL | SOS, delivery state, audit trail","textChars":43,"textLines":2,"bbox":[3240,435,285,150]}
+{"kind":"textbox","id":"sh/wnq5cbyt","slide":1,"name":"s-dashboard","text":"MDRRMO dashboard\nProtected REST poll every 3 seconds","textPreview":"MDRRMO dashboard | Protected REST poll every 3 seconds","textChars":52,"textLines":2,"bbox":[3570,445,300,130]}
+{"kind":"textbox","id":"sh/vmhoj6x8","slide":1,"name":"s-ack","text":"Responder acknowledges\nETA, note and response status","textPreview":"Responder acknowledges | ETA, note and response status","textChars":52,"textLines":2,"bbox":[3915,445,300,130]}
+{"kind":"textbox","id":"sh/ulona1gn","slide":1,"name":"s-return","text":"Return path\navailable?","textPreview":"Return path | available?","textChars":22,"textLines":2,"bbox":[4260,430,240,160]}
+{"kind":"textbox","id":"sh/1kj6xkfi","slide":1,"name":"s-ack-data","text":"Ack + ETA\nPhone state: ACKNOWLEDGED","textPreview":"Ack + ETA | Phone state: ACKNOWLEDGED","textChars":35,"textLines":2,"bbox":[4550,342,300,130]}
+{"kind":"textbox","id":"sh/gjapofex","slide":1,"name":"s-last-state","text":"Last proven phone state\nNo invented delivery or acknowledgement","textPreview":"Last proven phone state | No invented delivery or acknowledgement","textChars":63,"textLines":2,"bbox":[4550,600,300,130]}
+{"kind":"textbox","id":"sh/ore58bah","slide":1,"name":"s-end","text":"Incident response continues","textPreview":"Incident response continues","textChars":27,"textLines":1,"bbox":[4890,362,245,90]}
+{"kind":"textbox","id":"sh/9s761gb2","slide":1,"name":"s-no-return-end","text":"Reconcile later","textPreview":"Reconcile later","textChars":15,"textLines":1,"bbox":[4890,620,245,90]}
+{"kind":"shape","id":"sh/mpwn61sb","slide":1,"name":"s-1","bbox":[570,510,66.25,0]}
+{"kind":"shape","id":"sh/nq5oz6tw","slide":1,"name":"s-2","bbox":[903.75,510,66.25,0]}
+{"kind":"shape","id":"sh/wfy5cvat","slide":1,"name":"s-yes-internet","bbox":[1090,360,170,70]}
+{"kind":"shape","id":"sh/xg7650by","slide":1,"name":"s-direct-id","bbox":[1520,360,30,0]}
+{"kind":"shape","id":"sh/adgnalsn","slide":1,"name":"s-no-internet","bbox":[1210,510,50,0]}
+{"kind":"shape","id":"sh/bepo3qt8","slide":1,"name":"s-no-pod","bbox":[1380,590,5,38]}
+{"kind":"shape","id":"sh/kji5gvap","slide":1,"name":"s-retry","bbox":[1520,687,35,0]}
+{"kind":"shape","id":"sh/lkr690ba","slide":1,"name":"s-yes-pod","bbox":[1500,510,80,0]}
+{"kind":"shape","id":"sh/vet8zudc","slide":1,"name":"s-queue-lora","bbox":[1865,510,50,0]}
+{"kind":"shape","id":"sh/udkr6pcr","slide":1,"name":"s-yes-lora","bbox":[2155,510,95,0]}
+{"kind":"shape","id":"sh/hgbq14vi","slide":1,"name":"s-no-lora","bbox":[2035,590,27.5,38]}
+{"kind":"shape","id":"sh/gf298zux","slide":1,"name":"s-relay-gateway","bbox":[2205,575,187.5,112]}
+{"kind":"shape","id":"sh/7a98vudg","slide":1,"name":"s-gateway-https","bbox":[2535,510,61.25,0]}
+{"kind":"shape","id":"sh/690r2pcv","slide":1,"name":"s-https-backend","bbox":[2848.75,510,61.25,0]}
+{"kind":"shape","id":"sh/tcbqx4v6","slide":1,"name":"s-direct-continue","bbox":[2713,380,339.5,65]}
+{"kind":"shape","id":"sh/8b294zu1","slide":1,"name":"s-backend-store","bbox":[3195,510,45,0]}
+{"kind":"shape","id":"sh/r6d87edk","slide":1,"name":"s-store-dashboard","bbox":[3525,510,45,0]}
+{"kind":"shape","id":"sh/q54re9cz","slide":1,"name":"s-dashboard-ack","bbox":[3870,510,45,0]}
+{"kind":"shape","id":"sh/md83mh0j","slide":1,"name":"s-ack-return","bbox":[4215,510,45,0]}
+{"kind":"shape","id":"sh/nehkvm14","slide":1,"name":"s-return-yes","bbox":[4500,407,66.25,103]}
+{"kind":"shape","id":"sh/8falorip","slide":1,"name":"s-return-no","bbox":[4380,590,186.25,75]}
+{"kind":"shape","id":"sh/9gj2xwja","slide":1,"name":"s-ack-end","bbox":[4833.75,407,56.25,0]}
+{"kind":"shape","id":"sh/ahs3qh0f","slide":1,"name":"s-last-end","bbox":[4833.75,665,56.25,0]}
+{"kind":"textbox","id":"sh/vi1kzm10","slide":1,"name":"s-l1","text":"WiFi HTTP","textPreview":"WiFi HTTP","textChars":9,"textLines":1,"bbox":[1490,406,120,34]}
+{"kind":"textbox","id":"sh/wjalsril","slide":1,"name":"s-l2","text":"Signed LoAM","textPreview":"Signed LoAM","textChars":11,"textLines":1,"bbox":[2165,406,100,34]}
+{"kind":"textbox","id":"sh/x4j21wj6","slide":1,"name":"s-l3","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[1080,358,70,34]}
+{"kind":"textbox","id":"sh/qlojex0b","slide":1,"name":"s-l4","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[1188,475,60,34]}
+{"kind":"textbox","id":"sh/bmxkn21w","slide":1,"name":"s-l5","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[1354,595,60,34]}
+{"kind":"textbox","id":"sh/t0n6t03e","slide":1,"name":"s-l6","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[1496,475,70,34]}
+{"kind":"textbox","id":"sh/sze5kv2t","slide":1,"name":"s-l7","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[2158,475,70,34]}
+{"kind":"textbox","id":"sh/7y5orql8","slide":1,"name":"s-l8","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[2020,595,60,34]}
+{"kind":"textbox","id":"sh/6dcnilkn","slide":1,"name":"s-l9","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[4462,362,70,34]}
+{"kind":"textbox","id":"sh/h4n6x03a","slide":1,"name":"s-l10","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[4385,595,60,34]}
+{"kind":"textbox","id":"sh/g3e5of25","slide":1,"name":"s-id-note","text":"S1 continues the direct internet path without crossing the offline path","textPreview":"S1 continues the direct internet path without crossing the offline path","textChars":71,"textLines":1,"bbox":[2440,300,560,40]}
+{"kind":"shape","id":"sh/f25ovalk","slide":1,"name":"ENVIRONMENTAL WARNING-lane","bbox":[28,820,5144,520]}
+{"kind":"textbox","id":"sh/u1wnm5kz","slide":1,"name":"ENVIRONMENTAL WARNING-tag","text":"ENVIRONMENTAL WARNING","textPreview":"ENVIRONMENTAL WARNING","textChars":21,"textLines":1,"bbox":[48,842,220,88]}
+{"kind":"textbox","id":"sh/x83mlg36","slide":1,"name":"ENVIRONMENTAL WARNING-subtitle","text":"Sensor and forecast inputs\nAdvisory only","textPreview":"Sensor and forecast inputs | Advisory only","textChars":40,"textLines":2,"bbox":[54,936,205,92]}
+{"kind":"textbox","id":"sh/w7u5cb2l","slide":1,"name":"e-start","text":"Sensor cadence or\ndashboard refresh","textPreview":"Sensor cadence or | dashboard refresh","textChars":35,"textLines":2,"bbox":[310,995,260,110]}
+{"kind":"textbox","id":"sh/o7q9szuh","slide":1,"name":"e-input","text":"Environmental inputs\nPressure, current, health, weather, marine","textPreview":"Environmental inputs | Pressure, current, health, weather, marine","textChars":63,"textLines":2,"bbox":[620,980,320,140]}
+{"kind":"textbox","id":"sh/98jal4b2","slide":1,"name":"e-normalize","text":"Ingest and normalize\nAttach source, time and location","textPreview":"Ingest and normalize | Attach source, time and location","textChars":53,"textLines":2,"bbox":[990,985,285,130]}
+{"kind":"textbox","id":"sh/258rq9cb","slide":1,"name":"e-quality","text":"Fresh and\nreliable?","textPreview":"Fresh and | reliable?","textChars":19,"textLines":2,"bbox":[1320,970,240,160]}
+{"kind":"textbox","id":"sh/n6hsjutw","slide":1,"name":"e-stale","text":"Unknown or stale\nDo not claim a safe condition","textPreview":"Unknown or stale | Do not claim a safe condition","textChars":46,"textLines":2,"bbox":[1310,1168,280,118]}
+{"kind":"textbox","id":"sh/03q9ozu5","slide":1,"name":"e-stale-end","text":"Wait for better data","textPreview":"Wait for better data","textChars":20,"textLines":1,"bbox":[1625,1186,235,82]}
+{"kind":"textbox","id":"sh/14zah4bq","slide":1,"name":"e-squall","text":"Backend squall nowcast\nPressure and forecast features","textPreview":"Backend squall nowcast | Pressure and forecast features","textChars":53,"textLines":2,"bbox":[1640,900,300,120]}
+{"kind":"textbox","id":"sh/e18rmpcz","slide":1,"name":"e-danger","text":"Browser danger-zone GBDT\nLocal map features","textPreview":"Browser danger-zone GBDT | Local map features","textChars":43,"textLines":2,"bbox":[1640,1070,300,120]}
+{"kind":"textbox","id":"sh/f2hsfutk","slide":1,"name":"e-combine","text":"Combine model evidence\nKeep source and age visible","textPreview":"Combine model evidence | Keep source and age visible","textChars":50,"textLines":2,"bbox":[1990,985,300,130]}
+{"kind":"textbox","id":"sh/kzat0jup","slide":1,"name":"e-official","text":"Official or human\nwarning exists?","textPreview":"Official or human | warning exists?","textChars":33,"textLines":2,"bbox":[2340,970,260,160]}
+{"kind":"textbox","id":"sh/l03atobu","slide":1,"name":"e-precedence","text":"Use official or human warning\nOverrides model advisory","textPreview":"Use official or human warning | Overrides model advisory","textChars":54,"textLines":2,"bbox":[2660,892,310,120]}
+{"kind":"textbox","id":"sh/vu5cjidc","slide":1,"name":"e-candidate","text":"Model advisory candidate\nNo autonomous emergency action","textPreview":"Model advisory candidate | No autonomous emergency action","textChars":55,"textLines":2,"bbox":[2660,1100,310,120]}
+{"kind":"textbox","id":"sh/utwvqdwr","slide":1,"name":"e-publish","text":"Publish advisory\nRecord source, age, confidence","textPreview":"Publish advisory | Record source, age, confidence","textChars":47,"textLines":2,"bbox":[3030,985,300,130]}
+{"kind":"textbox","id":"sh/hwnulsv2","slide":1,"name":"e-store","text":"PostgreSQL\nTelemetry and advisories","textPreview":"PostgreSQL | Telemetry and advisories","textChars":35,"textLines":2,"bbox":[3380,975,280,150]}
+{"kind":"textbox","id":"sh/gvedsnex","slide":1,"name":"e-output","text":"Warning payload\nRisk, source, age, confidence, location","textPreview":"Warning payload | Risk, source, age, confidence, location","textChars":55,"textLines":2,"bbox":[3710,980,320,140]}
+{"kind":"textbox","id":"sh/3y5cn2d8","slide":1,"name":"e-surface","text":"Mobile and dashboard\nAuthorized users review context","textPreview":"Mobile and dashboard | Authorized users review context","textChars":52,"textLines":2,"bbox":[4080,985,300,130]}
+{"kind":"textbox","id":"sh/ixwvuxwn","slide":1,"name":"e-end","text":"Human decides action","textPreview":"Human decides action","textChars":20,"textLines":1,"bbox":[4430,995,260,110]}
+{"kind":"shape","id":"sh/5k7epcve","slide":1,"name":"e-1","bbox":[570,1050,67.5,0]}
+{"kind":"shape","id":"sh/4jydw7et","slide":1,"name":"e-2","bbox":[922.5,1050,67.5,0]}
+{"kind":"shape","id":"sh/j2lcbyd4","slide":1,"name":"e-3","bbox":[1275,1050,45,0]}
+{"kind":"shape","id":"sh/y1cvitwj","slide":1,"name":"e-no","bbox":[1440,1130,10,38]}
+{"kind":"shape","id":"sh/jipsbuxc","slide":1,"name":"e-stale-end-link","bbox":[1575.25,1227,49.75,0]}
+{"kind":"shape","id":"sh/ihgripw7","slide":1,"name":"e-yes-top","bbox":[1560,960,80,90]}
+{"kind":"shape","id":"sh/5k7ad4fi","slide":1,"name":"e-yes-bottom","bbox":[1560,1050,80,80]}
+{"kind":"shape","id":"sh/4jy9kzex","slide":1,"name":"e-squall-combine","bbox":[1940,960,200,25]}
+{"kind":"shape","id":"sh/vu5s7uxg","slide":1,"name":"e-danger-combine","bbox":[1940,1115,200,15]}
+{"kind":"shape","id":"sh/atwrepwv","slide":1,"name":"e-combine-official","bbox":[2290,1050,50,0]}
+{"kind":"shape","id":"sh/hgna94fm","slide":1,"name":"e-official-yes","bbox":[2600,952,60,98]}
+{"kind":"shape","id":"sh/wfe9gze1","slide":1,"name":"e-official-no","bbox":[2600,1050,60,110]}
+{"kind":"shape","id":"sh/fq9sjexk","slide":1,"name":"e-precedence-publish","bbox":[2970,952,210,33]}
+{"kind":"shape","id":"sh/ep0rq9wz","slide":1,"name":"e-candidate-publish","bbox":[2970,1115,210,45]}
+{"kind":"shape","id":"sh/cvapkbuh","slide":1,"name":"e-publish-store","bbox":[3330,1050,50,0]}
+{"kind":"shape","id":"sh/dwj6dgv2","slide":1,"name":"e-store-output","bbox":[3660,1050,67.5,0]}
+{"kind":"shape","id":"sh/qts7ilcr","slide":1,"name":"e-output-surface","bbox":[4012.5,1050,67.5,0]}
+{"kind":"shape","id":"sh/bu1ob6dc","slide":1,"name":"e-surface-end","bbox":[4380,1050,50,0]}
+{"kind":"textbox","id":"sh/0zupovut","slide":1,"name":"e-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[1570,956,70,34]}
+{"kind":"textbox","id":"sh/l036h0ve","slide":1,"name":"e-no-label","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[1410,1135,60,34]}
+{"kind":"textbox","id":"sh/yxs7mlcn","slide":1,"name":"e-off-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[2588,918,70,34]}
+{"kind":"textbox","id":"sh/zylofqd8","slide":1,"name":"e-off-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[2588,1142,60,34]}
+{"kind":"shape","id":"sh/8nupsvup","slide":1,"name":"TRIP ANOMALY-lane","bbox":[28,1360,5144,520]}
+{"kind":"textbox","id":"sh/9o3ql0va","slide":1,"name":"TRIP ANOMALY-tag","text":"TRIP ANOMALY","textPreview":"TRIP ANOMALY","textChars":12,"textLines":1,"bbox":[48,1382,220,88]}
+{"kind":"textbox","id":"sh/hkj650ne","slide":1,"name":"TRIP ANOMALY-subtitle","text":"Per-vessel deviation signal\nRequires responder verification","textPreview":"Per-vessel deviation signal | Requires responder verification","textChars":59,"textLines":2,"bbox":[54,1476,205,92]}
+{"kind":"textbox","id":"sh/wjqpwvmt","slide":1,"name":"t-start","text":"Active or open trip","textPreview":"Active or open trip","textChars":19,"textLines":1,"bbox":[310,1535,260,110]}
+{"kind":"textbox","id":"sh/viho3q5o","slide":1,"name":"t-input","text":"Trip evidence\nContact events, route, duration, trip history","textPreview":"Trip evidence | Contact events, route, duration, trip history","textChars":59,"textLines":2,"bbox":[620,1520,320,140]}
+{"kind":"textbox","id":"sh/uh87ul43","slide":1,"name":"t-filter","text":"Causal history filter\nExclude future and candidate-trip leakage","textPreview":"Causal history filter | Exclude future and candidate-trip leakage","textChars":63,"textLines":2,"bbox":[990,1525,300,130]}
+{"kind":"textbox","id":"sh/58j690nq","slide":1,"name":"t-baseline","text":"Enough personal\nbaseline?","textPreview":"Enough personal | baseline?","textChars":25,"textLines":2,"bbox":[1340,1510,240,160]}
+{"kind":"textbox","id":"sh/47ap0fm5","slide":1,"name":"t-cold","text":"Cold-start review queue\nAsk for human verification","textPreview":"Cold-start review queue | Ask for human verification","textChars":50,"textLines":2,"bbox":[1325,1708,280,118]}
+{"kind":"textbox","id":"sh/361o7a5k","slide":1,"name":"t-cold-end","text":"No automated claim","textPreview":"No automated claim","textChars":18,"textLines":1,"bbox":[1640,1726,235,82]}
+{"kind":"textbox","id":"sh/i5s7y54z","slide":1,"name":"t-profile","text":"Build per-vessel profile\nPersonal route and duration behavior","textPreview":"Build per-vessel profile | Personal route and duration behavior","textChars":61,"textLines":2,"bbox":[1650,1525,300,130]}
+{"kind":"textbox","id":"sh/lcf6xgn6","slide":1,"name":"t-deviation","text":"Deviation exceeds\nthreshold?","textPreview":"Deviation exceeds | threshold?","textChars":28,"textLines":2,"bbox":[2000,1510,250,160]}
+{"kind":"textbox","id":"sh/kb65obm1","slide":1,"name":"t-continue","text":"Continue monitoring","textPreview":"Continue monitoring","textChars":19,"textLines":1,"bbox":[2000,1726,250,82]}
+{"kind":"textbox","id":"sh/ah43yhkj","slide":1,"name":"t-case","text":"Create anomaly case\nEvidence, confidence and reason","textPreview":"Create anomaly case | Evidence, confidence and reason","textChars":51,"textLines":2,"bbox":[2310,1525,300,130]}
+{"kind":"textbox","id":"sh/bid47ml4","slide":1,"name":"t-store","text":"PostgreSQL\nTrip state and anomaly case","textPreview":"PostgreSQL | Trip state and anomaly case","textChars":38,"textLines":2,"bbox":[2660,1515,280,150]}
+{"kind":"textbox","id":"sh/cjml0r2p","slide":1,"name":"t-review","text":"Responder review\nCall, radio check, context review","textPreview":"Responder review | Call, radio check, context review","textChars":50,"textLines":2,"bbox":[2990,1525,300,130]}
+{"kind":"textbox","id":"sh/xkvm9w3a","slide":1,"name":"t-escalate","text":"Escalate as\nincident?","textPreview":"Escalate as | incident?","textChars":21,"textLines":2,"bbox":[3340,1510,240,160]}
+{"kind":"textbox","id":"sh/ylo32hkv","slide":1,"name":"t-dismiss","text":"Dismiss or monitor case","textPreview":"Dismiss or monitor case","textChars":23,"textLines":1,"bbox":[3330,1726,270,82]}
+{"kind":"textbox","id":"sh/zmx4bmlg","slide":1,"name":"t-datum","text":"Confirmed incident datum\nLast fix, time, object class; connector D1","textPreview":"Confirmed incident datum | Last fix, time, object class; connector D1","textChars":67,"textLines":2,"bbox":[3630,1520,340,140]}
+{"kind":"textbox","id":"sh/kn6l4r2l","slide":1,"name":"t-end","text":"Pass to drift lane","textPreview":"Pass to drift lane","textChars":18,"textLines":1,"bbox":[4020,1535,250,110]}
+{"kind":"shape","id":"sh/lofmdw36","slide":1,"name":"t-1","bbox":[570,1590,67.5,0]}
+{"kind":"shape","id":"sh/epk3qxkb","slide":1,"name":"t-2","bbox":[922.5,1590,67.5,0]}
+{"kind":"shape","id":"sh/fqtkz2lw","slide":1,"name":"t-3","bbox":[1290,1590,50,0]}
+{"kind":"shape","id":"sh/va1s7u9o","slide":1,"name":"t-no-base","bbox":[1460,1670,5,38]}
+{"kind":"shape","id":"sh/u9sbep83","slide":1,"name":"t-cold-end-link","bbox":[1605,1767,35,0]}
+{"kind":"shape","id":"sh/hc3a94ru","slide":1,"name":"t-yes-base","bbox":[1580,1590,70,0]}
+{"kind":"shape","id":"sh/gbatgzq9","slide":1,"name":"t-profile-dev","bbox":[1950,1590,50,0]}
+{"kind":"shape","id":"sh/3ylsbu9k","slide":1,"name":"t-dev-no","bbox":[2125,1670,0,56]}
+{"kind":"shape","id":"sh/idcbi98z","slide":1,"name":"t-dev-yes","bbox":[2250,1590,60,0]}
+{"kind":"shape","id":"sh/503ad4rq","slide":1,"name":"t-case-store","bbox":[2610,1590,50,0]}
+{"kind":"shape","id":"sh/4zutkzq5","slide":1,"name":"t-store-review","bbox":[2940,1590,50,0]}
+{"kind":"shape","id":"sh/r2lsfe9w","slide":1,"name":"t-review-escalate","bbox":[3290,1590,50,0]}
+{"kind":"shape","id":"sh/q1cbm98b","slide":1,"name":"t-escalate-no","bbox":[3460,1670,5,56]}
+{"kind":"shape","id":"sh/o7e9cj69","slide":1,"name":"t-escalate-yes","bbox":[3580,1590,67.5,0]}
+{"kind":"shape","id":"sh/p8na5onu","slide":1,"name":"t-datum-end","bbox":[3952.5,1590,67.5,0]}
+{"kind":"textbox","id":"sh/25wra9oj","slide":1,"name":"t-b-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[1430,1675,60,34]}
+{"kind":"textbox","id":"sh/n65s3epo","slide":1,"name":"t-b-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[1580,1555,70,34]}
+{"kind":"textbox","id":"sh/03e98z6d","slide":1,"name":"t-d-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[2100,1675,60,34]}
+{"kind":"textbox","id":"sh/14na147y","slide":1,"name":"t-d-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[2250,1555,70,34]}
+{"kind":"textbox","id":"sh/e1cr69o7","slide":1,"name":"t-e-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[3430,1675,60,34]}
+{"kind":"textbox","id":"sh/f2lszeps","slide":1,"name":"t-e-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[3575,1555,70,34]}
+{"kind":"shape","id":"sh/szu94z61","slide":1,"name":"DRIFT AND SEARCH-lane","bbox":[28,1900,5144,520]}
+{"kind":"textbox","id":"sh/d03qx47m","slide":1,"name":"DRIFT AND SEARCH-tag","text":"DRIFT AND SEARCH","textPreview":"DRIFT AND SEARCH","textChars":16,"textLines":1,"bbox":[48,1922,220,88]}
+{"kind":"textbox","id":"sh/twvq10zq","slide":1,"name":"DRIFT AND SEARCH-subtitle","text":"Decision support after confirmed incident\nNo autonomous dispatch","textPreview":"Decision support after confirmed incident | No autonomous dispatch","textChars":64,"textLines":2,"bbox":[54,2016,205,92]}
+{"kind":"textbox","id":"sh/8vmpsvy5","slide":1,"name":"d-start","text":"Confirmed SOS or D1 case","textPreview":"Confirmed SOS or D1 case","textChars":24,"textLines":1,"bbox":[310,2075,270,110]}
+{"kind":"textbox","id":"sh/7udozqhk","slide":1,"name":"d-datum","text":"Incident datum\nLast fix, time, object class","textPreview":"Incident datum | Last fix, time, object class","textChars":43,"textLines":2,"bbox":[630,2060,300,140]}
+{"kind":"textbox","id":"sh/6t47qlgz","slide":1,"name":"d-forcing","text":"Load environmental forcing\nWind, current and coastline","textPreview":"Load environmental forcing | Wind, current and coastline","textChars":54,"textLines":2,"bbox":[980,2065,300,130]}
+{"kind":"textbox","id":"sh/lsv6xgze","slide":1,"name":"d-current","text":"Live current\nsupport?","textPreview":"Live current | support?","textChars":21,"textLines":2,"bbox":[1330,2050,240,160]}
+{"kind":"textbox","id":"sh/k72pobyt","slide":1,"name":"d-observed","text":"Use observed current field\nTime and location aligned","textPreview":"Use observed current field | Time and location aligned","textChars":52,"textLines":2,"bbox":[1630,1972,300,120]}
+{"kind":"textbox","id":"sh/j6tov6h8","slide":1,"name":"d-degraded","text":"Mark degraded mode\nAssumption-conditioned output","textPreview":"Mark degraded mode | Assumption-conditioned output","textChars":48,"textLines":2,"bbox":[1630,2180,300,120]}
+{"kind":"textbox","id":"sh/y5k7m1g3","slide":1,"name":"d-monte","text":"Monte Carlo leeway\nParticle paths and land stranding","textPreview":"Monte Carlo leeway | Particle paths and land stranding","textChars":52,"textLines":2,"bbox":[1980,2065,300,130]}
+{"kind":"textbox","id":"sh/pofq9kzy","slide":1,"name":"d-grid","text":"Search probability\nGrid plus 50, 75 and 95 percent contours","textPreview":"Search probability | Grid plus 50, 75 and 95 percent contours","textChars":59,"textLines":2,"bbox":[2330,2060,330,140]}
+{"kind":"textbox","id":"sh/436p0fyd","slide":1,"name":"d-rank","text":"Rank search sectors\nCoverage priority and uncertainty","textPreview":"Rank search sectors | Coverage priority and uncertainty","textChars":53,"textLines":2,"bbox":[2710,2065,300,130]}
+{"kind":"textbox","id":"sh/2xgvedsj","slide":1,"name":"d-negative","text":"Negative search\nevidence?","textPreview":"Negative search | evidence?","textChars":25,"textLines":2,"bbox":[3060,2050,250,160]}
+{"kind":"textbox","id":"sh/nypw7it4","slide":1,"name":"d-plan","text":"Current search plan\nRanked sectors and confidence","textPreview":"Current search plan | Ranked sectors and confidence","textChars":49,"textLines":2,"bbox":[3380,1972,300,120]}
+{"kind":"textbox","id":"sh/ozydgnap","slide":1,"name":"d-posterior","text":"Update posterior\nCondition on searched area and time","textPreview":"Update posterior | Condition on searched area and time","textChars":52,"textLines":2,"bbox":[3380,2180,300,120]}
+{"kind":"textbox","id":"sh/p07e9sbu","slide":1,"name":"d-revised","text":"Revised search plan\nUpdated contours and sector order","textPreview":"Revised search plan | Updated contours and sector order","textChars":53,"textLines":2,"bbox":[3730,2180,300,120]}
+{"kind":"textbox","id":"sh/etwvats7","slide":1,"name":"d-store","text":"PostgreSQL\nIncident, model run, search evidence","textPreview":"PostgreSQL | Incident, model run, search evidence","textChars":47,"textLines":2,"bbox":[4080,2055,300,150]}
+{"kind":"textbox","id":"sh/fu5c3yts","slide":1,"name":"d-surface","text":"Responder map\nHuman reviews and directs search","textPreview":"Responder map | Human reviews and directs search","textChars":46,"textLines":2,"bbox":[4430,2065,300,130]}
+{"kind":"textbox","id":"sh/0vydc3ad","slide":1,"name":"d-end","text":"Search plan remains advisory","textPreview":"Search plan remains advisory","textChars":28,"textLines":1,"bbox":[4780,2075,300,110]}
+{"kind":"shape","id":"sh/1w7e58by","slide":1,"name":"d-1","bbox":[580,2130,67.5,0]}
+{"kind":"shape","id":"sh/yp0vmxsr","slide":1,"name":"d-2","bbox":[912.5,2130,67.5,0]}
+{"kind":"shape","id":"sh/zq9wf2tc","slide":1,"name":"d-3","bbox":[1280,2130,50,0]}
+{"kind":"shape","id":"sh/7m5wz2lg","slide":1,"name":"d-current-yes","bbox":[1570,2032,60,98]}
+{"kind":"shape","id":"sh/6lwv6xkv","slide":1,"name":"d-current-no","bbox":[1570,2130,60,110]}
+{"kind":"shape","id":"sh/t8ne1s36","slide":1,"name":"d-observed-monte","bbox":[1930,2032,200,33]}
+{"kind":"shape","id":"sh/8ned8721","slide":1,"name":"d-degraded-monte","bbox":[1930,2195,200,45]}
+{"kind":"shape","id":"sh/ji5cvil4","slide":1,"name":"d-monte-grid","bbox":[2280,2130,67.5,0]}
+{"kind":"shape","id":"sh/yhcv2dkj","slide":1,"name":"d-grid-rank","bbox":[2642.5,2130,67.5,0]}
+{"kind":"shape","id":"sh/lknuxs3a","slide":1,"name":"d-rank-negative","bbox":[3010,2130,50,0]}
+{"kind":"shape","id":"sh/kjed4n2p","slide":1,"name":"d-negative-no","bbox":[3310,2032,85,98]}
+{"kind":"shape","id":"sh/belcril8","slide":1,"name":"d-negative-yes","bbox":[3310,2130,70,110]}
+{"kind":"shape","id":"sh/adcvydkn","slide":1,"name":"d-posterior-revised","bbox":[3680,2240,65,0]}
+{"kind":"shape","id":"sh/0jat8jil","slide":1,"name":"d-plan-store","bbox":[3665,2032,565,23]}
+{"kind":"shape","id":"sh/1kja1oj6","slide":1,"name":"d-revised-store","bbox":[4015,2205,215,35]}
+{"kind":"shape","id":"sh/ex8r690f","slide":1,"name":"d-store-surface","bbox":[4380,2130,50,0]}
+{"kind":"shape","id":"sh/zihsze10","slide":1,"name":"d-surface-end","bbox":[4730,2130,50,0]}
+{"kind":"textbox","id":"sh/onatcjih","slide":1,"name":"d-c-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[1560,1998,70,34]}
+{"kind":"textbox","id":"sh/9oja5oj2","slide":1,"name":"d-c-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[1560,2222,60,34]}
+{"kind":"textbox","id":"sh/mlsba90b","slide":1,"name":"d-n-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[3310,1998,60,34]}
+{"kind":"textbox","id":"sh/nm1s3e1w","slide":1,"name":"d-n-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[3310,2222,70,34]}
+{"kind":"shape","id":"sh/4rq90zid","slide":1,"name":"CONSENTED CATCH ACTIVITY-lane","bbox":[28,2440,5144,520]}
+{"kind":"textbox","id":"sh/pszat4jy","slide":1,"name":"CONSENTED CATCH ACTIVITY-tag","text":"CONSENTED CATCH ACTIVITY","textPreview":"CONSENTED CATCH ACTIVITY","textChars":24,"textLines":1,"bbox":[48,2462,220,88]}
+{"kind":"textbox","id":"sh/4bmxw7e1","slide":1,"name":"CONSENTED CATCH ACTIVITY-subtitle","text":"Optional fisheries purpose\nNever sent over LoRa","textPreview":"Optional fisheries purpose | Never sent over LoRa","textChars":47,"textLines":2,"bbox":[54,2556,205,92]}
+{"kind":"textbox","id":"sh/5cvypcvm","slide":1,"name":"f-start","text":"User opts in","textPreview":"User opts in","textChars":12,"textLines":1,"bbox":[310,2615,250,110]}
+{"kind":"textbox","id":"sh/i94fuxwv","slide":1,"name":"f-token","text":"Valid vessel\ndevice token?","textPreview":"Valid vessel | device token?","textChars":26,"textLines":2,"bbox":[610,2590,250,160]}
+{"kind":"textbox","id":"sh/jadgn2dg","slide":1,"name":"f-reject","text":"Reject request","textPreview":"Reject request","textChars":14,"textLines":1,"bbox":[610,2806,250,82]}
+{"kind":"textbox","id":"sh/w7mxs7ep","slide":1,"name":"f-input","text":"Catch log\nSpecies, weight, time, coarse place, consent","textPreview":"Catch log | Species, weight, time, coarse place, consent","textChars":54,"textLines":2,"bbox":[920,2600,330,140]}
+{"kind":"textbox","id":"sh/h8velsva","slide":1,"name":"f-validate","text":"Validate and store\nSeparate fisheries domain","textPreview":"Validate and store | Separate fisheries domain","textChars":44,"textLines":2,"bbox":[1300,2605,300,130]}
+{"kind":"textbox","id":"sh/u5kfqxwz","slide":1,"name":"f-store","text":"PostgreSQL\nPrivate catch record and consent","textPreview":"PostgreSQL | Private catch record and consent","textChars":43,"textLines":2,"bbox":[1650,2595,300,150]}
+{"kind":"textbox","id":"sh/v6dwj2dk","slide":1,"name":"f-consent","text":"Consent to coarse\nactivity sharing?","textPreview":"Consent to coarse | activity sharing?","textChars":35,"textLines":2,"bbox":[2000,2590,260,160]}
+{"kind":"textbox","id":"sh/8j2xonet","slide":1,"name":"f-private","text":"Keep private record only","textPreview":"Keep private record only","textChars":24,"textLines":1,"bbox":[2000,2806,260,82]}
+{"kind":"textbox","id":"sh/94behsve","slide":1,"name":"f-aggregate","text":"Coarse aggregation\nRecent time window and broad grid cell","textPreview":"Coarse aggregation | Recent time window and broad grid cell","textChars":57,"textLines":2,"bbox":[2320,2605,310,130]}
+{"kind":"textbox","id":"sh/be9g7ih0","slide":1,"name":"f-threshold","text":"Independent reporter\nthreshold met?","textPreview":"Independent reporter | threshold met?","textChars":35,"textLines":2,"bbox":[2680,2590,270,160]}
+{"kind":"textbox","id":"sh/ad0fydgf","slide":1,"name":"f-withhold","text":"Cell withheld\nInsufficient independent reports","textPreview":"Cell withheld | Insufficient independent reports","textChars":46,"textLines":2,"bbox":[2680,2788,270,118]}
+{"kind":"textbox","id":"sh/xgby9sz6","slide":1,"name":"f-withhold-end","text":"Retry after more reports","textPreview":"Retry after more reports","textChars":24,"textLines":1,"bbox":[3000,2806,270,82]}
+{"kind":"textbox","id":"sh/cf2h0nyl","slide":1,"name":"f-cell","text":"Coarse activity cell\nRecent activity; no exact vessel position","textPreview":"Coarse activity cell | Recent activity; no exact vessel position","textChars":62,"textLines":2,"bbox":[3010,2600,330,140]}
+{"kind":"textbox","id":"sh/z2tgb2hc","slide":1,"name":"f-api","text":"Public REST output\nPrivacy-filtered activity only","textPreview":"Public REST output | Privacy-filtered activity only","textChars":49,"textLines":2,"bbox":[3390,2605,300,130]}
+{"kind":"textbox","id":"sh/yhkz2xgr","slide":1,"name":"f-surface","text":"Mobile and LGU/BFAR view\nNo guaranteed catch claim","textPreview":"Mobile and LGU/BFAR view | No guaranteed catch claim","textChars":50,"textLines":2,"bbox":[3740,2605,320,130]}
+{"kind":"textbox","id":"sh/l4bydsz2","slide":1,"name":"f-end","text":"Optional fisheries insight","textPreview":"Optional fisheries insight","textChars":26,"textLines":1,"bbox":[4110,2615,280,110]}
+{"kind":"shape","id":"sh/k32h4nyx","slide":1,"name":"f-1","bbox":[560,2670,50,0]}
+{"kind":"shape","id":"sh/76dgf2h8","slide":1,"name":"f-token-no","bbox":[735,2750,0,56]}
+{"kind":"shape","id":"sh/m5kz6xgn","slide":1,"name":"f-token-yes","bbox":[860,2670,77.5,0]}
+{"kind":"shape","id":"sh/id8ru547","slide":1,"name":"f-input-validate","bbox":[1232.5,2670,67.5,0]}
+{"kind":"shape","id":"sh/3ehsna5s","slide":1,"name":"f-validate-store","bbox":[1600,2670,50,0]}
+{"kind":"shape","id":"sh/4fqtwvmd","slide":1,"name":"f-store-consent","bbox":[1950,2670,50,0]}
+{"kind":"shape","id":"sh/5gzap0ny","slide":1,"name":"f-consent-no","bbox":[2130,2750,0,56]}
+{"kind":"shape","id":"sh/u9orql4b","slide":1,"name":"f-consent-yes","bbox":[2260,2670,60,0]}
+{"kind":"shape","id":"sh/vaxsjq5w","slide":1,"name":"f-aggregate-threshold","bbox":[2630,2670,50,0]}
+{"kind":"shape","id":"sh/gbq9svm1","slide":1,"name":"f-threshold-no","bbox":[2815,2750,0,38]}
+{"kind":"shape","id":"sh/hczal0nm","slide":1,"name":"f-withhold-end-link","bbox":[2935.25,2847,64.75,0]}
+{"kind":"shape","id":"sh/e5sb2p4f","slide":1,"name":"f-threshold-yes","bbox":[2950,2670,77.5,0]}
+{"kind":"shape","id":"sh/z61svu50","slide":1,"name":"f-cell-api","bbox":[3322.5,2670,67.5,0]}
+{"kind":"shape","id":"sh/903ulo72","slide":1,"name":"f-api-surface","bbox":[3690,2670,50,0]}
+{"kind":"shape","id":"sh/ozudsj6h","slide":1,"name":"f-surface-end","bbox":[4060,2670,50,0]}
+{"kind":"textbox","id":"sh/nylcjepw","slide":1,"name":"f-t-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[700,2755,60,34]}
+{"kind":"textbox","id":"sh/mxcvq9or","slide":1,"name":"f-t-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[850,2635,70,34]}
+{"kind":"textbox","id":"sh/1c3uh476","slide":1,"name":"f-c-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[2100,2755,60,34]}
+{"kind":"textbox","id":"sh/0budoz6l","slide":1,"name":"f-c-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[2260,2635,70,34]}
+{"kind":"textbox","id":"sh/za1cfup0","slide":1,"name":"f-th-no","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[2790,2755,60,34]}
+{"kind":"textbox","id":"sh/e9svm9of","slide":1,"name":"f-th-yes","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[2950,2635,70,34]}
+{"kind":"textbox","id":"sh/l8net87a","slide":1,"name":"legend-title","text":"FLOWCHART LEGEND","textPreview":"FLOWCHART LEGEND","textChars":16,"textLines":1,"bbox":[54,3003,310,42]}
+{"kind":"textbox","id":"sh/k7ed036p","slide":1,"name":"legend-oval","text":"Start / end","textPreview":"Start / end","textChars":11,"textLines":1,"bbox":[360,2997,210,58]}
+{"kind":"textbox","id":"sh/szid4z29","slide":1,"name":"legend-process","text":"Process","textPreview":"Process","textChars":7,"textLines":1,"bbox":[610,2997,210,58]}
+{"kind":"textbox","id":"sh/t0bux43u","slide":1,"name":"legend-decision","text":"Decision","textPreview":"Decision","textChars":8,"textLines":1,"bbox":[860,2992,140,68]}
+{"kind":"textbox","id":"sh/6x0v29k3","slide":1,"name":"legend-data","text":"Data input / output","textPreview":"Data input / output","textChars":19,"textLines":1,"bbox":[1040,2997,245,58]}
+{"kind":"textbox","id":"sh/ry9cvulo","slide":1,"name":"legend-store","text":"Data store","textPreview":"Data store","textChars":10,"textLines":1,"bbox":[1325,2993,200,66]}
+{"kind":"textbox","id":"sh/g32d8j25","slide":1,"name":"legend-dot","text":"S1","textPreview":"S1","textChars":2,"textLines":1,"bbox":[1570,3002,48,48]}
+{"kind":"textbox","id":"sh/14bu1o3q","slide":1,"name":"legend-dot-label","text":"Matched connector IDs continue a route without a crossing","textPreview":"Matched connector IDs continue a route without a crossing","textChars":57,"textLines":1,"bbox":[1628,2994,555,66]}
+{"kind":"textbox","id":"sh/e1kv69kf","slide":1,"name":"legend-lines","text":"Solid: active software path    Dashed: optional, unavailable or field-dependent path","textPreview":"Solid: active software path    Dashed: optional, unavailable or field-dependent path","textChars":84,"textLines":1,"bbox":[2200,2997,1000,58]}
+{"kind":"textbox","id":"sh/f2tczel0","slide":1,"name":"principles","text":"NON-NEGOTIABLE ARCHITECTURE RULES\nManual SOS never depends on AI. Delivery states reflect evidence. Models advise authorized humans. Catch sharing stays optional and coarse.","textPreview":"NON-NEGOTIABLE ARCHITECTURE RULES | Manual SOS never depends on AI. Delivery states reflect evidence. Models advise authorized humans. Ca...","textChars":173,"textLines":2,"bbox":[3260,2993,1880,74]}
+{"kind":"textbox","id":"sh/or2dcj2h","slide":1,"name":"footer","text":"AqOne technical architecture | Source of record: repository contracts and current implementation | One page, native editable PowerPoint shapes","textPreview":"AqOne technical architecture | Source of record: repository contracts and current implementation | One page, native editable PowerPoint s...","textChars":142,"textLines":1,"bbox":[54,3305,5090,42]}
+{"kind":"notes","id":"nt/57h3aa","slide":1,"text":"Sources: docs/00_START_HERE.md; docs/02_LOAM_PACKET_SPEC.md; docs/03_PHONE_BUOY_WIFI.md; docs/04_INGEST_API.md; docs/05_PUBLIC_API.md; docs/06_DELIVERY_STATES.md; docs/07_SCOPE_OUT.md; docs/17_AI_EXPLAINED_SIMPLY.md; docs/45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md; docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md; Aqone_PRD (2).md; current backend, mobile, gateway and firmware implementation. The diagram distinguishes active software paths from optional or field-dependent paths."}

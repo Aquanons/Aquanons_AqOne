@@ -14,10 +14,11 @@ page for naming, status, and authoring rules.
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) |
 | Current hybrid transport decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) |
+| Aggregated architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) |
 | Honest demo status and evidence | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) |
 | Current executable pitch plan | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) |
-| Shared technical contracts | [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md), [`03_PHONE_BUOY_WIFI.md`](03_PHONE_BUOY_WIFI.md), [`04_INGEST_API.md`](04_INGEST_API.md), [`05_PUBLIC_API.md`](05_PUBLIC_API.md), [`06_DELIVERY_STATES.md`](06_DELIVERY_STATES.md) |
+| Shared technical contracts | [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md), [`03_PHONE_BUOY_WIFI.md`](03_PHONE_BUOY_WIFI.md), [`04_INGEST_API.md`](04_INGEST_API.md), [`05_PUBLIC_API.md`](05_PUBLIC_API.md), [`06_DELIVERY_STATES.md`](06_DELIVERY_STATES.md), [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) |
 
 `README.md` defines the current pitch priorities.
 The numbered documents preserve decisions and evidence from earlier work.
@@ -98,6 +99,7 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Web remediation plan | [`WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](WEB_REMEDIATION_IMPLEMENTATION_PLAN.md) |
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
+| Hybrid transport decision and technical architecture spec | `55`, `56` |
 | Design references and workshop material | [`design-reference/`](design-reference/), [`dti-workshop/`](dti-workshop/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 

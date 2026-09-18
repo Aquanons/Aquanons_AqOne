@@ -48,6 +48,9 @@ network. This doc is the map; the numbered contracts define each edge in detail.
 | Boat pod / relay buoy → gateway | LoRa | `docs/02_LOAM_PACKET_SPEC.md` |
 | Gateway → backend | HTTPS | `docs/04_INGEST_API.md` |
 | Backend → dashboard / mobile | REST + SSE | `docs/05_PUBLIC_API.md` |
+| Aggregated data flows & AI boundaries | All channels | `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md` |
+
+The visual architecture diagrams and editable swimlane flowcharts are maintained in [`artifacts/`](../artifacts/), specifically [`AqOne_Aggregated_Technical_Architecture.docx`](../artifacts/AqOne_Aggregated_Technical_Architecture.docx), [`.pdf`](../artifacts/AqOne_Aggregated_Technical_Architecture.pdf), and [`.pptx`](../artifacts/AqOne_Aggregated_Technical_Architecture_Editable.pptx).
 
 ## Identities
 
