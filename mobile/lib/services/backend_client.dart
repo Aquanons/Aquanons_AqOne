@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 
 import '../core/config.dart';
 import '../core/endpoint_guard.dart';
-import '../data/avatar_bytes.dart';
 import '../data/identity_store.dart';
 import '../data/secure_credential_store.dart';
 import '../models/delivery_state.dart';
@@ -305,24 +304,8 @@ class BackendClient {
   /// who raised an SOS. Best-effort and never blocking: the profile is
   /// dispatcher context, not part of getting the distress call through, so a
   /// failure here is simply retried on the next app start or profile edit.
-  ///
-  /// The profile picture rides along as a base64 PNG data URL, because the
-  /// dashboard needs the face on the received-call card. A stored profile must
-  /// never be erased by a partial push, so: no photo on the handset sends an
-  /// explicit empty string (clear it), a photo that cannot be read sends
-  /// nothing (keep whatever the backend has).
   Future<void> registerVesselProfile(VesselIdentity identity) async {
     final payload = identity.toRegistrationPayload();
-    final hasPhoto =
-        identity.avatarPath != null && identity.avatarPath!.isNotEmpty;
-    if (!hasPhoto) {
-      payload['avatar'] = '';
-    } else {
-      final bytes = await readAvatarBytes(identity.avatarPath);
-      if (bytes != null && bytes.isNotEmpty) {
-        payload['avatar'] = 'data:image/png;base64,${base64Encode(bytes)}';
-      }
-    }
     try {
       await _send(
         _request(

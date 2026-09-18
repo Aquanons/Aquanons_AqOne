@@ -1297,13 +1297,6 @@ body {
   gap: 6px;
 }
 
-.alert-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
 
 .alert-meta {
   font-size: 9px;
@@ -3018,13 +3011,6 @@ body {
   gap: 8px;
 }
 
-.sos-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
 
 .sos-timer {
   font-family: "Consolas", "SF Mono", monospace;
