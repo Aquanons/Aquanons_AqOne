@@ -28,7 +28,6 @@ from app.api.public import router as public_router
 from app.api.sea_condition import router as sea_condition_router
 from app.api.sos import protected_router as sos_read_router
 from app.api.sos import router as sos_ingest_router
-from app.api.spots import router as spots_router
 from app.api.squall import router as squall_router
 from app.api.trips import router as trips_router
 from app.api.vessel_auth import router as vessel_auth_router
@@ -96,13 +95,6 @@ app.include_router(current_events_router)
 
 # Explicit vessel trips and welfare evidence collection (Phase 2 Task 2.4).
 app.include_router(trips_router)
-
-# Fishing spots (community-reported "fish hotspots") - both ingest and read
-# are unauthenticated here, unlike catch logging: this is public, shared
-# data every fisherman with the app needs to see, not per-vessel dispatcher
-# reporting. Also what the dashboard's fetchHotspots() already expects to
-# call unauthenticated. See app/api/spots.py.
-app.include_router(spots_router)
 
 # Read-only safety feeds for the handset. Unauthenticated for the same reason
 # ingest is: the fisherman app has no account by design, so anything it needs

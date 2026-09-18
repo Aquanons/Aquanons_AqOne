@@ -171,25 +171,6 @@ class AqOneConfig {
   static const String advisoriesPath = '/api/advisories?status=Published';
   static const String publicAdvisoriesPath = '/api/public/advisories';
 
-  /// DEPRECATED - manually reported fishing spots. Nothing calls this.
-  ///
-  /// Two claims in the comment this replaces were wrong or became wrong. The
-  /// dashboard's fetchHotspots() no longer exists (see web/js/dashboard.js:
-  /// the hotspot system was dropped in a merge), and the handset no longer
-  /// reads or writes spots at all.
-  ///
-  /// The feature was removed because it contradicted the system design: §6.2
-  /// requires hotspot locations to be spatially binned and protected against
-  /// exposing an individual's exact productive location, and §6.1 puts all
-  /// fisheries collection behind separate informed consent. A pin-drop that
-  /// published exact coordinates, attributed to a vessel, to every handset,
-  /// with no consent gate, did the opposite of both. See [publicHotspotsPath]
-  /// for what replaces it.
-  ///
-  /// The endpoint and the local outbox table are intentionally left in place
-  /// so anything a handset had already queued still uploads.
-  static const String spotsPath = '/api/spots';
-
   /// Fish-hotspot surface (§6.2): binned cells scored by a model over
   /// environmental data.
   ///
