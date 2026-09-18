@@ -564,26 +564,7 @@
     if (!document.hidden) fetchWeatherData();
   });
 
-  ns.wcBody = wcBody;
-  ns.WConditions_INTERVAL_MS = WConditions_INTERVAL_MS;
-  ns.WEATHER_CACHE_KEY = WEATHER_CACHE_KEY;
-  ns.SAFETY_THRESHOLDS = SAFETY_THRESHOLDS;
-  ns.SAFETY_TIERS = SAFETY_TIERS;
   ns.classifySafety = classifySafety;
-  ns.degToCompass = degToCompass;
-  ns.WMO_MAP = WMO_MAP;
-  ns.wmoIcon = wmoIcon;
-  ns.safetyBadgeHTML = safetyBadgeHTML;
   ns.renderWeatherCard = renderWeatherCard;
-  ns.renderForecast = renderForecast;
-  ns.renderRainfall = renderRainfall;
-  ns.fetchLiveJson = fetchLiveJson;
-  ns.readWeatherCache = readWeatherCache;
-  ns.writeWeatherCache = writeWeatherCache;
-  ns.forecastTimeLabel = forecastTimeLabel;
-  ns.buildForecastAlerts = buildForecastAlerts;
-  ns.replaceForecastAlerts = replaceForecastAlerts;
-  ns.displayWeatherSnapshot = displayWeatherSnapshot;
-  ns.fetchWeatherData = fetchWeatherData;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

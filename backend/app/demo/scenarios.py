@@ -221,24 +221,6 @@ async def _write_pressure_window(pool, run_id: str, beat: BeatDefinition, scenar
                 )
 
 
-async def _choose_target_vessel(conn) -> dict[str, Any]:
-    row = await conn.fetchrow(
-        '''
-        SELECT v.id, v.boat_name, COUNT(DISTINCT bc.trip_id) AS trip_count
-        FROM vessels v
-        JOIN buoy_contacts bc ON bc.vessel_id = v.id
-        WHERE v.is_synthetic = TRUE AND bc.is_synthetic = TRUE
-        GROUP BY v.id, v.boat_name
-        HAVING COUNT(DISTINCT bc.trip_id) >= 3
-        ORDER BY COUNT(DISTINCT bc.trip_id) DESC, v.id
-        LIMIT 1
-        '''
-    )
-    if row is None:
-        raise RuntimeError('demo requires a generator vessel with three trips')
-    return dict(row)
-
-
 async def _write_anomaly_contacts(pool, run_id: str) -> str:
     now = datetime.now(UTC).replace(second=0, microsecond=0)
     async with pool.acquire() as conn:

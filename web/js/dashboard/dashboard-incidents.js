@@ -67,16 +67,6 @@
 
     document.getElementById('sos-vessel-id').textContent = data.vesselId;
     document.getElementById('sos-owner').textContent     = data.skipperName || data.owner || 'Unknown';
-    var avatarEl = document.getElementById('sos-avatar');
-    if (avatarEl) {
-      if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/') === 0) {
-        avatarEl.src = data.avatar;
-        avatarEl.hidden = false;
-      } else {
-        avatarEl.removeAttribute('src');
-        avatarEl.hidden = true;
-      }
-    }
     document.getElementById('sos-boat').textContent      = data.boat || '—';
     document.getElementById('sos-registration').textContent = data.license || 'Not declared';
     document.getElementById('sos-contact').textContent      = data.phone || 'Not provided';
@@ -495,31 +485,11 @@
   }
 
   ns.sosDrawer = sosDrawer;
-  ns.sosDrawerHeader = sosDrawerHeader;
-  ns.sosDrawerTitle = sosDrawerTitle;
-  ns.sosDrawerClose = sosDrawerClose;
-  ns.sosTimerEl = sosTimerEl;
-  ns.sosBtnZoom = sosBtnZoom;
-  ns.sosBtnAcknowledge = sosBtnAcknowledge;
-  ns.sosBtnResolve = sosBtnResolve;
-  ns.sosBtnBroadcast = sosBtnBroadcast;
-  ns.sosBtnCheckin = sosBtnCheckin;
-  ns.sosBroadcastMsg = sosBroadcastMsg;
-  ns.sosTimerInterval = sosTimerInterval;
-  ns.sosAlertStartTime = sosAlertStartTime;
   ns.openIncidentDrawer = openIncidentDrawer;
   ns.closeSOSDrawer = closeSOSDrawer;
-  ns.sosTickTimer = sosTickTimer;
   ns.ackOverlay = ackOverlay;
-  ns.ackVesselEl = ackVesselEl;
-  ns.ackStatusEl = ackStatusEl;
-  ns.ackEtaEl = ackEtaEl;
-  ns.ackNoteEl = ackNoteEl;
-  ns.ackConfirmBtn = ackConfirmBtn;
   ns.closeAckModal = closeAckModal;
   ns.openAckModal = openAckModal;
-  ns.ackQuick = ackQuick;
-  ns.renderResponderSection = renderResponderSection;
   ns.refreshOpenDrawer = refreshOpenDrawer;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
 

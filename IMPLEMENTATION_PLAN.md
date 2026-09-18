@@ -1,9 +1,15 @@
-# Implementation Plan: Fishing Weather Window
+# Implementation Plan Index
 
-> **Active Gemini 3.8 handoff:** [AI safety remediation implementation plan](docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md).
+> **Completed Gemini workstream:** [Ponytail audit cleanup implementation plan](docs/PONYTAIL_AUDIT_CLEANUP_IMPLEMENTATION_PLAN.md).
+> Completed 2026-09-18 across Phases 1–5 on branch `codex/ponytail-audit-cleanup`. All regression verification gates passed cleanly (371 backend tests, 257 mobile tests, 148 web tests, web build, lint/syntax checks). Net reduction: 65 files changed, -14,281 lines, -129.5 KB legacy binary assets.
+> The fishing weather window plan below is a completed historical record and must not be treated as the active workstream.
+
+> **Earlier Gemini 3.8 handoff:** [AI safety remediation implementation plan](docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md).
 > Prepared 2026-09-15 for offline warnings, qualified drift support, time-aligned search, calibration and field validation.
 > Every production change requires a failing behavioral test first; implementation has not started under this handoff.
 > Earlier plans and completion statements below are historical records; the new plan identifies claims that still require verification.
+
+## Historical record: Fishing Weather Window
 
 > **Status:** Prepared for Gemini handoff; no implementation phase started.  
 > **Target Branch:** `codex/fishing-weather-window` (create from the current checkout after inspecting local changes).  

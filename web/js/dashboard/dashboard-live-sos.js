@@ -133,11 +133,9 @@
       vesselId: ev.vessel_id || null,
       // The declared owner identity from POST /api/vessel-profile, carried on
       // the event itself so the received-call row/toast can name the person
-      // who pressed the button, not just the boat id. `avatar` is a base64 PNG
-      // data URL (`data:image/png;base64,...`), rendered by an <img>.
-      owner: skipperName,
+      // who pressed the button, not just the boat id.
+      owner: skipperName || boat,
       phone: ev.phone || null,
-      avatar: ev.avatar || null,
       confidence: null,
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
@@ -157,7 +155,7 @@
       // boat as fallback until the profile arrives, so the drawer tells the
       // dispatcher who raised the call - not just which boat id did.
       skipperName: ev.skipper_name || null,
-      owner: ev.skipper_name || null,
+      owner: ev.skipper_name || boat || null,
       boat: boat,
       license: (ev.license_type && ev.license_type !== 'none')
         ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
@@ -302,21 +300,10 @@
   loadActiveSos();
   setInterval(loadActiveSos, LIVE_SOS_POLL_MS);
 
-  ns.relativeTime = relativeTime;
-  ns.LIVE_SOS_POLL_MS = LIVE_SOS_POLL_MS;
   ns.liveSosLayer = liveSosLayer;
   ns.liveSosMarkers = liveSosMarkers;
-  ns.liveSosFirstLoad = liveSosFirstLoad;
-  ns.knownSosIds = knownSosIds;
-  ns.syncStatusEl = syncStatusEl;
-  ns.syncTextEl = syncTextEl;
-  ns.bannerTimeEl = bannerTimeEl;
   ns.updateSyncStatus = updateSyncStatus;
-  ns.liveSosIcon = liveSosIcon;
-  ns.deliveryPath = deliveryPath;
-  ns.sosPosition = sosPosition;
   ns.liveAlertFromEvent = liveAlertFromEvent;
-  ns.syncLiveSosMarkers = syncLiveSosMarkers;
   ns.loadActiveSos = loadActiveSos;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

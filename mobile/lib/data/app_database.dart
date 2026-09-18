@@ -78,10 +78,8 @@ class AppDatabase {
           await _createChecklistItems(db);
         }
         if (oldVersion < 10) {
-          // v10: fish hotspots. Community-reported fishing spots, queued and
-          // synced offline-first - see FishingSpot's doc
-          // comment for why this carries no prediction/trend/health columns.
-          await _createFishingSpotOutbox(db);
+          // v10 once created fishing_spot_outbox. The dormant exact-spot
+          // pipeline was removed; existing tables/rows are preserved untouched.
         }
         if (oldVersion < 11) {
           // v11: offline map. The Venture map's feeds lived in memory only,
@@ -150,7 +148,6 @@ if (oldVersion < 12) {
           'CREATE INDEX idx_outbox_seq ON outbox (vessel_id, seq)',
         );
         await _createChecklistItems(db);
-        await _createFishingSpotOutbox(db);
         await _createMapSnapshot(db);
       },
     );
@@ -201,10 +198,6 @@ if (oldVersion < 12) {
     ''');
   }
 
-  /// Community-reported fishing spots, queued locally until they can be
-  /// uploaded. No prediction/trend/health/reporter-count columns exist here
-  /// - see FishingSpot's doc comment for why fabricating those would be
-  /// dishonest about a model that doesn't exist.
   /// One row per feed, holding the raw JSON exactly as the backend sent it.
   ///
   /// Raw rather than parsed columns on purpose: the models already know how
@@ -219,30 +212,6 @@ if (oldVersion < 12) {
         fetched_at INTEGER NOT NULL
       )
     ''');
-  }
-
-  static Future<void> _createFishingSpotOutbox(Database db) async {
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS fishing_spot_outbox (
-        local_id     TEXT PRIMARY KEY,
-        vessel_id    TEXT NOT NULL,
-        posted_by    TEXT,
-        latitude     REAL NOT NULL,
-        longitude    REAL NOT NULL,
-        species_name TEXT,
-        notes        TEXT,
-        client_ts    INTEGER NOT NULL,
-        state        TEXT NOT NULL,
-        attempts     INTEGER NOT NULL DEFAULT 0,
-        last_error   TEXT,
-        server_id    TEXT,
-        synced_at    INTEGER
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_fishing_spot_state '
-      'ON fishing_spot_outbox (state, client_ts DESC)',
-    );
   }
 
   Future<void> close() async {

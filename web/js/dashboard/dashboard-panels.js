@@ -60,15 +60,5 @@
     });
   });
 
-  ns.statsWidget = statsWidget;
-  ns.statsMinimizeBtn = statsMinimizeBtn;
-  ns.statsBody = statsBody;
-  ns.statsMinimized = statsMinimized;
-  ns.statAlertsCard = statAlertsCard;
-  ns.legendCard = legendCard;
-  ns.legendToggle = legendToggle;
-  ns.legendCollapsed = legendCollapsed;
-  ns.statsTabs = statsTabs;
-  ns.tabContents = tabContents;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

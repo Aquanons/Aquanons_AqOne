@@ -562,16 +562,6 @@ def predict_drift(
     )
 
 
-def max_radius_m(result: DriftResult, last_lat: float, last_lon: float) -> float:
-    final = result.centroid_track[-1]
-    return float(
-        math.hypot(
-            (final['lon'] - last_lon) * _km_per_deg_lon(last_lat),
-            (final['lat'] - last_lat) * KM_PER_DEG_LAT,
-        )
-    )
-
-
 def contour_contains(contour: dict[str, object], lat: float, lon: float) -> bool:
     geometry = contour['geometry']
     ring = geometry['coordinates'][0]

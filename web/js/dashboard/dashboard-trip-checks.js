@@ -154,6 +154,5 @@
   setInterval(updateTripChecksFreshness, 10000);
 
   ns.loadOpenCases = loadOpenCases;
-  ns.updateTripChecksFreshness = updateTripChecksFreshness;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

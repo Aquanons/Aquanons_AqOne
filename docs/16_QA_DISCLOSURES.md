@@ -108,7 +108,7 @@ Hand-supplied GeoJSON of New Washington municipal waters, encoded in
 
 ### Libraries
 
-`scikit-learn 1.9.0`, `numpy 2.4.6`, `pandas 3.0.5`, `joblib 1.5.3`,
+`scikit-learn 1.9.0`, `numpy 2.4.6`, `joblib 1.5.3`,
 `fastapi 0.139.2`, `asyncpg`, `PyJWT`, `bcrypt`. Frontend: Leaflet, Chart.js.
 Mobile: Flutter/Dart, `sqflite`.
 
