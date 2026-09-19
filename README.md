@@ -1,4 +1,4 @@
-<p align="center"><img src="Assets/aqoneLogo.png" alt="AqOne logo" width="320"></p>
+<p align="center"><img src="web/assets/icons/aqoneLogo-full.png" alt="AqOne logo" width="320"></p>
 
 # AqOne
 
@@ -256,8 +256,7 @@ Dataset sources, licences, limitations, and measured results are documented in [
 
 ```text
 backend/       FastAPI, PostgreSQL migrations, AI services, and tests
-firmware/      ESP32-S3 firmware: buoy/ and shore/ sketches
-gateway/       Gateway work area
+firmware/      ESP32-S3 firmware: buoy/ (boat pod & buoy) and shore/ (gateway) sketches
 mobile/        Flutter handset application
 web/           MDRRMO dashboard and browser hazard model
 docs/          Contracts, references, decisions, plans, and verification records

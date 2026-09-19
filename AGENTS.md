@@ -71,9 +71,9 @@ backend/     FastAPI + PostgreSQL (Lenard)
   app/       application code
   migrations/  database migrations
   tests/
-gateway/     LoRa gateway node code (Arnold)
-firmware/
-  buoy/      ESP32-S3 + SX1262 firmware, PlatformIO (Daniel)
+firmware/    ESP32-S3 + SX1262 firmware, PlatformIO
+  buoy/      boat pod & sensor buoy firmware (Daniel)
+  shore/     shore gateway receiver code (Arnold, Daniel)
 mobile/      Flutter app (Jade, Doreen Kay)
   lib/l10n/  ARB translation files, en/fil/akl. Read its README first.
 docs/        numbered specs; 00 is the brief, 08 is the status table

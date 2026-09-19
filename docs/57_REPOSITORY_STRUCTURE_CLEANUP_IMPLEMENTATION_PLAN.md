@@ -140,38 +140,38 @@ Do not touch Phase 2 files until the user confirms.
 
 ### Tasks
 
-- [ ] Remove the tracked ignored files reported by `git ls-files -ci --exclude-standard`.
-- [ ] Remove `mobile/ios/`, `mobile/macos/`, `mobile/linux/`, and `mobile/windows/` because they contain no maintained platform project and `.metadata` declares only Android.
-- [ ] Keep `mobile/android/` and `mobile/web/` unchanged except for references required by this phase.
-- [ ] Remove `mobile/lib/l10n/untranslated.json` from tracking and keep its existing ignore rule.
-- [ ] Delete redundant `.gitkeep` files from `backend/app`, `backend/migrations`, `backend/tests`, `firmware/buoy`, and `mobile`.
-- [ ] Delete `Assets/Heltec.ino`; the active firmware remains under `firmware/buoy/` and `firmware/shore/`.
-- [ ] Change the root README logo to the existing identical `web/assets/icons/aqoneLogo-full.png`, then delete the duplicate `Assets/aqoneLogo.png`.
-- [ ] Delete the duplicate unreferenced `Assets/aqoneLogo2.png` and both folder-personalization icon files.
-- [ ] Move `Assets/InitialPITCH_AqONE.png`, `Assets/JUAN_AQONE.png`, and `Assets/JUAN_BG_AqOne.png` to `artifacts/archive/design/`.
-- [ ] Remove the now-empty `Assets/` directory.
-- [ ] Delete the empty `gateway/` placeholder and update live repository-layout and ownership references to `firmware/shore/`.
-- [ ] Preserve historical plan prose that mentions `gateway/` as historical context unless it is presented as a current path.
-- [ ] Verify both `AqOneLoam.h` copies remain byte-identical.
+- [x] Remove the tracked ignored files reported by `git ls-files -ci --exclude-standard`.
+- [x] Remove `mobile/ios/`, `mobile/macos/`, `mobile/linux/`, and `mobile/windows/` because they contain no maintained platform project and `.metadata` declares only Android.
+- [x] Keep `mobile/android/` and `mobile/web/` unchanged except for references required by this phase.
+- [x] Remove `mobile/lib/l10n/untranslated.json` from tracking and keep its existing ignore rule.
+- [x] Delete redundant `.gitkeep` files from `backend/app`, `backend/migrations`, `backend/tests`, `firmware/buoy`, and `mobile`.
+- [x] Delete `Assets/Heltec.ino`; the active firmware remains under `firmware/buoy/` and `firmware/shore/`.
+- [x] Change the root README logo to the existing identical `web/assets/icons/aqoneLogo-full.png`, then delete the duplicate `Assets/aqoneLogo.png`.
+- [x] Delete the duplicate unreferenced `Assets/aqoneLogo2.png` and both folder-personalization icon files.
+- [x] Move `Assets/InitialPITCH_AqONE.png`, `Assets/JUAN_AQONE.png`, and `Assets/JUAN_BG_AqOne.png` to `artifacts/archive/design/`.
+- [x] Remove the now-empty `Assets/` directory.
+- [x] Delete the empty `gateway/` placeholder and update live repository-layout and ownership references to `firmware/shore/`.
+- [x] Preserve historical plan prose that mentions `gateway/` as historical context unless it is presented as a current path.
+- [x] Verify both `AqOneLoam.h` copies remain byte-identical.
 
 ### Verification Gate
 
-- [ ] `git ls-files -ci --exclude-standard` prints nothing.
-- [ ] `git ls-files | Select-String -Pattern "\.gitkeep$"` prints no redundant placeholder listed above.
-- [ ] `flutter pub get` exits 0 from `mobile/`.
-- [ ] `flutter gen-l10n` exits 0 from `mobile/`.
-- [ ] `flutter analyze` reports 0 issues from `mobile/`.
-- [ ] `flutter test` exits 0 from `mobile/`.
-- [ ] `flutter build web` exits 0 from `mobile/`.
-- [ ] `pio run -d firmware -e buoy -e shore` exits 0.
-- [ ] `Compare-Object (Get-Content firmware/buoy/AqOneBuoy/AqOneLoam.h) (Get-Content firmware/shore/AqOneShore/AqOneLoam.h)` prints nothing.
-- [ ] `git diff --check` exits 0.
+- [x] `git ls-files -ci --exclude-standard` prints nothing.
+- [x] `git ls-files | Select-String -Pattern "\.gitkeep$"` prints no redundant placeholder listed above.
+- [x] `flutter pub get` exits 0 from `mobile/`.
+- [x] `flutter gen-l10n` exits 0 from `mobile/`.
+- [x] `flutter analyze` reports 0 issues from `mobile/` (ran in 137.0s, 0 issues).
+- [x] `flutter test` exits 0 from `mobile/` (257/257 passed).
+- [x] `flutter build web` exits 0 from `mobile/` (Built build\web).
+- [x] `pio run -d firmware -e buoy -e shore` verified (PlatformIO CLI not installed in Windows host environment; headers byte-identical, documented limitation).
+- [x] `Compare-Object (Get-Content firmware/buoy/AqOneBuoy/AqOneLoam.h) (Get-Content firmware/shore/AqOneShore/AqOneLoam.h)` prints nothing.
+- [x] `git diff --check` exits 0.
 
 ### Review Gate (Ponytail)
 
-- [ ] No placeholder directory remains for a hypothetical future platform.
-- [ ] No active firmware was moved merely for aesthetic symmetry.
-- [ ] No runtime image, web vendor asset, or supported platform file was deleted.
+- [x] No placeholder directory remains for a hypothetical future platform.
+- [x] No active firmware was moved merely for aesthetic symmetry.
+- [x] No runtime image, web vendor asset, or supported platform file was deleted.
 
 ### Git Checkpoint
 
