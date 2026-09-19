@@ -20,7 +20,7 @@ This file is the execution contract for the coding agent. It is not a statement 
 
 - LoRa relay, gateway implementation, radio firmware, TinyML, new AI models, PostGIS migration, full visual redesign, family portal, and secure OTA.
 - Treating mock, generated, or hardcoded records as live telemetry.
-- Editing the user-supplied `AqOne_Technical_Profile_Aquanons-1.docx`.
+- Editing the user-supplied `artifacts/competitions/technical-profile/AqOne_Technical_Profile_Aquanons-1.docx`.
 
 ## Hard reset: rules that override every task
 

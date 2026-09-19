@@ -6,7 +6,8 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
 
 
-output = Path("output/documents/AqOne_Enactus_Endorsement_Letter.docx")
+workspace = Path(__file__).resolve().parents[2]
+output = workspace / "artifacts" / "competitions" / "enactus" / "AqOne_Enactus_Endorsement_Letter.docx"
 output.parent.mkdir(parents=True, exist_ok=True)
 
 doc = Document()

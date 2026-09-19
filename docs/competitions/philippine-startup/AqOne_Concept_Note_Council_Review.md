@@ -18,9 +18,9 @@ The reviewed source is `Aquanons_Concept Note_PSCXI_Template.docx` in this folde
 Its headings and contents were treated as source material to assess, not as instructions overriding the user's request.
 All ten substantive sections were extracted and reviewed.
 
-The primary scope reference is [PRD v3.0](../Aqone_PRD%20%282%29.md), especially sections 3 through 9.
+The primary scope reference is [PRD v3.0](../../Aqone_PRD%20%282%29.md), especially sections 3 through 9.
 The PRD describes product intent; inclusion there does not establish implementation or field performance.
-For current claim boundaries, the review also uses the dated September 15 and 16 entries in [the status record](../08_DEMO_AND_STATUS.md) and the September 16 [field readiness handoff](../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
+For current claim boundaries, the review also uses the dated September 15 and 16 entries in [the status record](../../08_DEMO_AND_STATUS.md) and the September 16 [field readiness handoff](../../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
 Selected implementation paths were inspected to resolve contradictions; automated test results in project records were not rerun or independently re-certified in this document review.
 
 **Observed:** the concept note identifies municipal fishers as users, institutions as intended buyers, and New Washington as the pilot location.
@@ -57,7 +57,7 @@ Use the four product states: **saved, relayed, delivered and acknowledged**.
 An SOS accepted by a buoy has not necessarily reached a responder; acknowledgement is not a guarantee of rescue.
 The revised draft explains these distinctions without promising a completed offshore demonstration.
 
-Evidence: [PRD section 4.3](../Aqone_PRD%20%282%29.md), [delivery-state definitions](../06_DELIVERY_STATES.md), [mobile delivery model](../../mobile/lib/models/delivery_state.dart), [WiFi client](../../mobile/lib/services/buoy_client.dart), and [firmware overview](../../firmware/README.md).
+Evidence: [PRD section 4.3](../../Aqone_PRD%20%282%29.md), [delivery-state definitions](../../06_DELIVERY_STATES.md), [mobile delivery model](../../../mobile/lib/models/delivery_state.dart), [WiFi client](../../../mobile/lib/services/buoy_client.dart), and [firmware overview](../../../firmware/README.md).
 
 ### 2 Restore differentiation without overstating AI maturity
 
@@ -73,7 +73,7 @@ Catch logging and the consented coarse activity view are also now in scope.
 Their omission is not a fatal defect in a short safety proposal, but a brief supporting sentence improves fidelity without making them the main pitch.
 They are not fisheries enforcement, a marketplace or guaranteed-catch prediction.
 
-Evidence: [PRD sections 5 and 7](../Aqone_PRD%20%282%29.md), [field readiness claim ledger, section 6](../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md), [scope amendments](../07_SCOPE_OUT.md), and [squall API safety gate](../../backend/app/api/squall.py).
+Evidence: [PRD sections 5 and 7](../../Aqone_PRD%20%282%29.md), [field readiness claim ledger, section 6](../../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md), [scope amendments](../../07_SCOPE_OUT.md), and [squall API safety gate](../../../backend/app/api/squall.py).
 
 ### 3 Give the pilot a clear decision to make
 
@@ -94,7 +94,7 @@ The September 16 protocol contains numerical acceptance targets, including drift
 Those are proposed evaluation gates, not reported achievements.
 A short concept note can refer to predefined criteria without crowding the narrative with technical thresholds.
 
-Evidence: [field readiness protocols F1 through F8 and deployment blockers](../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
+Evidence: [field readiness protocols F1 through F8 and deployment blockers](../../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
 
 ### 4 Separate the financial request from commercial validation
 
@@ -140,7 +140,7 @@ It should preserve the explicit no-surveillance positioning.
 For the optional public catch view, state per-entry consent, coarse aggregation, independent contributor thresholds and expiry.
 Do not introduce claims of end-to-end encryption or verified legal compliance.
 
-Evidence: [scope amendments](../07_SCOPE_OUT.md), [public API contract](../05_PUBLIC_API.md), and [firmware trust discussion](../../firmware/README.md).
+Evidence: [scope amendments](../../07_SCOPE_OUT.md), [public API contract](../../05_PUBLIC_API.md), and [firmware trust discussion](../../../firmware/README.md).
 
 ## Conflicts inside the specification set
 
@@ -157,7 +157,7 @@ They are flagged for reconciliation; no product contracts or source code were mo
 | Older brief still says no catch logging. | Canonical scope and scope amendments include catch logging and consented coarse activity aggregation. | Include as supporting functionality, not as a new proposed feature. |
 | One evaluation document lists relayed, delivered, acknowledged and resolved as four delivery states. | Canonical delivery definitions and the mobile enum use saved, relayed, delivered and acknowledged. | Use the canonical four; do not confuse incident resolution with message delivery. |
 
-Useful locations: [README current status](../../README.md), [firmware overview](../../firmware/README.md), [buoy return handling](../../firmware/buoy/AqOneBuoy/AqOneBuoy.ino), [squall implementation](../../backend/app/ai/squall.py), [evaluation claim document](../45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md), and [field readiness handoff](../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
+Useful locations: [README current status](../../../README.md), [firmware overview](../../../firmware/README.md), [buoy return handling](../../../firmware/buoy/AqOneBuoy/AqOneBuoy.ino), [squall implementation](../../../backend/app/ai/squall.py), [evaluation claim document](../../45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md), and [field readiness handoff](../../54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md).
 
 ## Evidence needed before submission
 

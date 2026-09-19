@@ -46,7 +46,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Completed plans | [`archive/plans/`](archive/plans/) — only records whose header says `COMPLETE` and have no live path references |
 | Engineering guides | [`guides/`](guides/) |
 | Design references | [`design-reference/`](design-reference/) |
-| Workshop material | [`dti-workshop/`](dti-workshop/) |
+| Competition and workshop materials | [`competitions/`](competitions/) |
 
 ## Organization rules
 

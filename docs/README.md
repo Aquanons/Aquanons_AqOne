@@ -100,7 +100,7 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
 | Hybrid transport decision, technical architecture spec, and cleanup plan | `55`, `56`, `57` |
-| Design references and workshop material | [`design-reference/`](design-reference/), [`dti-workshop/`](dti-workshop/) |
+| Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 
 `Aqone_PRD (2).md` retains its supplied filename because it is the canonical PRD.

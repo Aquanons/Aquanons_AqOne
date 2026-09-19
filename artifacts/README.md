@@ -11,6 +11,8 @@ This directory contains presentation decks, technical architecture diagrams, and
 | [`architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx`](architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx) | PowerPoint PPTX (5200x3400 pt) | Single-slide comprehensive aggregated technical architecture built entirely from native, editable shapes, connectors, and text boxes. | Engineers, designers, pitch editors |
 | [`architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx`](architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx) | PowerPoint PPTX (3 slides) | Multi-slide traceable architecture flowchart decomposing individual subsystem transitions and edge cases across distinct slides. | Deep-dive presentations, design reviews |
 | [`archive/architecture/AqOne_Editable_Architecture_Flowchart_v*.pptx`](archive/architecture/) | PowerPoint PPTX | Earlier revision milestones (v1–v5) preserved for audit trail and iteration history. | Archive |
+| [`competitions/enactus/AqOne_Enactus_Endorsement_Letter.docx`](competitions/enactus/AqOne_Enactus_Endorsement_Letter.docx) | Word DOCX | Official HEI head endorsement letter generated via [`tools/documents/create_endorsement_letter.py`](../tools/documents/create_endorsement_letter.py). | Competition reviewers |
+| [`competitions/technical-profile/AqOne_Technical_Profile_Aquanons-1.docx`](competitions/technical-profile/AqOne_Technical_Profile_Aquanons-1.docx) | Word DOCX | Project technical profile submission document. | Competition reviewers |
 
 ---
 

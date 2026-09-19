@@ -194,34 +194,34 @@ Do not touch Phase 3 files until the user confirms.
 
 ### Tasks
 
-- [ ] Create `tools/documents/` and move `tmp/create_endorsement_letter.py` there.
-- [ ] Update the generator to write into `artifacts/competitions/enactus/` using a path derived from the script location.
-- [ ] Delete `tmp/pdfs/*.png`; they are document-rendering QA intermediates.
-- [ ] Move `output/documents/AqOne_Enactus_Endorsement_Letter.docx` into `artifacts/competitions/enactus/`.
-- [ ] Move the root Enactus notification PDF into `artifacts/competitions/enactus/`.
-- [ ] Move `AqOne_Technical_Profile_Aquanons-1.docx` into `artifacts/competitions/technical-profile/`.
-- [ ] Move `docs/PhilippineStartUpCompetition/` to `docs/competitions/philippine-startup/`.
-- [ ] Move `docs/dti-workshop/` to `docs/competitions/dti-workshop/`.
-- [ ] Remove the empty `tmp/` and `output/` directories.
-- [ ] Update `docs/20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md`, `docs/README.md`, `docs/SPEC_INDEX.md`, and every other live reference to the moved materials.
-- [ ] Check whether an externally hosted `aqone-release.apk` already exists.
-- [ ] If an external APK exists, download or inspect it through the approved release channel, verify its SHA-256 equals `mobile/releases/SHA256SUMS.txt`, update the README with the download URL, and remove the tracked APK.
-- [ ] If no verified external APK exists, retain `mobile/releases/aqone-release.apk` and record that decision in this plan without blocking the remaining cleanup.
-- [ ] Do not publish a release, rewrite Git history, or remove the checksum file in this phase.
+- [x] Create `tools/documents/` and move `tmp/create_endorsement_letter.py` there.
+- [x] Update the generator to write into `artifacts/competitions/enactus/` using a path derived from the script location.
+- [x] Delete `tmp/pdfs/*.png`; they are document-rendering QA intermediates.
+- [x] Move `output/documents/AqOne_Enactus_Endorsement_Letter.docx` into `artifacts/competitions/enactus/`.
+- [x] Move the root Enactus notification PDF into `artifacts/competitions/enactus/`.
+- [x] Move `AqOne_Technical_Profile_Aquanons-1.docx` into `artifacts/competitions/technical-profile/`.
+- [x] Move `docs/PhilippineStartUpCompetition/` to `docs/competitions/philippine-startup/`.
+- [x] Move `docs/dti-workshop/` to `docs/competitions/dti-workshop/`.
+- [x] Remove the empty `tmp/` and `output/` directories.
+- [x] Update `docs/20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md`, `docs/README.md`, `docs/SPEC_INDEX.md`, and every other live reference to the moved materials.
+- [x] Check whether an externally hosted `aqone-release.apk` already exists.
+- [x] If an external APK exists, download or inspect it through the approved release channel, verify its SHA-256 equals `mobile/releases/SHA256SUMS.txt`, update the README with the download URL, and remove the tracked APK. (No external hosting verified; retained tracked APK).
+- [x] If no verified external APK exists, retain `mobile/releases/aqone-release.apk` and record that decision in this plan without blocking the remaining cleanup.
+- [x] Do not publish a release, rewrite Git history, or remove the checksum file in this phase.
 
 ### Verification Gate
 
-- [ ] `python -m py_compile tools/documents/create_endorsement_letter.py` exits 0.
-- [ ] Every moved Markdown link resolves from its containing document.
-- [ ] `rg -n "tmp/pdfs|output/documents|AqOne_Technical_Profile_Aquanons-1" README.md AGENTS.md docs artifacts tools` returns only intentional current paths or historical statements.
-- [ ] If the APK was removed, the verified external checksum and URL are recorded beside the release instructions.
-- [ ] `git diff --check` exits 0.
+- [x] `python -m py_compile tools/documents/create_endorsement_letter.py` exits 0.
+- [x] Every moved Markdown link resolves from its containing document.
+- [x] `rg -n "tmp/pdfs|output/documents|AqOne_Technical_Profile_Aquanons-1" README.md AGENTS.md docs artifacts tools` returns only intentional current paths or historical statements.
+- [x] If the APK was removed, the verified external checksum and URL are recorded beside the release instructions. (Retained APK: no verified external URL yet; SHA-256 confirmed in `mobile/releases/SHA256SUMS.txt`).
+- [x] `git diff --check` exits 0.
 
 ### Review Gate (Ponytail)
 
-- [ ] Only final documents and reusable generators remain; rendered QA pages are gone.
-- [ ] No new artifact registry, metadata schema, or publishing automation was added.
-- [ ] The APK decision is evidence-based and does not block unrelated cleanup.
+- [x] Only final documents and reusable generators remain; rendered QA pages are gone.
+- [x] No new artifact registry, metadata schema, or publishing automation was added.
+- [x] The APK decision is evidence-based and does not block unrelated cleanup.
 
 ### Git Checkpoint
 
