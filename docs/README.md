@@ -81,7 +81,7 @@ They are part of the project record and may explain older code or pitch material
 
 | Status | Document | Purpose |
 |---|---|---|
-| ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Phase 1 DTI pitch build handoff |
+| ACTIVE | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Repository structure cleanup without behavior change |
 
 Add a row here when a document becomes `ACTIVE`.
 Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
@@ -99,7 +99,7 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Web remediation plan | [`WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](WEB_REMEDIATION_IMPLEMENTATION_PLAN.md) |
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
-| Hybrid transport decision and technical architecture spec | `55`, `56` |
+| Hybrid transport decision, technical architecture spec, and cleanup plan | `55`, `56`, `57` |
 | Design references and workshop material | [`design-reference/`](design-reference/), [`dti-workshop/`](dti-workshop/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 

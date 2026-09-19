@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from docx import Document
@@ -8,8 +9,8 @@ from docx.shared import Inches, Pt
 
 
 workspace = Path(__file__).resolve().parents[2]
-image_path = workspace / ".artifacts_build" / "aqone-flowchart" / "aqone-aggregated-architecture.png"
-output_path = workspace / "artifacts" / "AqOne_Aggregated_Technical_Architecture.docx"
+image_path = Path(os.environ.get("AQONE_ARCHITECTURE_PNG", workspace / ".artifacts_build" / "aqone-flowchart" / "aqone-aggregated-architecture.png"))
+output_path = workspace / "artifacts" / "architecture" / "AqOne_Aggregated_Technical_Architecture.docx"
 
 document = Document()
 section = document.sections[0]

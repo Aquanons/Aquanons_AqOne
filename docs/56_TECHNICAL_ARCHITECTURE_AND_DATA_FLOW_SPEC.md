@@ -259,36 +259,36 @@ Supports sustainable fisheries documentation and municipal livelihoods. This pat
 
 ## 5. Artifact Directory Inventory
 
-The diagrams representing this specification are maintained in the [`artifacts/`](../artifacts/) directory:
+The diagrams representing this specification are maintained in the [`artifacts/architecture/`](../artifacts/architecture/) directory:
 
 | Artifact | Format | Description |
 |---|---|---|
-| [`artifacts/AqOne_Aggregated_Technical_Architecture.docx`](../artifacts/AqOne_Aggregated_Technical_Architecture.docx) | Word Document | Landscape 22"x14.7" document containing the comprehensive single-page aggregated technical architecture. |
-| [`artifacts/AqOne_Aggregated_Technical_Architecture.pdf`](../artifacts/AqOne_Aggregated_Technical_Architecture.pdf) | PDF Document | Direct standalone printable PDF of the aggregated architecture. |
-| [`artifacts/AqOne_Aggregated_Technical_Architecture_Editable.pptx`](../artifacts/AqOne_Aggregated_Technical_Architecture_Editable.pptx) | PowerPoint Presentation | 5200x3400 pt single-slide diagram constructed from native, editable shapes, connectors, and text boxes. |
-| [`artifacts/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx`](../artifacts/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx) | PowerPoint Presentation | 3-slide multi-page traceable architecture flowchart detailing individual subsystem transitions and edge cases. |
+| [`artifacts/architecture/AqOne_Aggregated_Technical_Architecture.docx`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture.docx) | Word Document | Landscape 22"x14.7" document containing the comprehensive single-page aggregated technical architecture. |
+| [`artifacts/architecture/AqOne_Aggregated_Technical_Architecture.pdf`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture.pdf) | PDF Document | Direct standalone printable PDF of the aggregated architecture. |
+| [`artifacts/architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx) | PowerPoint Presentation | 5200x3400 pt single-slide diagram constructed from native, editable shapes, connectors, and text boxes. |
+| [`artifacts/architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx`](../artifacts/architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx) | PowerPoint Presentation | 3-slide multi-page traceable architecture flowchart detailing individual subsystem transitions and edge cases. |
 | [`artifacts/README.md`](../artifacts/README.md) | Markdown | Directory index and usage guidelines for artifact files. |
 
 ---
 
 ## 6. Build and Regeneration Tooling
 
-The architecture graphics and presentations are generated via automated scripts in [`.artifacts_build/aqone-flowchart/`](../.artifacts_build/aqone-flowchart/):
+The architecture graphics and presentations are generated via automated scripts in [`tools/architecture/`](../tools/architecture/):
 
 1. **Aggregated PowerPoint Generator:**
    ```bash
-   node .artifacts_build/aqone-flowchart/build_aggregated_architecture.mjs
+   node tools/architecture/build_aggregated_architecture.mjs
    ```
-   *Generates `artifacts/AqOne_Aggregated_Technical_Architecture_Editable.pptx` and `.artifacts_build/aqone-flowchart/aqone-aggregated-architecture.png`.*
+   *Generates `artifacts/architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx`.*
 
 2. **Aggregated Word Document Generator:**
    ```bash
-   python .artifacts_build/aqone-flowchart/build_architecture_docx.py
+   python tools/architecture/build_architecture_docx.py
    ```
-   *Compiles the graphic into `artifacts/AqOne_Aggregated_Technical_Architecture.docx` with metadata, print margins, and accessibility tags.*
+   *Compiles the graphic into `artifacts/architecture/AqOne_Aggregated_Technical_Architecture.docx` with metadata, print margins, and accessibility tags.*
 
 3. **Traceable Multi-Slide Flowcharts:**
    ```bash
-   node .artifacts_build/aqone-flowchart/build_traceable_flowchart.mjs
+   node tools/architecture/build_traceable_flowchart.mjs
    ```
    *Produces the multi-slide traceable decks (`v4`–`v6`).*

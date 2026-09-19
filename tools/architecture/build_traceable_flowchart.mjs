@@ -1,14 +1,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Presentation, PresentationFile } from "@oai/artifact-tool";
 
-const workspaceDir = "C:\\Users\\User\\Desktop\\PersonalProjects\\00-HACKATHONS-COMPETITIONS\\00-HACKATHONS\\00-2026-FIRST-YEAR\\2026-Aquanons\\AIHackathon2026_Aquanons_AqOne";
-const skillDir = "C:\\Users\\User\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.909.22227\\skills\\presentations";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const workspaceDir = path.resolve(__dirname, "..", "..");
+const skillDir = process.env.CODEX_PRESENTATION_SKILL_DIR || "";
 const buildDir = path.join(workspaceDir, ".artifacts_build", "aqone-flowchart");
 const stagingDir = path.join(workspaceDir, ".codex-finalizer");
-const finalPath = path.join(workspaceDir, "artifacts", "AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx");
-const pythonExecutable = "C:\\Users\\User\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
+const finalPath = path.join(workspaceDir, "artifacts", "architecture", "AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx");
+const pythonExecutable = process.env.PYTHON_EXECUTABLE || process.env.PYTHON || "python";
+
+if (!skillDir) {
+  throw new Error("CODEX_PRESENTATION_SKILL_DIR environment variable is required to execute this generator.");
+}
 
 const { resolvePresentationFont, finalizePresentation } = await import(
   pathToFileURL(path.join(skillDir, "container_tools", "artifact_tool_utils.mjs")).href,

@@ -65,6 +65,10 @@ firmware/buoy/.pio/
 .vscode/.browse.c_cpp.db*
 CMakeLists.txt.user
 
+# Architecture build & staging
+.artifacts_build/
+.codex-finalizer/
+
 # Node / misc
 node_modules/
 *.log

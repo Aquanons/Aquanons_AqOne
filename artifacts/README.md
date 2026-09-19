@@ -6,11 +6,11 @@ This directory contains presentation decks, technical architecture diagrams, and
 
 | Artifact File | Format | Description | Target Audience |
 |---|---|---|---|
-| [`AqOne_Aggregated_Technical_Architecture.docx`](AqOne_Aggregated_Technical_Architecture.docx) | Word DOCX (Landscape 22"x14.7") | High-resolution single-page technical architecture document. Embeds the aggregated technical flowchart with complete end-to-end swimlanes. | Technical evaluators, judges, print / PDF export |
-| [`AqOne_Aggregated_Technical_Architecture.pdf`](AqOne_Aggregated_Technical_Architecture.pdf) | Adobe PDF (Landscape) | Direct standalone view of the single-page aggregated technical architecture for instant review without Office software. | All reviewers, web preview |
-| [`AqOne_Aggregated_Technical_Architecture_Editable.pptx`](AqOne_Aggregated_Technical_Architecture_Editable.pptx) | PowerPoint PPTX (5200x3400 pt) | Single-slide comprehensive aggregated technical architecture built entirely from native, editable shapes, connectors, and text boxes. | Engineers, designers, pitch editors |
-| [`AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx`](AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx) | PowerPoint PPTX (3 slides) | Multi-slide traceable architecture flowchart decomposing individual subsystem transitions and edge cases across distinct slides. | Deep-dive presentations, design reviews |
-| `AqOne_Editable_Architecture_Flowchart_v*.pptx` | PowerPoint PPTX | Earlier revision milestones (v1–v5) preserved for audit trail and iteration history. | Archive |
+| [`architecture/AqOne_Aggregated_Technical_Architecture.docx`](architecture/AqOne_Aggregated_Technical_Architecture.docx) | Word DOCX (Landscape 22"x14.7") | High-resolution single-page technical architecture document. Embeds the aggregated technical flowchart with complete end-to-end swimlanes. | Technical evaluators, judges, print / PDF export |
+| [`architecture/AqOne_Aggregated_Technical_Architecture.pdf`](architecture/AqOne_Aggregated_Technical_Architecture.pdf) | Adobe PDF (Landscape) | Direct standalone view of the single-page aggregated technical architecture for instant review without Office software. | All reviewers, web preview |
+| [`architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx`](architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx) | PowerPoint PPTX (5200x3400 pt) | Single-slide comprehensive aggregated technical architecture built entirely from native, editable shapes, connectors, and text boxes. | Engineers, designers, pitch editors |
+| [`architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx`](architecture/AqOne_Editable_Architecture_Flowchart_v6_Traceable.pptx) | PowerPoint PPTX (3 slides) | Multi-slide traceable architecture flowchart decomposing individual subsystem transitions and edge cases across distinct slides. | Deep-dive presentations, design reviews |
+| [`archive/architecture/AqOne_Editable_Architecture_Flowchart_v*.pptx`](archive/architecture/) | PowerPoint PPTX | Earlier revision milestones (v1–v5) preserved for audit trail and iteration history. | Archive |
 
 ---
 
@@ -37,7 +37,7 @@ The aggregated technical architecture depicts five decoupled, independent data f
 
 ## Build & Generation Scripts
 
-Source code and generator scripts used to produce these artifacts reside in [`.artifacts_build/aqone-flowchart/`](../.artifacts_build/aqone-flowchart/):
+Source code and generator scripts used to produce these artifacts reside in [`tools/architecture/`](../tools/architecture/):
 
 - `build_aggregated_architecture.mjs`: Node.js script using `@oai/artifact-tool` to synthesize `AqOne_Aggregated_Technical_Architecture_Editable.pptx` and `aqone-aggregated-architecture.png`.
 - `build_architecture_docx.py`: Python script using `python-docx` to package the high-resolution architecture graphic into `AqOne_Aggregated_Technical_Architecture.docx`.
