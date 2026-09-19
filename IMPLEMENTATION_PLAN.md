@@ -7,7 +7,7 @@ Per [`AGENTS.md`](AGENTS.md) and [`docs/README.md`](docs/README.md), only one pl
 
 | Status | Plan | Purpose |
 |---|---|---|
-| ACTIVE | [`docs/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](docs/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Repository structure cleanup without behavior change |
+| ACTIVE | [`docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
 
 ## Completed and Archived Plans
 
@@ -21,10 +21,9 @@ Archived implementation plans are stored in [`docs/archive/plans/`](docs/archive
 | [`docs/archive/plans/PONYTAIL_AUDIT_CLEANUP_IMPLEMENTATION_PLAN.md`](docs/archive/plans/PONYTAIL_AUDIT_CLEANUP_IMPLEMENTATION_PLAN.md) | COMPLETE | Whole-repo Ponytail audit and bloat reduction |
 | [`docs/archive/plans/PONYTAIL_SIMPLIFICATION_IMPLEMENTATION_PLAN.md`](docs/archive/plans/PONYTAIL_SIMPLIFICATION_IMPLEMENTATION_PLAN.md) | COMPLETE | Simplification of AI safety and drift logic |
 | [`docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md) | COMPLETE | Five-phase web dashboard hardening and remediation |
+| [`docs/archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](docs/archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | COMPLETE | Repository structure cleanup without behavior change |
 | [`docs/archive/plans/FISHING_WEATHER_WINDOW_IMPLEMENTATION_PLAN.md`](docs/archive/plans/FISHING_WEATHER_WINDOW_IMPLEMENTATION_PLAN.md) | SUPERSEDED | Forecast-based fishing window preparation (historical) |
 
 ## Related Planning Records
-
-- [`docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md) — Pitch and demonstration preparation plan
 - [`docs/README.md`](docs/README.md) — Documentation governance, status conventions, and full file register
 - [`docs/SPEC_INDEX.md`](docs/SPEC_INDEX.md) — Fast specification index for agent navigation

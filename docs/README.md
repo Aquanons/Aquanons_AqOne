@@ -80,7 +80,7 @@ Do not delete historical documents. When a plan is verified complete, it may mov
 
 | Status | Document | Purpose |
 |---|---|---|
-| ACTIVE | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Repository structure cleanup without behavior change |
+| ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
 
 Add a row here when a document becomes `ACTIVE`.
 Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
@@ -97,7 +97,7 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Historical records and legacy guides | [`archive/history/`](archive/history/) |
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
-| Hybrid transport decision, technical architecture spec, and cleanup plan | `55`, `56`, `57` |
+| Hybrid transport decision and technical architecture spec | `55`, `56` |
 | Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 
