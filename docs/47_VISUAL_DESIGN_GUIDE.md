@@ -7,7 +7,7 @@
 
 ## 1. Purpose and precedence
 
-This document records the frontend design actually implemented in the AqOne repository. It covers the Flutter application in flutter/ and the regulator-facing web experience in web/admin/. It intentionally excludes network behavior, data models, storage, and all server-side concerns.
+This document records the frontend design actually implemented in the AqOne repository. It covers the Flutter application in mobile/ and the regulator-facing web experience in web/. It intentionally excludes network behavior, data models, storage, and all server-side concerns.
 
 The product currently contains two related visual systems:
 
@@ -16,7 +16,7 @@ The product currently contains two related visual systems:
 
 Both share the same modern AqOne core: deep navy surfaces, blue brand actions, cyan accents, cool slate neutrals, rounded cards, and restrained shadows. The older web landing/login/terms pages use a separate, lighter blue-gray palette. The admin setup page is a third, isolated dark-teal treatment.
 
-web/admin/dashboard-improvements.md is historical commentary, not an active visual source. It describes an older dark-only dashboard and must not override the current CSS or this document.
+docs/archive/history/WEB_DASHBOARD_IMPROVEMENTS.md is historical commentary, not an active visual source. It describes an older dark-only dashboard and must not override the current CSS or this document.
 
 For new work, use this precedence:
 
@@ -48,7 +48,7 @@ These values dominate both active frontend surfaces and are the preferred palett
 | Light app canvas | #F4F8FA | 244, 248, 250 | Main Flutter and dashboard light background |
 | White surface | #FFFFFF | 255, 255, 255 | Cards, controls, avatars, light-theme surfaces |
 
-Canonical CSS definitions, as implemented in web/admin/css/dashboard.css:
+Canonical CSS definitions, as implemented in web/css/dashboard.css:
 
     :root {
       --bg: #F4F8FA;
@@ -133,7 +133,7 @@ The landing, login, and terms surfaces predate the dashboard token set. Preserve
 
 ### 2.5 Admin setup exception palette
 
-web/admin/html/admin-signup.html is a self-contained dark setup form and does not consume the main design tokens.
+web/html/admin-signup.html is a self-contained dark setup form and does not consume the main design tokens.
 
 | Value | Existing role |
 |---:|---|
@@ -193,7 +193,7 @@ Neutrals:
 
 #000000, #07131F, #0F172A, #1A1A2E, #1D354B, #1E293B, #1F405C, #2C4960, #334155, #3C5D7A, #475569, #4A6B82, #4F4F4F, #5A7E97, #64748B, #666666, #6B7280, #6D829B, #757575, #7A97AC, #7B93B0, #7F8C8D, #90A4AE, #94A3B8, #95A5A6, #9CA3AF, #9E9E9E, #B0BEC5, #BDBDBD, #CBD5E1, #CCCCCC, #D4E2EC, #E0E0E0, #E2E8F0, #E2EFF9, #E8F0F8, #EEF4FA, #EEF7FF, #F0F4F8, #F1F5F9, #F4F8FA, #F8FAFC, #FFFFFF.
 
-Flutter also uses Material named colors and opacity constants. Their effective base colors include black, white, transparent, Grey 500 #9E9E9E, Grey 400 #BDBDBD, Grey 600 #757575, Blue 500 #2196F3, Green 500 #4CAF50, Red 500 #F44336, Red 800 #C62828, Green 800 #2E7D32, Amber 500 #FFC107, Amber 300 #FFD54F, Amber 700 #FFA000, Red Accent #FF5252, Green Accent #69F0AE, Orange Accent #FFAB40, and Light Blue Accent 100 #80D8FF. Flutter platform chrome additionally retains the template blue #0175C2 in flutter/web/manifest.json.
+Flutter also uses Material named colors and opacity constants. Their effective base colors include black, white, transparent, Grey 500 #9E9E9E, Grey 400 #BDBDBD, Grey 600 #757575, Blue 500 #2196F3, Green 500 #4CAF50, Red 500 #F44336, Red 800 #C62828, Green 800 #2E7D32, Amber 500 #FFC107, Amber 300 #FFD54F, Amber 700 #FFA000, Red Accent #FF5252, Green Accent #69F0AE, Orange Accent #FFAB40, and Light Blue Accent 100 #80D8FF. Flutter platform chrome additionally retains the template blue #0175C2 in mobile/web/manifest.json.
 
 Normalized alpha overlays observed in the web UI:
 
@@ -620,7 +620,7 @@ Toasts:
 
 ### 8.1 Runtime Flutter assets
 
-Only the following are declared for runtime use in flutter/pubspec.yaml:
+Only the following are declared for runtime use in mobile/pubspec.yaml:
 
 | Asset | Intrinsic size | Use |
 |---|---:|---|
@@ -661,7 +661,7 @@ The landing logo source is only 80 × 80px but style.css renders it at 350px wid
 
 ### 8.3 Reference-only assets
 
-flutter/assets/images/finalDesign, finalMobileApplication, finalDesktopApplicaation, wireframes, and files such as dashboardDesign.png/homeDesign.png/newsDesign.png are design references, not declared runtime assets. Their dominant reference ratios are:
+docs/design-reference/finalDesign, finalMobileApplication, finalDesktopApplicaation, wireframes, and files such as dashboardDesign.png/homeDesign.png/newsDesign.png are design references, not declared runtime assets. Their dominant reference ratios are:
 
 - Mobile finals: approximately 0.462 (about 853 × 1844).
 - Desktop finals: approximately 1.5 (typically 1536 × 1024).
@@ -846,7 +846,7 @@ MaterialApp and ThemeData provide the framework baseline. There is no custom glo
 
 Flutter web and native startup chrome are not yet aligned with the in-app system:
 
-- flutter/web/manifest.json uses template theme/background color #0175C2 and forces portrait-primary.
+- mobile/web/manifest.json uses template theme/background color #0175C2 and forces portrait-primary.
 - Android startup is plain white/system background.
 - iOS startup is the default white launch screen; its launch-image PNGs are 1 × 1 placeholders.
 - Flutter web defines no additional reset, font loading, or smoothing CSS.
@@ -915,25 +915,25 @@ Primary visual sources reviewed:
 
 | Source | Responsibility |
 |---|---|
-| flutter/lib/main.dart | Flutter app root, login, legal/detail presentation |
-| flutter/lib/createAccount.dart | Multi-step registration presentation |
-| flutter/lib/home.dart | Responsive shell, home cards, navigation, profile editor |
-| flutter/lib/venture.dart | Full-screen map, floating actions, checklists, SOS visuals |
-| flutter/lib/dashboard.dart | Fisher analytics presentation |
-| flutter/lib/advisories.dart | Advisory list/card presentation |
-| flutter/lib/settings.dart | Theme switch, settings cards, information views |
-| flutter/pubspec.yaml | Runtime assets and Material icon enablement |
-| web/admin/css/dashboard.css | Dashboard tokens, reset, layout, components, themes, motion |
-| web/admin/css/profile.css | Regulator profile layout and components |
-| web/admin/css/style.css | Landing/login visual system |
-| web/admin/css/terms.css | Terms layout and typography |
-| web/admin/html/dashboard.html | Dashboard composition and inline SVG/icon colors |
-| web/admin/html/dashboardprof.html | Profile composition |
-| web/admin/html/admin-signup.html | Isolated setup-form visual system |
-| web/admin/index.html, html/login.html, html/terms.html | Auth and policy composition |
-| web/admin/js/dashboard.js | Visual state classes, generated marker/pin palettes, theme behavior |
-| web/admin/js/jss.js | Profile tab/theme/toast visual state |
-| flutter/assets and web/admin/assets | Image, icon, video, and reference inventory |
+| mobile/lib/main.dart | Flutter app root, login, legal/detail presentation |
+| mobile/lib/createAccount.dart | Multi-step registration presentation |
+| mobile/lib/home.dart | Responsive shell, home cards, navigation, profile editor |
+| mobile/lib/venture.dart | Full-screen map, floating actions, checklists, SOS visuals |
+| mobile/lib/dashboard.dart | Fisher analytics presentation |
+| mobile/lib/advisories.dart | Advisory list/card presentation |
+| mobile/lib/settings.dart | Theme switch, settings cards, information views |
+| mobile/pubspec.yaml | Runtime assets and Material icon enablement |
+| web/css/dashboard.css | Dashboard tokens, reset, layout, components, themes, motion |
+| web/css/profile.css | Regulator profile layout and components |
+| web/css/style.css | Landing/login visual system |
+| web/css/terms.css | Terms layout and typography |
+| web/html/dashboard.html | Dashboard composition and inline SVG/icon colors |
+| web/html/dashboardprof.html | Profile composition |
+| web/html/admin-signup.html | Isolated setup-form visual system |
+| web/index.html, web/html/login.html, web/html/terms.html | Auth and policy composition |
+| web/js/dashboard.js | Visual state classes, generated marker/pin palettes, theme behavior |
+| web/js/jss.js | Profile tab/theme/toast visual state |
+| mobile/assets and web/assets | Image, icon, video, and reference inventory |
 
 Files concerned only with transport, configuration, models, session state, or nonvisual service behavior are outside this document’s scope.
 

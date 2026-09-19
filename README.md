@@ -1,4 +1,4 @@
-<p align="center"><img src="Assets/aqoneLogo.png" alt="AqOne logo" width="320"></p>
+<p align="center"><img src="web/assets/icons/aqoneLogo-full.png" alt="AqOne logo" width="320"></p>
 
 # AqOne
 
@@ -13,16 +13,15 @@ Built by **Team Aquanons** for AI Fest 2026.
 
 **Current competition focus:** Phase 1, the manual SOS and responder handshake.
 
-**Last status check:** September 10, 2026.
+**Last status check:** September 19, 2026.
 
-The documented Railway deployment currently returns `404 Application not found` from `/healthz`.
-There is no working public demo URL until the backend is redeployed and checked again.
+The active backend is deployed on Render (`https://aqone-backend.onrender.com`), with `/health/ready` verified responsive. The legacy Railway service has been retired.
 Obtain current evaluator access from Team Aquanons rather than relying on credentials stored in the repository.
 
 | Area | Status | Evidence and limitation |
 |---|---|---|
 | Mobile pitch build | 🟡 Built and automatically tested | The September 5 build recorded `flutter analyze` with no issues and 184 passing tests. Physical handset installation and the hardware demonstration remain unverified. |
-| Backend and dashboard software | 🟡 Built and locally tested | The hosted Railway service is unavailable. Current deployment behavior cannot be demonstrated. |
+| Backend and dashboard software | 🟢 Deployed and verified | Live Render backend deployment responsive at `https://aqone-backend.onrender.com/health/ready`. |
 | Phone to boat-pod WiFi | 🟡 Implemented in source | The pod address is `192.168.4.1`. The complete path has not been reverified on a physical handset and pod. |
 | Boat-pod and shore firmware | 🟡 Pod and shore sketches exist, compile clean | SOS, responder ETA and chat cross LoRa; the pod has no internet of its own. Neither sketch has run on hardware. Stationary relay/sensor hardware is not yet validated. |
 | Direct and optional relay LoRa | 🟡 Implemented, unproven | Direct pod-to-shore delivery and TTL flood/seen-set relay logic are written. No outdoor range has been measured — every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
@@ -256,8 +255,7 @@ Dataset sources, licences, limitations, and measured results are documented in [
 
 ```text
 backend/       FastAPI, PostgreSQL migrations, AI services, and tests
-firmware/      ESP32-S3 firmware: buoy/ and shore/ sketches
-gateway/       Gateway work area
+firmware/      ESP32-S3 firmware: buoy/ (boat pod & buoy) and shore/ (gateway) sketches
 mobile/        Flutter handset application
 web/           MDRRMO dashboard and browser hazard model
 docs/          Contracts, references, decisions, plans, and verification records

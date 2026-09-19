@@ -74,14 +74,13 @@ Decisions state what changed, why, and which document they replace or amend.
 Only `ACTIVE` plans belong in the current work discussion.
 Mark a finished plan `COMPLETE` after its evidence and commit are recorded.
 Mark an obsolete plan `SUPERSEDED` and link the replacement at the top.
-Do not delete or move superseded documents.
-They are part of the project record and may explain older code or pitch material.
+Do not delete historical documents. When a plan is verified complete, it may move to `docs/archive/plans/`. When a record is verified superseded or completed historical context, it may move to `docs/archive/history/` after all references are updated. They remain part of the project record and explain earlier code, architectural decisions, and pitch material.
 
 ## Current Register
 
 | Status | Document | Purpose |
 |---|---|---|
-| ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Phase 1 DTI pitch build handoff |
+| ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
 
 Add a row here when a document becomes `ACTIVE`.
 Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
@@ -91,16 +90,15 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Group | Files |
 |---|---|
 | Foundation and shared contracts | `00` to `08` |
-| Earlier planning and implementation records | `09`, `11` to `42`, `46` |
+| Earlier planning and implementation records | `11`, `13` to `26`, `29` to `31`, `33`, `34`, `36` to `42`, `46` |
 | Dated audits and verification | [`audits/`](audits/) |
 | Current pitch plan | `43` |
 | Visual design guide | `47` |
-| Documentation organization plan | [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) |
-| Web remediation plan | [`WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](WEB_REMEDIATION_IMPLEMENTATION_PLAN.md) |
+| Historical records and legacy guides | [`archive/history/`](archive/history/) |
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
 | Hybrid transport decision and technical architecture spec | `55`, `56` |
-| Design references and workshop material | [`design-reference/`](design-reference/), [`dti-workshop/`](dti-workshop/) |
+| Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 
 `Aqone_PRD (2).md` retains its supplied filename because it is the canonical PRD.

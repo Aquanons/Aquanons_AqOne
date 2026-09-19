@@ -14,7 +14,8 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Hybrid transport architecture decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) | Active decision |
 | Aggregated architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) | Active specification |
 | Demo evidence and implementation status | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) | Evidence ledger |
-| Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active |
+| Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active plan |
+| Repository structure cleanup | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Completed cleanup plan |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) | Active |
 
 ## Shared contracts
@@ -45,7 +46,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Completed plans | [`archive/plans/`](archive/plans/) — only records whose header says `COMPLETE` and have no live path references |
 | Engineering guides | [`guides/`](guides/) |
 | Design references | [`design-reference/`](design-reference/) |
-| Workshop material | [`dti-workshop/`](dti-workshop/) |
+| Competition and workshop materials | [`competitions/`](competitions/) |
 
 ## Organization rules
 
@@ -55,4 +56,4 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 - Dated audit reports are read-only records and belong in `audits/` after their links are rewritten.
 - Completed plans belong in `archive/plans/` only when no code, test, agent rule, or active document depends on their current path.
 
-See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.
+See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](archive/plans/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.
