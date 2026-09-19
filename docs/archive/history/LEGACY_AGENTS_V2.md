@@ -1,7 +1,13 @@
-# AGENTS.md — AqOne v2
+# AGENTS.md — AqOne v2 (Archived Draft)
 
-> Place this file at the **repository root**. Place the numbered docs in `docs/`.
-> Read this file completely before writing any code.
+**Status:** SUPERSEDED
+**Owner:** Team Aquanons
+**Created:** 2026-08-01
+**Updated:** 2026-09-19
+**Related:** [AGENTS.md](../../AGENTS.md)
+
+> **Historical document:** Archived legacy agent guide.
+> Active agent instructions reside at the repository root in [AGENTS.md](../../AGENTS.md).
 
 ## What this project is
 

@@ -56,4 +56,4 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 - Dated audit reports are read-only records and belong in `audits/` after their links are rewritten.
 - Completed plans belong in `archive/plans/` only when no code, test, agent rule, or active document depends on their current path.
 
-See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.
+See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](archive/plans/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.

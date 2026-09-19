@@ -1,5 +1,14 @@
 # 09 — AI Implementation Plan
 
+**Status:** SUPERSEDED
+**Owner:** Lenard / Backend Team
+**Created:** 2026-08-04
+**Updated:** 2026-09-19
+**Related:** [`docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](../56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md)
+
+> **Historical document:** This document records early scaffold prompts for the backend AI layer.
+> The AI models are now implemented in `backend/app/routers/ai.py` and documented in [`docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](../56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md).
+
 Backend AI layer for AqOne, deployed to Railway. Written as a sequence of
 prompts to hand to AI coding assistants, in strict order.
 

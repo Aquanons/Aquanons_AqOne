@@ -1,6 +1,15 @@
 # 27 — Demo Workstreams
 
-Companion to [`26_DEMO_BUILD_PLAN.md`](26_DEMO_BUILD_PLAN.md). That document
+**Status:** SUPERSEDED
+**Owner:** Team Aquanons
+**Created:** 2026-08-15
+**Updated:** 2026-09-19
+**Related:** [`docs/08_DEMO_AND_STATUS.md`](../08_DEMO_AND_STATUS.md), [`docs/26_DEMO_BUILD_PLAN.md`](../26_DEMO_BUILD_PLAN.md)
+
+> **Historical document:** Historical demo sprint workstreams and ownership mapping for AI Fest 2026.
+> See [`docs/08_DEMO_AND_STATUS.md`](../08_DEMO_AND_STATUS.md) for current demo status and evidence.
+
+Companion to [`26_DEMO_BUILD_PLAN.md`](../26_DEMO_BUILD_PLAN.md). That document
 is the architecture; this one is who owns what.
 
 **Written the way this team works.** Everyone owns their own area, so what

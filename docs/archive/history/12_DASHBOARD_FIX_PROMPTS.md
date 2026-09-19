@@ -1,5 +1,14 @@
 # 12 — Dashboard Fix Prompts
 
+**Status:** COMPLETE
+**Owner:** Jade / Dashboard Team
+**Created:** 2026-08-04
+**Updated:** 2026-09-19
+**Related:** [`docs/11_DASHBOARD_AUDIT.md`](../11_DASHBOARD_AUDIT.md)
+
+> **Historical document:** Prompts addressing findings from [`docs/11_DASHBOARD_AUDIT.md`](../11_DASHBOARD_AUDIT.md).
+> All prompts were executed and verified in earlier sprints.
+
 Prompts to hand to a coding agent, in order. Findings they address are in
 `docs/11_DASHBOARD_AUDIT.md`.
 

@@ -88,7 +88,7 @@ or the enclosure slips, everything else is decoration.
 Strictly sequential. Do not start a step before the previous one demonstrably
 works.
 
-1. **Deployed skeleton** — FastAPI on Railway, green healthcheck, migrations
+1. **Deployed skeleton** — FastAPI on Render, green healthcheck (/health/ready), migrations
    run. (~1 hr)
 2. **Two radios talk** — raw LoRa packet between two ESP32s, no protocol yet.
    (~1 hr, parallel with 1)

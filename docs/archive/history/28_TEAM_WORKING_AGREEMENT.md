@@ -1,5 +1,14 @@
 # 28 — Working Agreement for the Demo Sprint
 
+**Status:** SUPERSEDED
+**Owner:** Team Aquanons
+**Created:** 2026-08-15
+**Updated:** 2026-09-19
+**Related:** [`AGENTS.md`](../../AGENTS.md)
+
+> **Historical document:** Working agreement for the original 7-day demo sprint.
+> Current team guidelines and conventions are maintained in [`AGENTS.md`](../../AGENTS.md).
+
 Seven days, five people, one stage demo. This is how we work so that the
 demo does not come down to one person merging everything at 3am.
 

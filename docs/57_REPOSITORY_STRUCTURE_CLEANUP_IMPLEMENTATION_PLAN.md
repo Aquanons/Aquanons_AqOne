@@ -4,7 +4,7 @@
 **Owner:** Gemini execution handoff
 **Created:** 2026-09-19
 **Updated:** 2026-09-19
-**Related:** `docs/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`, `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
+**Related:** `docs/archive/plans/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`, `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
 
 > **Target Branch:** `codex/repository-structure-cleanup`
 > **Baseline Revision:** `1fe6eda`
@@ -249,48 +249,48 @@ Do not touch Phase 4 files until the user confirms.
 
 ### Tasks
 
-- [ ] Update `docs/README.md` so verified completed plans may move to `docs/archive/plans/` and verified superseded records may move to `docs/archive/history/` after all references are updated.
-- [ ] Add lifecycle headers and replacement links before moving historical files that currently lack them.
-- [ ] Move these verified historical records into `docs/archive/history/`:
+- [x] Update `docs/README.md` so verified completed plans may move to `docs/archive/plans/` and verified superseded records may move to `docs/archive/history/` after all references are updated.
+- [x] Add lifecycle headers and replacement links before moving historical files that currently lack them.
+- [x] Move these verified historical records into `docs/archive/history/`:
   - `09_AI_IMPLEMENTATION_PLAN.md`
   - `12_DASHBOARD_FIX_PROMPTS.md`
   - `27_DEMO_WORKSTREAMS.md`
   - `28_TEAM_WORKING_AGREEMENT.md`
   - `32_DARKMODE_DASHBOARD_FIX_LUNA.md`
   - `35_HOTSPOT_SURFACE_PLAN_LUNA.md`
-- [ ] Move these verified completed plans into `docs/archive/plans/`:
+- [x] Move these verified completed plans into `docs/archive/plans/`:
   - `48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`
   - `PONYTAIL_AUDIT_CLEANUP_IMPLEMENTATION_PLAN.md`
   - `PONYTAIL_SIMPLIFICATION_IMPLEMENTATION_PLAN.md`
   - `WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`
-- [ ] Move `web/dashboard-improvements.md` to `docs/archive/history/WEB_DASHBOARD_IMPROVEMENTS.md`.
-- [ ] Delete the unreferenced bundled snapshot `docs/guides/AqOne Dashboard.html`; Git history remains its archive.
-- [ ] Move `docs/guides/AGENTS.md` to `docs/archive/history/LEGACY_AGENTS_V2.md` so it no longer acts as nested agent instructions.
-- [ ] Move the current root `IMPLEMENTATION_PLAN.md` to `docs/archive/plans/FISHING_WEATHER_WINDOW_IMPLEMENTATION_PLAN.md`, correct its historical status header, and replace it with a short plan index.
-- [ ] Repair current paths in `docs/47_VISUAL_DESIGN_GUIDE.md` from obsolete `flutter/` and `web/admin/` locations to existing `mobile/` and `web/` paths.
-- [ ] Replace the machine-local `file:///C:/...` link in `docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md` with a relative repository link.
-- [ ] Verify Render is the current deployment using repository evidence and a live `/health/ready` check.
-- [ ] If Render is confirmed current, remove `railway.json` and update active Railway wording in `AGENTS.md`, `README.md`, `docs/00_START_HERE.md`, and other current guidance.
-- [ ] If deployment ownership cannot be confirmed, retain `railway.json`, record the unresolved conflict, and do not claim the deployment source is settled.
-- [ ] Update every inbound link, `docs/README.md`, `docs/SPEC_INDEX.md`, and the new root plan index.
-- [ ] Preserve historical prose that names old files when the old path is evidence rather than a live instruction.
+- [x] Move `web/dashboard-improvements.md` to `docs/archive/history/WEB_DASHBOARD_IMPROVEMENTS.md`.
+- [x] Delete the unreferenced bundled snapshot `docs/guides/AqOne Dashboard.html`; Git history remains its archive.
+- [x] Move `docs/guides/AGENTS.md` to `docs/archive/history/LEGACY_AGENTS_V2.md` so it no longer acts as nested agent instructions.
+- [x] Move the current root `IMPLEMENTATION_PLAN.md` to `docs/archive/plans/FISHING_WEATHER_WINDOW_IMPLEMENTATION_PLAN.md`, correct its historical status header, and replace it with a short plan index.
+- [x] Repair current paths in `docs/47_VISUAL_DESIGN_GUIDE.md` from obsolete `flutter/` and `web/admin/` locations to existing `mobile/` and `web/` paths.
+- [x] Replace the machine-local `file:///C:/...` link in `docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md` with a relative repository link.
+- [x] Verify Render is the current deployment using repository evidence and a live `/health/ready` check.
+- [x] If Render is confirmed current, remove `railway.json` and update active Railway wording in `AGENTS.md`, `README.md`, `docs/00_START_HERE.md`, and other current guidance.
+- [x] If deployment ownership cannot be confirmed, retain `railway.json`, record the unresolved conflict, and do not claim the deployment source is settled. (Resolved: Render verified live; `railway.json` removed).
+- [x] Update every inbound link, `docs/README.md`, `docs/SPEC_INDEX.md`, and the new root plan index.
+- [x] Preserve historical prose that names old files when the old path is evidence rather than a live instruction.
 
 ### Verification Gate
 
-- [ ] Every moved Markdown target exists.
-- [ ] `rg -n "web/admin/|flutter/|file:///C:/" docs/47_VISUAL_DESIGN_GUIDE.md docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md` prints nothing.
-- [ ] `rg -n "docs/guides/AGENTS.md|web/dashboard-improvements.md|docs/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md|docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md" README.md AGENTS.md GEMINI.md IMPLEMENTATION_PLAN.md docs` returns only updated archive paths or intentional move-ledger entries.
-- [ ] The docs current register contains exactly one `ACTIVE` plan.
-- [ ] The root `IMPLEMENTATION_PLAN.md` is an index rather than a historical implementation body.
-- [ ] If `railway.json` was removed, active docs consistently name Render and the live health check result is recorded.
-- [ ] `git diff --check` exits 0.
+- [x] Every moved Markdown target exists.
+- [x] `rg -n "web/admin/|flutter/|file:///C:/" docs/47_VISUAL_DESIGN_GUIDE.md docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md` prints nothing.
+- [x] `rg -n "docs/guides/AGENTS.md|web/dashboard-improvements.md|docs/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md|docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md" README.md AGENTS.md GEMINI.md IMPLEMENTATION_PLAN.md docs` returns only updated archive paths or intentional move-ledger entries.
+- [x] The docs current register contains exactly one `ACTIVE` plan.
+- [x] The root `IMPLEMENTATION_PLAN.md` is an index rather than a historical implementation body.
+- [x] If `railway.json` was removed, active docs consistently name Render and the live health check result is recorded.
+- [x] `git diff --check` exits 0.
 
 ### Review Gate (Ponytail)
 
-- [ ] No second documentation taxonomy or generated index was introduced.
-- [ ] Stable technical contracts remain at their existing numbered paths.
-- [ ] Historical evidence is not rewritten as current evidence.
-- [ ] Only verified completed or superseded records moved.
+- [x] No second documentation taxonomy or generated index was introduced.
+- [x] Stable technical contracts remain at their existing numbered paths.
+- [x] Historical evidence is not rewritten as current evidence.
+- [x] Only verified completed or superseded records moved.
 
 ### Git Checkpoint
 

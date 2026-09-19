@@ -1,7 +1,13 @@
 # Dashboard Improvements Summary (Historical)
 
+**Status:** SUPERSEDED
+**Owner:** Jade / Dashboard Team
+**Created:** 2026-08-10
+**Updated:** 2026-09-19
+**Related:** [`docs/46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md`](../46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md), [`docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](../plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md)
+
 > **Historical document:** This document records early single-file dashboard enhancements implemented in `dashboard.js`.
-> The dashboard was subsequently modularized into 16 focused modules under `web/js/dashboard/` (see `docs/46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md`) and hardened against security, freshness, and race conditions under `docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`.
+> The dashboard was subsequently modularized into 16 focused modules under `web/js/dashboard/` (see [`docs/46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md`](../46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md)) and hardened against security, freshness, and race conditions under [`docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md`](../plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md).
 > Active code lives under `web/js/dashboard/` and `web/html/dashboard.html`.
 
 ## Overview

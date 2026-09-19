@@ -1,5 +1,14 @@
 # 32 — Dark Mode Dashboard Fix (for Luna)
 
+**Status:** COMPLETE
+**Owner:** GPT Luna / Jade
+**Created:** 2026-08-23
+**Updated:** 2026-09-19
+**Related:** [`docs/47_VISUAL_DESIGN_GUIDE.md`](../47_VISUAL_DESIGN_GUIDE.md)
+
+> **Historical document:** Implementation plan executed for dark mode dashboard fixes on 2026-08-23.
+> Current visual and theme specifications are maintained in [`docs/47_VISUAL_DESIGN_GUIDE.md`](../47_VISUAL_DESIGN_GUIDE.md).
+
 **Audience: GPT Luna, executing on a dedicated branch. Do not work on `master`
 or on the `demo` branch.**
 

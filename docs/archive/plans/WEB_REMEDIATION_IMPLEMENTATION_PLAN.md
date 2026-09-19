@@ -4,7 +4,7 @@
 > **Target Branch:** `codex/web-audit-remediation` (active branch).
 > **Test Command:** `node --test web/test/*.test.js`; backend `python -m pytest backend/tests`.
 > **Lint/Check Command:** JavaScript syntax checks; backend `python -m ruff check backend`.
-> **Prepared:** 2026-09-14, from the [2026-09-13 audit](audits/WEB_AUDIT_2026-09-13.md) and [2026-09-14 re-audit](audits/WEB_GEMINI_REAUDIT_2026-09-14.md).
+> **Prepared:** 2026-09-14, from the [2026-09-13 audit](../../audits/WEB_AUDIT_2026-09-13.md) and [2026-09-14 re-audit](../../audits/WEB_GEMINI_REAUDIT_2026-09-14.md).
 > **Owners:** Jade for dashboard implementation, Lenard for backend/contracts, Doreen Kay for UI and wording review.
 > **Execution:** Sequential phases with verification, Ponytail review, atomic commits, and sign-off.
 
@@ -26,7 +26,7 @@ This plan follows the source evidence in the audit; no council deliberation or e
   Before executing this plan, confirm evidence for that prerequisite or obtain an explicit owner exception for these repairs; this document does not claim the prerequisite passed.
 - The implementation-plan skill requires a stop after each completed phase.
   Its exact rule is: “Execution must halt at the end of each phase.”
-  See [the skill](../.agents/skills/implementation-plan/SKILL.md).
+  See [the skill](../../../.agents/skills/implementation-plan/SKILL.md).
   These are future execution gates; creating this complete plan does not require an intermediate approval.
 - Inspect the current branch and local changes before creating the target branch.
   The audit baseline was `c2dd802`; at completion HEAD was `56868b4`, with no intervening changes to the audited web files or the backend files cited for SOS provenance/geographic tests.

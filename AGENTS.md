@@ -15,7 +15,7 @@ backend, and the backend pushes the SOS to an MDRRMO dashboard over SSE.
 Do NOT start a step until the previous one demonstrably works. Do NOT skip
 steps. If you are unsure whether a step is done, ask.
 
-1. Deployed skeleton — FastAPI on Railway, green `/healthz`, migrations run.
+1. Deployed skeleton — FastAPI on Render, green `/health/ready`, migrations run.
 2. Two radios talk — raw LoRa packet between two ESP32s, no protocol.
 3. Buoy → gateway → backend — button press on a buoy creates a real SOS row.
 4. Phone → buoy → backend — phone in airplane mode, SOS lands.

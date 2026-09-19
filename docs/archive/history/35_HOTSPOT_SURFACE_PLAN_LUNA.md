@@ -1,5 +1,14 @@
 # 35 — Fish Hotspot Surface: Mount + Dashboard Layer (for Luna)
 
+**Status:** COMPLETE
+**Owner:** GPT Luna / Jade
+**Created:** 2026-08-25
+**Updated:** 2026-09-19
+**Related:** [`docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](../56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md)
+
+> **Historical document:** Plan executed on 2026-08-25 for mounting fish hotspot surfaces and dashboard layer.
+> Live architecture and endpoints are documented in [`docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](../56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md).
+
 **Audience: GPT Luna, executing on a dedicated branch cut from `dj`.**
 **Scope: mount an existing backend router, reconcile two constants, and build
 the dispatcher dashboard's hotspot layer. No mobile changes. No firmware. No

@@ -106,7 +106,7 @@ Environment: Windows 11, Python 3.11.9, pytest-9.1.1, Flutter 3.44.7, Node.js v2
 
 ## 2026-09-14 — Operations Console Audit Remediation: Complete Implementation & Verification
 
-Recorded per `docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/audits/WEB_AUDIT_2026-09-13.md`.
+Recorded per `docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/audits/WEB_AUDIT_2026-09-13.md`.
 Environment: Windows 11, Node.js (native test runner), Python 3.11.9, pytest-9.1.1.
 
 **Remediation and Corrective Changes:**
