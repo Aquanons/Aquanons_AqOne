@@ -13,7 +13,7 @@ Two files, both part of the sketch:
 
 | File | |
 |---|---|
-| `AqOneShore.ino` | Everything gateway-specific. Set `AQONE_NODE_ID` / `AQONE_NODE_NAME`, the uplink WiFi, and an `OPS_TOKEN` or operator login at the top. |
+| `AqOneShore.ino` | Everything gateway-specific. Set `AQONE_NODE_ID` / `AQONE_NODE_NAME`, the uplink WiFi, and `GATEWAY_API_KEY` at the top. `GATEWAY_API_KEY` must match the backend environment variable of the same name; without it the dispatcher's acknowledgement and ETA cannot reach the boats. |
 | `AqOneLoam.h` | The shared radio layer. **Must stay byte-identical to the buoy's copy** — `diff` them after any edit. |
 
 No `build_opt.h` here: this sketch has no WebSocket server, so the flag the buoy

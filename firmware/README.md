@@ -85,8 +85,8 @@ new app configuration. Stationary sensor-only nodes do not need to expose the
 phone API unless that is explicitly added later.
 
 **Shore only:** `UPLINK_SSID`/`UPLINK_PASS`, `BACKEND_HOST` (already set to the
-Railway deployment), and `OPS_TOKEN` **or** `OPS_EMAIL`/`OPS_PASSWORD` — see
-"The acknowledgement path needs a credential" below.
+Railway deployment), and `GATEWAY_API_KEY` — see "The acknowledgement path needs
+a credential" below.
 
 ### Why the pod network is open
 
@@ -276,21 +276,29 @@ than the phone silently leaving.
 | `POST /api/sos` | On every SOS frame received | none, by design |
 | `POST /api/mesh/chat` | On every chat frame received, tagged `origin: "mesh"` | none |
 | `GET /api/mesh/chat?since_id=` | Every 20 s | none |
-| `GET /api/sos/active` | Every 45 s | **bearer required** |
-| `POST /api/login` | Once, if `OPS_EMAIL`/`OPS_PASSWORD` are set | — |
+| `GET /api/sos/downlink` | Every 45 s | **`X-Api-Key: GATEWAY_API_KEY`** |
 
 ### The acknowledgement path needs a credential
 
 `GET /api/sos/vessel/{id}` — what the old firmware polled — is behind
 `require_vessel_device` and derives ownership from the handset's own paired
-credential. **A gateway does not have one and cannot obtain one.** So the shore
-reads `GET /api/sos/active` instead, which needs an operator bearer: set
-`OPS_TOKEN`, or `OPS_EMAIL`/`OPS_PASSWORD` and let it log in and refresh on 401.
+credential. **A gateway does not have one and cannot obtain one.**
 
-With neither set, **SOS still flows up and chat still flows both ways** — only
-the dispatcher's ETA cannot come back down, and the buoys' `GET /v1/status`
-reports `shore_seen` honestly rather than the app waiting forever for an answer
-that is not coming.
+So the shore reads `GET /api/sos/downlink`, the gateway-only view of the
+responder's answer (docs/04). Set `GATEWAY_API_KEY` in `AqOneShore.ino` to the
+same value as the backend environment variable of the same name — the one
+`/api/v1/contacts` and `/api/v1/pressure-events` already use.
+
+It is deliberately **not** `GET /api/sos/active`, the dashboard feed. That one
+needs an operator login and carries position, the fisher's note, boat name,
+trust tier and the owner's name, licence and phone. A key hardcoded in firmware
+on a mast must not unlock any of that. `/downlink` returns only what the board
+is about to broadcast over the radio in clear anyway.
+
+With it unset, **SOS still flows up and chat still flows both ways** — only the
+dispatcher's ETA cannot come back down. The board does not hide this: the OLED
+shows `Ack : no key`, and `pollAcks()` says so on serial every 45 s. A wrong key
+shows `Ack : http 401` instead.
 
 ### Chat does not echo
 

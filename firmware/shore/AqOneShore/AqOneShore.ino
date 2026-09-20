@@ -72,26 +72,34 @@ static const char* UPLINK_PASS = "4eHfak6E";
 static const char* BACKEND_HOST =
     "https://aqone-backend.onrender.com";
 
-// Responder acknowledgements and ETAs come from GET /api/sos/active, which is
-// behind require_user — unlike POST /api/sos, which is deliberately open.
+// Responder acknowledgements and ETAs come from GET /api/sos/downlink, the
+// gateway-only view of the responder's answer. It is guarded by the same
+// X-Api-Key / GATEWAY_API_KEY credential the contact, pressure and current
+// ingest routes already use, so this board needs no human's account.
 //
-// GET /api/sos/vessel/{id} is NOT usable here: it is behind
+// It deliberately is NOT GET /api/sos/active. That one is behind require_user
+// (a dispatcher login) and carries position, the fisher's own distress note,
+// boat name, trust tier and the vessel owner's name, licence and phone. A key
+// hardcoded in firmware on a mast must not unlock any of that. /downlink
+// returns only what this board is about to broadcast in clear anyway.
+//
+// GET /api/sos/vessel/{id} is NOT usable here either: it is behind
 // require_vessel_device and derives ownership from the handset's own paired
 // credential, which a gateway does not have and cannot obtain.
 //
-// Give the gateway either a long-lived token or an operator login. With
-// neither, SOS still flows UP and chat still flows both ways — only the
-// dispatcher's ETA cannot come back down, and the buoys' GET /v1/status says
-// so honestly rather than the app quietly waiting forever.
-static const char* OPS_TOKEN    = "";   // paste a bearer token, or leave empty
-static const char* OPS_EMAIL    = "";   // ...or log in with these instead
-static const char* OPS_PASSWORD = "";
+// Set this to the same value as GATEWAY_API_KEY in the backend environment.
+// With it empty, SOS still flows UP and chat still flows both ways - but the
+// dispatcher's ETA cannot come back down, the OLED shows "no key", and
+// pollAcks() says so on serial every 45 s rather than failing silently.
+static const char* GATEWAY_API_KEY = "";
 
 // ===========================================================================
 
 bool   uplinkUp = false;
-String opsToken;            // bearer for the acknowledgement poll
-bool   opsTokenTried = false;
+// Last HTTP status from the downlink poll. 0 = not polled yet. Surfaced on
+// the OLED so a board that cannot read acknowledgements says so on its face,
+// instead of looking identical to one with nothing to report.
+int    lastAckHttp = 0;
 
 int    lastChatId = 0;      // since_id cursor into GET /api/mesh/chat
 // The first poll after a boot only moves the cursor. Without this, a gateway
@@ -215,47 +223,6 @@ bool postChat(const char* sender, const char* text) {
 }
 
 // ---------------------------------------------------------------------------
-// Operator credential
-// ---------------------------------------------------------------------------
-
-bool opsLogin() {
-  if (!online()) return false;
-  if (!OPS_EMAIL[0] || !OPS_PASSWORD[0]) return false;
-
-  WiFiClientSecure client;
-  HTTPClient https;
-  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/login")) return false;
-  https.addHeader("Content-Type", "application/json");
-  https.setTimeout(12000);
-
-  JsonDocument doc;
-  doc["email"]    = OPS_EMAIL;
-  doc["password"] = OPS_PASSWORD;
-  String body;
-  serializeJson(doc, body);
-
-  int code = https.POST(body);
-  bool ok = false;
-  if (code == 200) {
-    JsonDocument out;
-    if (!deserializeJson(out, https.getString())) {
-      const char* token = out["token"] | "";
-      if (token[0]) { opsToken = token; ok = true; }
-    }
-  }
-  https.end();
-  Serial.printf("[auth] login -> %d %s\n", code, ok ? "ok" : "no token");
-  return ok;
-}
-
-bool opsAuthReady() {
-  if (opsToken.length()) return true;
-  if (OPS_TOKEN[0]) { opsToken = OPS_TOKEN; return true; }
-  if (!opsTokenTried) { opsTokenTried = true; return opsLogin(); }
-  return false;
-}
-
-// ---------------------------------------------------------------------------
 // Vessels this gateway has heard from, and what it last told them.
 //
 // The signature is how a re-poll becomes a downlink only when something the
@@ -375,40 +342,47 @@ size_t buildEtaPayload(const JsonObject& ev, const char* state, char* out, size_
   return 0;
 }
 
-// GET /api/sos/active in one call rather than per vessel: one request covers
-// every incident, and it is the only acknowledgement view a gateway credential
-// can actually read.
+// GET /api/sos/downlink in one call rather than per vessel: one request
+// covers every live incident, and it is the gateway-only view of the
+// responder's answer (see GATEWAY_API_KEY at the top of this file).
 void pollAcks() {
   if (!online()) return;
-  if (!opsAuthReady()) return;
+
+  if (!GATEWAY_API_KEY[0]) {
+    // Repeated on every poll, not logged once at boot. The failure this
+    // guards is a fisher watching a screen that never changes while a
+    // dispatcher believes the ETA was sent - it must be impossible to miss
+    // on a serial monitor, and it must still be shouting an hour in.
+    Serial.println("[ack] GATEWAY_API_KEY is empty - the dispatcher's ETA "
+                   "CANNOT reach the boats. Set it and reflash.");
+    return;
+  }
 
   WiFiClientSecure client;
   HTTPClient https;
-  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/sos/active")) return;
-  https.addHeader("Authorization", "Bearer " + opsToken);
+  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/sos/downlink")) return;
+  https.addHeader("X-Api-Key", GATEWAY_API_KEY);
   https.setTimeout(12000);
 
   int code = https.GET();
-  if (code == 401 || code == 403) {
-    // Expired. Drop it and let the next tick log in again.
-    opsToken = "";
-    opsTokenTried = false;
+  lastAckHttp = code;
+  if (code != 200) {
     https.end();
-    Serial.println("[ack] token rejected - will re-login");
+    Serial.printf("[ack] downlink poll -> %d%s\n", code,
+                  code == 401 ? " - GATEWAY_API_KEY rejected, check it matches"
+                                " the backend environment" : "");
     return;
   }
-  if (code != 200) { https.end(); return; }
 
-  // Filtered parse straight off the socket. The unfiltered feed is up to 100
-  // events wide with fields this gateway never reads, and materialising all of
-  // it as a String first is the allocation that kills the board.
+  // Filtered parse straight off the socket. Materialising the whole feed as a
+  // String first is the allocation that kills the board.
   JsonDocument filter;
   JsonObject f = filter["events"].add<JsonObject>();
-  f["id"] = true; f["vessel_id"] = true; f["seq"] = true; f["client_ts"] = true;
+  f["id"] = true; f["vessel_id"] = true; f["seq"] = true;
+  f["delivery_state"] = true;
   f["acknowledged_at"] = true; f["acked_by"] = true; f["eta_at"] = true;
   f["responder_status"] = true; f["responder_note"] = true;
   f["resolved_at"] = true;
-  f["delivered_direct"] = true; f["delivered_via_buoy"] = true;
 
   JsonDocument doc;
   DeserializationError err =
@@ -422,13 +396,11 @@ void pollAcks() {
     VesselWatch* w = watchFind(vid);
     if (!w) continue;   // never came through this mesh; nothing to send it to
 
-    // Mirrors _delivery_state() in backend/app/api/sos.py. Recomputed here
-    // because /active does not return the collapsed field that /vessel does.
-    const char* state = "relayed";
-    if (ev["resolved_at"].is<const char*>() || ev["acknowledged_at"].is<const char*>())
-      state = "acknowledged";
-    else if ((ev["delivered_direct"] | false) || (ev["delivered_via_buoy"] | false))
-      state = "delivered";
+    // Taken from the server, not recomputed. This board used to mirror
+    // _delivery_state() from backend/app/api/sos.py, which meant a second
+    // implementation of it lived in firmware and only a reflash could correct
+    // a drift between the two.
+    const char* state = ev["delivery_state"] | "relayed";
 
     uint32_t sig = 2166136261UL;
     sig = fnv1a(sig, state);
@@ -727,7 +699,10 @@ void oledDraw() {
 
   oled.setCursor(0, 50);
   oled.print(F("Ack  : "));
-  oled.print(opsToken.length() ? F("armed") : F("no token"));
+  if (!GATEWAY_API_KEY[0])      oled.print(F("no key"));
+  else if (lastAckHttp == 200)  oled.print(F("armed"));
+  else if (lastAckHttp == 0)    oled.print(F("waiting"));
+  else                        { oled.print(F("http ")); oled.print(lastAckHttp); }
 
   // ":>" in the bottom-right corner. At text size 1 a glyph is 6x8, so two
   // characters start 12px in from the right edge and clear the text on that
