@@ -23,5 +23,14 @@ services:
         generateValue: true
       - key: ADMIN_SETUP_KEY
         generateValue: true
+      # The LoRa shore gateway's credential, for GET /api/sos/downlink and the
+      # /api/v1 ingest routes. Without it require_gateway_key rejects every
+      # request, the dispatcher's acknowledgement and ETA never reach the
+      # boats, and nothing in the backend logs says why - so it is declared
+      # here rather than left to be remembered. Copy the generated value from
+      # the Render dashboard into GATEWAY_API_KEY in
+      # firmware/shore/AqOneShore/AqOneShore.ino.
+      - key: GATEWAY_API_KEY
+        generateValue: true
       - key: JWT_EXPIRY_HOURS
         value: "168"

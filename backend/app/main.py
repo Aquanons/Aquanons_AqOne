@@ -26,6 +26,7 @@ from app.api.ops_audit import router as ops_audit_router
 from app.api.pressure_events import router as pressure_events_router
 from app.api.public import router as public_router
 from app.api.sea_condition import router as sea_condition_router
+from app.api.sos import gateway_router as sos_downlink_router
 from app.api.sos import protected_router as sos_read_router
 from app.api.sos import router as sos_ingest_router
 from app.api.squall import router as squall_router
@@ -88,6 +89,15 @@ app.include_router(contacts_router)
 # per-route require_gateway_key guard as contacts_router, for the same
 # reason. See app/api/pressure_events.py.
 app.include_router(pressure_events_router)
+
+# Gateway-only SOS downlink (GET /api/sos/downlink). The return leg of the
+# distress loop: the shore gateway reads the responder's acknowledgement and
+# ETA here and puts them back on the radio. Same require_gateway_key guard as
+# the ingest routers, and deliberately NOT mounted under _protected - the
+# gateway has no operator account and cannot obtain one. It stays a separate
+# router from sos_read_router precisely so the gateway key buys the downlink
+# fields and nothing else; see sos_downlink() for the field-by-field reasoning.
+app.include_router(sos_downlink_router)
 
 # Gateway-only current-event ingest (Phase 2 Task 2.2). Guarded per-route by
 # require_gateway_key, matching contacts_router and pressure_events_router.

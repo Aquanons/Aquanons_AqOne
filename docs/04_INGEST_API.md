@@ -229,6 +229,70 @@ submitted without `DEMO_MODE` and a valid `X-Demo-Key`; `422` malformed body
 (bad/future timestamp, empty/oversized id, pressure outside sanity range,
 missing/invalid `source`); `400` unknown `buoy_id`.
 
+## SOS downlink (the responder's answer, backend -> gateway)
+
+Every other endpoint in this document flows gateway -> backend. This one is
+the return leg: the shore gateway reads the dispatcher's acknowledgement and
+ETA here and puts them back on the LoRa mesh, where the buoy caches them and
+pushes them to the fisher's handset.
+
+### `GET /api/sos/downlink` - the responder's answer to every live call
+
+Same transport and `X-Api-Key` auth as `/api/v1/ingest` above, via the same
+`GATEWAY_API_KEY` credential `/api/v1/contacts` and `/api/v1/pressure-events`
+use. No body, no query parameters.
+
+This is deliberately **not** `GET /api/sos/active`, which serves the same
+underlying incidents to the dashboard. `/active` is behind `require_user` (a
+dispatcher login) and carries position, the fisher's own distress note, boat
+name, trust tier and the vessel owner's name, licence number and phone. The
+gateway key ships hardcoded in firmware on a mast; if it leaks it must not
+become a live feed of where every boat in the municipality is and who owns
+it. `/downlink` returns only fields the gateway is about to broadcast over
+the radio in clear anyway, so it discloses nothing the fisher is not already
+being told.
+
+```json
+{
+  "events": [
+    {
+      "id": 41,
+      "vessel_id": "NW-001",
+      "seq": 7,
+      "delivery_state": "acknowledged",
+      "acknowledged_at": "2026-09-21T03:00:00+00:00",
+      "acked_by": "dispatcher_maria",
+      "eta_at": "2026-09-21T03:40:00+00:00",
+      "responder_status": 2,
+      "responder_note": "Coast Guard boat en route from Dumaguit",
+      "resolved_at": null
+    }
+  ]
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `delivery_state` | Collapsed server-side (`relayed` / `delivered` / `acknowledged`, docs/06). The gateway used to recompute this from the delivery flags, which put a second copy of `_delivery_state()` in firmware that only a reflash could correct. |
+| `responder_status` | The one-byte vocabulary from docs/13. The label is **not** sent - the buoy renders it locally, so the text survives a mesh with no internet. |
+| `resolved_at` | Set once a dispatcher closes the incident. |
+
+Unlike `/api/sos/active`, which drops an incident the moment it is resolved,
+this feed holds resolved incidents for `DOWNLINK_RESOLVED_WINDOW_HOURS`
+(6 h). The gateway polls on a 45 s cycle, so an incident acknowledged and then
+resolved between two polls would otherwise leave the mesh without the closure
+ever going out, and the handset would count down an ETA for a rescue that had
+already finished. Capped at 100 events, newest first.
+
+Errors: `401` missing or wrong `X-Api-Key` - including a valid operator bearer
+token or demo key, neither of which substitutes for it.
+
+Gateway configuration: set `GATEWAY_API_KEY` in
+`firmware/shore/AqOneShore/AqOneShore.ino` to the same value as the backend's
+`GATEWAY_API_KEY` environment variable. Left empty, SOS still flows up and
+chat still flows both ways, but no acknowledgement can reach a boat - the
+gateway's OLED shows `Ack : no key` and it says so on serial every poll.
+
 ## Warning delivery tracking
 
 Warning events track the hop-by-hop delivery of safety advisories down to the

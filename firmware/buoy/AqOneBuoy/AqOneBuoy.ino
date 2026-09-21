@@ -197,10 +197,26 @@ size_t buildSosPayload(const SosItem& it, char* out, size_t cap) {
   for (int attempt = 0; attempt < 3; attempt++) {
     JsonDocument doc;
     doc["v"]    = 1;
-    doc["kind"] = "sos";
+    // No "kind" here any more, matching the ETA payload: TYPE 0x01 in the
+    // authenticated header already says this is an SOS, and nothing on either
+    // board or in the backend ever read the field - it was 13 bytes of pure
+    // restatement in the tightest payload in the system. Reclaiming them is
+    // what pays for "sq" below without pushing the fisher's note down the
+    // shedding ladder.
     doc["vid"]  = it.vesselId;
     doc["ts"]   = it.clientTs;
     doc["bid"]  = NODE_NAME;
+    // The handset's matching key, and the reason it is above the shedding
+    // ladder rather than in it.
+    //
+    // A LoRa frame has no room for the local_id a phone would otherwise be
+    // matched on, so when the dispatcher's answer comes back down the app
+    // pairs it to the right outbox record by seq alone
+    // (mobile/lib/services/sos_service.dart _applyRemote). That is THIS
+    // number - the value handlePostSos() already returned to the phone - not
+    // the mesh frame seq, which rotates on every retry by design. Shedding it
+    // would deliver an acknowledgement the fisher never sees.
+    doc["sq"]   = it.seq;
     if (it.trust[0]) doc["tt"] = it.trust;
     // Omit lat/lon entirely when there is no fix. Never send 0,0 — that is a
     // real location in the Gulf of Guinea and it would be plotted as one.

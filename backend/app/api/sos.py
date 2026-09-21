@@ -6,6 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.contacts import require_gateway_key
 from app.audit import record_audit_event
 from app.auth import require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
@@ -65,6 +66,13 @@ router = APIRouter(prefix='/api/sos', tags=['sos'])
 
 # The read side stays protected - that is dispatcher data.
 protected_router = APIRouter(prefix='/api/sos', tags=['sos'])
+
+# The downlink read side. Same prefix, different guard: the LoRa shore gateway
+# holds GATEWAY_API_KEY, never an operator login, and needs exactly one thing
+# from this file - the responder's answer to a call it already relayed, so it
+# can put that answer back on the radio. See sos_downlink() for why this is
+# not simply GATEWAY_API_KEY access to /active.
+gateway_router = APIRouter(prefix='/api/sos', tags=['sos'])
 
 
 VALID_TRUST_TIERS = {'self_declared', 'phone_verified', 'confirmed_by_responder'}
@@ -319,6 +327,79 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
         events.append(data)
 
     return {'events': events}
+
+
+# How long a resolved incident keeps appearing in the downlink feed.
+#
+# /active drops an incident the moment a dispatcher resolves it, which is
+# correct for a dashboard - the case is closed and the operator should stop
+# looking at it. It is wrong for the radio: the shore gateway polls on a 45 s
+# cycle, so an incident acknowledged and then resolved between two polls would
+# leave the mesh without the closure ever going out, and the handset would
+# count down an ETA for a rescue that already finished. Holding resolved
+# incidents in this feed for a while gives the gateway room to see the final
+# state and send it down. Six hours is far longer than it needs and still
+# bounded, so the feed cannot grow without limit.
+DOWNLINK_RESOLVED_WINDOW_HOURS = 6
+
+
+@gateway_router.get('/downlink', dependencies=[Depends(require_gateway_key)])
+async def sos_downlink() -> dict[str, object]:
+    """The responder's answer to each live call, for the LoRa shore gateway.
+
+    This is deliberately NOT `GATEWAY_API_KEY` access to `/active`.
+    `app/main.py` states the rule this endpoint has to satisfy - a gateway key
+    must not read dispatcher data - and `/active` is dispatcher data: it
+    carries position, the fisher's own distress note, boat name, trust tier
+    and the vessel owner's name, licence and phone number. A gateway is a
+    radio relay bolted to a mast; it has no business holding any of that, and
+    a key that ships hardcoded in firmware is the last credential that should
+    unlock it.
+
+    So this returns only what travels back DOWN the radio anyway: the
+    acknowledgement, the ETA, the responder's status and note, and the
+    closure. Every field here is something the gateway is about to broadcast
+    to the boat in clear. Nothing is disclosed that the fisher is not already
+    being told.
+
+    `delivery_state` is collapsed here rather than left to the caller. The
+    gateway used to recompute it from `delivered_direct`/`delivered_via_buoy`,
+    which meant `_delivery_state()` had a second implementation living in
+    firmware that only a reflash could correct if the two ever drifted.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''
+            SELECT e.id, e.vessel_id, e.seq,
+                   e.delivered_direct, e.delivered_via_buoy,
+                   e.acknowledged_at, e.acked_by, e.eta_at,
+                   e.responder_status, e.responder_note, e.resolved_at
+            FROM sos_events e
+            WHERE e.resolved_at IS NULL
+               OR e.resolved_at > NOW() - make_interval(hours => $1)
+            ORDER BY e.created_at DESC
+            LIMIT 100
+            ''',
+            DOWNLINK_RESOLVED_WINDOW_HOURS,
+        )
+    return {
+        'events': [
+            {
+                'id': row['id'],
+                'vessel_id': row['vessel_id'],
+                'seq': row['seq'],
+                'delivery_state': _delivery_state(row),
+                'acknowledged_at': _iso(row['acknowledged_at']),
+                'acked_by': row['acked_by'],
+                'eta_at': _iso(row['eta_at']),
+                'responder_status': row['responder_status'],
+                'responder_note': row['responder_note'],
+                'resolved_at': _iso(row['resolved_at']),
+            }
+            for row in rows
+        ]
+    }
 
 
 class AcknowledgeIn(BaseModel):
