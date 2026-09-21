@@ -69,8 +69,7 @@
 static const char* UPLINK_SSID = "Converge_2.4GHz_30D7";
 static const char* UPLINK_PASS = "4eHfak6E";
 
-static const char* BACKEND_HOST =
-    "https://aqone-backend.onrender.com";
+static const char* BACKEND_HOST = "https://aqone-backend.onrender.com";
 
 // Responder acknowledgements and ETAs come from GET /api/sos/downlink, the
 // gateway-only view of the responder's answer. It is guarded by the same
@@ -91,7 +90,7 @@ static const char* BACKEND_HOST =
 // With it empty, SOS still flows UP and chat still flows both ways - but the
 // dispatcher's ETA cannot come back down, the OLED shows "no key", and
 // pollAcks() says so on serial every 45 s rather than failing silently.
-static const char* GATEWAY_API_KEY = "";
+static const char* GATEWAY_API_KEY = "badingsijade";
 
 // ===========================================================================
 
