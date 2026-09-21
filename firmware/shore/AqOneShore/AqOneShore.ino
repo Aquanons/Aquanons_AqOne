@@ -812,8 +812,14 @@ unsigned long lastBeacon   = 0;
 unsigned long lastWarnPoll = 0;
 
 void setup() {
+  // Compiler-filled build stamp, first line out of the box.
+  //
+  // "Did that board actually get the new firmware?" has cost more time on
+  // this project than any single bug. __DATE__/__TIME__ are baked in at
+  // compile time, so this answers it in one glance and cannot drift.
   Serial.begin(115200);
   delay(300);
+  Serial.printf("\n\n[boot] AqOneShore build %s %s\n", __DATE__, __TIME__);
   Serial.println("\n=== AqOne shore gateway " + String(NODE_NAME) + " ===");
 
   oledSetup();
