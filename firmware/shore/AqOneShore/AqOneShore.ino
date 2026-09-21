@@ -389,6 +389,19 @@ void pollAcks() {
   if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/sos/downlink")) return;
   https.addHeader("X-Api-Key", GATEWAY_API_KEY);
   https.setTimeout(12000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   int code = https.GET();
   lastAckHttp = code;
@@ -415,6 +428,16 @@ void pollAcks() {
       deserializeJson(doc, https.getStream(), DeserializationOption::Filter(filter));
   https.end();
   if (err) { Serial.printf("[ack] parse failed: %s\n", err.c_str()); return; }
+
+  // A body that parsed but carries no events ARRAY is not an empty feed - it
+  // is a body this board did not understand. It needs its own line, because
+  // the counters below cannot tell the two apart, and the difference is
+  // "no rescues in progress" versus "this gateway is deaf".
+  if (!doc["events"].is<JsonArray>()) {
+    Serial.println("[ack] response parsed but had no events array - not the "
+                   "feed this board expected");
+    return;
+  }
 
   int events = 0, sent = 0, unchanged = 0, superseded = 0;
 
@@ -521,6 +544,19 @@ void pollChat() {
   String url = String(BACKEND_HOST) + "/api/mesh/chat?limit=10&since_id=" + String(lastChatId);
   if (!httpsBegin(client, https, url)) return;
   https.setTimeout(10000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   if (https.GET() != 200) { https.end(); return; }
 
@@ -621,6 +657,19 @@ void pollWarnings() {
   String url = String(BACKEND_HOST) + "/api/public/advisories";
   if (!httpsBegin(client, https, url)) return;
   https.setTimeout(10000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   if (https.GET() != 200) { https.end(); return; }
 
