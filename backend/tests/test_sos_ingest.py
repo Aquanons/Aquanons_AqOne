@@ -281,3 +281,66 @@ def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
     sos_insert = next(i for i, q in enumerate(queries) if 'INSERT INTO sos_events' in q)
     assert buoy_insert < sos_insert
     assert pool.statements[buoy_insert][1] == ('SHORE01',)
+
+
+def test_shore_gateway_wire_payload_validates(monkeypatch):
+    """The exact JSON firmware/shore/AqOneShore.ino postSos() builds.
+
+    This is the firmware-to-backend contract for the LoRa route, and it is the
+    one path with no way to see a validation failure: postSos() only logs the
+    status code, and a 422 there is indistinguishable on the board from a
+    delivery that worked. A field renamed on either side would silently stop
+    every mesh-delivered distress call from reaching the dashboard.
+
+    seq is the buoy's own SOS counter (payload `sq`), not the mesh frame seq -
+    a uint32 from NVS that keeps counting across reboots, so it is deliberately
+    larger here than the small frame seq this used to send.
+    """
+    monkeypatch.delenv('DATABASE_URL', raising=False)
+    body = {
+        'vessel_id': 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',  # always 32 chars
+        'client_ts': 1790000000,
+        'boat': 'BG-123',
+        'trust_tier': 'self_declared',
+        'source': 'buoy',
+        'buoy_id': 'BUOY01',
+        'src_id': 65537,
+        'seq': 40321,
+        'note': 'engine down',
+        'lat': 11.6050,
+        'lon': 122.3125,
+    }
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/sos', json=body)
+
+    assert response.status_code != 422, (
+        f'shore gateway payload rejected by validation: {response.text}'
+    )
+    assert response.status_code != 401, 'SOS ingest must never require a token'
+    assert response.status_code == 503  # reached the handler, no DB in tests
+
+
+def test_shore_gateway_payload_without_fix_or_note_validates(monkeypatch):
+    """The shed case: buildSosPayload drops the boat name, then the note, and
+    omits lat/lon entirely when the phone has no fix (never 0,0 - that is a
+    real position in the Gulf of Guinea). What survives must still be a valid
+    distress call.
+    """
+    monkeypatch.delenv('DATABASE_URL', raising=False)
+    body = {
+        'vessel_id': 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',
+        'client_ts': 1790000000,
+        'boat': '',
+        'trust_tier': 'self_declared',
+        'source': 'buoy',
+        'buoy_id': 'BUOY01',
+        'src_id': 65537,
+        'seq': 40321,
+    }
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/sos', json=body)
+
+    assert response.status_code != 422, (
+        f'shed shore payload rejected by validation: {response.text}'
+    )
+    assert response.status_code == 503

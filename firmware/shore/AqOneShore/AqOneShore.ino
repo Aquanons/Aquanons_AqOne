@@ -157,7 +157,19 @@ bool httpsBegin(WiFiClientSecure& client, HTTPClient& https, const String& url) 
 // arriving here AND over the fisher's own mobile data would create two
 // separate incidents on the dispatcher's screen.
 bool postSos(const JsonDocument& in, uint32_t srcId, uint16_t seq) {
-  if (!online()) return false;
+  if (!online()) {
+    // Said out loud, because this is the one failure that looks like a
+    // working mesh. The radio leg is fine - the buoy reached this board - so
+    // the boats see delivery succeed while nothing ever arrives on the
+    // dashboard. Withholding the ack below is correct (the buoy keeps the
+    // call queued and keeps retrying), but silence here sends you hunting
+    // through the backend for a frame that was never sent.
+    Serial.println("[sos] NO UPLINK - not POSTing. The call stays queued on "
+                   "the mesh and the buoy will retry. Check UPLINK_SSID: this "
+                   "board is an ESP32-S3 and joins 2.4 GHz networks ONLY - a "
+                   "5 GHz SSID will never associate.");
+    return false;
+  }
 
   const char* vid = in["vid"] | "";
   uint32_t    ts  = in["ts"]  | 0;
