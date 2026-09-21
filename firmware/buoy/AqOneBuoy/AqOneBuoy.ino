@@ -591,6 +591,12 @@ void handleGetSosStatus() {
   String body;
   serializeJson(doc, body);
   http.send(200, "application/json", body);
+
+  // Says what this buoy actually handed the phone. An empty events array here
+  // while the shore reports the frame sent means the ETA never crossed the
+  // radio; a populated one means it did, and the question moves to the app.
+  Serial.printf("[eta] served %s -> %s\n", vid.c_str(),
+                (t && t->hasEta) ? "1 event" : "nothing cached");
 }
 
 // GET /v1/status — buoy health, so the app can show "connected to BUOY01".
@@ -935,6 +941,18 @@ void onMeshFrame(const uint8_t* raw, size_t total, const LoamFrame& f) {
         String out;
         serializeJson(ev, out);
         ws.broadcastTXT(out);
+
+        // The return leg was invisible from this board before: an ETA frame
+        // arrived, cached and served correctly, and nothing anywhere said so.
+        // When the fisher's screen stays blank, this line is what separates
+        // "the frame never arrived" from "the app did not use it".
+        Serial.printf("[eta] rx %s state=%s seq=%ld eta=%lu ack=%lu rssi=%.0f"
+                      " clients=%u\n",
+                      vid, t->state, (long)t->eventSeq,
+                      (unsigned long)t->etaAt, (unsigned long)t->ackedAt,
+                      f.rssi, WiFi.softAPgetStationNum());
+      } else {
+        Serial.printf("[eta] rx %s but the track table is FULL - dropped\n", vid);
       }
       meshRelay(raw, total, f);   // other buoys need it too
       break;
