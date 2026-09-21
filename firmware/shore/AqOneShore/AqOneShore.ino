@@ -416,11 +416,33 @@ void pollAcks() {
   https.end();
   if (err) { Serial.printf("[ack] parse failed: %s\n", err.c_str()); return; }
 
+  int events = 0, sent = 0, unchanged = 0;
   for (JsonObject ev : doc["events"].as<JsonArray>()) {
+    events++;
     const char* vid = ev["vessel_id"] | "";
     if (!vid[0]) continue;
+
+    // An open incident this gateway never heard on the radio still gets an
+    // answer put on the radio.
+    //
+    // This used to `continue` here, on the reasoning that a vessel which
+    // never came through this mesh has nobody to send to. That is wrong for
+    // the case the product exists for: a handset with signal raises its SOS
+    // over the DIRECT path, so the gateway never sees a T_SOS frame for it -
+    // and then the boat loses signal, falls back to a buoy, and waits for an
+    // answer this board was silently declining to send. It also skipped every
+    // incident that predates a reboot of this board.
+    //
+    // The airtime is bounded: the feed carries only unresolved incidents, and
+    // the signature below means one frame per actual change a dispatcher
+    // makes, not one per poll.
     VesselWatch* w = watchFind(vid);
-    if (!w) continue;   // never came through this mesh; nothing to send it to
+    if (!w) {
+      watchVessel(vid);
+      w = watchFind(vid);
+      if (w) Serial.printf("[ack] now watching %s (direct-path incident)\n", vid);
+    }
+    if (!w) { Serial.printf("[ack] watch table full - cannot answer %s\n", vid); continue; }
 
     // Taken from the server, not recomputed. This board used to mirror
     // _delivery_state() from backend/app/api/sos.py, which meant a second
@@ -435,16 +457,30 @@ void pollAcks() {
     sig = fnv1a(sig, ev["resolved_at"] | "");
     sig = fnv1a(sig, ev["responder_note"] | "");
     sig = fnv1a(sig, String((int)(ev["responder_status"] | 0)).c_str());
-    if (sig == w->signature) continue;
+    if (sig == w->signature) { unchanged++; continue; }
 
     char payload[LOAM_MAX_PAYLOAD + 1];
     size_t n = buildEtaPayload(ev, state, payload, sizeof(payload));
-    if (!n) continue;
-    if (!meshSend(T_ETA, 0, payload, n)) continue;
+    if (!n) {
+      Serial.printf("[ack] %s -> %s: payload would not fit, DROPPED\n", vid, state);
+      continue;
+    }
+    if (!meshSend(T_ETA, 0, payload, n)) {
+      // TX ring full. Deliberately does NOT record the signature, so the next
+      // poll tries again rather than treating an unsent answer as delivered.
+      Serial.printf("[ack] %s -> %s: radio busy, will retry next poll\n", vid, state);
+      continue;
+    }
 
     w->signature = sig;
-    Serial.printf("[ack] downlink %s -> %s\n", vid, state);
+    sent++;
+    Serial.printf("[ack] downlink %s -> %s (%u bytes)\n", vid, state, (unsigned)n);
   }
+
+  // Said every poll, because "nothing happened" and "nothing could happen"
+  // looked identical from the outside before this, and that cost real hours.
+  Serial.printf("[ack] poll ok: %d open incident(s), %d sent, %d unchanged\n",
+                events, sent, unchanged);
 }
 
 // GET /api/mesh/chat?since_id= — everything said on the dashboard or by a boat
