@@ -61,6 +61,7 @@ class _FakePool:
     def __init__(self, rows=None) -> None:
         self.rows = rows if rows is not None else [_row()]
         self.fetch_args: tuple = ()
+        self.last_query: str = ''
 
     def acquire(self):
         return self
@@ -73,6 +74,7 @@ class _FakePool:
 
     async def fetch(self, query: str, *args):
         self.fetch_args = args
+        self.last_query = query
         if 'FROM sos_events' in query:
             return self.rows
         return []
@@ -193,3 +195,28 @@ def test_resolved_incidents_are_held_for_the_downlink_window(monkeypatch):
     assert event['delivery_state'] == 'acknowledged'
     # The window is passed to SQL as a parameter, not baked into the query text.
     assert pool.fetch_args == (sos_api.DOWNLINK_RESOLVED_WINDOW_HOURS,)
+
+
+def test_only_the_newest_incident_per_vessel_is_returned(monkeypatch):
+    """One row per vessel, not one per incident.
+
+    Everything downstream of this feed is keyed by VESSEL: the gateway's
+    downlink signature and the buoy cache that answers the handset. A boat
+    that has raised several calls used to appear several times, and each older
+    one overwrote the newer, so the fisher was finally told about the OLDEST
+    call - an expired ETA carrying a seq the handset no longer held, which the
+    app then correctly ignored. It also multiplied radio airtime by the number
+    of calls that boat had ever made.
+
+    Observed live: 21 open incidents for 2 vessels, ~20 frames of ~1 s airtime
+    every 45 s poll, and the handset served a seq from three days earlier.
+    """
+    client, pool = _client_with(monkeypatch)
+    with client:
+        client.get('/api/sos/downlink', headers={'X-Api-Key': 'correct-key'})
+
+    sql = pool.last_query
+    assert 'DISTINCT ON (e.vessel_id)' in sql, 'the feed must collapse to one row per vessel'
+    # DISTINCT ON requires the leading ORDER BY term to match, and newest-first
+    # after that is what makes the surviving row the vessel's current call.
+    assert 'ORDER BY e.vessel_id, e.created_at DESC' in sql

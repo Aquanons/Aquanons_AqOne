@@ -416,11 +416,38 @@ void pollAcks() {
   https.end();
   if (err) { Serial.printf("[ack] parse failed: %s\n", err.c_str()); return; }
 
-  int events = 0, sent = 0, unchanged = 0;
+  int events = 0, sent = 0, unchanged = 0, superseded = 0;
+
+  // One incident per vessel: the newest, and only the newest.
+  //
+  // The feed is ordered created_at DESC and carries EVERY open incident, so a
+  // boat that has raised several calls appears several times. Everything
+  // downstream of here is keyed by vessel, not by incident - this gateway's
+  // watch signature, and the buoy's track cache that answers the handset. So
+  // walking the whole list meant each older call overwrote the newer one, and
+  // the boat was finally told about its OLDEST call: an expired ETA carrying
+  // a seq its handset no longer holds, which the app then correctly ignored.
+  //
+  // It also put ~20 frames of ~1 s airtime on the radio every 45 s, and the
+  // signature never settled because each pass ended on a different incident,
+  // so it repeated forever.
+  char handled[MAX_VESSELS][33];
+  int  nHandled = 0;
+
   for (JsonObject ev : doc["events"].as<JsonArray>()) {
     events++;
     const char* vid = ev["vessel_id"] | "";
     if (!vid[0]) continue;
+
+    bool older = false;
+    for (int k = 0; k < nHandled; k++)
+      if (strcmp(handled[k], vid) == 0) { older = true; break; }
+    if (older) { superseded++; continue; }
+    if (nHandled < MAX_VESSELS) {
+      strncpy(handled[nHandled], vid, 32);
+      handled[nHandled][32] = 0;
+      nHandled++;
+    }
 
     // An open incident this gateway never heard on the radio still gets an
     // answer put on the radio.
@@ -479,8 +506,9 @@ void pollAcks() {
 
   // Said every poll, because "nothing happened" and "nothing could happen"
   // looked identical from the outside before this, and that cost real hours.
-  Serial.printf("[ack] poll ok: %d open incident(s), %d sent, %d unchanged\n",
-                events, sent, unchanged);
+  Serial.printf("[ack] poll ok: %d open incident(s) for %d vessel(s), "
+                "%d sent, %d unchanged, %d superseded\n",
+                events, nHandled, sent, unchanged, superseded);
 }
 
 // GET /api/mesh/chat?since_id= — everything said on the dashboard or by a boat
