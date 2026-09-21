@@ -362,6 +362,15 @@ async def sos_downlink() -> dict[str, object]:
     to the boat in clear. Nothing is disclosed that the fisher is not already
     being told.
 
+    One row per vessel, its newest call. Unlike `/active`, which lists every
+    incident because a dispatcher needs the whole board, everything consuming
+    this feed is keyed by VESSEL and not by incident: the gateway's downlink
+    signature, and the buoy cache that answers the handset. Returning a boat's
+    older calls alongside its current one made each of them overwrite the
+    newer, and the fisher was finally told about the oldest - an expired ETA
+    carrying a seq the handset no longer held. It also multiplied radio
+    airtime by the number of calls that boat had ever made.
+
     `delivery_state` is collapsed here rather than left to the caller. The
     gateway used to recompute it from `delivered_direct`/`delivered_via_buoy`,
     which meant `_delivery_state()` had a second implementation living in
@@ -371,14 +380,15 @@ async def sos_downlink() -> dict[str, object]:
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT e.id, e.vessel_id, e.seq,
+            SELECT DISTINCT ON (e.vessel_id)
+                   e.id, e.vessel_id, e.seq,
                    e.delivered_direct, e.delivered_via_buoy,
                    e.acknowledged_at, e.acked_by, e.eta_at,
                    e.responder_status, e.responder_note, e.resolved_at
             FROM sos_events e
             WHERE e.resolved_at IS NULL
                OR e.resolved_at > NOW() - make_interval(hours => $1)
-            ORDER BY e.created_at DESC
+            ORDER BY e.vessel_id, e.created_at DESC
             LIMIT 100
             ''',
             DOWNLINK_RESOLVED_WINDOW_HOURS,
