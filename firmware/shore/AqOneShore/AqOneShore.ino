@@ -177,7 +177,22 @@ bool postSos(const JsonDocument& in, uint32_t srcId, uint16_t seq) {
   doc["source"]     = "buoy";
   doc["buoy_id"]    = in["bid"] | NODE_NAME;
   doc["src_id"]     = srcId;
-  doc["seq"]        = seq;
+  // The buoy's own SOS counter, not the mesh frame seq.
+  //
+  // These are different numbers and only one of them is any use downstream.
+  // `seq` here is the frame seq, which rotates on every retransmission - a
+  // retry MUST use a fresh one or each relay's seen-set drops it as a
+  // duplicate. The handset, meanwhile, holds the value the buoy returned from
+  // POST /v1/sos, and that is what it matches the dispatcher's answer against
+  // when it comes back down with no local_id to pair on. Storing the frame
+  // seq here meant the acknowledgement reached the buoy correctly and then
+  // failed to match anything on the phone.
+  //
+  // `| 0` covers a buoy on firmware that predates the `sq` field: fall back
+  // to the frame seq, which is what this always used to send. it.seq counts
+  // from 1, so 0 is unambiguously "absent".
+  uint32_t payloadSeq = in["sq"] | 0;
+  doc["seq"]        = payloadSeq ? payloadSeq : (uint32_t)seq;
   if (in["n"].is<const char*>()) doc["note"] = in["n"];
   if (in["lat"].is<double>() && in["lon"].is<double>()) {
     doc["lat"] = in["lat"];
