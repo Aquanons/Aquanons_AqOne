@@ -32,6 +32,12 @@
       var badge = typeof ns.alertBadge === 'function' ? ns.alertBadge(a.isLive) : (a.isLive ? { cssClass: 'alert-live-badge', text: 'LIVE' } : { cssClass: 'alert-demo-badge', text: 'DEMO' });
       var titleAttr = a.isLive ? '' : ' title="Scripted sample data, not a real incident"';
       var badgeHtml = '<span class="' + badge.cssClass + '"' + titleAttr + '>' + badge.text + '</span>';
+      var reply = a.fisherReply != null ? a.fisherReply : (a.drawerData && a.drawerData.fisherReply);
+      var reportHtml = reply === 1
+        ? '<div class="alert-fisher-report alert-fisher-danger">Fisher reports: STILL IN DANGER</div>'
+        : (reply === 2
+          ? '<div class="alert-fisher-report alert-fisher-safe">Fisher reports: SAFE NOW</div>'
+          : '');
       return '<div class="incident-feed-row' + (a.isLive ? ' incident-feed-live' : '') +
         '" data-idx="' + i + '">' +
         alertIcon(a.type) +
@@ -41,6 +47,7 @@
             ? '<div class="incident-feed-sender">' + ((typeof a.avatar === 'string' && a.avatar.indexOf('data:image/') === 0) ? '<img class="alert-avatar" src="' + a.avatar + '" alt="" />' : '') + '<span>Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
               (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
             : '') +
+          reportHtml +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +
       '</div>';

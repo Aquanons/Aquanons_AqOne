@@ -955,6 +955,18 @@
   "@gotItButton": {
     "description": "Dismiss button on informational dialogs."
   },
+  "wifiTitle": "Buoy Wi-Fi",
+  "@wifiTitle": {
+    "description": "AppBar title of the buoy connection screen. Shows the phone's real Wi-Fi network and the live buoy link."
+  },
+  "wifiNotConnected": "Not connected to Wi-Fi",
+  "@wifiNotConnected": {
+    "description": "Shown on the buoy connection screen when the phone is on no Wi-Fi network."
+  },
+  "wifiJoinHint": "Join a buoy network in the phone's Wi-Fi settings, then return here.",
+  "@wifiJoinHint": {
+    "description": "Guidance on the buoy connection screen when the phone is on no Wi-Fi network. The app cannot join networks itself."
+  },
   "myLocationTooltip": "My location",
   "@myLocationTooltip": {
     "description": "Tooltip for the re-center map button on the Venture screen."

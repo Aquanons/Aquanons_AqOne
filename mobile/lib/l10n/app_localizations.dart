@@ -1306,6 +1306,24 @@ abstract class AppLocalizations {
   /// **'Got it'**
   String get gotItButton;
 
+  /// AppBar title of the buoy connection screen. Shows the phone's real Wi-Fi network and the live buoy link.
+  ///
+  /// In en, this message translates to:
+  /// **'Buoy Wi-Fi'**
+  String get wifiTitle;
+
+  /// Shown on the buoy connection screen when the phone is on no Wi-Fi network.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected to Wi-Fi'**
+  String get wifiNotConnected;
+
+  /// Guidance on the buoy connection screen when the phone is on no Wi-Fi network. The app cannot join networks itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a buoy network in the phone\'s Wi-Fi settings, then return here.'**
+  String get wifiJoinHint;
+
   /// Tooltip for the re-center map button on the Venture screen.
   ///
   /// In en, this message translates to:

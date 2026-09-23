@@ -124,19 +124,8 @@
   document.getElementById('badge-vessels').textContent = overdueCount;
 
 
-  // ===== ALERT DATA (confidence-scored, escalation ladder) =====
-  const alertData = [
-    { type: 'overdue-vessel', desc: 'Overdue \u2014 "San Pedro" (V-002) missed expected contact at Buoy-C', time: '14 minutes ago',  lat: 11.7141, lng: 122.4166, status: 'active', vesselId: 'V-002', confidence: 88, stage: 'STAGE 3 \u2014 SCORED ALERT', isLive: false, isSynthetic: true, provenance: 'synthetic' },
-    { type: 'sos',             desc: 'Manual SOS \u2014 Vessel "San Pedro" (V-002)',                       time: '14 minutes ago',  lat: 11.7141, lng: 122.4166, status: 'active', vesselId: 'V-002', confidence: 92, stage: 'STAGE 3 \u2014 SCORED ALERT', isLive: false, isSynthetic: true, provenance: 'synthetic' },
-    { type: 'wave-zone',       desc: 'Squall Nowcast \u2014 RETURN NOW on Buoy-B / Buoy-C',                time: '12 minutes ago',  lat: 11.7029, lng: 122.5107, status: 'active', vesselId: null, confidence: 88, stage: 'SQUALL \u2014 45 MIN LEAD', isLive: false, isSynthetic: true, provenance: 'synthetic' },
-    { type: 'overdue-vessel',  desc: 'Overdue \u2014 "Maria Gracia" (V-005) check-in request outstanding', time: '1 hour 12 minutes ago', lat: 11.6768, lng: 122.4757, status: 'acknowledged', vesselId: 'V-005', confidence: 64, stage: 'STAGE 2 \u2014 CHECK-IN', isLive: false, isSynthetic: true, provenance: 'synthetic' },
-    { type: 'capsizing-risk',  desc: 'Resolved \u2014 false alarm from single-vessel deviation',            time: '2 hours ago',     lat: 11.6563, lng: 122.5327, status: 'resolved', vesselId: null, confidence: 41, stage: 'STAGE 1 \u2014 SILENT CHECK-IN', isLive: false, isSynthetic: true, provenance: 'synthetic' },
-  ];
+  const alertData = [];
 
-  // Real SOS events from the backend. Kept in a separate array from the demo
-  // rows above so that nothing scripted can ever be mistaken for a live
-  // distress call: live entries carry isLive and a real sosEventId, demo rows
-  // carry neither. Live entries always sort first.
   let liveAlerts = [];
 
   function allAlerts() {
@@ -187,9 +176,24 @@
           </div>`;
   }
 
+  function fisherReportRow(a) {
+    var reply = a.fisherReply != null ? a.fisherReply : (a.drawerData && a.drawerData.fisherReply);
+    if (reply === 1) {
+      return '<div class="alert-fisher-report alert-fisher-danger">Fisher reports: STILL IN DANGER</div>';
+    }
+    if (reply === 2) {
+      return '<div class="alert-fisher-report alert-fisher-safe">Fisher reports: SAFE NOW</div>';
+    }
+    return '';
+  }
+
   function renderAlerts() {
     const list = document.getElementById('alert-list');
     const rows = allAlerts();
+    if (rows.length === 0) {
+      list.innerHTML = '<p class="panel-stub-text">No active incidents</p>';
+      return;
+    }
     list.innerHTML = rows.map((a, i) => `
       <div class="alert-row${(a.isLive || a.provenance === 'unknown') ? ' alert-row-live' : ' alert-row-secondary'}" data-alert-index="${i}" tabindex="0" role="button" aria-label="Incident: ${escapeHtml(a.desc)}">
         ${alertIcon(a.type)}
@@ -211,6 +215,7 @@
               ? '<span class="alert-nofix">no GPS fix</span>'
               : a.lat + '&deg; N, ' + a.lng + '&deg; E'
           }${a.etaAt ? ' &middot; <span data-eta-at="' + escapeHtml(a.etaAt) + '"></span>' : ''}</div>
+          ${fisherReportRow(a)}
           ${alertConfidenceRow(a)}
         </div>
         ${alertStatusPill(a.status, a.fisherReply != null ? a.fisherReply : (a.drawerData && a.drawerData.fisherReply))}
@@ -312,6 +317,7 @@
   ns.allAlerts = allAlerts;
   ns.alertIcon = alertIcon;
   ns.alertStatusPill = alertStatusPill;
+  ns.fisherReportRow = fisherReportRow;
   ns.confidenceColor = confidenceColor;
   ns.alertConfidenceRow = alertConfidenceRow;
   ns.renderAlerts = renderAlerts;

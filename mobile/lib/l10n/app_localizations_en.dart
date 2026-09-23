@@ -724,6 +724,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gotItButton => 'Got it';
 
   @override
+  String get wifiTitle => 'Buoy Wi-Fi';
+
+  @override
+  String get wifiNotConnected => 'Not connected to Wi-Fi';
+
+  @override
+  String get wifiJoinHint =>
+      'Join a buoy network in the phone\'s Wi-Fi settings, then return here.';
+
+  @override
   String get myLocationTooltip => 'My location';
 
   @override

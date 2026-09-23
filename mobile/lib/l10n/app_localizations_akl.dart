@@ -736,6 +736,16 @@ class AppLocalizationsAkl extends AppLocalizations {
   String get gotItButton => 'Nakasabot';
 
   @override
+  String get wifiTitle => 'Buoy Wi-Fi';
+
+  @override
+  String get wifiNotConnected => 'Waeay koneksyon sa Wi-Fi';
+
+  @override
+  String get wifiJoinHint =>
+      'Magkonekta sa buoy network sa Wi-Fi settings it telepono, dayon balik diri.';
+
+  @override
   String get myLocationTooltip => 'Akong lokasyon';
 
   @override
