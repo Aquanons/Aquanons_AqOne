@@ -602,15 +602,44 @@ test('R2: SOS Distress Provenance, Actionability & Confidence Suppression', asyn
     assert.equal(ns.openIncidentDrawerCalled.drawerData.headerText, 'DEMO SOS — SIMULATED DISTRESS CALL');
   });
 
-  await t.test('hardcoded sample alertData rows render DEMO badge and sample data tooltip, not UNKNOWN', () => {
+  await t.test('empty feed renders an honest empty state, never sample rows', () => {
     ns.liveAlerts.length = 0;
     ns.renderAlerts();
     const alertList = document.getElementById('alert-list');
     const html = alertList.innerHTML;
-    assert.ok(html.includes('Manual SOS'), 'Renders manual SOS sample');
-    assert.ok(html.includes('alert-demo-badge'), 'Sample SOS gets DEMO badge');
-    assert.ok(!html.includes('alert-unknown-badge'), 'Sample SOS does not get UNKNOWN badge');
-    assert.ok(html.includes('title="Scripted sample data, not a real incident"'), 'Sample SOS gets demo tooltip');
+    assert.ok(html.includes('No active incidents'), 'Empty feed states it plainly');
+    assert.ok(!html.includes('Manual SOS'), 'No scripted sample rows');
+    assert.ok(!html.includes('San Pedro'), 'No scripted vessel names');
+  });
+
+  await t.test('live SOS with a fisher reply renders a status report line', () => {
+    ns.liveAlerts.length = 0;
+    ns.liveAlerts.push({
+      type: 'sos',
+      desc: 'SOS — Real Vessel',
+      time: '1 minute ago',
+      lat: 11.7,
+      lng: 122.4,
+      status: 'acknowledged',
+      isLive: true,
+      provenance: 'real',
+      sosEventId: 9,
+      owner: 'Juan Dela Cruz',
+      phone: '+639171234567',
+      fisherReply: 2,
+      stage: 'DISTRESS CALL',
+      drawerData: { fisherReply: 2 }
+    });
+    ns.renderAlerts();
+    const safeHtml = document.getElementById('alert-list').innerHTML;
+    assert.ok(safeHtml.includes('SAFE NOW'), 'Fisher SAFE NOW report renders on the row');
+
+    ns.liveAlerts[0].fisherReply = 1;
+    ns.liveAlerts[0].drawerData.fisherReply = 1;
+    ns.renderAlerts();
+    const dangerHtml = document.getElementById('alert-list').innerHTML;
+    assert.ok(dangerHtml.includes('STILL IN DANGER'), 'Fisher STILL IN DANGER report renders on the row');
+    ns.liveAlerts.length = 0;
   });
 });
 
