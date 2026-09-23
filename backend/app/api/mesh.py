@@ -54,6 +54,12 @@ async def ingest_chat(payload: MeshChatIn) -> dict:
             payload.text,
             payload.origin,
         )
+        await conn.execute(
+            '''
+            DELETE FROM mesh_chat
+            WHERE created_at < NOW() - INTERVAL '30 days'
+            '''
+        )
     return _row_to_message(row)
 
 

@@ -56,6 +56,9 @@ class _FakeMeshPool:
         self.rows.append(row)
         return row
 
+    async def execute(self, query: str, *args):
+        return 'OK'
+
     async def fetch(self, query: str, *args):
         assert 'FROM mesh_chat' in query
         if 'WHERE id > $1' in query:

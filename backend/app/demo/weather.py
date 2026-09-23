@@ -12,11 +12,16 @@ def _number_list(value: str | None) -> list[float]:
         raise ValueError('latitude and longitude must be comma-separated numbers') from exc
 
 
+MAX_COORDINATE_CELLS = 64
+
+
 def coordinates(latitude: str | None, longitude: str | None) -> list[tuple[float, float]]:
     latitudes = _number_list(latitude)
     longitudes = _number_list(longitude)
     if len(latitudes) != len(longitudes) or not latitudes:
         raise ValueError('latitude and longitude must contain the same non-zero number of cells')
+    if len(latitudes) > MAX_COORDINATE_CELLS:
+        raise ValueError(f'coordinate cell count exceeds maximum of {MAX_COORDINATE_CELLS}')
     return list(zip(latitudes, longitudes, strict=True))
 
 

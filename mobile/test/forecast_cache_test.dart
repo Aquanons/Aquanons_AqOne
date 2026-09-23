@@ -230,5 +230,29 @@ void main() {
       expect(condition, isNotNull);
       expect(condition!.isStale(threshold: const Duration(minutes: 1)), isFalse);
     });
+
+    test('reads set_by_label when present without exposing operator account', () {
+      final json = <String, Object?>{
+        'status': 'safe',
+        'reason': 'Calm sea',
+        'set_by_label': 'MDRRMO Officer Juan',
+      };
+
+      final condition = SeaCondition.tryParse(json);
+      expect(condition, isNotNull);
+      expect(condition!.setByName, 'MDRRMO Officer Juan');
+    });
+
+    test('falls back to set_by_name when set_by_label is absent', () {
+      final json = <String, Object?>{
+        'status': 'safe',
+        'reason': 'Calm sea',
+        'set_by_name': 'Legacy MDRRMO',
+      };
+
+      final condition = SeaCondition.tryParse(json);
+      expect(condition, isNotNull);
+      expect(condition!.setByName, 'Legacy MDRRMO');
+    });
   });
 }

@@ -24,7 +24,7 @@ from datetime import UTC, datetime
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from app.api.sea_condition import _buoy_telemetry, _serialise
+from app.api.sea_condition import _buoy_telemetry
 from app.api.squall import _load_rows, _return_now_enabled, build_squall_status
 from app.db import get_pool
 from app.geo import SHORE_STATIONS
@@ -107,20 +107,46 @@ async def public_capsizing_alerts() -> dict[str, object]:
     return {'capsizing_advisories': []}
 
 
+def _serialise_public_sea_condition(row) -> dict[str, object]:
+    setter_label = ''
+    if isinstance(row, dict) or hasattr(row, 'get'):
+        setter_label = (row.get('setter_full_name') or '').strip()
+    elif hasattr(row, '__getitem__'):
+        try:
+            val = row['setter_full_name']
+            if val and isinstance(val, str):
+                setter_label = val.strip()
+        except (KeyError, IndexError):
+            pass
+    return {
+        'id': row['id'],
+        'status': row['status'],
+        'reason': row['reason'],
+        'set_by_label': setter_label if setter_label else 'MDRRMO',
+        'created_at': row['created_at'].isoformat(),
+    }
+
+
 @router.get('/sea-condition')
 async def public_sea_condition() -> dict[str, object]:
     """The MDRRMO's current declaration.
 
-    This is a human decision, not model output. The handset renders it with the
-    setter's name and timestamp so a fisher can see a person stands behind it.
+    This is a human decision, not model output. Public feed exposes set_by_label
+    without disclosing operator identity or email.
     """
     pool = get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            'SELECT * FROM sea_conditions ORDER BY created_at DESC, id DESC LIMIT 1'
+            '''
+            SELECT sc.*, u.full_name AS setter_full_name
+            FROM sea_conditions sc
+            LEFT JOIN users u ON u.id = sc.set_by_user_id
+            ORDER BY sc.created_at DESC, sc.id DESC
+            LIMIT 1
+            '''
         )
         telemetry = await _buoy_telemetry(conn)
-    current = _serialise(row) if row else {'status': 'unknown'}
+    current = _serialise_public_sea_condition(row) if row else {'status': 'unknown'}
     if telemetry:
         current['buoy_telemetry'] = telemetry
     return {'current': current}

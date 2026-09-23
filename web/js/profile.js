@@ -281,6 +281,17 @@
                 if (confirm('Are you sure you want to log out?')) {
                     showToast('Logging out...', 'info');
                     try {
+                        const token = sessionStorage.getItem('aqoneToken');
+                        if (token) {
+                            fetch('/api/logout', {
+                                method: 'POST',
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            }).catch(() => {});
+                        }
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    try {
                         sessionStorage.removeItem('aqoneToken');
                         sessionStorage.removeItem('aqoneUser');
                         sessionStorage.removeItem('aqoneDemoBypassActive');

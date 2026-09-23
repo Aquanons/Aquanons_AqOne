@@ -137,7 +137,7 @@ def test_successful_ingest_and_idempotency(monkeypatch):
         assert body1['accepted'] is True
         assert body1['deduped'] is False
         assert body1['event_id'] == 'cur-gw-01-000101'
-        assert body1['calibration_status'] == 'qualified'
+        assert body1['calibration_status'] == 'uncalibrated'
 
         # Duplicate ingest with same event_id
         res2 = client.post(

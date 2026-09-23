@@ -123,7 +123,7 @@ class SeaCondition {
     final source = current is Map ? current : decoded;
     final status = source['status'];
     final reason = source['reason'];
-    final setBy = source['set_by_name'];
+    final setBy = source['set_by_label'] ?? source['set_by_name'];
     final createdAt = source['created_at'];
     final telemetry = source['buoy_telemetry'];
     final telemetryMap = telemetry is Map ? telemetry : const <Object?, Object?>{};

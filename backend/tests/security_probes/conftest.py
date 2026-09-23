@@ -26,6 +26,8 @@ from urllib.parse import urlparse
 import asyncpg
 import pytest
 
+import migrate
+
 LOCAL_HOSTS = {'localhost', '127.0.0.1', '::1'}
 
 
@@ -69,9 +71,22 @@ def probe_db(monkeypatch):
     asyncio.run(admin(f'CREATE DATABASE {name}'))
     try:
         monkeypatch.setenv('DATABASE_URL', url)
-        import migrate
-
         asyncio.run(migrate.main())
+
+        async def seed_probe_operator():
+            conn = await asyncpg.connect(url)
+            try:
+                await conn.execute(
+                    '''
+                    INSERT INTO users (id, email, email_normalized, password_hash, role, token_version)
+                    VALUES (1, 'probe.mdrrmo@example.invalid', 'probe.mdrrmo@example.invalid', 'hash', 'mdrrmo', 0)
+                    ON CONFLICT DO NOTHING
+                    '''
+                )
+            finally:
+                await conn.close()
+
+        asyncio.run(seed_probe_operator())
         yield url
     finally:
         asyncio.run(admin(f'DROP DATABASE IF EXISTS {name} WITH (FORCE)'))

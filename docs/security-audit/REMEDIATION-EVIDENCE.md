@@ -350,3 +350,115 @@ Result:
 7. `tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp`: PASSED [SEC-04]
 8. Controls (3): PASSED.
 
+## Phase 3 Verification Evidence: Operator Sessions and Public Disclosure
+
+Date: 2026-09-23
+Requirements: SEC-12, SEC-13, SEC-14, SEC-15, SEC-16, SEC-17, SEC-18, SEC-19
+Status: PASSED (All 8 requirements verified, all gates passed)
+
+### Changes Summary
+
+- Contract documentation updated in `docs/05_PUBLIC_API.md` (logout route, session token version validation, squall model admin-only, public sea condition `set_by_label`) and `docs/04_INGEST_API.md` (current events `uncalibrated` demotion).
+- Migration 030 (`backend/migrations/030_user_token_version.sql`): added `token_version INTEGER NOT NULL DEFAULT 0` to `users`.
+- Migration 031 (`backend/migrations/031_mesh_chat_created_at_index.sql`): added index on `mesh_chat (created_at)`.
+- SEC-12: `create_token` includes `ver` claim with user's `token_version`.
+  `require_user` verifies `sub` against database, checking that `token_version` matches and role matches.
+  Added `POST /api/logout` endpoint that increments `token_version` on the user record.
+  Updated `web/js/profile.js` to call `POST /api/logout` before clearing local storage.
+- SEC-13: `login` in `backend/app/api/auth.py` evaluates `_DUMMY_HASH` with `verify_password` when email is unknown to eliminate timing discrepancy.
+- SEC-14: `POST /api/ai/squall/train` now requires `require_admin_role`.
+- SEC-15: Added `_serialise_public_sea_condition` returning `set_by_label` and omitting operator identity fields (`set_by_user_id`, `set_by_name`, email).
+  Updated `mobile/lib/models/sea_condition.dart` to read `set_by_label` falling back to `set_by_name`.
+- SEC-16: `ingest_current_event` in `backend/app/api/current_events.py` demotes `qualified` to `uncalibrated`.
+- SEC-17: `coordinates()` in `backend/app/demo/weather.py` caps grid requests at `MAX_COORDINATE_CELLS = 64`.
+- SEC-18: `_load_rows` in `backend/app/api/squall.py` accepts optional `since` parameter, defaulting `public_squall` to past 24 hours while keeping training unbounded.
+- SEC-19: `ingest_chat` in `backend/app/api/mesh.py` enforces 30-day retention cleanup on `mesh_chat`.
+
+### Verification Gates
+
+#### 1. Backend Gate
+
+Commands executed from `backend/`:
+```powershell
+ruff check app tests
+pytest -q -p no:cacheprovider
+```
+
+Result:
+- Ruff: All checks passed (0 errors).
+- Pytest default suite: 409 passed, 5 skipped, 1 xfailed.
+- Status: PASSED.
+
+#### 2. Web Gate
+
+Command executed from repository root:
+```powershell
+node --test web/test/*.test.js
+```
+
+Result:
+- Node test runner: 149 passed, 0 failed.
+- Status: PASSED.
+
+#### 3. Mobile Gate
+
+Commands executed from `mobile/`:
+```powershell
+flutter gen-l10n
+flutter analyze
+flutter test
+```
+
+Result:
+- Flutter analyze: No issues found (ran in 19.7s).
+- Flutter test: 261 passed, 0 failed.
+- Status: PASSED.
+
+#### 4. Probe Gate (PostgreSQL 18 on Port 55432)
+
+Command executed from `backend/`:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\User\.gemini\antigravity-cli\brain\5f1ba94e-af06-4466-b19e-6d81fc6cb5c0\scratch\run_probe_gate.ps1
+```
+
+Result:
+- Total probe items: 43.
+- Passed: 29 (+9 passed from Phase 2).
+- Failed: 14 (open findings scheduled for Phase 4 through Phase 7).
+- Errors: 0.
+- Migrations 030 and 031 applied cleanly on fresh throwaway databases.
+- Status: PASSED.
+
+### Probe Status Changes (Phase 3)
+
+1. `tests/security_probes/test_probe_auth.py::test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password`: PASSED [SEC-13]
+2. `tests/security_probes/test_probe_auth.py::test_token_for_an_account_that_no_longer_exists_is_rejected`: PASSED [SEC-12]
+3. `tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[mdrrmo]`: PASSED [SEC-14]
+4. `tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[lgu]`: PASSED [SEC-14]
+5. `tests/security_probes/test_probe_auth.py::test_squall_control_admin_reaches_the_model_write`: PASSED [SEC-14 control]
+6. `tests/security_probes/test_probe_public_disclosure.py::test_public_sea_condition_does_not_expose_operator_account`: PASSED [SEC-15]
+7. `tests/security_probes/test_probe_ingest_trust.py::test_request_text_cannot_mark_a_current_reading_qualified`: PASSED [SEC-16]
+8. `tests/security_probes/test_probe_resource_bounds.py::test_demo_weather_rejects_ten_thousand_coordinate_cells`: PASSED [SEC-17]
+9. `tests/security_probes/test_probe_resource_bounds.py::test_public_squall_does_not_load_week_old_readings`: PASSED [SEC-18]
+10. `tests/security_probes/test_probe_resource_bounds.py::test_mesh_chat_has_a_retention_or_admission_control`: PASSED [SEC-19]
+
+#### Regression Check: Phases 1 and 2 Probes Stay Green
+
+- All Phase 1 probes (SEC-01 through SEC-05, including anomaly evaluation and whole fleet cost measurement) stay PASSED.
+- All Phase 2 probes (SEC-06 through SEC-11, including SOS provenance, active feed, vessel profile auth, trips auth, advisory auth, catch log scoping) stay PASSED.
+
+### Manual Replay Check
+
+Executed on migrated local Postgres database:
+1. Seeded user `op@example.com` with role `mdrrmo`.
+2. Called `POST /api/login` -> HTTP 200, received bearer token.
+3. Called `GET /api/me` with bearer token -> HTTP 200, returned `op@example.com`.
+4. Called `POST /api/logout` with bearer token -> HTTP 200, returned `{'message': 'Logged out.'}` (incremented `token_version` to 1).
+5. Replayed previous bearer token against `GET /api/me` -> HTTP 401 `{'detail': 'session revoked'}`.
+
+### Probe Harness Fixes Logged
+
+1. `backend/tests/security_probes/conftest.py`: Added `import migrate` to fixture setup so throwaway databases run schema migrations.
+   Added operator user seeding in `probe_db` fixture so authenticated routes have user 1 on migrated test databases.
+2. `backend/tests/security_probes/test_probe_auth.py`: Updated `_stub_training` harness to inspect caller role and supply matching operator user for `users` queries so train endpoint can reach role check.
+

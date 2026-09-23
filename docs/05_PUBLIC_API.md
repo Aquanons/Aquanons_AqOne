@@ -107,6 +107,30 @@ Operator-authenticated, device-admin roles only (`lgu` / `admin` — see
 Once revoked, the device token must no longer authorize any per-vessel read or
 write. SOS ingest remains available without it.
 
+## Operator authentication and sessions
+
+Operator endpoints (the MDRRMO/LGU dashboard) authenticate using bearer tokens.
+
+### `POST /api/login`
+
+Accepts `email` and `password`.
+Performs constant-timing password verification (evaluating bcrypt regardless of whether the email exists).
+Returns a signed JWT bearer token with claims `sub`, `email`, `role`, and `ver` (current token version).
+
+### `POST /api/logout`
+
+Operator-authenticated (`require_user`).
+Increments the operator's `token_version` in the database, instantly revoking all active tokens issued for this user.
+The dashboard calls this endpoint best-effort on logout before clearing client storage.
+Returns `200` with `{"message": "Logged out."}`.
+
+### Session revocation rules
+
+- The dependency `require_user` loads `id`, `email`, `role`, and `token_version` from `users` for the token `sub`.
+- If the user no longer exists in the database, the request is rejected with HTTP 401.
+- If the token's `role` claim does not match the stored user's role, the request is rejected with HTTP 401.
+- If the token's `ver` claim does not match the stored `token_version` (or `ver` is missing), the request is rejected with HTTP 401.
+
 ## Endpoints
 
 ### `GET /healthz`
@@ -542,11 +566,19 @@ declared status plus buoy telemetry, or a bounded history.
 
 ### `POST /api/sea-condition`
 
-Operator-authenticated, responder roles (`mdrrmo` / `lgu` / `admin` — see
+Operator-authenticated, responder roles (`mdrrmo` / `lgu` / `admin` - see
 [Roles](#roles)). Declares the current sea condition (`status`, `reason`).
 The stored `set_by_user_id`/`set_by_name` are always derived from the
-authenticated token server-side — the request body cannot set or override
+authenticated token server-side - the request body cannot set or override
 them; a body containing those fields is silently ignored.
+
+### `GET /api/public/sea-condition`
+
+Unauthenticated endpoint consumed by mobile handsets.
+Returns the current sea condition status, reason, and buoy telemetry.
+To protect operator privacy, user accounts are never disclosed to anonymous clients.
+The response returns `set_by_label` (`users.full_name` when set, otherwise `"MDRRMO"`).
+The fields `set_by_user_id` and `set_by_name` are excluded from the public response.
 
 ## Squall nowcast — **implemented**
 
@@ -611,8 +643,16 @@ reading this backend has ever seen — never a fabricated calm baseline.
 | `detections`, `threshold`, `triggered_buoys`, `lead_minutes` | Only populated once quality passes; empty/`null` otherwise. |
 
 `calibration: "synthetic"` is carried on every response while the model is
-trained on simulated pressure fields rather than observed squalls — this is
+trained on simulated pressure fields rather than observed squalls - this is
 not a PAGASA warning, and the handset must keep saying so.
+
+### `POST /api/ai/squall/train`
+
+Restricted to administrator operators (`require_admin_role`).
+Additionally requires the server-side deployment flag `ALLOW_TRAINING=true`.
+Non-admin operators (`mdrrmo`, `lgu`) receive HTTP 403 even when training is enabled.
+Re-trains the squall detector model from stored synthetic readings and squall events, then persists the resulting artifact.
+An empty dataset returns HTTP 400.
 
 ## Daily and hourly forecast for the app — **implemented as a transparent proxy**
 
@@ -1201,10 +1241,11 @@ the dashboard shows it a panel.
 | Operator-account setup | `POST /api/admin-signup` | Gated by `ADMIN_SETUP_KEY` (not a role check) |||
 | Case timeline (one case) | `GET /api/ops/cases/{resource_type}/{resource_id}/timeline` | Yes | Yes | Yes |
 | Global audit search / export | `GET /api/ops/audit`, `GET /api/ops/audit/export` | No | **No** | Yes |
+| Squall model training | `POST /api/ai/squall/train` | No | No | Yes |
 
 `lgu` has the same permissions as `admin` for every action above **except**
-global audit search/export (owner decision, 2026-08-30 for the operational
-rows; reaffirmed narrower for audit visibility itself on the same date) —
+global audit search/export and squall model training (owner decision, 2026-08-30 for operational
+rows; squall training restricted to admin to prevent unauthorized model replacement) -
 seeing every operator's action history across every case is a different
 kind of privilege than the operational writes above. `admin`'s only other
 distinct capability outside this table is back-office API-key revocation,

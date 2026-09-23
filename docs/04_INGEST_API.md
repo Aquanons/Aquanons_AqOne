@@ -229,6 +229,56 @@ submitted without `DEMO_MODE` and a valid `X-Demo-Key`; `422` malformed body
 (bad/future timestamp, empty/oversized id, pressure outside sanity range,
 missing/invalid `source`); `400` unknown `buoy_id`.
 
+## Current events (buoy hydrodynamic current telemetry)
+
+Telemetry contract for acoustic Doppler or hydrodynamic current observations from anchored buoys.
+
+### `POST /api/v1/current-events` - submit one current reading
+
+Same transport and `X-Api-Key` auth as `/api/v1/ingest` above, via `GATEWAY_API_KEY`.
+Submissions with `source: 'synthetic'` additionally require `DEMO_MODE` and a valid `X-Demo-Key`.
+
+Request body (JSON):
+
+```json
+{
+  "v": 1,
+  "event_id": "gw-01-current-0001",
+  "buoy_id": "BUOY01",
+  "observed_at": "2026-08-29T05:00:00Z",
+  "observed_u_mps": 0.25,
+  "observed_v_mps": -0.10,
+  "depth_m": 1.0,
+  "source": "live",
+  "calibration_status": "uncalibrated"
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `v` | yes | `1` |
+| `event_id` | yes | Upstream event id from the gateway. The idempotency key - resubmissions return the original reading. |
+| `buoy_id` | yes | Must already be a registered buoy; an unrecognized id is rejected. |
+| `observed_at` | yes | RFC 3339 timestamp of the reading. Rejected if more than 5 minutes ahead of server clock. |
+| `observed_u_mps` / `observed_v_mps` | yes | Current velocity components in m/s, bounded to [-5.0, 5.0]. |
+| `depth_m` | no | Depth of measurement in metres (default 1.0, bounded to [0.0, 100.0]). |
+| `source` | yes | `live` or `synthetic`. |
+| `calibration_status` | no | Declared calibration quality (`qualified`, `uncalibrated`, `synthetic`). Because the backend has no instrument or calibration registry to verify claims, any request claiming `qualified` is automatically stored and returned as `uncalibrated`. |
+
+Success `200`:
+
+```json
+{
+  "accepted": true,
+  "event_id": "gw-01-current-0001",
+  "deduped": false,
+  "reading_id": 1024,
+  "buoy_id": "BUOY01",
+  "source": "live",
+  "calibration_status": "uncalibrated"
+}
+```
+
 ## SOS downlink (the responder's answer, backend -> gateway)
 
 Every other endpoint in this document flows gateway -> backend. This one is

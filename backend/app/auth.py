@@ -66,13 +66,14 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def create_token(user_id: int, email: str, role: str) -> str:
+def create_token(user_id: int, email: str, role: str, token_version: int = 0) -> str:
     now = datetime.now(UTC)
     payload = {
         'kind': 'user',
         'sub': str(user_id),
         'email': email,
         'role': role,
+        'ver': token_version,
         'iat': now,
         'exp': now + timedelta(hours=TOKEN_TTL_HOURS),
     }
@@ -100,6 +101,43 @@ def decode_token(token: str) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail='invalid token') from exc
 
 
+async def verify_user_session(user_id: int | str, claims: dict[str, Any]) -> dict[str, Any]:
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=401, detail='invalid token') from exc
+
+    token_ver = claims.get('ver')
+    if token_ver is None:
+        raise HTTPException(status_code=401, detail='session expired')
+
+    from app.db import get_pool
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            '''
+            SELECT id, email, role, token_version
+              FROM users
+             WHERE id = $1
+            ''',
+            user_id_int,
+        )
+
+    if row is None:
+        raise HTTPException(status_code=401, detail='user not found')
+    if claims.get('role') != row['role']:
+        raise HTTPException(status_code=401, detail='role mismatch')
+    if token_ver != row['token_version']:
+        raise HTTPException(status_code=401, detail='session revoked')
+
+    return {
+        'id': str(row['id']),
+        'email': row['email'],
+        'role': row['role'],
+    }
+
+
 async def require_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict[str, Any]:
@@ -114,11 +152,10 @@ async def require_user(
     claims = decode_token(credentials.credentials)
     if claims.get('kind', 'user') != 'user':
         raise HTTPException(status_code=401, detail='invalid token')
-    return {
-        'id': claims.get('sub'),
-        'email': claims.get('email'),
-        'role': claims.get('role'),
-    }
+    user_id = claims.get('sub')
+    if not user_id:
+        raise HTTPException(status_code=401, detail='invalid token')
+    return await verify_user_session(user_id, claims)
 
 
 async def require_operator_user(user: dict[str, Any] = Depends(require_user)) -> dict[str, Any]:

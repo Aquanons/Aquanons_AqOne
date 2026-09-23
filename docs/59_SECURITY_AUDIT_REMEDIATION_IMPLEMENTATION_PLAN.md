@@ -188,29 +188,29 @@ Checkpoint message: `fix(sos): stop anonymous callers forging provenance or over
 ## Phase 3: Operator sessions and public disclosure
 
 Requirements: SEC-12, SEC-13, SEC-14, SEC-15, SEC-16, SEC-17, SEC-18, SEC-19
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] Contracts first: `docs/05_PUBLIC_API.md` (logout route, session rules, squall train admin-only, public sea-condition `set_by_label`) and `docs/04_INGEST_API.md` (current `calibration_status`).
-- [ ] SEC-12, operator sessions:
+- [x] Contracts first: `docs/05_PUBLIC_API.md` (logout route, session rules, squall train admin-only, public sea-condition `set_by_label`) and `docs/04_INGEST_API.md` (current `calibration_status`).
+- [x] SEC-12, operator sessions:
   - Migration `030_user_token_version.sql`: `ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0`.
   - `create_token` adds a `ver` claim. `require_user` loads `id, email, role, token_version` for `sub` through `app.db.get_pool()` and returns 401 when the user is missing, the role differs from the claim, or `ver` differs (a missing `ver` counts as a mismatch, so old tokens need one re-login).
   - Add `POST /api/logout` (`require_user`), which increments `token_version`. Make the dashboard logout button (`web/js/profile.js` around line 280) call it best-effort before clearing local state.
   - Keep the lookup in one function in `app/auth.py`. In `backend/tests/conftest.py`, add one autouse fixture that stubs it to trust the claims, so existing fake-pool tests keep working. The fixture must not apply under `tests/security_probes/`, and there must be default-suite tests that exercise the real lookup.
-- [ ] SEC-13: in `app/api/auth.py` `login`, when the email is unknown, call `verify_password(payload.password, _DUMMY_HASH)` so both branches pay one bcrypt check. `_DUMMY_HASH` is a module constant bcrypt hash of a random throwaway string.
-- [ ] SEC-14: `POST /api/ai/squall/train` needs `require_admin_role` as well as `ALLOW_TRAINING`.
-- [ ] SEC-15: give `public_sea_condition` its own serializer. It returns `set_by_label` (the setter's `users.full_name` when present, otherwise `MDRRMO`) and never `set_by_user_id`, `set_by_name`, or an email. The protected dashboard route keeps `_serialise`. In `mobile/lib/models/sea_condition.dart`, read `set_by_label`, falling back to `set_by_name` for older backends, and update its tests.
-- [ ] SEC-16: in `app/api/current_events.py`, store `uncalibrated` when a request claims `qualified`, because the backend has no instrument or calibration registry to check the claim against. Keep `synthetic` as it is. Return the stored value.
-- [ ] SEC-17: cap `coordinates()` in `app/demo/weather.py` at 64 cells (`ValueError` above that). First confirm the handset's largest request (`mobile/lib/services/forecast_provider.dart`) is below 64.
-- [ ] SEC-18: give `_load_rows` in `app/api/squall.py` an optional lower bound on `observed_at` for readings. `public_squall` and any other live caller pass `now - 24 hours`; training (`live=False`) stays unbounded. Confirm `build_squall_status` still reports the last real observation time when the window is empty.
-- [ ] SEC-19: in `app/api/mesh.py` `ingest_chat`, delete `mesh_chat` rows older than 30 days in the same connection after the insert. Add migration `031_mesh_chat_created_at_index.sql` for an index on `created_at` if none exists.
+- [x] SEC-13: in `app/api/auth.py` `login`, when the email is unknown, call `verify_password(payload.password, _DUMMY_HASH)` so both branches pay one bcrypt check. `_DUMMY_HASH` is a module constant bcrypt hash of a random throwaway string.
+- [x] SEC-14: `POST /api/ai/squall/train` needs `require_admin_role` as well as `ALLOW_TRAINING`.
+- [x] SEC-15: give `public_sea_condition` its own serializer. It returns `set_by_label` (the setter's `users.full_name` when present, otherwise `MDRRMO`) and never `set_by_user_id`, `set_by_name`, or an email. The protected dashboard route keeps `_serialise`. In `mobile/lib/models/sea_condition.dart`, read `set_by_label`, falling back to `set_by_name` for older backends, and update its tests.
+- [x] SEC-16: in `app/api/current_events.py`, store `uncalibrated` when a request claims `qualified`, because the backend has no instrument or calibration registry to check the claim against. Keep `synthetic` as it is. Return the stored value.
+- [x] SEC-17: cap `coordinates()` in `app/demo/weather.py` at 64 cells (`ValueError` above that). First confirm the handset's largest request (`mobile/lib/services/forecast_provider.dart`) is below 64.
+- [x] SEC-18: give `_load_rows` in `app/api/squall.py` an optional lower bound on `observed_at` for readings. `public_squall` and any other live caller pass `now - 24 hours`; training (`live=False`) stays unbounded. Confirm `build_squall_status` still reports the last real observation time when the window is empty.
+- [x] SEC-19: in `app/api/mesh.py` `ingest_chat`, delete `mesh_chat` rows older than 30 days in the same connection after the insert. Add migration `031_mesh_chat_created_at_index.sql` for an index on `created_at` if none exists.
 
 ### Verification
 
-- [ ] Backend, web and mobile gates pass.
-- [ ] Probe gate: every SEC-12 to SEC-19 probe passes, and Phases 1 and 2 stay green.
-- [ ] Manual check with a local server: log in on the dashboard, press logout, and replay the old bearer against `/api/me` (expect 401). Record the result in the evidence file.
+- [x] Backend, web and mobile gates pass.
+- [x] Probe gate: every SEC-12 to SEC-19 probe passes, and Phases 1 and 2 stay green.
+- [x] Manual check with a local server: log in on the dashboard, press logout, and replay the old bearer against `/api/me` (expect 401). Record the result in the evidence file.
 
 Checkpoint message: `fix(auth): server-checked operator sessions and no operator identity in public feeds`
 

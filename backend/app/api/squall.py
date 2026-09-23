@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
@@ -18,6 +18,7 @@ from app.ai.squall import (
     save_bundle,
     train_from_rows,
 )
+from app.auth import require_admin_role
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/ai/squall', tags=['squall'])
@@ -26,18 +27,33 @@ _TRUTHY = {'1', 'true', 'TRUE', 'yes', 'YES'}
 
 
 async def _load_rows(
-    conn, *, live: bool
+    conn, *, live: bool, since: datetime | None = None
 ) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
     is_synthetic = not live
-    readings = await conn.fetch(
-        '''
-        SELECT buoy_id, observed_at, pressure_hpa
-        FROM barometric_readings
-        WHERE is_synthetic = $1
-        ORDER BY observed_at, buoy_id
-        ''',
-        is_synthetic,
-    )
+    if live and since is None:
+        since = datetime.now(UTC) - timedelta(hours=24)
+
+    if since is not None:
+        readings = await conn.fetch(
+            '''
+            SELECT buoy_id, observed_at, pressure_hpa
+            FROM barometric_readings
+            WHERE is_synthetic = $1 AND observed_at >= $2
+            ORDER BY observed_at, buoy_id
+            ''',
+            is_synthetic,
+            since,
+        )
+    else:
+        readings = await conn.fetch(
+            '''
+            SELECT buoy_id, observed_at, pressure_hpa
+            FROM barometric_readings
+            WHERE is_synthetic = $1
+            ORDER BY observed_at, buoy_id
+            ''',
+            is_synthetic,
+        )
     squalls = await conn.fetch(
         '''
         SELECT id, started_at, peak_at, ended_at, center_lat, center_lon,
@@ -201,7 +217,7 @@ async def buoy(buoy_id: str) -> dict[str, object]:
 
 
 @router.post('/train')
-async def train() -> dict[str, object]:
+async def train(_admin: dict = require_admin_role) -> dict[str, object]:
     if os.environ.get('ALLOW_TRAINING') not in _TRUTHY:
         raise HTTPException(status_code=403, detail='training disabled')
 

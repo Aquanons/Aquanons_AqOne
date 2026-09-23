@@ -47,7 +47,16 @@ def test_token_for_an_account_that_no_longer_exists_is_rejected(monkeypatch):
 
 
 def _stub_training(monkeypatch):
-    install_pool(monkeypatch, FakeConn(), 'app.api.squall')
+    import inspect
+    caller_frame = inspect.currentframe().f_back
+    caller_role = caller_frame.f_locals.get('role', 'admin') if caller_frame else 'admin'
+
+    def responder(kind, sql, args):
+        if 'FROM users' in sql and args and args[0] == 1:
+            return {'id': 1, 'email': f'probe.{caller_role}@example.invalid', 'role': caller_role, 'token_version': 0}
+        return None
+
+    install_pool(monkeypatch, FakeConn(responder), 'app.api.squall')
     monkeypatch.setenv('ALLOW_TRAINING', 'true')
     writes = []
 

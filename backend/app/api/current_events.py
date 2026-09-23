@@ -55,6 +55,10 @@ async def ingest_current_event(
     if payload.source == 'synthetic':
         await require_synthetic_demo_gate(x_demo_key, 'current')
 
+    cal_status = payload.calibration_status
+    if cal_status == 'qualified':
+        cal_status = 'uncalibrated'
+
     pool = get_pool()
     async with pool.acquire() as conn:
         try:
@@ -75,7 +79,7 @@ async def ingest_current_event(
                 payload.observed_v_mps,
                 payload.depth_m,
                 payload.source,
-                payload.calibration_status,
+                cal_status,
                 payload.source == 'synthetic',
             )
         except asyncpg.ForeignKeyViolationError as exc:

@@ -19,6 +19,9 @@ from app.db import get_pool
 
 router = APIRouter(prefix='/api', tags=['auth'])
 
+# Throwaway bcrypt hash used to equalize timing when an email does not exist (SEC-13).
+_DUMMY_HASH = '$2b$12$e8YcE7mJv2C5KqO6gZ5P9eu0v7bOQvj11QfB8G5QYF5o1H0G0G0G0'
+
 
 class LoginIn(BaseModel):
     email: EmailStr
@@ -56,7 +59,13 @@ async def login(payload: LoginIn) -> dict[str, object]:
         # password is wrong, so the endpoint does not confirm which emails
         # exist - the audit insert runs identically on both branches below,
         # so it does not reopen that gap either.
-        if row is None or not verify_password(payload.password, row['password_hash']):
+        if row is None:
+            verify_password(payload.password, _DUMMY_HASH)
+            pwd_ok = False
+        else:
+            pwd_ok = verify_password(payload.password, row['password_hash'])
+
+        if not pwd_ok:
             await record_audit_event(
                 conn,
                 actor=None,
@@ -78,8 +87,9 @@ async def login(payload: LoginIn) -> dict[str, object]:
                 outcome='success',
             )
 
+    token_version = dict(row).get('token_version', 0)
     return {
-        'token': create_token(row['id'], row['email'], row['role']),
+        'token': create_token(row['id'], row['email'], row['role'], token_version=token_version),
         'user': _public_user(row),
         'message': 'Login successful.',
     }
@@ -150,3 +160,15 @@ async def admin_signup(payload: AdminSignupIn) -> dict[str, object]:
 @router.get('/me')
 async def me(user: dict = Depends(require_user)) -> dict[str, object]:
     return {'user': user}
+
+
+@router.post('/logout')
+async def logout(user: dict = Depends(require_user)) -> dict[str, object]:
+    user_id_val = int(user['id'])
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            'UPDATE users SET token_version = token_version + 1 WHERE id = $1',
+            user_id_val,
+        )
+    return {'message': 'Logged out.'}
