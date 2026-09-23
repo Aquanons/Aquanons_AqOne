@@ -91,6 +91,18 @@ class DeliveryStateTile extends StatelessWidget {
               color: palette.secondaryText,
             ),
           ),
+          if (resolved)
+            Padding(
+              padding: const EdgeInsets.only(top: AqSpace.xs),
+              child: Text(
+                t.resolvedStillEndangered,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AqColors.warning,
+                ),
+              ),
+            ),
           const SizedBox(height: AqSpace.md),
           _MetaLine(
             label: t.deliveryMetaPosition,

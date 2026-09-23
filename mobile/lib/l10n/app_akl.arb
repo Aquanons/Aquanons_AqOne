@@ -119,6 +119,7 @@
   "resolvedTitle": "Nasolbad ron ro insidente",
   "resolvedNotifBody": "Gin-pundoe ron it MDRRMO ining insidente. Kon kinahanglan mo pa gihapon it bueig, magpadaea it bag-o nga SOS.",
   "resolvedDescription": "Gin-pundoe ron it MDRRMO ining insidente. Indi na kinahanglan ro pagsagip.",
+  "resolvedStillEndangered": "Delikado pa? Magpadala it bag-o nga SOS.",
   "hotspotLegendDisclaimer": "Base sa datos it kapalibutan. Indi ini saad it isda, kag indi man ini timailhan nga ligaw eon magguwa.",
   "forecastStripTitle": "7-adlaw nga panan-awon",
   "forecastAsOf": "hangtod sa {time}",
