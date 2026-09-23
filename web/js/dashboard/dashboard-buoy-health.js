@@ -38,6 +38,9 @@
         : (reply === 2
           ? '<div class="alert-fisher-report alert-fisher-safe">Fisher reports: SAFE NOW</div>'
           : '');
+      var regHtml = (typeof ns.registrationBadgeHtml === 'function')
+        ? '<div class="incident-feed-reg">' + ns.registrationBadgeHtml(a.drawerData && a.drawerData.licenseType) + '</div>'
+        : '';
       return '<div class="incident-feed-row' + (a.isLive ? ' incident-feed-live' : '') +
         '" data-idx="' + i + '">' +
         alertIcon(a.type) +
@@ -48,6 +51,7 @@
               (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
             : '') +
           reportHtml +
+          regHtml +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +
       '</div>';

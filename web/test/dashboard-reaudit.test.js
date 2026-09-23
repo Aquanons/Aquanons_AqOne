@@ -15,7 +15,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const { escapeHtml, alertBadge, confidenceColor, classifyFreshness, freshnessLabel, formatDataAge, squallStatusHtml } = require('../js/dashboard-utils.js');
+const { escapeHtml, alertBadge, confidenceColor, classifyFreshness, freshnessLabel, formatDataAge, squallStatusHtml, registrationBadgeHtml } = require('../js/dashboard-utils.js');
 
 function createStubElement(tag = 'div', id = '') {
   const children = [];
@@ -206,6 +206,7 @@ function createDOMContext(elements = {}, ns = {}) {
   ns.ready = ns.ready !== undefined ? ns.ready : true;
   ns.escapeHtml = ns.escapeHtml || escapeHtml;
   ns.alertBadge = ns.alertBadge || alertBadge;
+  ns.registrationBadgeHtml = ns.registrationBadgeHtml || registrationBadgeHtml;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
   ns.classifyFreshness = ns.classifyFreshness || classifyFreshness;
   ns.freshnessLabel = ns.freshnessLabel || freshnessLabel;
@@ -628,11 +629,13 @@ test('R2: SOS Distress Provenance, Actionability & Confidence Suppression', asyn
       phone: '+639171234567',
       fisherReply: 2,
       stage: 'DISTRESS CALL',
-      drawerData: { fisherReply: 2 }
+      drawerData: { fisherReply: 2, licenseType: 'boatr' }
     });
     ns.renderAlerts();
     const safeHtml = document.getElementById('alert-list').innerHTML;
     assert.ok(safeHtml.includes('SAFE NOW'), 'Fisher SAFE NOW report renders on the row');
+    assert.ok(safeHtml.includes('Registered Boat'), 'Registered pill renders on the row');
+    assert.ok(safeHtml.includes('BOATR'), 'Registration type named on the row');
 
     ns.liveAlerts[0].fisherReply = 1;
     ns.liveAlerts[0].drawerData.fisherReply = 1;

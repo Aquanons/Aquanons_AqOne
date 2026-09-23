@@ -16,6 +16,7 @@ import 'package:vibration/vibration.dart';
 class SosAlarm {
   final AudioPlayer _player = AudioPlayer();
   bool _ringing = false;
+  bool _sourceSet = false;
 
   bool get isRinging => _ringing;
 
@@ -55,11 +56,15 @@ class SosAlarm {
 
   Future<void> _startSound() async {
     try {
-      await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource('audio/sos_alarm.wav'));
+      if (!_sourceSet) {
+        await _player.setSource(AssetSource('audio/sos_alarm.wav'));
+        await _player.setReleaseMode(ReleaseMode.loop);
+        _sourceSet = true;
+      }
+      await _player.seek(Duration.zero);
+      await _player.resume();
     } catch (_) {
-      // No audio output, an unsupported platform, or the asset failed to
-      // decode. Vibration alone still carries the alarm.
+      _sourceSet = false;
     }
   }
 
@@ -73,7 +78,7 @@ class SosAlarm {
       await Vibration.cancel();
     } catch (_) {}
     try {
-      await _player.stop();
+      await _player.pause();
     } catch (_) {}
   }
 

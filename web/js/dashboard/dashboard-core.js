@@ -42,6 +42,7 @@
   };
   var formatEta = dashboardUtils.formatEta || function () { return ''; };
   var responderStatusHtml = dashboardUtils.responderStatusHtml || function () { return ''; };
+  var registrationBadgeHtml = dashboardUtils.registrationBadgeHtml || function () { return ''; };
   var tripChecksListHtml = dashboardUtils.tripChecksListHtml || function () { return ''; };
   var squallStatusHtml = dashboardUtils.squallStatusHtml || function () { return ''; };
   var auditTimelineHtml = dashboardUtils.auditTimelineHtml || function () { return ''; };
@@ -312,6 +313,7 @@
   ns.alertBadge = alertBadge;
   ns.formatEta = formatEta;
   ns.responderStatusHtml = responderStatusHtml;
+  ns.registrationBadgeHtml = registrationBadgeHtml;
   ns.tripChecksListHtml = tripChecksListHtml;
   ns.squallStatusHtml = squallStatusHtml;
   ns.auditTimelineHtml = auditTimelineHtml;

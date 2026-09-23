@@ -16,6 +16,8 @@ const {
   classifyFreshness,
   freshnessLabel,
   alertBadge,
+  registrationBadge,
+  registrationBadgeHtml,
   formatEta,
   responderStatusHtml,
   caseTypeBadge,
@@ -156,6 +158,33 @@ test('alertBadge (synthetic/demo vs. live incident-feed badges)', async (t) => {
     // looking like a real distress call.
     const badge = alertBadge(undefined);
     assert.equal(badge.text, 'DEMO');
+  });
+});
+
+test('registrationBadge (registered vs. unregistered boat)', async (t) => {
+  await t.test('a declared license type gets the green registered badge', () => {
+    for (const type of ['boatr', 'fishr', 'cfvgl', 'motorized']) {
+      const badge = registrationBadge(type);
+      assert.equal(badge.text, 'Registered Boat');
+      assert.equal(badge.cssClass, 'reg-badge-registered');
+    }
+  });
+
+  await t.test('missing, empty, or none reads unregistered, never registered', () => {
+    for (const type of [null, undefined, '', 'none']) {
+      const badge = registrationBadge(type);
+      assert.equal(badge.text, 'Unregistered Boat');
+      assert.equal(badge.cssClass, 'reg-badge-unregistered');
+    }
+  });
+
+  await t.test('badge HTML names the registration type and escapes it', () => {
+    const html = registrationBadgeHtml('boatr');
+    assert.ok(html.includes('Registered Boat'), 'badge text rendered');
+    assert.ok(html.includes('BOATR'), 'license type named');
+    assert.ok(!html.includes('<img'), 'no raw markup from the type value');
+    const evil = registrationBadgeHtml('boatr"><img src=x>');
+    assert.ok(!evil.includes('<img src=x>'), 'type value is escaped');
   });
 });
 

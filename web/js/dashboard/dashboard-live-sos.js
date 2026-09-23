@@ -160,6 +160,7 @@
       license: (ev.license_type && ev.license_type !== 'none')
         ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
         : (ev.license_number || null),
+      licenseType: ev.license_type || null,
       phone: ev.phone || null,
       position: sosPosition(ev),
       lat: alert.lat,
