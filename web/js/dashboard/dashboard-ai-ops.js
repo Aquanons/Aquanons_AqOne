@@ -1067,27 +1067,9 @@
   ns.driftLayer = aiContoursLayer;
   ns.escapeHtml = escapeHtml;
   ns._escHtml = escapeHtml;
-  ns.aiRefreshTimer = aiRefreshTimer;
-  ns.aiFreshnessTimer = aiFreshnessTimer;
-  ns.aiColors = aiColors;
-  ns.aiFetchJson = aiFetchJson;
-  ns.aiStatusClass = aiStatusClass;
-  ns.aiRiskPriority = aiRiskPriority;
-  ns.clearAiDriftLayers = clearAiDriftLayers;
-  ns.clearAiSquallLayers = clearAiSquallLayers;
-  ns.updateAiMapKey = updateAiMapKey;
-  ns.updateSquallBanner = updateSquallBanner;
-  ns.renderDriftContours = renderDriftContours;
-  ns.renderDriftIncidentList = renderDriftIncidentList;
   ns.renderRiskFeed = renderRiskFeed;
-  ns.renderSquallChart = renderSquallChart;
-  ns.updateSquallLegendVisibility = updateSquallLegendVisibility;
   ns.renderSquallWatch = renderSquallWatch;
-  ns.loadDriftIncidentDetail = loadDriftIncidentDetail;
-  ns.loadSquallTrace = loadSquallTrace;
   ns.pollAIOperations = pollAIOperations;
-  ns.updateAIFreshness = updateAIFreshness;
-  ns.initAIOperations = initAIOperations;
   ns.sectorDraw = sectorDraw;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

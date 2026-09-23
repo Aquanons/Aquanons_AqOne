@@ -45,8 +45,6 @@
   var tripChecksListHtml = dashboardUtils.tripChecksListHtml || function () { return ''; };
   var squallStatusHtml = dashboardUtils.squallStatusHtml || function () { return ''; };
   var auditTimelineHtml = dashboardUtils.auditTimelineHtml || function () { return ''; };
-  var auditEventRowHtml = dashboardUtils.auditEventRowHtml || function () { return ''; };
-  var formatAuditAction = dashboardUtils.formatAuditAction || function (action) { return String(action || 'unknown action'); };
 
 
   // ===== CONFIG =====
@@ -317,12 +315,9 @@
   ns.tripChecksListHtml = tripChecksListHtml;
   ns.squallStatusHtml = squallStatusHtml;
   ns.auditTimelineHtml = auditTimelineHtml;
-  ns.auditEventRowHtml = auditEventRowHtml;
-  ns.formatAuditAction = formatAuditAction;
   ns.OPS_CENTER = OPS_CENTER;
   ns.OPS_ZOOM = OPS_ZOOM;
   ns.API_BASE = API_BASE;
-  ns.clearSession = clearSession;
   ns.authFetch = authFetch;
   ns.CURRENT_USER = CURRENT_USER;
   ns.CURRENT_USER_COLOR = CURRENT_USER_COLOR;

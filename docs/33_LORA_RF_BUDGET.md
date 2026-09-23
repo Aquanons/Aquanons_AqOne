@@ -1,7 +1,8 @@
 # 33 — LoRa RF Budget & Over-Water Range
 
-Radio-layer design constraints for the buoy mesh. Owns the answer to "how far
-does it actually reach", the spreading-factor choice, and buoy spacing.
+Radio-layer design constraints for the hybrid coastal network. Owns the answer
+to "how far does it actually reach", the spreading-factor choice, and the
+spacing of optional relay buoys.
 Complements [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md), which owns the
 frame format; this doc owns the deployment parameters that make the frame
 arrive.
@@ -12,10 +13,12 @@ measured. Nothing here has been validated on the water yet — see
 
 ## Platform assumption
 
-Buoy nodes mount on a navigational buoy approximately **1.5 m tall**, so the
-antenna sits ~1.5 m above the waterline at both ends of a buoy-to-buoy hop.
-Every number in this doc falls out of that height. If the mounting height
-changes, re-derive — do not scale the ranges linearly.
+The primary link is **boat pod → tall shoreline gateway**. The optional relay
+link is **stationary node → stationary node**. The existing table uses a
+conservative **1.5 m low-node antenna height at both ends**; this is a planning
+assumption for boat pods and relay buoys, not an on-water measurement. The
+shore gateway is modelled separately at 15–20 m. If the pod mast or antenna
+height changes, re-derive — do not scale the ranges linearly.
 
 ## The governing constraint: this is not a free-space link
 
@@ -54,7 +57,9 @@ Assumptions used throughout: `P_tx` = +22 dBm, `G_tx` = `G_rx` = 2 dBi
 
 ## Range and airtime by spreading factor
 
-Buoy-to-buoy, both antennas at 1.5 m.
+Low-node-to-low-node, both antennas at 1.5 m. Use this table for pod-to-relay
+and relay-to-relay planning; direct pod-to-shore uses the taller gateway
+horizon described below.
 
 | SF | SX1262 sens. | SX1262 range | LR2021 sens. | LR2021 range | Time-on-air |
 |---|---|---|---|---|---|
@@ -71,9 +76,9 @@ more distance than the earth will give you.
 
 This is the single most important line in this document:
 
-> **At 1.5 m of antenna height, the system is geometry-limited, not
-> chip-limited.** No transceiver reaches past ~10 km buoy-to-buoy. Only the
-> mesh does.
+> **At 1.5 m of antenna height, a low-node link is geometry-limited, not
+> chip-limited.** No transceiver reaches past ~10 km pod-to-relay or
+> relay-to-relay. Only the optional relay chain can extend the overall area.
 
 The same holds on the shore link. A gateway on a 15–20 m mast has a horizon of
 ~23.5 km, and even an SX1262 at SF10 already models to ~27 km. Both links run
@@ -92,15 +97,17 @@ table.
 
 Rationale:
 
-- SF7's 4.5 km forces buoy spacing so tight the deployment cost stops working.
+- SF7's 4.5 km forces relay spacing so tight the deployment cost stops working.
 - SF12 is a trap: it costs 4× the airtime of SF10 and lands exactly at the
   10.1 km horizon, so it buys nothing usable. In a TTL flood where every relay
   retransmits, a 3.8-second frame makes collisions the binding constraint long
   before range is.
 - SF10 keeps a single hop under a second, which a flood mesh can absorb.
 
-**Buoy spacing: 4–5 km**, i.e. 60–70% of modelled range. The margin is not
-padding — see [Sea state](#sea-state-and-why-the-margin-is-not-padding).
+**Optional relay spacing: 4–5 km**, i.e. 60–70% of modelled low-node range. Do
+not deploy buoys at this spacing by default: first test the direct pod-to-shore
+link, then add relay buoys only for measured dead zones or fixed-sensor needs.
+The margin is not padding — see [Sea state](#sea-state-and-why-the-margin-is-not-padding).
 
 ### Note — the dashboard's demo coverage radius is not a modelled range
 
@@ -141,7 +148,7 @@ Semtech's Gen-4 "LoRa Plus" part. Same **+22 dBm** sub-GHz TX, sensitivity to
 **−141.5 dBm @ SF12/125 kHz**, 150–960 MHz continuous coverage, multi-SF
 receive, 5.7 mA RX.
 
-**Gain: ~4.5 dB of sensitivity. It does not extend buoy-to-buoy range**,
+**Gain: ~4.5 dB of sensitivity. It does not extend low-node-to-low-node range**,
 because the horizon binds first (see the table's † rows).
 
 Where it would genuinely help, if adopted later:

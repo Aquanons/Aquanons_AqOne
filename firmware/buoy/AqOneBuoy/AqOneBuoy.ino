@@ -197,10 +197,26 @@ size_t buildSosPayload(const SosItem& it, char* out, size_t cap) {
   for (int attempt = 0; attempt < 3; attempt++) {
     JsonDocument doc;
     doc["v"]    = 1;
-    doc["kind"] = "sos";
+    // No "kind" here any more, matching the ETA payload: TYPE 0x01 in the
+    // authenticated header already says this is an SOS, and nothing on either
+    // board or in the backend ever read the field - it was 13 bytes of pure
+    // restatement in the tightest payload in the system. Reclaiming them is
+    // what pays for "sq" below without pushing the fisher's note down the
+    // shedding ladder.
     doc["vid"]  = it.vesselId;
     doc["ts"]   = it.clientTs;
     doc["bid"]  = NODE_NAME;
+    // The handset's matching key, and the reason it is above the shedding
+    // ladder rather than in it.
+    //
+    // A LoRa frame has no room for the local_id a phone would otherwise be
+    // matched on, so when the dispatcher's answer comes back down the app
+    // pairs it to the right outbox record by seq alone
+    // (mobile/lib/services/sos_service.dart _applyRemote). That is THIS
+    // number - the value handlePostSos() already returned to the phone - not
+    // the mesh frame seq, which rotates on every retry by design. Shedding it
+    // would deliver an acknowledgement the fisher never sees.
+    doc["sq"]   = it.seq;
     if (it.trust[0]) doc["tt"] = it.trust;
     // Omit lat/lon entirely when there is no fix. Never send 0,0 — that is a
     // real location in the Gulf of Guinea and it would be plotted as one.
@@ -575,6 +591,12 @@ void handleGetSosStatus() {
   String body;
   serializeJson(doc, body);
   http.send(200, "application/json", body);
+
+  // Says what this buoy actually handed the phone. An empty events array here
+  // while the shore reports the frame sent means the ETA never crossed the
+  // radio; a populated one means it did, and the question moves to the app.
+  Serial.printf("[eta] served %s -> %s\n", vid.c_str(),
+                (t && t->hasEta) ? "1 event" : "nothing cached");
 }
 
 // GET /v1/status — buoy health, so the app can show "connected to BUOY01".
@@ -919,6 +941,18 @@ void onMeshFrame(const uint8_t* raw, size_t total, const LoamFrame& f) {
         String out;
         serializeJson(ev, out);
         ws.broadcastTXT(out);
+
+        // The return leg was invisible from this board before: an ETA frame
+        // arrived, cached and served correctly, and nothing anywhere said so.
+        // When the fisher's screen stays blank, this line is what separates
+        // "the frame never arrived" from "the app did not use it".
+        Serial.printf("[eta] rx %s state=%s seq=%ld eta=%lu ack=%lu rssi=%.0f"
+                      " clients=%u\n",
+                      vid, t->state, (long)t->eventSeq,
+                      (unsigned long)t->etaAt, (unsigned long)t->ackedAt,
+                      f.rssi, WiFi.softAPgetStationNum());
+      } else {
+        Serial.printf("[eta] rx %s but the track table is FULL - dropped\n", vid);
       }
       meshRelay(raw, total, f);   // other buoys need it too
       break;
@@ -1059,8 +1093,14 @@ unsigned long lastDisplay = 0;
 unsigned long lastFlush   = 0;
 
 void setup() {
+  // Compiler-filled build stamp, first line out of the box.
+  //
+  // "Did that board actually get the new firmware?" has cost more time on
+  // this project than any single bug. __DATE__/__TIME__ are baked in at
+  // compile time, so this answers it in one glance and cannot drift.
   Serial.begin(115200);
   delay(300);
+  Serial.printf("\n\n[boot] AqOneBuoy build %s %s\n", __DATE__, __TIME__);
   Serial.println("\n=== AqOne buoy " + String(NODE_NAME) + " ===");
 
   oledSetup();

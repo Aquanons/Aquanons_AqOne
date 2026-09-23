@@ -1,9 +1,11 @@
-<p align="center"><img src="Assets/aqoneLogo.png" alt="AqOne logo" width="320"></p>
+<p align="center"><img src="web/assets/icons/aqoneLogo-full.png" alt="AqOne logo" width="320"></p>
 
 # AqOne
 
 AqOne is an offline maritime safety system for municipal fishers in New Washington, Aklan.
-A phone hands an SOS to a nearby buoy over local WiFi, and the intended LoRa network carries it toward an internet-connected gateway and an MDRRMO dashboard.
+A phone hands an SOS to a shared boat-mounted safety pod over local WiFi. The
+pod sends it directly over LoRa to a tall shoreline gateway when possible;
+stationary navigational buoys remain optional fixed sensor and relay nodes.
 
 Built by **Team Aquanons** for AI Fest 2026.
 
@@ -11,19 +13,18 @@ Built by **Team Aquanons** for AI Fest 2026.
 
 **Current competition focus:** Phase 1, the manual SOS and responder handshake.
 
-**Last status check:** September 10, 2026.
+**Last status check:** September 19, 2026.
 
-The documented Railway deployment currently returns `404 Application not found` from `/healthz`.
-There is no working public demo URL until the backend is redeployed and checked again.
+The active backend is deployed on Render (`https://aqone-backend.onrender.com`), with `/health/ready` verified responsive. The legacy Railway service has been retired.
 Obtain current evaluator access from Team Aquanons rather than relying on credentials stored in the repository.
 
 | Area | Status | Evidence and limitation |
 |---|---|---|
 | Mobile pitch build | 🟡 Built and automatically tested | The September 5 build recorded `flutter analyze` with no issues and 184 passing tests. Physical handset installation and the hardware demonstration remain unverified. |
-| Backend and dashboard software | 🟡 Built and locally tested | The hosted Railway service is unavailable. Current deployment behavior cannot be demonstrated. |
-| Phone to buoy WiFi | 🟡 Implemented in source | The current buoy address is `192.168.4.1`. The complete path has not been reverified on a physical handset and buoy. |
-| Buoy firmware | 🟡 Buoy and shore sketches exist, compile clean | SOS, responder ETA and chat all cross LoRa; the buoy has no internet of its own. Neither sketch has run on hardware. |
-| Multi-hop LoRa mesh | 🟡 Implemented, unproven | TTL flood, seen-set and relay logic are written. No middle node has been built and no outdoor range has been measured — every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
+| Backend and dashboard software | 🟢 Deployed and verified | Live Render backend deployment responsive at `https://aqone-backend.onrender.com/health/ready`. |
+| Phone to boat-pod WiFi | 🟡 Implemented in source | The pod address is `192.168.4.1`. The complete path has not been reverified on a physical handset and pod. |
+| Boat-pod and shore firmware | 🟡 Pod and shore sketches exist, compile clean | SOS, responder ETA and chat cross LoRa; the pod has no internet of its own. Neither sketch has run on hardware. Stationary relay/sensor hardware is not yet validated. |
+| Direct and optional relay LoRa | 🟡 Implemented, unproven | Direct pod-to-shore delivery and TTL flood/seen-set relay logic are written. No outdoor range has been measured — every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
 | Responder acknowledgement and ETA | 🟡 Implemented, needs a credential | The gateway reads `GET /api/sos/active` and pushes the ETA back down the mesh. That endpoint needs an operator bearer token, which must be configured before this path works. |
 | AI safety features | 🟡 Prototype software exists | No component has been trained and validated on locally collected New Washington data. Synthetic scenarios support most calibration/evaluation; the marine-hazard model uses historical environmental proxy data. Field validation and deployment remain incomplete. |
 | Catch activity features | 🟡 Foundation exists | Offline logging and coarse aggregation exist. The intended BFAR workflow has not been validated. |
@@ -47,11 +48,11 @@ Scope amendments and exclusions are recorded in [`docs/07_SCOPE_OUT.md`](docs/07
 
 ```mermaid
 flowchart LR
-    P["Fisher phone<br/>Flutter and offline outbox"] -->|Local WiFi| B["Buoy<br/>ESP32-S3"]
+    P["Fisher phone<br/>Flutter and offline outbox"] -->|Local WiFi| B["Boat pod<br/>ESP32-S3"]
     P -->|HTTPS when internet is available| API["FastAPI and PostgreSQL"]
-    B -->|Current sketch: WiFi uplink| API
-    B -.->|Target path: LoRa| R["Relay buoy"]
-    R -.-> G["Shore gateway"]
+    B -.->|Direct LoRa| G["Tall shore gateway"]
+    B -.->|Optional relay| R["Stationary sensor/relay buoy"]
+    R -.-> G
     G -.->|HTTPS| API
     API --> D["MDRRMO dashboard"]
     D -->|Acknowledgement and ETA| API
@@ -59,7 +60,9 @@ flowchart LR
 ```
 
 Solid arrows represent software paths present in the repository.
-Dashed arrows represent the intended LoRa path, which has not been implemented or range-tested.
+Dashed arrows represent the intended LoRa transport path, which has not been
+range-tested outdoors. The older `buoy` directory/sketch names are retained for
+firmware compatibility while the primary role is now the boat pod.
 
 The handset uses four delivery states shared across the product:
 
@@ -77,7 +80,7 @@ The app must never display a later state without observing evidence for it.
 | Understand current priorities and limitations | This README |
 | Inspect dated verification evidence | [`docs/08_DEMO_AND_STATUS.md`](docs/08_DEMO_AND_STATUS.md) |
 | Understand the target topology | [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md), while treating its old scope exclusions as historical |
-| Work on phone to buoy communication | [`docs/03_PHONE_BUOY_WIFI.md`](docs/03_PHONE_BUOY_WIFI.md) and the verified fixtures in [`docs/21_WEEK1_CONTRACT_FIXTURES.md`](docs/21_WEEK1_CONTRACT_FIXTURES.md) |
+| Work on phone to boat-pod communication | [`docs/03_PHONE_BUOY_WIFI.md`](docs/03_PHONE_BUOY_WIFI.md) and the verified fixtures in [`docs/21_WEEK1_CONTRACT_FIXTURES.md`](docs/21_WEEK1_CONTRACT_FIXTURES.md) |
 | Work on LoRa frames | [`docs/02_LOAM_PACKET_SPEC.md`](docs/02_LOAM_PACKET_SPEC.md) |
 | Work on backend, dashboard, or mobile APIs | [`docs/05_PUBLIC_API.md`](docs/05_PUBLIC_API.md) |
 | Understand the backend layout | [`docs/18_BACKEND_STRUCTURE.md`](docs/18_BACKEND_STRUCTURE.md) |
@@ -199,7 +202,7 @@ Two sketches, one per kind of board:
 
 | Sketch | Flash it to |
 |---|---|
-| [`firmware/buoy/AqOneBuoy/`](firmware/buoy/AqOneBuoy/) | The boards that float. WiFi access point for phones, plus LoRa. No internet of its own. |
+| [`firmware/buoy/AqOneBuoy/`](firmware/buoy/AqOneBuoy/) | The boat safety-pod sketch (folder name retained for compatibility). Local WiFi for phones, plus LoRa. No internet of its own. |
 | [`firmware/shore/AqOneShore/`](firmware/shore/AqOneShore/) | The board on the mast with the internet. LoRa plus a WiFi station, no access point. |
 
 Both include `AqOneLoam.h`, the shared radio layer. The file exists in both
@@ -252,8 +255,7 @@ Dataset sources, licences, limitations, and measured results are documented in [
 
 ```text
 backend/       FastAPI, PostgreSQL migrations, AI services, and tests
-firmware/      ESP32-S3 firmware: buoy/ and shore/ sketches
-gateway/       Gateway work area
+firmware/      ESP32-S3 firmware: buoy/ (boat pod & buoy) and shore/ (gateway) sketches
 mobile/        Flutter handset application
 web/           MDRRMO dashboard and browser hazard model
 docs/          Contracts, references, decisions, plans, and verification records

@@ -11,7 +11,6 @@ import 'core/locale_controller.dart';
 import 'core/tokens.dart';
 import 'data/app_database.dart';
 import 'data/checklist_store.dart';
-import 'data/fishing_spot_store.dart';
 import 'core/field_cipher.dart';
 import 'data/identity_store.dart';
 import 'data/secure_credential_store.dart';
@@ -19,7 +18,6 @@ import 'data/map_snapshot_store.dart';
 import 'data/outbox_store.dart';
 import 'services/backend_client.dart';
 import 'services/buoy_client.dart';
-import 'services/fishing_spot_service.dart';
 import 'services/location_service.dart';
 import 'services/sos_service.dart';
 import 'services/venture_feeds.dart';
@@ -124,7 +122,6 @@ class _AqOneAppState extends State<AqOneApp> {
   late final IdentityStore _identityStore;
   late final SosService _service;
   late final ChecklistStore _checklist;
-  late final FishingSpotService _spots;
   late final VentureFeeds _feeds;
   late final LocationService _location;
   late final BackendClient _backend;
@@ -154,16 +151,6 @@ class _AqOneAppState extends State<AqOneApp> {
       location: _location,
     );
     _checklist = ChecklistStore(_db);
-    // Manual fishing-spot reporting was removed from Venture: hotspots are
-    // meant to come from a model, not from fishers publishing exact productive
-    // coordinates to each other. The service is still constructed and started
-    // so anything a handset had already queued before the feature went away
-    // still uploads instead of being silently discarded. Nothing writes new spots.
-    _spots = FishingSpotService(
-      store: FishingSpotStore(_db),
-      identity: _identityStore,
-      backend: _backend,
-    );
     // Snapshots make the Venture map usable with no signal: the last good
     // response for each feed is replayed when a fetch fails, so opening
     // the app offshore shows buoys and coverage rather than empty sea.
@@ -190,7 +177,6 @@ class _AqOneAppState extends State<AqOneApp> {
   void dispose() {
     _locale?.removeListener(_onLocaleChanged);
     _service.dispose();
-    _spots.dispose();
     _feeds.close();
     _backend.close();
     super.dispose();
@@ -253,9 +239,6 @@ class _AqOneAppState extends State<AqOneApp> {
       }
       if (remembered) {
         _service.start();
-        if (!AqOneConfig.pitchMode) {
-          _spots.start();
-        }
         _pushVesselProfile(identity);
       }
       setState(() {
@@ -355,9 +338,6 @@ class _AqOneAppState extends State<AqOneApp> {
     // Background sync only starts once the user is actually in the app, so a
     // half-finished registration never puts traffic on the wire.
     _service.start();
-    if (!AqOneConfig.pitchMode) {
-      _spots.start();
-    }
     _pushVesselProfile(identity);
     setState(() {
       _identity = identity;

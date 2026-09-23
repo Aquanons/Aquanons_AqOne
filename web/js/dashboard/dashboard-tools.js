@@ -531,7 +531,6 @@
   ns.activatePinMode = activatePinMode;
   ns.deactivatePinMode = deactivatePinMode;
   ns.activatePanMode = activatePanMode;
-  ns.deactivatePanMode = deactivatePanMode;
   ns.activateMeasureMode = activateMeasureMode;
   ns.deactivateMeasureMode = deactivateMeasureMode;
   ns.measureClearAll = measureClearAll;

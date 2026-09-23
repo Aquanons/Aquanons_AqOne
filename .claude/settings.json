@@ -1,0 +1,40 @@
+{
+  "skillOverrides": {
+    "a-philosophy-of-software-design": "on",
+    "clean-architecture": "on",
+    "clean-code": "on",
+    "code-complete": "on",
+    "council": "on",
+    "designing-data-intensive-applications": "on",
+    "domain-driven-design": "on",
+    "domain-driven-design-distilled": "on",
+    "implementation-plan": "on",
+    "implementing-domain-driven-design": "on",
+    "patterns-of-enterprise-application-architecture": "on",
+    "ponytail": "on",
+    "ponytail-audit": "on",
+    "ponytail-debt": "on",
+    "ponytail-gain": "on",
+    "ponytail-help": "on",
+    "ponytail-review": "on",
+    "refactoring": "on",
+    "refactoring-guru": "on",
+    "release-it": "on",
+    "security-audit": "on",
+    "spec": "on",
+    "the-pragmatic-programmer": "on",
+    "working-effectively-with-legacy-code": "on"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$CLAUDE_PROJECT_DIR/HANDOFF.md\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

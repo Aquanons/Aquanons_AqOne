@@ -714,13 +714,6 @@ def _build_current_observations(
     return rows
 
 
-def _route_path(profile: VesselProfile, buoys_by_id: dict[str, dict[str, Any]]) -> list[tuple[float, float]]:
-    return [
-        (profile.home_lat, profile.home_lon),
-        *[(buoys_by_id[buoy_id]['lat'], buoys_by_id[buoy_id]['lon']) for buoy_id in profile.route_buoy_ids],
-    ]
-
-
 def _route_length_km(home_lat: float, home_lon: float, route_buoy_ids: tuple[str, ...]) -> float:
     # Approximation used only to shape the trip duration.
     points = [(home_lat, home_lon)]

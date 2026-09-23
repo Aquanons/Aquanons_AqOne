@@ -92,7 +92,7 @@ $$\text{Delivered Lead} = T_{\text{hazard\_onset}} - T_{\text{handset\_display}}
 ## 5. Canonical Dataset Manifest Fixture
 
 The repository maintains an illustrative, verified field evaluation manifest at:
-[`manifests/field_eval_manifest_v1.json`](file:///C:/Users/User/Desktop/PersonalProjects/00-HACKATHONS-COMPETITIONS/00-HACKATHONS/00-2026-FIRST-YEAR/2026-Aquanons/AIHackathon2026_Aquanons_AqOne/manifests/field_eval_manifest_v1.json)
+[`manifests/field_eval_manifest_v1.json`](../manifests/field_eval_manifest_v1.json)
 
 - **Verification:** Validated by `validate_manifest` (`backend/app/ai/manifest.py`) and tested under `test_canonical_field_eval_manifest_validates_cleanly` in `backend/tests/test_calibration_and_replay.py`.
 - **Integrity Constraints Enforced:**

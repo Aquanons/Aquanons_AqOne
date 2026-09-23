@@ -1,7 +1,8 @@
-# 19 — Heltec V3: How Data Reaches the Database
+# 19 — Heltec V3: Hybrid Data Flow to the Database
 
-Practical wiring guide for the buoy firmware. Written against what the backend
-**actually implements today**, not the older spec docs.
+Practical wiring guide for the boat-pod, stationary-relay, and shore-gateway
+firmware. Written against what the backend **actually implements today**, not
+the older spec docs.
 
 > ## ⚠️ Read this first — the spec docs are out of date
 >
@@ -19,52 +20,55 @@ Practical wiring guide for the buoy firmware. Written against what the backend
 
 ```
 [1] Fisher's phone
-     │  WiFi (phone joins buoy's access point)
+     │  WiFi (phone joins the boat pod's access point)
      │  POST http://192.168.4.1/v1/sos
      ▼
-[2] BUOY  (Heltec V3 — SoftAP + LoRa)
-     │  LoRa 915 MHz, binary frame, TTL flood
+[2] BOAT POD  (Heltec V3 — SoftAP + LoRa)
+     │  Direct LoRa 915 MHz, binary frame
      ▼
-[3] RELAY BUOY(s)   (Heltec V3 — LoRa only, TTL-1)
-     │  LoRa
+[3] OPTIONAL SENSOR / RELAY BUOY(s)   (Heltec V3 — LoRa only)
+     │  Fixed telemetry or TTL relay where needed
      ▼
-[4] GATEWAY  (Heltec V3 — LoRa + internet)
+[4] TALL SHORE GATEWAY  (Heltec V3 — LoRa + internet)
      │  HTTPS
      │  POST https://incredible-liberation-production-aad7.up.railway.app/api/sos
      ▼
 [5] FastAPI → PostgreSQL → dashboard
 ```
 
-Your ₱100,000 build is **[2], [3] and [4]** — two buoys and one gateway.
+The hybrid prototype is **one boat pod, one optional stationary node, and one
+tall shore gateway**. Add stationary nodes only for fixed sensing, measured
+coverage gaps, or redundancy.
 
 ---
 
-## Each Heltec has one of three jobs
+## Each Heltec has one of four possible jobs
 
 | Role | Radios in use | What it does |
 |---|---|---|
-| **Edge buoy** | WiFi SoftAP + LoRa TX | Hosts the phone's WiFi, accepts an SOS over HTTP, converts it to a LoRa frame, transmits |
-| **Relay buoy** | LoRa RX + TX | Receives a frame, checks it hasn't seen it before, decrements TTL, re-transmits |
+| **Boat pod** | WiFi SoftAP + LoRa TX/RX | Hosts the phone's local WiFi, accepts an SOS over HTTP, queues it, and sends it toward shore |
+| **Sensor buoy** | LoRa RX + TX | Reports fixed-position sensor data and can relay frames |
+| **Relay buoy** | LoRa RX + TX | Receives a frame, checks it has not seen it before, decrements TTL, re-transmits |
 | **Gateway** | LoRa RX + WiFi station | Receives frames, decodes them, POSTs JSON to the backend over the internet |
 
-A single Heltec can do all three, but **the gateway is the awkward one** — see the
+A single Heltec can perform the field-node roles, but **the gateway is the awkward one** — see the
 radio constraint below.
 
 ---
 
-## Step 1 — Phone to buoy (WiFi)
+## Step 1 — Phone to boat pod (WiFi)
 
-The buoy runs a WiFi access point. The phone joins it with its SIM in airplane
+The boat pod runs a WiFi access point. The phone joins it with its SIM in airplane
 mode.
 
 | Setting | Value |
 |---|---|
-| SSID | `AqOne-<buoy id>` e.g. `AqOne-BUOY01` |
-| Buoy IP | `192.168.4.1` |
-| Phone DHCP | `192.168.4.2` and up (ESP32 SoftAP default) |
-| Protocol | Plain HTTP — no TLS. The hop is one metre of air; certificates on a buoy are not worth the flash. |
+| SSID | `Aquan` |
+| Pod IP | `192.168.4.1` |
+| Phone DHCP | Assigned by the ESP32 SoftAP |
+| Protocol | Plain HTTP — no TLS. The hop is local; certificates on a pod are not worth the flash. |
 
-### The buoy must serve two routes
+### The boat pod must serve two routes
 
 **`POST /v1/sos`** — the phone sends:
 
@@ -83,7 +87,7 @@ mode.
 
 `lat`, `lon` and `note` may be absent. Everything else is always present.
 
-The buoy replies immediately — **do not wait for LoRa delivery**:
+The pod replies immediately — **do not wait for LoRa delivery**:
 
 ```json
 {
@@ -102,7 +106,7 @@ Buoy 01." Return battery, uptime, queue depth, last LoRa contact.
 
 ---
 
-## Step 2 — Buoy to buoy (LoRa)
+## Step 2 — Boat pod or relay buoy to shore (LoRa)
 
 Full binary format is in `docs/02_LOAM_PACKET_SPEC.md`. The essentials:
 
@@ -124,10 +128,10 @@ Max frame **94 bytes**. Frame types: `0x01` SOS, `0x02` ACK, `0x03` PING,
 the de-duplication key is `(vessel_id, client_ts)` and not a UUID — a UUID does
 not fit.
 
-### Relay logic — keep it this simple
+### Direct and relay logic — keep it this simple
 
 ```
-on frame received:
+on frame received at a pod or stationary relay:
     if MAGIC != 0xA5 or VERSION != 0x01:  drop
     if signature invalid:                  drop
     if (SRC_ID, SEQ) already in seen-set:  drop     ← stops broadcast storms
@@ -135,7 +139,7 @@ on frame received:
     if TTL == 0:                           drop
     TTL  = TTL - 1
     HOPS = HOPS + 1
-    re-transmit
+    re-transmit toward shore when no direct delivery is available
 ```
 
 The seen-set is the whole flood-control mechanism. A ring buffer of the last
@@ -177,11 +181,11 @@ Content-Type: application/json
 |---|---|---|
 | `vessel_id` | **yes** | From the frame payload |
 | `client_ts` | **yes** | Origin epoch seconds — **not** the gateway's clock |
-| `source` | **yes** | Must be exactly `"buoy"` |
+| `source` | **yes** | Must be exactly `"buoy"` for the current backend contract. This compatibility value covers a boat pod or stationary buoy radio endpoint. |
 | `boat` | no | Defaults to empty |
 | `lat` / `lon` | no | Omit entirely if no fix. **Do not send 0,0** — that is a real place in the Atlantic |
 | `note` | no | ≤ 64 chars |
-| `buoy_id`, `src_id`, `seq` | no | Send them; they populate the mesh trail on the dashboard |
+| `buoy_id`, `src_id`, `seq` | no | Send them; `buoy_id` is the retained compatibility field for the serving pod or stationary node, and these fields populate the radio trail on the dashboard |
 
 ### Three things that matter
 
@@ -190,35 +194,36 @@ gateway relaying a distress call cannot be asked for a bearer token.
 
 **`client_ts` must be the phone's original timestamp**, carried through the LoRa
 frame untouched. Together with `vessel_id` it is the de-duplication key. If the
-gateway substitutes its own clock, the same emergency arriving by both the buoy
-path and the phone's direct internet path will create **two incidents** on the
-dispatcher's screen.
+gateway substitutes its own clock, the same emergency arriving by both the boat
+pod path and the phone's direct internet path will create **two incidents** on
+the dispatcher's screen.
 
 **HTTP 200 means done.** It covers both "created" and "already recorded." Stop
 retrying on 200. Retry on network failure or 5xx, with backoff.
 
 ---
 
-## The radio constraint nobody warns you about
+## The radio and gateway constraint
 
-The ESP32-S3 has **one WiFi radio**. It can run access-point and station mode at
-the same time, but **both must be on the same channel**. When the gateway
-connects to an upstream hotspot, its own access point is forced onto that
-hotspot's channel — which can drop phones already connected to it.
+The Heltec's WiFi is now deliberately local: a phone only needs to reach the
+boat-mounted safety pod strapped to its own boat. The pod does not need WiFi
+coverage over the water and does not use WiFi as its long-range backhaul.
 
-Three options, easiest first:
+The tall shoreline gateway is dedicated to LoRa plus its internet uplink. It
+has no phone SoftAP. This avoids sharing the Heltec's single WiFi radio between
+an access point and an upstream station, while putting the long-range antenna
+where height actually helps.
 
-1. **Dedicate the gateway.** It does LoRa + internet only, no SoftAP. Phones
-   connect to the other two buoys. **This is what your 3-node budget assumes,
-   and what I recommend.**
-2. **Ethernet or a separate module** for the gateway's uplink. Costs more.
-3. **Time-slice** AP and station mode. Fiddly and fragile under demo pressure.
+Stationary navigational buoys are optional radio participants: they can report
+fixed-position sensor data and, where a direct boat-to-shore path is weak, act
+as relay nodes. A direct boat-pod frame uses `HOPS=0`; an optional relay applies
+the existing TTL/seen-set rules.
 
 ---
 
 ## Power and store-and-forward
 
-Solar + 18650 means the buoy will brown out. Two rules:
+Boat pods and stationary nodes can brown out or lose power. Two rules:
 
 **Persist the queue to flash**, not RAM. An SOS held in RAM dies with the
 battery. Use NVS or SPIFFS.
@@ -239,10 +244,13 @@ Each step must actually work before the next.
    forwards once and only once.
 3. **Gateway POSTs a hardcoded SOS** to `/api/sos`. Watch it appear on the
    dashboard. *This proves the whole backend half without any phone involved.*
-4. **Buoy serves `POST /v1/sos`** over SoftAP. Test with `curl` from a laptop
-   joined to the buoy's WiFi, before involving the Flutter app.
-5. **Phone in airplane mode → buoy → LoRa → gateway → dashboard.** The demo.
-6. **Outdoor range test.** Record actual metres in
+4. **Boat pod serves `POST /v1/sos`** over SoftAP. Test with `curl` from a
+   laptop joined to the pod's WiFi, before involving the Flutter app.
+5. **Phone in airplane mode → boat pod → direct LoRa → gateway → dashboard.**
+   The primary demo path.
+6. **Add one stationary relay buoy** and prove TTL/seen-set forwarding only
+   after the direct path works.
+7. **Outdoor range test.** Record actual metres in
    `docs/08_DEMO_AND_STATUS.md` — this is still an open item and you currently
    have no measured figure.
 

@@ -1,22 +1,22 @@
 # 01 — Architecture
 
-End-to-end topology, identities, and data flow for the AqOne mesh. This doc is
-the map; the numbered contracts define each edge in detail.
+End-to-end topology, identities, and data flow for the AqOne hybrid transport
+network. This doc is the map; the numbered contracts define each edge in detail.
 
 ## Topology
 
 ```
 ┌───────────────┐  WiFi SoftAP   ┌──────────────────────┐
-│ Vessel phone  │ ─────────────► │ Buoy (ESP32-S3)      │
+│ Vessel phone  │ ─────────────► │ Boat pod (ESP32-S3)  │
 │ Flutter       │                │ • SX1262 LoRa        │
 │ • SQLite      │ ◄───────────── │ • MPU6050 (optional) │
-│   outbox      │   buoy ack     │ • store & forward    │
+│   outbox      │   pod ack      │ • store & forward    │
 │ • airplane    │                │ • signs packets      │
 │   mode OK     │                └──────────┬───────────┘
 └───────────────┘                           │ LoRa
                                             ▼
                                  ┌──────────────────────┐
-                                 │ Buoy N (relay, TTL--)│
+                                 │ Optional sensor/relay │
                                  └──────────┬───────────┘
                                             │ LoRa
                                             ▼
@@ -44,33 +44,36 @@ the map; the numbered contracts define each edge in detail.
 
 | Edge | Medium | Contract |
 |---|---|---|
-| Phone → buoy | WiFi SoftAP HTTP | `docs/03_PHONE_BUOY_WIFI.md` |
-| Buoy → buoy / buoy → gateway | LoRa | `docs/02_LOAM_PACKET_SPEC.md` |
+| Phone → boat pod | WiFi SoftAP HTTP | `docs/03_PHONE_BUOY_WIFI.md` |
+| Boat pod / relay buoy → gateway | LoRa | `docs/02_LOAM_PACKET_SPEC.md` |
 | Gateway → backend | HTTPS | `docs/04_INGEST_API.md` |
 | Backend → dashboard / mobile | REST + SSE | `docs/05_PUBLIC_API.md` |
+| Aggregated data flows & AI boundaries | All channels | `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md` |
+
+The visual architecture diagrams and editable swimlane flowcharts are maintained in [`artifacts/architecture/`](../artifacts/architecture/), specifically [`AqOne_Aggregated_Technical_Architecture.docx`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture.docx), [`.pdf`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture.pdf), and [`.pptx`](../artifacts/architecture/AqOne_Aggregated_Technical_Architecture_Editable.pptx).
 
 ## Identities
 
 Two identity worlds exist; the gateway and backend reconcile them.
 
 - **External ID (mesh side).** A 32-bit opaque id assigned to every radio
-  endpoint (each buoy) and every phone session a buoy sees. Lives inside LoRa
+  endpoint: boat pod, stationary buoy, relay, or gateway. Lives inside LoRa
   frames. Short because the radio channel is narrow.
-- **Internal ID (backend side).** A UUID for each vessel (a fisherman's phone,
-  tracked across trips) and each buoy/device. Assigned on first sight.
+- **Internal ID (backend side).** A UUID for each vessel, pod, sensor station,
+  relay, and gateway. Assigned on first sight.
 
 The gateway maps external → internal for the backend (`docs/04_INGEST_API.md`);
 the backend also keeps the mapping so it can own the truth.
 
 ## End-to-end flow (phone-originated SOS)
 
-1. Phone in airplane mode joins the nearest buoy's WiFi AP.
-2. Phone `POST`s the SOS to the buoy (`03_PHONE_BUOY_WIFI.md`); the buoy
+1. Phone in airplane mode joins the boat pod's WiFi AP.
+2. Phone `POST`s the SOS to the pod (`03_PHONE_BUOY_WIFI.md`); the pod
    replies with an ack carrying its id and a sequence number.
 3. Phone records the delivery state `relayed` locally (SQLite outbox).
-4. Buoy wraps the SOS in a signed LoRa frame (`02_LOAM_PACKET_SPEC.md`),
-   stores it, and starts forwarding: TTL hops over LoRa, decrementing TTL at
-   each relay until a gateway hears it.
+4. The pod wraps the SOS in a signed LoRa frame (`02_LOAM_PACKET_SPEC.md`),
+   stores it, and transmits directly to the shore gateway. If a direct path is
+   unavailable, optional relay buoys forward it using TTL hops and the seen-set.
 5. Gateway verifies the signature, resolves external → internal ids, and
    `POST`s to the backend (`04_INGEST_API.md`).
 6. Backend dedupes on `(src_ext_id, seq)`, appends to the event log, updates
@@ -115,7 +118,8 @@ saved ──► relayed ──► delivered ──► acknowledged
 
 ## Key non-goals restated
 
-- No mesh routing algorithm — TTL flooding is enough for a bay.
+- No complex mesh routing algorithm — direct pod-to-gateway delivery is the
+  default and TTL flooding is used only by optional relay nodes.
 - No end-to-end encryption of content (channel signatures only, MVP).
 - No catch logging, advisories, photos, or float-plan (see
   `docs/07_SCOPE_OUT.md`).

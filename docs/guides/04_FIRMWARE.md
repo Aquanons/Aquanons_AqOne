@@ -1,9 +1,14 @@
-# 04 — FIRMWARE (ESP32-S3 buoy)
+# 04 — FIRMWARE (ESP32-S3 field node)
 
-**Owner: Daniel. This is the critical path — the buoy is the product.**
+**Owner: Daniel. This is the critical path — the boat pod and fixed field nodes are the product.**
 
 Toolchain: **Arduino IDE + RadioLib**. Read `01_CONTRACTS.md` §2 before
 writing any packet code.
+
+The current deployment decision is hybrid: use this field-node guidance for the
+removable boat pod first, and retain stationary buoys only for fixed sensing or
+measured relay gaps. The active topology is defined in
+`docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`.
 
 ---
 
@@ -11,7 +16,7 @@ writing any packet code.
 
 | Part | Notes |
 |---|---|
-| ESP32-S3 dev board | WiFi + BLE, plenty of RAM for this |
+| ESP32-S3 dev board | WiFi + BLE, plenty of RAM for this; used in the strap-on pod or an optional fixed node |
 | SX1262 LoRa module | **Confirm your module's band before flashing** |
 | MPU6050 | Optional for the demo — see sensor-bypass mode below |
 | Push button | GPIO, triggers a test SOS. Essential for the demo. |
@@ -42,7 +47,7 @@ compliance, and "we confirmed it against NTC allocations" is a good answer.
 #define LORA_PREAMBLE_LEN  8
 ```
 
-**Every buoy and the gateway must use identical values.** A mismatch is silent:
+**Every field node and the gateway must use identical values.** A mismatch is silent:
 no error, just nothing received. If two nodes won't talk, check these first.
 
 ---
@@ -160,7 +165,7 @@ device. Record each device in the backend `devices` table
 
 ---
 
-## Roles: buoy vs gateway
+## Roles: field node vs gateway
 
 Same firmware, one compile-time flag.
 
@@ -170,8 +175,10 @@ Same firmware, one compile-time flag.
 #define NODE_ROLE ROLE_BUOY     // change per device before flashing
 ```
 
-**Buoy:** raises SoftAP, accepts a frame from a phone, signs/relays over LoRa,
-relays others' frames with TTL decrement, sends its own SOS on button press.
+**Boat pod:** raises SoftAP, accepts a frame from the phone, signs/sends over
+LoRa, stores queued frames, and sends its own SOS on button press. A stationary
+relay buoy may use the same LoRa forwarding behavior without exposing the phone
+SoftAP.
 
 **Gateway:** listens on LoRa, verifies, converts the binary frame to the JSON
 envelope (`01_CONTRACTS.md` §4), POSTs to `/api/ingest/mesh` over WiFi/internet
@@ -200,7 +207,7 @@ QueueEntry g_queue[QUEUE_MAX];
 ```
 
 Dedupe relays with a small ring buffer of recently seen `msg_id`s (32 entries
-is plenty) so a message doesn't loop forever between two buoys.
+is plenty) so a message doesn't loop forever between field nodes.
 
 ---
 
@@ -212,7 +219,8 @@ is plenty) so a message doesn't loop forever between two buoys.
 #define AP_PORT        8080
 ```
 
-The phone POSTs the 46-byte frame as raw binary to `http://192.168.4.1:8080/tx`.
+The phone POSTs the 46-byte frame as raw binary to the pod's local endpoint
+`http://192.168.4.1:8080/tx`.
 Respond `200` with the `msg_id` **only after** the frame is queued — that
 response is what advances the app to `received_by_buoy`. Never ack before
 queueing; a false ack on an SOS is the worst bug this system can have.

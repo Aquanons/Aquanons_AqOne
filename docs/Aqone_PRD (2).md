@@ -1,6 +1,6 @@
 # Aqone — Product Requirements Document
 
-**A buoy-based maritime mesh network and AI search-and-rescue system for Philippine municipal fishers**
+**A hybrid boat-pod and stationary-buoy maritime mesh network with AI search-and-rescue support for Philippine municipal fishers**
 
 | | |
 |---|---|
@@ -13,11 +13,11 @@
 
 ## 1. Summary
 
-Aqone is a network of LoRa-equipped navigation buoys that eliminates communication dead zones in Philippine municipal waters, and an AI layer on top of it that predicts the weather that kills small boats, detects when a boat has failed to return before anyone reports it missing, and narrows the water where a missing person is still alive.
+Aqone is a hybrid network of boat-mounted LoRa safety pods, stationary sensor buoys, optional relay buoys, and a tall shoreline gateway that reduces communication dead zones in Philippine municipal waters. An AI layer predicts the weather that kills small boats, detects when a boat has failed to return before anyone reports it missing, and narrows the water where a missing person is still alive.
 
-The buoy network is the product's foundation. The AI is what the network makes possible — and what nothing else can do without it.
+The radio network is the product's foundation. Boat pods are the primary SOS origin; stationary buoys provide fixed environmental observations and optional relay coverage. The AI is what the network makes possible — and what nothing else can do without it.
 
-**One line:** *Aqone turns navigation buoys into a nervous system for municipal waters — one that forecasts the squall, notices the boat that never came back, and shrinks the search area while someone is still alive.*
+**One line:** *Aqone gives municipal boats a strap-on safety link to shore, while stationary buoys sense the water — forecasting the squall, noticing the boat that never came back, and shrinking the search area while someone is still alive.*
 
 ---
 
@@ -52,7 +52,7 @@ These are the incidents that reached national reporting. The Philippine Coast Gu
 | **Mobile phone** | No signal past ~20 km — the exact scenario where help is needed |
 | **Satellite messengers** | Recurring subscription, individual purchase, no local SAR integration |
 
-Every one of these requires the fisher to buy and carry hardware. **Aqone inverts the model: the infrastructure goes in the water, and the fisher needs only the phone already in their pocket.**
+Most of these require the fisher to buy and carry dedicated hardware. **Aqone keeps the pod shared and easy to strap on, while retaining fixed shoreline and buoy infrastructure; the fisher uses the phone already in their pocket.**
 
 ---
 
@@ -60,7 +60,7 @@ Every one of these requires the fisher to buy and carry hardware. **Aqone invert
 
 | User | Need | What Aqone gives them |
 |---|---|---|
-| **Municipal fisher** | Contact with shore; not dying | Messaging and weather beyond the coverage edge, with no hardware to buy; SOS from their own phone |
+| **Municipal fisher** | Contact with shore; not dying | Messaging and weather beyond the coverage edge through a shared boat pod; SOS from their own phone |
 | **Fisher's family** | To know the boat is safe | Check-in visibility; notification on alert or overdue return |
 | **Philippine Coast Guard** | Actionable position, not a search area the size of a province | Last-contact position and timestamp, drift-narrowed probability field, prioritized tasking |
 | **BFAR / LGU** | Maritime safety compliance; fleet visibility | Trip telemetry; incident data; measurable safety outcomes |
@@ -74,20 +74,19 @@ Every one of these requires the fisher to buy and carry hardware. **Aqone invert
 ### 4.1 Architecture
 
 ```
-   Fisher's phone                    Fisher's phone
-   (Aqone app)                        (Aqone app)
-        |                                  |
-   WiFi/BLE when                     WiFi/BLE when
-   within buoy range                 within buoy range
-        |                                  |
-   [ BUOY NODE ] <--- LoRa mesh ---> [ BUOY NODE ]
-   GPS · barometer                    GPS · barometer
-   current sensing                    current sensing
-        |                                  |
-        +--------- LoRa backhaul ----------+
-                        |
-                 Shore gateway
-            (coastal barangay, BFAR station)
+    Fisher's phone
+       (Aqone app)
+             |
+       local WiFi
+             |
+       [ BOAT POD ] -------- direct LoRa --------┐
+       SOS button, GPS                            |
+                                                  v
+     [ OPTIONAL STATIONARY SENSOR / RELAY BUOYS ]
+             barometer, GPS, optional relay       |
+                                                  v
+                         Tall shoreline gateway
+                    (coastal barangay, BFAR station)
                         |
                  Aqone backend
         (squall model · trip anomaly · drift model)
@@ -95,30 +94,58 @@ Every one of these requires the fisher to buy and carry hardware. **Aqone invert
          PCG / BFAR operations console
 ```
 
-### 4.2 Buoy node
+### 4.2 Field nodes
 
-Mounted on navigation buoys — retrofitted onto existing BFAR/PCG aids first, then extended with purpose-deployed units to fill coverage gaps.
+The system has two field-node forms. The boat pod is the primary SOS origin and
+is designed to be shared and strapped onto a participating boat. Stationary
+navigational buoys are retained where their fixed sensor data or relay position
+has independent value.
+
+#### Boat safety pod
 
 | Component | Purpose |
 |---|---|
-| LoRa radio | Long-range mesh backhaul between buoys and to shore gateways |
-| WiFi / BLE access point | Short-range link to fishers' phones |
-| GPS | Surveyed position reference; mooring watch-circle observation |
+| LoRa radio | Direct long-range link to the shoreline gateway; optional relay path |
+| WiFi access point | Short-range link to the phone on the same boat |
+| GPS | Boat/pod position attached to an SOS or telemetry record |
+| Physical SOS button | Distress origin even when the phone interaction is difficult |
+| Flash-backed queue | Store-and-forward through temporary radio loss or power cycling |
+| Battery + waterproof strap-on enclosure | Shared, removable boat deployment |
+
+#### Stationary sensor / relay buoy
+
+| Component | Purpose |
+|---|---|
+| LoRa radio | Fixed sensor telemetry and optional relay toward shore |
+| GPS / surveyed position | Stable location for the environmental array |
 | Barometer | Local pressure, feeding squall nowcasting |
-| Current sensing | Mooring-line tilt / watch-circle excursion, or add-on current meter |
+| Current sensing | Optional mooring-line or current-meter measurement |
 | Solar + battery | Autonomous operation |
 
-**No hardware on the boat.** This is the central deployment advantage: coverage is a procurement decision, not an adoption problem. There is no chicken-and-egg, no per-fisher purchase, and no device that can be left at home or run flat.
+The pod is not a personal device: it is shared equipment that can be moved
+between boats. This shifts the deployment problem from placing a WiFi contact
+zone around every route to supplying enough pods and strategically justified
+fixed nodes.
 
 ### 4.3 Connectivity model — honest framing
 
-Phones connect to buoys over WiFi/BLE only when within range. Coverage is therefore **the union of zones around each buoy**, not a continuous blanket. Range over open water is favourable — clear line of sight, no obstructions — but this is an opportunistic, store-and-forward network, not always-on connectivity.
+Phones connect to the boat pod over short-range WiFi. The pod then attempts a
+direct LoRa link to the tall shoreline gateway. Where that link is weak,
+stationary relay buoys can forward the frame using the existing TTL/seen-set
+rules. Coverage is therefore determined by pod-to-shore radio geometry plus
+selective relay placement, not by a dense WiFi zone around every buoy. This is
+still an opportunistic, store-and-forward network, not always-on connectivity.
 
 This is a real constraint and the PRD treats it as one. It shapes every design decision below, and it is why the detection strategy in §5.2 is built around contact events rather than continuous telemetry.
 
 ### 4.4 Everyday value
 
-The network earns its keep without any AI at all: **messages to family queued on the phone and delivered on passing a buoy, and current weather synced on every contact** — in water where there is otherwise no signal. That is the daily habit that gets the app installed and opened. Safety is the reason the system exists; connectivity is the reason fishers use it.
+The network earns its keep without any AI at all: **messages to family queued on
+the phone and delivered through the boat pod, and current weather synced on
+each successful contact** — in water where there is otherwise no signal.
+Stationary buoys add fixed observations and can provide a relay when needed.
+Safety is the reason the system exists; connectivity is the reason fishers use
+it.
 
 Critically, ordinary use *is* the safety data: every routine check-in builds the trip pattern that §5.2 depends on.
 
@@ -126,7 +153,9 @@ Critically, ordinary use *is* the safety data: every routine check-in builds the
 
 ## 5. AI components
 
-Three models, mapped to the three phases of a maritime incident. Each consumes data that only the Aqone buoy network produces.
+Three models, mapped to the three phases of a maritime incident. Each consumes
+data produced by the Aqone hybrid radio network, with fixed environmental data
+coming specifically from stationary sensor buoys.
 
 ---
 
@@ -134,13 +163,25 @@ Three models, mapped to the three phases of a maritime incident. Each consumes d
 
 **Problem.** Sudden localized convective squalls are a leading killer of small boats. They develop and strike faster than regional forecast products resolve, and PAGASA has no dense offshore observation network over municipal waters.
 
-**Approach.** Every buoy reports barometric pressure at a **surveyed, fixed position** on a continuous schedule. This is a proper meteorological observation array — fixed stations producing clean time series, which is exactly what atmospheric nowcasting requires and what a network of moving sensors could not deliver as cleanly. A model trained on the spatiotemporal pressure field — sharp localized drops, gradient steepening, propagation direction and speed across the array — predicts squall onset and issues a **RETURN NOW** alert, delivered to every phone in contact range and relayed to shore.
+**Approach.** Every stationary sensor buoy reports barometric pressure at a
+**surveyed, fixed position** on a continuous schedule. This is a proper
+meteorological observation array — fixed stations producing clean time series,
+which is exactly what atmospheric nowcasting requires and what moving boat pods
+could not deliver as cleanly. A model trained on the spatiotemporal pressure
+field — sharp localized drops, gradient steepening, propagation direction and
+speed across the array — predicts squall onset and issues a **RETURN NOW**
+alert, delivered through the radio network and to phones when they connect to a
+boat pod or fixed node.
 
 **Model.** Spatiotemporal forecasting over a fixed sensor graph (graph neural network or convolutional-recurrent hybrid), predicting onset probability and arrival time at 30–90 minute lead.
 
 **Cold start.** Bootstrapped from reanalysis data and physics-derived synthetic pressure fields; refined against observed outcomes once the array is live.
 
-**Delivery under intermittent connectivity.** Alerts propagate through the LoRa mesh to every buoy immediately, so the warning is waiting at whichever buoy a boat next contacts. Buoys can also carry a physical alert — light or audible signal — so a boat in visual range receives the warning with no phone contact at all.
+**Delivery under intermittent connectivity.** Alerts propagate through the
+LoRa network to the shore gateway and optional relay buoys. A boat pod can
+receive relevant downstream status when it has a shore path; stationary buoys
+can also carry a physical alert — light or audible signal — for a boat in visual
+range.
 
 **Why nobody else can build it.** The training data is produced by the hardware array. Without instrumented buoys offshore, these observations do not exist.
 
@@ -148,21 +189,34 @@ Three models, mapped to the three phases of a maritime incident. Each consumes d
 
 ### 5.2 During — Trip anomaly and overdue detection
 
-**Design change from v1, stated plainly.** An earlier version of this concept placed an accelerometer on a boat-mounted unit to detect capsize in real time. With a phone-only, buoy-side architecture that is not achievable: a phone goes into the water with its owner, and there is no continuous link to transmit from. **Aqone does not claim second-scale capsize detection.** It claims something more modest and still transformative: closing the gap between an incident and the moment anyone knows about it, from *hours* down to *tens of minutes*.
+**Design change from v1, stated plainly.** The primary field node is now a
+boat-mounted safety pod with a physical SOS button, GPS, local phone WiFi, and
+LoRa. It can provide a faster origin event than a phone-only design, but it is
+still store-and-forward and does not claim guaranteed second-scale capsize
+detection. The pod is shared equipment, not a personal subscription device.
 
 **Problem.** Today the alarm is raised when a boat fails to come home and a family member walks to the Coast Guard station. That is the reporting mechanism, and it is why the drift cases in §2.2 ran for three and five days.
 
-**Approach.** Every phone–buoy contact is a logged event: vessel identity, buoy, timestamp, position, direction of travel. From this event stream:
+**Approach.** Every phone–pod contact and pod radio event is a logged event:
+vessel identity, serving pod or fixed node, timestamp, position, and direction
+of travel. From this event stream:
 
-1. **Learned trip profiles.** A per-vessel model of normal behaviour — which buoys this boat typically passes, in what order, at what intervals, at what times, under what conditions, with what seasonal variation. Municipal fishing is strongly habitual, which makes these patterns highly learnable.
+1. **Learned trip profiles.** A per-vessel model of normal behaviour — which
+   pods or fixed nodes this boat typically contacts, in what order, at what
+   intervals, at what times, under what conditions, with what seasonal
+   variation. Municipal fishing is strongly habitual, which makes these
+   patterns highly learnable.
 2. **Expected next contact.** From the profile and last observed heading, the system predicts where and when the boat should next appear on the network. A missed expected contact is an anomaly — and because the expectation is personalised and learned rather than a fixed timeout, the alert is far earlier and far more specific than "they're not back yet."
-3. **Escalation ladder.** A missed contact triggers a silent check-in request queued at surrounding buoys. Continued silence combined with adverse conditions, an unusual last heading, or a seaward trajectory escalates to a scored alert on the PCG console.
+3. **Escalation ladder.** A missed contact triggers a silent check-in request
+queued at the serving pod and any reachable fixed nodes. Continued silence
+combined with adverse conditions, an unusual last heading, or a seaward
+trajectory escalates to a scored alert on the PCG console.
 
 **This is unsupervised anomaly detection over a learned behavioural baseline** — it requires no labelled disaster dataset, only ordinary usage, which the network generates from day one.
 
 **False alarm scoring — non-negotiable.** A system that cries wolf is ignored by the Coast Guard within a month, and is then worse than nothing. Every alert carries a confidence score fusing deviation magnitude, prevailing and forecast weather, the vessel's own historical variability, and corroboration from other boats in the same water. High-confidence alerts dispatch; low-confidence alerts request a check-in first.
 
-**The seed for everything downstream.** Even when detection is slow, the network delivers what no current system can: **a timestamped last-known position on the water.** Today a search begins from a village and a guess. With Aqone it begins from "contact at buoy 14, 09:40, heading northwest" — which is precisely the input §5.3 requires.
+**The seed for everything downstream.** Even when detection is slow, the network delivers what no current system can: **a timestamped last-known position on the water.** Today a search begins from a village and a guess. With Aqone it begins from "contact at pod 14, 09:40, heading northwest" or a fixed sensor contact — which is precisely the input §5.3 requires.
 
 ---
 
@@ -172,11 +226,11 @@ Three models, mapped to the three phases of a maritime incident. Each consumes d
 
 **Approach.** Established SAR practice — the US Coast Guard's SAROPS and the open-source OpenDrift/Leeway framework, which models 275 drifting object classes with distinct downwind and crosswind leeway coefficients — provides the physical backbone. Aqone contributes three things that framework cannot supply on its own:
 
-**(a) Local current fields from the buoy array.** Global ocean models such as HYCOM operate at roughly 8 km resolution. The Philippine archipelago is straits, channels, and nearshore eddies at **sub-kilometre** scale — these models are effectively blind exactly where fishers die, and nobody has ground-truth data there because instrumenting it has never been economical.
+**(a) Local current fields from the stationary sensor-buoy array.** Global ocean models such as HYCOM operate at roughly 8 km resolution. The Philippine archipelago is straits, channels, and nearshore eddies at **sub-kilometre** scale — these models are effectively blind exactly where fishers die, and nobody has ground-truth data there because instrumenting it has never been economical.
 
 **A moored buoy is a current-measuring station.** Mooring-line tilt and watch-circle excursion respond directly to current, and a fixed station produces a continuous time series at a known coordinate — the highest-value form of oceanographic observation for model correction. An array of them across municipal waters is a persistent current observatory. Aqone learns a downscaled local current field from its own array and uses it to correct the coarse global model.
 
-> **This is the core insight of the entire product.** The buoys exist to carry messages. As a byproduct, they generate the exact oceanographic dataset required to find drifting people — a dataset that cannot be replicated without first building the network.
+> **This is the core insight of the stationary sensor layer.** Fixed buoys generate the oceanographic dataset required to find drifting people. Their relay role is useful, but the sensor data remains valuable even when a boat pod can reach shore directly.
 
 **(b) Object classification.** Windage differs enormously between a person in a life vest, a swamped banca, and an inverted fibreglass hull — the same wind pushes them in materially different directions. Aqone infers likely object type from the registered vessel profile, the nature of the alert, and conditions at the time, then selects the corresponding leeway coefficients.
 
@@ -200,7 +254,11 @@ The standard test: remove the AI — does the product still work?
 | Trip anomaly detection | **Impossible.** Contact logs without a learned baseline are a database nobody reads. A fixed timeout would drown the PCG in false alarms. |
 | Drift prediction | **Impossible.** A last-known position with no drift model is a dot on a map that was wrong an hour ago. |
 
-The buoy network degrades gracefully to an opportunistic messaging service. **All three life-saving functions fail completely.** The AI is not a layer on top of the product — it is the product, and the buoy array is the sensing substrate that makes it trainable.
+The hybrid radio network degrades gracefully. If fixed sensor buoys are offline,
+the AI loses fresh local environmental observations; if a relay is offline, a
+boat pod may still reach the tall gateway directly. The transport layer remains
+useful for manual SOS, while model outputs become older or less complete rather
+than being presented as live certainty.
 
 ---
 
@@ -216,13 +274,18 @@ The buoy network degrades gracefully to an opportunistic messaging service. **Al
 
 **Problem.** The trip anomaly model in §5.2 detects that a boat has not appeared where expected, but it does not know how many people are on board or whether anyone else is monitoring the situation. The PCG receives a single-vessel alert with no crew count, no passenger manifest, and no visibility into whether other boats in the area witnessed the incident.
 
-**Approach.** A per-vessel crew manifest maintained on the phone (optional, privacy-preserving) that is included in the SOS payload. When the backend receives an SOS, it broadcasts a situational request to nearby buoys: any vessel that was in the area within the last N minutes is asked for a brief witness report (saw / did not see, conditions at time of observation). The roster aggregates these into a common operating picture.
+**Approach.** A per-vessel crew manifest maintained on the phone (optional,
+privacy-preserving) that is included in the SOS payload. When the backend
+receives an SOS, it broadcasts a situational request through reachable boat pods
+and fixed nodes: any vessel that was in the area within the last N minutes is
+asked for a brief witness report (saw / did not see, conditions at time of
+observation). The roster aggregates these into a common operating picture.
 
 ---
 
 ### 5.7 Nearest-responder broadcast — [Roadmap — not implemented]
 
-**Problem.** The current system routes all SOS traffic through the gateway to the backend, then to the PCG. But the nearest other fisher may be 500 metres away and able to render assistance in minutes, while the PCG asset is an hour out. The LoRa mesh already connects nearby buoys; it can also connect nearby vessels.
+**Problem.** The current system routes all SOS traffic through the gateway to the backend, then to the PCG. But the nearest other fisher may be 500 metres away and able to render assistance in minutes, while the PCG asset is an hour out. The hybrid LoRa network already connects boat pods, fixed sensor buoys, and the shore gateway; a nearest-responder broadcast remains a roadmap capability.
 
 **Approach.** When an SOS is received, the buoy network broadcasts a prioritised assistance request to all phones within LoRa range of the incident position. The request includes the incident type, position, and the sender's estimated distance. Nearby fishers can acknowledge and redirect, providing immediate assistance while the PCG asset transits. Acknowledgements propagate back to the PCG console so dispatchers know whether self-rescue is underway.
 
@@ -236,8 +299,9 @@ The buoy network degrades gracefully to an opportunistic messaging service. **Al
 | **Search area at hour 1 / 6 / 24** | Direct measure of drift model value. Search area is the resource cost of a rescue. |
 | **Survival rate of alerted incidents** | The outcome that actually matters. |
 | **False alarm rate** | Governs whether the PCG keeps responding. Must stay low or the system is worthless. |
-| **Buoy coverage of municipal water area** | Determines contact frequency, current-field resolution, and squall skill simultaneously. |
-| **App adoption among registered fisherfolk** | No hardware barrier, but the app still has to be installed and opened. |
+| **Boat-pod direct coverage of municipal water area** | Determines how often an SOS can reach shore without a relay. |
+| **Stationary sensor/relay coverage** | Determines fixed-observation quality and fills measured radio dead zones. |
+| **App and shared-pod adoption among registered fisherfolk** | The app still has to be installed and the pod must be available on the boat. |
 | **Squall alert lead time and hit rate** | Prevention value. |
 
 ---
@@ -246,8 +310,9 @@ The buoy network degrades gracefully to an opportunistic messaging service. **Al
 
 ### In scope (v1)
 
-- LoRa mesh across retrofitted and purpose-deployed navigation buoys
-- Buoy instrumentation: GPS, barometer, current sensing, solar power
+- Strap-on boat safety pods: physical SOS button, GPS, local WiFi, LoRa, flash-backed queue, battery, and waterproof enclosure
+- LoRa transport from boat pods to a tall shoreline gateway, with optional relay buoys
+- Stationary buoy instrumentation: GPS, barometer, optional current sensing, solar power
 - Phone app: opportunistic messaging, weather sync, manual SOS
 - Squall nowcasting with RETURN NOW alerts, including buoy-side physical signalling
 - Learned trip profiles and overdue/anomaly detection with confidence scoring
@@ -260,7 +325,7 @@ The buoy network degrades gracefully to an opportunistic messaging service. **Al
 
 ### Explicitly out of scope
 
-- **Boat-mounted hardware.** Deferred to v2 (see open questions) — it would restore real-time capsize detection, but v1 deliberately keeps the fisher's barrier to entry at zero.
+- **Continuous guaranteed capsize detection.** The boat pod can provide a physical SOS button and optional telemetry, but v1 remains store-and-forward and does not claim an always-connected, second-scale capsize detector.
 - Market pricing, marketplace features *(catch logging itself — species, quantity, date, method, notes — is back in scope as a lightweight offline-first log; see `docs/07_SCOPE_OUT.md`'s "Amended — now in scope". It stops at recording the catch, not selling it.)*
 - Fisheries enforcement and illegal fishing detection *(technically feasible on this data; deferred to avoid positioning a safety network as a surveillance network, which would undermine fisher adoption)*
 - Voice communication
@@ -277,11 +342,11 @@ Aqone does not replace the PCG, VHF radio, or EPIRB. It fills the gap beneath th
 | Risk | Mitigation |
 |---|---|
 | **Intermittent connectivity limits alert speed** | Stated openly rather than hidden. v1 targets tens of minutes, not seconds — still a step change from overnight. Learned expected-contact modelling extracts maximum signal from sparse contacts. |
-| **Detection latency is worse than a boat-mounted sensor** | Accepted trade for zero fisher hardware cost and immediate deployability. v2 boat tag is the upgrade path. |
-| **Buoy coverage gaps** | Retrofit existing aids first for immediate footprint, then site new buoys using observed trip density from the app itself. |
+| **Direct pod-to-shore coverage gaps** | Validate the direct link outdoors; add relay buoys only where measured dead zones or fixed-sensor needs justify them. |
+| **Shared pod availability and maintenance** | Use a simple strap-on enclosure, physical button, flash-backed queue, and a checkout/charging routine through partner boats or LGU/BFAR stations. |
 | **False alarms erode PCG trust** | Confidence scoring with per-vessel baselines and peer corroboration; check-in request before dispatch on low-confidence alerts; false-alarm rate tracked as a headline metric. |
-| **App adoption** | Everyday messaging and weather are the hook, not the safety features. No purchase required. Distribution via BFAR's existing FishR registration. |
-| **Buoy maintenance, vandalism, theft** | Solar-autonomous, low-value visible components, mounted on aids already under BFAR/PCG maintenance regimes; network self-reports node loss immediately. |
+| **App and pod adoption** | Everyday messaging and weather are the hook; pods are shared rather than individually purchased. Distribution via BFAR's existing FishR registration and partner boats. |
+| **Buoy and pod maintenance, vandalism, theft** | Keep fixed buoys on existing BFAR/PCG maintenance regimes; make pods removable, low-value, waterproof, and self-reporting when they reconnect. |
 | **No historical incident data to train on** | All three models cold-start on synthetic, physics-derived, or unsupervised approaches. None require a labelled disaster dataset. |
 | **Drift model accuracy without validation data** | Built on validated open frameworks (OpenDrift / Leeway); improves via residual learning from real recoveries. Honest framing: v1 narrows the search, it does not pinpoint. |
 
@@ -289,10 +354,10 @@ Aqone does not replace the PCG, VHF radio, or EPIRB. It fills the gap beneath th
 
 ## 9. Open questions
 
-1. What is realistic WiFi/BLE range from a buoy to a phone over open water, and what buoy spacing does that imply for useful contact frequency?
+1. What direct LoRa range is realistic from the strap-on pod to the tall shoreline gateway at the real antenna heights and sea state?
 2. What contact frequency is required for learned trip profiles to detect an overdue vessel within the target window?
-3. What buoy density is needed for the learned current field to outperform raw HYCOM?
-4. Should v2 add a low-cost boat tag to restore real-time capsize detection, and does that break the zero-cost-to-fisher model that makes v1 deployable?
+3. What stationary sensor-buoy density is needed for the learned current field to outperform raw HYCOM, and where are relay buoys actually justified?
+4. How many shared pods are needed per partner fleet, and what charging/checkout process keeps them on boats?
 5. What is the PCG's operational threshold — what confidence level justifies dispatching an asset?
 6. Can BFAR's FishR / FishCore registration serve as the app distribution and vessel-identity channel?
 7. What is the real municipal fisher fatality baseline? No comprehensive public dataset exists — establishing it may be a contribution in itself.

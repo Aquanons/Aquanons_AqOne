@@ -11,17 +11,22 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) | Foundation |
 | Product scope and roadmap | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) | Canonical product scope |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) | Foundation |
+| Hybrid transport architecture decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) | Active decision |
+| Aggregated architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) | Active specification |
 | Demo evidence and implementation status | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) | Evidence ledger |
-| Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active |
+| Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active plan |
+| Repository structure cleanup | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Completed cleanup plan |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) | Active |
+| Cross-agent memory and handoff | [`58_MULTI_AGENT_HANDOFF_SPEC.md`](58_MULTI_AGENT_HANDOFF_SPEC.md) | Active specification |
 
 ## Shared contracts
 
 | Subsystem | Contract |
 |---|---|
 | Architecture | [`01_ARCHITECTURE.md`](01_ARCHITECTURE.md) |
-| Buoy-to-gateway LoRa frame | [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md) |
-| Phone-to-buoy WiFi | [`03_PHONE_BUOY_WIFI.md`](03_PHONE_BUOY_WIFI.md) |
+| Technical architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) |
+| Boat pod and relay LoRa frame | [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md) |
+| Phone-to-pod WiFi | [`03_PHONE_BUOY_WIFI.md`](03_PHONE_BUOY_WIFI.md) |
 | Gateway ingest | [`04_INGEST_API.md`](04_INGEST_API.md) |
 | Public REST and SSE | [`05_PUBLIC_API.md`](05_PUBLIC_API.md) |
 | Delivery states | [`06_DELIVERY_STATES.md`](06_DELIVERY_STATES.md) |
@@ -42,7 +47,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Completed plans | [`archive/plans/`](archive/plans/) — only records whose header says `COMPLETE` and have no live path references |
 | Engineering guides | [`guides/`](guides/) |
 | Design references | [`design-reference/`](design-reference/) |
-| Workshop material | [`dti-workshop/`](dti-workshop/) |
+| Competition and workshop materials | [`competitions/`](competitions/) |
 
 ## Organization rules
 
@@ -52,4 +57,4 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 - Dated audit reports are read-only records and belong in `audits/` after their links are rewritten.
 - Completed plans belong in `archive/plans/` only when no code, test, agent rule, or active document depends on their current path.
 
-See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.
+See [`48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md`](archive/plans/48_DOCS_REORGANIZATION_IMPLEMENTATION_PLAN.md) for the phased move and verification gates.

@@ -1,12 +1,13 @@
 # 21 — Week 1 Contract Fixtures (ground truth, Phase 0)
 
-This document records the *actual* JSON shapes observed in the checked-in
+This document records the *historical* JSON shapes observed in the checked-in
 firmware and backend on 2026-08-15, as required by
-`docs/20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md` Phase 0. It
-supersedes `docs/03_PHONE_BUOY_WIFI.md` wherever the two disagree — `03` was
-written before this firmware existed and was not updated with it. Update `03`
-itself in a later phase; until then, this file and the fixtures in
-`fixtures/` are the source of truth for tests.
+`docs/20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md` Phase 0. It is a
+dated fixture record, not the current architecture decision. The current
+phone-to-field-node naming and hybrid topology are in
+`docs/03_PHONE_BUOY_WIFI.md` and
+`docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`; the fixtures remain useful
+for the firmware shapes they capture.
 
 Fixture files: `fixtures/accepted_sos.json`, `fixtures/queue_full.json`,
 `fixtures/buoy_offline.json`, `fixtures/no_eta.json`,
@@ -26,7 +27,8 @@ Fixture files: `fixtures/accepted_sos.json`, `fixtures/queue_full.json`,
 
 **Verdict: apply the plan's canonical contract decision as written.** The
 conflicts below are all on the *client* side (Flutter) and in stale docs, not
-in the firmware.
+in the firmware. The `buoy` names in these fixtures are retained wire/API
+compatibility names and may identify a boat pod or stationary field node.
 
 ## Discrepancies found (client/doc vs. firmware — not yet fixed, Phase 1 work)
 

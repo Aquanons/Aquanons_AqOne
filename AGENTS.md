@@ -15,7 +15,7 @@ backend, and the backend pushes the SOS to an MDRRMO dashboard over SSE.
 Do NOT start a step until the previous one demonstrably works. Do NOT skip
 steps. If you are unsure whether a step is done, ask.
 
-1. Deployed skeleton — FastAPI on Railway, green `/healthz`, migrations run.
+1. Deployed skeleton — FastAPI on Render, green `/health/ready`, migrations run.
 2. Two radios talk — raw LoRa packet between two ESP32s, no protocol.
 3. Buoy → gateway → backend — button press on a buoy creates a real SOS row.
 4. Phone → buoy → backend — phone in airplane mode, SOS lands.
@@ -28,9 +28,9 @@ steps. If you are unsure whether a step is done, ask.
 | Person | Owns |
 |---|---|
 | Lenard | Lead dev — backend, architecture, deployment |
-| Arnold | Full stack — ingest pipeline, gateway |
+| Arnold | Dashboard, ingest pipeline, gateway |
 | Daniel | Hardware/firmware — buoy. Critical path. |
-| Jade | Dashboard |
+| Jade | Flutter app (mobile) |
 | Doreen Kay | UI/UX, pitch deck |
 
 ## Deliberately NOT building (do not implement)
@@ -60,7 +60,7 @@ change, update the doc first and tell the affected owners.
 | LoRa binary frame | `docs/02_LOAM_PACKET_SPEC.md` | firmware (Daniel), gateway (Arnold) |
 | Phone ↔ buoy WiFi HTTP | `docs/03_PHONE_BUOY_WIFI.md` | firmware (Daniel), mobile (Jade/Doreen) |
 | Gateway → backend HTTPS | `docs/04_INGEST_API.md` | gateway (Arnold), backend (Lenard) |
-| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Jade) |
+| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Arnold) |
 | Delivery states | `docs/06_DELIVERY_STATES.md` | all — the four states are the product language |
 | Mobile UI strings | `docs/22_LOCALIZATION_PLAN.md` | mobile (Jade/Doreen Kay) |
 
@@ -71,9 +71,9 @@ backend/     FastAPI + PostgreSQL (Lenard)
   app/       application code
   migrations/  database migrations
   tests/
-gateway/     LoRa gateway node code (Arnold)
-firmware/
-  buoy/      ESP32-S3 + SX1262 firmware, PlatformIO (Daniel)
+firmware/    ESP32-S3 + SX1262 firmware, PlatformIO
+  buoy/      boat pod & sensor buoy firmware (Daniel)
+  shore/     shore gateway receiver code (Arnold, Daniel)
 mobile/      Flutter app (Jade, Doreen Kay)
   lib/l10n/  ARB translation files, en/fil/akl. Read its README first.
 docs/        numbered specs; 00 is the brief, 08 is the status table
@@ -123,6 +123,34 @@ treat them as correct; see `mobile/lib/l10n/README.md`.
 - Verification before completion: run the project's lint/tests for whatever
   you changed. The backend uses pytest + ruff once scaffolded; firmware uses
   PlatformIO build; mobile uses `flutter analyze` + `flutter test`.
+- Never use the em dash "-". Use plain dash "-" instead.
+- When writing commit messages, NEVER auto-add your agent name as co-author.
+- Never manually modify CHANGELOG.md files or any files marked as auto-generated.
+- When writing or substantially editing long Markdown files, put each full sentence on its own line. Preserve normal Markdown structure, but avoid wrapping multiple sentences onto one physical line.
+- When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
+- When doing bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user would use it. This makes sure you find the real problem so your fix will actually solve it.
+- When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along.
+- Apply that same high standard to engineering excellence: lint, test failures, and test flakiness. If you see one, even if it is not caused by what you are working on right now, still get it fixed.
+
+## Agent handoff
+
+The live handoff file is root `HANDOFF.md`, written from `.agents/templates/docs/HANDOFF.md`.
+Each git worktree maintains its own `HANDOFF.md`, which is ignored and never committed.
+The specification is in `docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
+On arrival, read `HANDOFF.md` if present before taking action.
+If **Status** is `COMPLETED`, treat the handoff as background context only and follow the user prompt.
+If **Status** is `ACTIVE`, run `git status` and `git diff --stat` to inspect the working tree.
+Compare that output against **Working Tree Evidence** and report any mismatch to the user before your first edit.
+Treat any file changed after the **Updated** timestamp as unrecorded work.
+Continue execution from **The Baton** unless the user directs otherwise.
+On departure during multi-step tasks, update `HANDOFF.md` after every verified step and before stopping.
+Set **Updated** to the current timestamp in ISO 8601 format with `+08:00`.
+Specify exactly one concrete action in **The Baton**, giving a command or file edit rather than a vague goal.
+Trivial single edits or one-shot questions require no handoff update.
+When the overall objective is done and verified, set **Status** to `COMPLETED` with final verification evidence.
+Do not delete `HANDOFF.md` on completion so the next arriving agent can see what just finished.
+Name secrets by environment variable or config key, such as `LOAM_KEY` or `DATABASE_URL`, and never write their values.
+Formal approvals are recorded in the approved doc header, and `HANDOFF.md` only links to that document.
 
 ## Ponytail: lazy senior dev mode
 

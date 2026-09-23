@@ -18,8 +18,12 @@ doc is amended first.
 
 ## Hardware / mesh
 
-- No mesh routing protocol. Relay is TTL flooding with a per-buoy seen-set
+- No mesh routing protocol. Relay is TTL flooding with a per-node seen-set
   (`docs/02_LOAM_PACKET_SPEC.md`). Good enough for a bay.
+- **Current architecture amendment:** Boat-mounted safety pods are now the
+  primary phone access and SOS origin nodes. Stationary navigational buoys are
+  retained as optional fixed sensor stations and LoRa relays. The decision is
+  recorded in `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`.
 - No end-to-end encryption of SOS content in MVP. Frames are channel-signed
   (HMAC) for authenticity; content is plaintext JSON.
 - No duplex return channel for ack delivery to the phone **over the mesh**.
@@ -40,8 +44,9 @@ brought back - see "Amended — now in scope" below.
 
 We had ~15.5 build hours and a strict sequential path
 (`docs/00_START_HERE.md`). Every item above is a separable product that would
-consume the integration budget. The demo story is: airplane-mode SOS → buoy →
-LoRa → gateway → dashboard → ack. Everything else is future work.
+consume the integration budget. The current demo story is: airplane-mode SOS →
+boat pod → LoRa → gateway → dashboard → ack. Stationary buoys are added only
+for fixed sensing, measured relay gaps, or redundancy.
 
 ## How to amend
 
@@ -64,6 +69,13 @@ than taken on trust.
   *Honesty note:* the app's wind indicator is a single 30 km/h threshold, shown
   with its source and an explicit "not a PAGASA warning" disclaimer. It is not a
   model and must never be presented as one.
+
+- **Boat-mounted safety pods and hybrid transport.** The original decision to
+  avoid boat hardware is amended. A pod provides local phone WiFi, a physical
+  SOS path, flash-backed queueing, and direct LoRa to a tall shoreline gateway.
+  Stationary navigational buoys remain valuable for fixed-position pressure and
+  environmental data, optional LoRa relay coverage, and redundancy. See
+  `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`.
 
 - **Float-plan / "did not return" logic.** This is now a core AI component -
   learned per-vessel trip profiles, expected-next-contact prediction and a

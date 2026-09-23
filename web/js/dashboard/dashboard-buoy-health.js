@@ -43,8 +43,8 @@
         alertIcon(a.type) +
         '<div class="incident-feed-info">' +
           '<div class="incident-feed-desc">' + badgeHtml + escapeHtml(a.desc) + '</div>' +
-          ((a.owner || a.phone || a.avatar)
-            ? '<div class="incident-feed-sender">' + ((typeof a.avatar === 'string' && a.avatar.indexOf('data:image/') === 0) ? '<img class="alert-avatar" src="' + a.avatar + '" alt="" />' : '') + '<span>Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
+          ((a.owner || a.phone)
+            ? '<div class="incident-feed-sender"><span>Sender: ' + escapeHtml(a.owner || 'Unnamed vessel') +
               (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
             : '') +
           reportHtml +
@@ -293,20 +293,6 @@
   });
 
   ns.renderIncidentFeed = renderIncidentFeed;
-  ns.buoyMonitorData = buoyMonitorData;
-  ns.buoyRailBtn = buoyRailBtn;
-  ns.buoyRailBadge = buoyRailBadge;
-  ns.buoyDrawerBadge = buoyDrawerBadge;
-  ns.buoyListEl = buoyListEl;
-  ns.buoyFooter = buoyFooter;
-  ns.buoySyncTime = buoySyncTime;
-  ns.buoyOnlineCount = buoyOnlineCount;
-  ns.buoyTotal = buoyTotal;
-  ns.renderBuoyList = renderBuoyList;
-  ns.renderBuoyHealthCard = renderBuoyHealthCard;
-  ns.renderBuoyHealth = renderBuoyHealth;
   ns.updateStats = updateStats;
-  ns.formatCoord = formatCoord;
-  ns.compassWidget = compassWidget;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

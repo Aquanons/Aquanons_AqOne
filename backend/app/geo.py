@@ -184,26 +184,6 @@ def sample_water_points(rng: np.random.Generator, count: int) -> list[tuple[floa
     return points
 
 
-def nearest_water_point(lat: float, lon: float, step_km: float = 0.5) -> tuple[float, float]:
-    """Nudge a position into the water if it has drifted onto land.
-
-    Used as a guard on computed positions - vessel tracks, drift endpoints -
-    where the maths may legitimately walk a point ashore.
-    """
-    if point_in_water(lat, lon):
-        return lat, lon
-
-    for radius_km in np.arange(step_km, 25.0, step_km):
-        for bearing in range(0, 360, 15):
-            rad = math.radians(bearing)
-            candidate_lat = lat + (radius_km * math.cos(rad)) / KM_PER_DEG_LAT
-            candidate_lon = lon + (radius_km * math.sin(rad)) / km_per_deg_lon(lat)
-            if point_in_water(candidate_lat, candidate_lon):
-                return candidate_lat, candidate_lon
-
-    return CENTER_LAT, CENTER_LON
-
-
 def geojson_feature_collection() -> dict[str, Any]:
     """The service area as GeoJSON, for map rendering and visual verification.
 

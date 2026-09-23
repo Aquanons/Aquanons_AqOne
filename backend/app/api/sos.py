@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from base64 import b64encode
 from datetime import UTC, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.contacts import require_gateway_key
 from app.audit import record_audit_event
 from app.auth import require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
@@ -66,6 +66,13 @@ router = APIRouter(prefix='/api/sos', tags=['sos'])
 
 # The read side stays protected - that is dispatcher data.
 protected_router = APIRouter(prefix='/api/sos', tags=['sos'])
+
+# The downlink read side. Same prefix, different guard: the LoRa shore gateway
+# holds GATEWAY_API_KEY, never an operator login, and needs exactly one thing
+# from this file - the responder's answer to a call it already relayed, so it
+# can put that answer back on the radio. See sos_downlink() for why this is
+# not simply GATEWAY_API_KEY access to /active.
+gateway_router = APIRouter(prefix='/api/sos', tags=['sos'])
 
 
 VALID_TRUST_TIERS = {'self_declared', 'phone_verified', 'confirmed_by_responder'}
@@ -284,15 +291,9 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     Each event carries the vessel's declared owner identity
     (`POST /api/vessel-profile`) alongside its snapshot fields, so a
     dispatcher can see who raised the call. That identity includes the owner's
-    profile photo (`avatar`, a base64 PNG data URL) and contact number. The
+    contact number and license info. The
     trust tier that sits on the incident is the same self-declared claim,
     shown next to it (docs/16).
-
-    The photo is inlined rather than served from a URL so it stays behind this
-    protected endpoint - a static file route would expose every fisherman's
-    face without a token. `ponytail:` the whole image rides every 3s poll for
-    every event; fine at demo scale, and the upgrade path is a thumbnail plus
-    a token-checked GET /api/vessel/{id}/avatar if the feed grows.
     """
     pool = get_pool()
     async with pool.acquire() as conn:
@@ -305,8 +306,7 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
                    e.is_synthetic,
-                   v.skipper_name, v.license_type, v.license_number, v.phone,
-                   v.avatar_png
+                   v.skipper_name, v.license_type, v.license_number, v.phone
             FROM sos_events e
             LEFT JOIN vessels v ON v.id = e.vessel_id
             WHERE e.resolved_at IS NULL
@@ -321,19 +321,95 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     events: list[dict[str, object]] = []
     for row in rows:
         data = dict(row)
-        # Raw bytes are not JSON-serializable; swap them for the data URL the
-        # dashboard's <img> can consume directly.
-        avatar_png = data.pop('avatar_png', None)
         for col in timestamp_columns:
             data[col] = _iso(row[col])
         data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
-        data['avatar'] = (
-            'data:image/png;base64,' + b64encode(bytes(avatar_png)).decode()
-            if avatar_png else None
-        )
         events.append(data)
 
     return {'events': events}
+
+
+# How long a resolved incident keeps appearing in the downlink feed.
+#
+# /active drops an incident the moment a dispatcher resolves it, which is
+# correct for a dashboard - the case is closed and the operator should stop
+# looking at it. It is wrong for the radio: the shore gateway polls on a 45 s
+# cycle, so an incident acknowledged and then resolved between two polls would
+# leave the mesh without the closure ever going out, and the handset would
+# count down an ETA for a rescue that already finished. Holding resolved
+# incidents in this feed for a while gives the gateway room to see the final
+# state and send it down. Six hours is far longer than it needs and still
+# bounded, so the feed cannot grow without limit.
+DOWNLINK_RESOLVED_WINDOW_HOURS = 6
+
+
+@gateway_router.get('/downlink', dependencies=[Depends(require_gateway_key)])
+async def sos_downlink() -> dict[str, object]:
+    """The responder's answer to each live call, for the LoRa shore gateway.
+
+    This is deliberately NOT `GATEWAY_API_KEY` access to `/active`.
+    `app/main.py` states the rule this endpoint has to satisfy - a gateway key
+    must not read dispatcher data - and `/active` is dispatcher data: it
+    carries position, the fisher's own distress note, boat name, trust tier
+    and the vessel owner's name, licence and phone number. A gateway is a
+    radio relay bolted to a mast; it has no business holding any of that, and
+    a key that ships hardcoded in firmware is the last credential that should
+    unlock it.
+
+    So this returns only what travels back DOWN the radio anyway: the
+    acknowledgement, the ETA, the responder's status and note, and the
+    closure. Every field here is something the gateway is about to broadcast
+    to the boat in clear. Nothing is disclosed that the fisher is not already
+    being told.
+
+    One row per vessel, its newest call. Unlike `/active`, which lists every
+    incident because a dispatcher needs the whole board, everything consuming
+    this feed is keyed by VESSEL and not by incident: the gateway's downlink
+    signature, and the buoy cache that answers the handset. Returning a boat's
+    older calls alongside its current one made each of them overwrite the
+    newer, and the fisher was finally told about the oldest - an expired ETA
+    carrying a seq the handset no longer held. It also multiplied radio
+    airtime by the number of calls that boat had ever made.
+
+    `delivery_state` is collapsed here rather than left to the caller. The
+    gateway used to recompute it from `delivered_direct`/`delivered_via_buoy`,
+    which meant `_delivery_state()` had a second implementation living in
+    firmware that only a reflash could correct if the two ever drifted.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''
+            SELECT DISTINCT ON (e.vessel_id)
+                   e.id, e.vessel_id, e.seq,
+                   e.delivered_direct, e.delivered_via_buoy,
+                   e.acknowledged_at, e.acked_by, e.eta_at,
+                   e.responder_status, e.responder_note, e.resolved_at
+            FROM sos_events e
+            WHERE e.resolved_at IS NULL
+               OR e.resolved_at > NOW() - make_interval(hours => $1)
+            ORDER BY e.vessel_id, e.created_at DESC
+            LIMIT 100
+            ''',
+            DOWNLINK_RESOLVED_WINDOW_HOURS,
+        )
+    return {
+        'events': [
+            {
+                'id': row['id'],
+                'vessel_id': row['vessel_id'],
+                'seq': row['seq'],
+                'delivery_state': _delivery_state(row),
+                'acknowledged_at': _iso(row['acknowledged_at']),
+                'acked_by': row['acked_by'],
+                'eta_at': _iso(row['eta_at']),
+                'responder_status': row['responder_status'],
+                'responder_note': row['responder_note'],
+                'resolved_at': _iso(row['resolved_at']),
+            }
+            for row in rows
+        ]
+    }
 
 
 class AcknowledgeIn(BaseModel):

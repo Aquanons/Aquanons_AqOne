@@ -26,9 +26,9 @@ from app.api.ops_audit import router as ops_audit_router
 from app.api.pressure_events import router as pressure_events_router
 from app.api.public import router as public_router
 from app.api.sea_condition import router as sea_condition_router
+from app.api.sos import gateway_router as sos_downlink_router
 from app.api.sos import protected_router as sos_read_router
 from app.api.sos import router as sos_ingest_router
-from app.api.spots import router as spots_router
 from app.api.squall import router as squall_router
 from app.api.trips import router as trips_router
 from app.api.vessel_auth import router as vessel_auth_router
@@ -90,19 +90,21 @@ app.include_router(contacts_router)
 # reason. See app/api/pressure_events.py.
 app.include_router(pressure_events_router)
 
+# Gateway-only SOS downlink (GET /api/sos/downlink). The return leg of the
+# distress loop: the shore gateway reads the responder's acknowledgement and
+# ETA here and puts them back on the radio. Same require_gateway_key guard as
+# the ingest routers, and deliberately NOT mounted under _protected - the
+# gateway has no operator account and cannot obtain one. It stays a separate
+# router from sos_read_router precisely so the gateway key buys the downlink
+# fields and nothing else; see sos_downlink() for the field-by-field reasoning.
+app.include_router(sos_downlink_router)
+
 # Gateway-only current-event ingest (Phase 2 Task 2.2). Guarded per-route by
 # require_gateway_key, matching contacts_router and pressure_events_router.
 app.include_router(current_events_router)
 
 # Explicit vessel trips and welfare evidence collection (Phase 2 Task 2.4).
 app.include_router(trips_router)
-
-# Fishing spots (community-reported "fish hotspots") - both ingest and read
-# are unauthenticated here, unlike catch logging: this is public, shared
-# data every fisherman with the app needs to see, not per-vessel dispatcher
-# reporting. Also what the dashboard's fetchHotspots() already expects to
-# call unauthenticated. See app/api/spots.py.
-app.include_router(spots_router)
 
 # Read-only safety feeds for the handset. Unauthenticated for the same reason
 # ingest is: the fisherman app has no account by design, so anything it needs

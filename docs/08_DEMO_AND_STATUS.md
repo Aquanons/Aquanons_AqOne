@@ -1,13 +1,23 @@
 # 08 — DEMO, CONTINGENCY & STATUS
 
-> **This file predates the current build** (it was written for the original
-> Day 1–3 hackathon push; the status table below still shows placeholder ⬜
-> rows for capabilities the README now reports as built). It has not been
-> retrofitted as part of the Week 1 dashboard/Flutter sprint - that would be
-> a larger rewrite than this sprint's scope. For status that has actually
-> been verified this week, see the root [`README.md`](../README.md) "Week 1
-> dashboard/Flutter contract sprint" section and
-> [`20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md`](20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md).
+> **This file contains historical entries** from the original Day 1–3
+> hackathon push. Do not rewrite those entries as if they were current evidence.
+> The current transport decision and current demo path are recorded in the
+> newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
+
+## 2026-09-17 — Hybrid transport architecture decision
+
+The primary field node is now a **shared strap-on boat safety pod**: local WiFi
+to the phone, physical SOS button, flash-backed queue, GPS, and LoRa direct to a
+tall shoreline gateway. Stationary navigational buoys remain in scope for fixed
+barometer/current observations and optional LoRa relay coverage, not as the
+default way to surround every boat with WiFi.
+
+This is an architecture decision, not a claim of field validation. The next
+hardware gates are: prove two Heltecs exchange a direct pod-to-shore packet,
+test pod enclosure/strap and antenna placement, verify a pod power cycle does
+not lose a queued SOS, then add one stationary relay buoy only if the direct
+range test exposes a gap. Record measured distances and packet outcomes here.
 
 ## 2026-09-16 — AI Safety Remediation Phase 5: Field Readiness, Measurement Protocols & Collection Handoff
 
@@ -96,7 +106,7 @@ Environment: Windows 11, Python 3.11.9, pytest-9.1.1, Flutter 3.44.7, Node.js v2
 
 ## 2026-09-14 — Operations Console Audit Remediation: Complete Implementation & Verification
 
-Recorded per `docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/audits/WEB_AUDIT_2026-09-13.md`.
+Recorded per `docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/audits/WEB_AUDIT_2026-09-13.md`.
 Environment: Windows 11, Node.js (native test runner), Python 3.11.9, pytest-9.1.1.
 
 **Remediation and Corrective Changes:**
@@ -832,12 +842,13 @@ MDRRMO currently learns about a capsizing hours later, by word of mouth.
 - Hold up the phone. **Put it in airplane mode in front of the judges.**
 - Press SOS.
 - Narrate the delivery states as they advance: saved on phone → received by
-  buoy → received by AqOne → MDRRMO responded.
+  boat pod → received by AqOne → MDRRMO responded.
 - The dashboard across the room lights up.
 - **Hand a judge the phone and let them press it.**
 
-**4. How it works — 1 min.** One slide: phone → buoy WiFi → LoRa hop → gateway
-→ backend → dashboard. Name the signed envelope and replay protection here,
+**4. How it works — 1 min.** One slide: phone → boat-pod WiFi → direct LoRa →
+gateway → backend → dashboard. Mention optional relay buoys, the signed
+envelope, and replay protection here,
 unprompted — that's your cybersecurity answer delivered before anyone asks.
 
 **5. What's real, what's next — 45s.** Read the status table below out loud.
@@ -848,8 +859,8 @@ Then:
 That single sentence pre-empts the AI question and reframes it as sequencing
 rather than absence.
 
-**6. Close — 15s.** Cost per buoy, buoys needed for coverage, who pays
-(LGU/BFAR). Have real numbers.
+**6. Close — 15s.** Cost per shared pod, where fixed sensor/relay buoys add
+value, and who pays (LGU/BFAR). Have real numbers.
 
 ### Rehearse the airplane-mode moment specifically
 
@@ -881,8 +892,8 @@ exists, every hardware risk drops from fatal to embarrassing.
 
 **"Is the mesh actually working or simulated?"**
 > Answer precisely. If one hop is real and multi-hop isn't, say exactly that.
-> "One real LoRa hop, phone to buoy to gateway. Multi-hop relay is implemented
-> in firmware but we've only bench-tested two nodes."
+> "One real LoRa hop, phone to boat pod to gateway. Optional stationary-buoy
+> relay is implemented in firmware but still needs an outdoor range test."
 
 **"What's your model's accuracy?"**
 > "We deliberately didn't ship a model. With the catch data available, the
@@ -903,18 +914,22 @@ exists, every hardware risk drops from fatal to embarrassing.
 > the demo unit runs the AP always-on.
 
 **"What if the gateway is down?"**
-> "Store-and-forward at every buoy with backoff retry, and multiple
-> gateway-capable nodes. An SOS is never dropped from the queue."
+> "Store-and-forward at the boat pod with backoff retry; an optional stationary
+> relay can help if the direct path is weak. An SOS is never dropped from the
+> queue."
 
 **"Why not a satellite beacon / PLB?"**
 > Cost per vessel. Have the price comparison ready — this is a small-scale
 > fisherman's budget.
 
-**"How much per buoy? Who pays?"**
-> Have a number. LGU/BFAR procurement is the realistic path.
+**"How much per pod or buoy? Who pays?"**
+> Separate the shared pod cost from the optional fixed-buoy hull and mooring
+> cost. LGU/BFAR procurement is the realistic path.
 
-**"What happens when a buoy is stolen or lost?"**
-> "The key is revoked in the device registry; frames from it are rejected."
+**"What happens when a pod or buoy is stolen or lost?"**
+> "The key is revoked in the device registry; frames from it are rejected. A
+> pod is removable and replaceable; a fixed buoy is serviced through the
+> existing maintenance route."
 
 ---
 
@@ -926,11 +941,11 @@ drifted from reality; here it's maintained as you build.
 
 | Capability | Status | Notes |
 |---|---|---|
-| SOS over LoRa mesh, phone offline | ⬜ | The core claim. Update the moment it works. |
+| SOS over direct LoRa, phone offline | ⬜ | Phone → boat pod → tall shore gateway. The core claim. Update the moment it works. |
 | Signed frames + replay protection | ⬜ | |
-| Store-and-forward at buoy | ⬜ | |
-| Multi-hop relay (3+ nodes) | ⬜ | Likely bench-only — say so |
-| Buoy hazard sensing (MPU6050) | ⬜ | Bypass mode if the IMU is dead |
+| Store-and-forward at boat pod | ⬜ | |
+| Optional multi-hop relay (3+ nodes) | ⬜ | Stationary relay buoy; likely bench-only — say so |
+| Stationary buoy hazard sensing | ⬜ | Fixed barometer/current observations; do not claim hardware data before field validation |
 | Dashboard live feed + acknowledge | ⬜ | |
 | Deployed backend, healthcheck green | ⬜ | |
 | Range measured on water | ⬜ | Record the metres |

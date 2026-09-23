@@ -286,7 +286,7 @@ data: {"event": "acknowledged", "sos": { ... }}
 
 ## Delivery-state reporting for the app
 
-The phone learns nothing beyond its buoy (`docs/03_PHONE_BUOY_WIFI.md`) unless
+The phone learns nothing beyond its serving boat pod (`docs/03_PHONE_BUOY_WIFI.md`) unless
 it has internet. If it does, it can reconcile its outbox:
 
 ### `GET /api/sos/ack/{local_id}`
@@ -773,17 +773,12 @@ Rules the shape enforces, all of them deliberate:
 
 Parsing is pinned by `mobile/test/hotspot_cell_test.dart`.
 
-### `POST /api/spots` — **deprecated, no callers**
+### `POST /api/spots` — **removed**
 
-Manual pin-drop fishing spots. Removed from the handset. It published exact
-coordinates, attributed to a vessel, to every other handset, with no consent
-gate — the direct opposite of §6.2's binning requirement and §6.1's separate
-opt-in. The dashboard's `fetchHotspots()` that once read it no longer exists
-either.
-
-Endpoint and tables are left in place so anything a handset had already
-queued still uploads. Nothing writes new spots. Delete both once the
-outstanding queues are known to be drained.
+Manual pin-drop fishing spots pipeline has been removed from backend and handset.
+It published exact coordinates, attributed to a vessel, with no consent gate - the direct
+opposite of §6.2's binning requirement and §6.1's separate opt-in. Aggregated catch-activity
+heatmap is served through `/api/public/hotspots`. Historical database migration 013 is preserved.
 
 ### PAGASA
 

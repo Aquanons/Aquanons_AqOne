@@ -69,29 +69,36 @@
 static const char* UPLINK_SSID = "Converge_2.4GHz_30D7";
 static const char* UPLINK_PASS = "4eHfak6E";
 
-static const char* BACKEND_HOST =
-    "https://aqone-backend.onrender.com";
+static const char* BACKEND_HOST = "https://aqone-backend.onrender.com";
 
-// Responder acknowledgements and ETAs come from GET /api/sos/active, which is
-// behind require_user — unlike POST /api/sos, which is deliberately open.
+// Responder acknowledgements and ETAs come from GET /api/sos/downlink, the
+// gateway-only view of the responder's answer. It is guarded by the same
+// X-Api-Key / GATEWAY_API_KEY credential the contact, pressure and current
+// ingest routes already use, so this board needs no human's account.
 //
-// GET /api/sos/vessel/{id} is NOT usable here: it is behind
+// It deliberately is NOT GET /api/sos/active. That one is behind require_user
+// (a dispatcher login) and carries position, the fisher's own distress note,
+// boat name, trust tier and the vessel owner's name, licence and phone. A key
+// hardcoded in firmware on a mast must not unlock any of that. /downlink
+// returns only what this board is about to broadcast in clear anyway.
+//
+// GET /api/sos/vessel/{id} is NOT usable here either: it is behind
 // require_vessel_device and derives ownership from the handset's own paired
 // credential, which a gateway does not have and cannot obtain.
 //
-// Give the gateway either a long-lived token or an operator login. With
-// neither, SOS still flows UP and chat still flows both ways — only the
-// dispatcher's ETA cannot come back down, and the buoys' GET /v1/status says
-// so honestly rather than the app quietly waiting forever.
-static const char* OPS_TOKEN    = "";   // paste a bearer token, or leave empty
-static const char* OPS_EMAIL    = "";   // ...or log in with these instead
-static const char* OPS_PASSWORD = "";
+// Set this to the same value as GATEWAY_API_KEY in the backend environment.
+// With it empty, SOS still flows UP and chat still flows both ways - but the
+// dispatcher's ETA cannot come back down, the OLED shows "no key", and
+// pollAcks() says so on serial every 45 s rather than failing silently.
+static const char* GATEWAY_API_KEY = "badingsijade";
 
 // ===========================================================================
 
 bool   uplinkUp = false;
-String opsToken;            // bearer for the acknowledgement poll
-bool   opsTokenTried = false;
+// Last HTTP status from the downlink poll. 0 = not polled yet. Surfaced on
+// the OLED so a board that cannot read acknowledgements says so on its face,
+// instead of looking identical to one with nothing to report.
+int    lastAckHttp = 0;
 
 int    lastChatId = 0;      // since_id cursor into GET /api/mesh/chat
 // The first poll after a boot only moves the cursor. Without this, a gateway
@@ -149,7 +156,19 @@ bool httpsBegin(WiFiClientSecure& client, HTTPClient& https, const String& url) 
 // arriving here AND over the fisher's own mobile data would create two
 // separate incidents on the dispatcher's screen.
 bool postSos(const JsonDocument& in, uint32_t srcId, uint16_t seq) {
-  if (!online()) return false;
+  if (!online()) {
+    // Said out loud, because this is the one failure that looks like a
+    // working mesh. The radio leg is fine - the buoy reached this board - so
+    // the boats see delivery succeed while nothing ever arrives on the
+    // dashboard. Withholding the ack below is correct (the buoy keeps the
+    // call queued and keeps retrying), but silence here sends you hunting
+    // through the backend for a frame that was never sent.
+    Serial.println("[sos] NO UPLINK - not POSTing. The call stays queued on "
+                   "the mesh and the buoy will retry. Check UPLINK_SSID: this "
+                   "board is an ESP32-S3 and joins 2.4 GHz networks ONLY - a "
+                   "5 GHz SSID will never associate.");
+    return false;
+  }
 
   const char* vid = in["vid"] | "";
   uint32_t    ts  = in["ts"]  | 0;
@@ -169,7 +188,22 @@ bool postSos(const JsonDocument& in, uint32_t srcId, uint16_t seq) {
   doc["source"]     = "buoy";
   doc["buoy_id"]    = in["bid"] | NODE_NAME;
   doc["src_id"]     = srcId;
-  doc["seq"]        = seq;
+  // The buoy's own SOS counter, not the mesh frame seq.
+  //
+  // These are different numbers and only one of them is any use downstream.
+  // `seq` here is the frame seq, which rotates on every retransmission - a
+  // retry MUST use a fresh one or each relay's seen-set drops it as a
+  // duplicate. The handset, meanwhile, holds the value the buoy returned from
+  // POST /v1/sos, and that is what it matches the dispatcher's answer against
+  // when it comes back down with no local_id to pair on. Storing the frame
+  // seq here meant the acknowledgement reached the buoy correctly and then
+  // failed to match anything on the phone.
+  //
+  // `| 0` covers a buoy on firmware that predates the `sq` field: fall back
+  // to the frame seq, which is what this always used to send. it.seq counts
+  // from 1, so 0 is unambiguously "absent".
+  uint32_t payloadSeq = in["sq"] | 0;
+  doc["seq"]        = payloadSeq ? payloadSeq : (uint32_t)seq;
   if (in["n"].is<const char*>()) doc["note"] = in["n"];
   if (in["lat"].is<double>() && in["lon"].is<double>()) {
     doc["lat"] = in["lat"];
@@ -212,47 +246,6 @@ bool postChat(const char* sender, const char* text) {
 
   Serial.printf("[chat] POST %s -> %d\n", sender, code);
   return code == 201 || code == 200;
-}
-
-// ---------------------------------------------------------------------------
-// Operator credential
-// ---------------------------------------------------------------------------
-
-bool opsLogin() {
-  if (!online()) return false;
-  if (!OPS_EMAIL[0] || !OPS_PASSWORD[0]) return false;
-
-  WiFiClientSecure client;
-  HTTPClient https;
-  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/login")) return false;
-  https.addHeader("Content-Type", "application/json");
-  https.setTimeout(12000);
-
-  JsonDocument doc;
-  doc["email"]    = OPS_EMAIL;
-  doc["password"] = OPS_PASSWORD;
-  String body;
-  serializeJson(doc, body);
-
-  int code = https.POST(body);
-  bool ok = false;
-  if (code == 200) {
-    JsonDocument out;
-    if (!deserializeJson(out, https.getString())) {
-      const char* token = out["token"] | "";
-      if (token[0]) { opsToken = token; ok = true; }
-    }
-  }
-  https.end();
-  Serial.printf("[auth] login -> %d %s\n", code, ok ? "ok" : "no token");
-  return ok;
-}
-
-bool opsAuthReady() {
-  if (opsToken.length()) return true;
-  if (OPS_TOKEN[0]) { opsToken = OPS_TOKEN; return true; }
-  if (!opsTokenTried) { opsTokenTried = true; return opsLogin(); }
-  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -375,40 +368,60 @@ size_t buildEtaPayload(const JsonObject& ev, const char* state, char* out, size_
   return 0;
 }
 
-// GET /api/sos/active in one call rather than per vessel: one request covers
-// every incident, and it is the only acknowledgement view a gateway credential
-// can actually read.
+// GET /api/sos/downlink in one call rather than per vessel: one request
+// covers every live incident, and it is the gateway-only view of the
+// responder's answer (see GATEWAY_API_KEY at the top of this file).
 void pollAcks() {
   if (!online()) return;
-  if (!opsAuthReady()) return;
+
+  if (!GATEWAY_API_KEY[0]) {
+    // Repeated on every poll, not logged once at boot. The failure this
+    // guards is a fisher watching a screen that never changes while a
+    // dispatcher believes the ETA was sent - it must be impossible to miss
+    // on a serial monitor, and it must still be shouting an hour in.
+    Serial.println("[ack] GATEWAY_API_KEY is empty - the dispatcher's ETA "
+                   "CANNOT reach the boats. Set it and reflash.");
+    return;
+  }
 
   WiFiClientSecure client;
   HTTPClient https;
-  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/sos/active")) return;
-  https.addHeader("Authorization", "Bearer " + opsToken);
+  if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/sos/downlink")) return;
+  https.addHeader("X-Api-Key", GATEWAY_API_KEY);
   https.setTimeout(12000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   int code = https.GET();
-  if (code == 401 || code == 403) {
-    // Expired. Drop it and let the next tick log in again.
-    opsToken = "";
-    opsTokenTried = false;
+  lastAckHttp = code;
+  if (code != 200) {
     https.end();
-    Serial.println("[ack] token rejected - will re-login");
+    Serial.printf("[ack] downlink poll -> %d%s\n", code,
+                  code == 401 ? " - GATEWAY_API_KEY rejected, check it matches"
+                                " the backend environment" : "");
     return;
   }
-  if (code != 200) { https.end(); return; }
 
-  // Filtered parse straight off the socket. The unfiltered feed is up to 100
-  // events wide with fields this gateway never reads, and materialising all of
-  // it as a String first is the allocation that kills the board.
+  // Filtered parse straight off the socket. Materialising the whole feed as a
+  // String first is the allocation that kills the board.
   JsonDocument filter;
   JsonObject f = filter["events"].add<JsonObject>();
-  f["id"] = true; f["vessel_id"] = true; f["seq"] = true; f["client_ts"] = true;
+  f["id"] = true; f["vessel_id"] = true; f["seq"] = true;
+  f["delivery_state"] = true;
   f["acknowledged_at"] = true; f["acked_by"] = true; f["eta_at"] = true;
   f["responder_status"] = true; f["responder_note"] = true;
   f["resolved_at"] = true;
-  f["delivered_direct"] = true; f["delivered_via_buoy"] = true;
 
   JsonDocument doc;
   DeserializationError err =
@@ -416,19 +429,76 @@ void pollAcks() {
   https.end();
   if (err) { Serial.printf("[ack] parse failed: %s\n", err.c_str()); return; }
 
+  // A body that parsed but carries no events ARRAY is not an empty feed - it
+  // is a body this board did not understand. It needs its own line, because
+  // the counters below cannot tell the two apart, and the difference is
+  // "no rescues in progress" versus "this gateway is deaf".
+  if (!doc["events"].is<JsonArray>()) {
+    Serial.println("[ack] response parsed but had no events array - not the "
+                   "feed this board expected");
+    return;
+  }
+
+  int events = 0, sent = 0, unchanged = 0, superseded = 0;
+
+  // One incident per vessel: the newest, and only the newest.
+  //
+  // The feed is ordered created_at DESC and carries EVERY open incident, so a
+  // boat that has raised several calls appears several times. Everything
+  // downstream of here is keyed by vessel, not by incident - this gateway's
+  // watch signature, and the buoy's track cache that answers the handset. So
+  // walking the whole list meant each older call overwrote the newer one, and
+  // the boat was finally told about its OLDEST call: an expired ETA carrying
+  // a seq its handset no longer holds, which the app then correctly ignored.
+  //
+  // It also put ~20 frames of ~1 s airtime on the radio every 45 s, and the
+  // signature never settled because each pass ended on a different incident,
+  // so it repeated forever.
+  char handled[MAX_VESSELS][33];
+  int  nHandled = 0;
+
   for (JsonObject ev : doc["events"].as<JsonArray>()) {
+    events++;
     const char* vid = ev["vessel_id"] | "";
     if (!vid[0]) continue;
-    VesselWatch* w = watchFind(vid);
-    if (!w) continue;   // never came through this mesh; nothing to send it to
 
-    // Mirrors _delivery_state() in backend/app/api/sos.py. Recomputed here
-    // because /active does not return the collapsed field that /vessel does.
-    const char* state = "relayed";
-    if (ev["resolved_at"].is<const char*>() || ev["acknowledged_at"].is<const char*>())
-      state = "acknowledged";
-    else if ((ev["delivered_direct"] | false) || (ev["delivered_via_buoy"] | false))
-      state = "delivered";
+    bool older = false;
+    for (int k = 0; k < nHandled; k++)
+      if (strcmp(handled[k], vid) == 0) { older = true; break; }
+    if (older) { superseded++; continue; }
+    if (nHandled < MAX_VESSELS) {
+      strncpy(handled[nHandled], vid, 32);
+      handled[nHandled][32] = 0;
+      nHandled++;
+    }
+
+    // An open incident this gateway never heard on the radio still gets an
+    // answer put on the radio.
+    //
+    // This used to `continue` here, on the reasoning that a vessel which
+    // never came through this mesh has nobody to send to. That is wrong for
+    // the case the product exists for: a handset with signal raises its SOS
+    // over the DIRECT path, so the gateway never sees a T_SOS frame for it -
+    // and then the boat loses signal, falls back to a buoy, and waits for an
+    // answer this board was silently declining to send. It also skipped every
+    // incident that predates a reboot of this board.
+    //
+    // The airtime is bounded: the feed carries only unresolved incidents, and
+    // the signature below means one frame per actual change a dispatcher
+    // makes, not one per poll.
+    VesselWatch* w = watchFind(vid);
+    if (!w) {
+      watchVessel(vid);
+      w = watchFind(vid);
+      if (w) Serial.printf("[ack] now watching %s (direct-path incident)\n", vid);
+    }
+    if (!w) { Serial.printf("[ack] watch table full - cannot answer %s\n", vid); continue; }
+
+    // Taken from the server, not recomputed. This board used to mirror
+    // _delivery_state() from backend/app/api/sos.py, which meant a second
+    // implementation of it lived in firmware and only a reflash could correct
+    // a drift between the two.
+    const char* state = ev["delivery_state"] | "relayed";
 
     uint32_t sig = 2166136261UL;
     sig = fnv1a(sig, state);
@@ -437,16 +507,31 @@ void pollAcks() {
     sig = fnv1a(sig, ev["resolved_at"] | "");
     sig = fnv1a(sig, ev["responder_note"] | "");
     sig = fnv1a(sig, String((int)(ev["responder_status"] | 0)).c_str());
-    if (sig == w->signature) continue;
+    if (sig == w->signature) { unchanged++; continue; }
 
     char payload[LOAM_MAX_PAYLOAD + 1];
     size_t n = buildEtaPayload(ev, state, payload, sizeof(payload));
-    if (!n) continue;
-    if (!meshSend(T_ETA, 0, payload, n)) continue;
+    if (!n) {
+      Serial.printf("[ack] %s -> %s: payload would not fit, DROPPED\n", vid, state);
+      continue;
+    }
+    if (!meshSend(T_ETA, 0, payload, n)) {
+      // TX ring full. Deliberately does NOT record the signature, so the next
+      // poll tries again rather than treating an unsent answer as delivered.
+      Serial.printf("[ack] %s -> %s: radio busy, will retry next poll\n", vid, state);
+      continue;
+    }
 
     w->signature = sig;
-    Serial.printf("[ack] downlink %s -> %s\n", vid, state);
+    sent++;
+    Serial.printf("[ack] downlink %s -> %s (%u bytes)\n", vid, state, (unsigned)n);
   }
+
+  // Said every poll, because "nothing happened" and "nothing could happen"
+  // looked identical from the outside before this, and that cost real hours.
+  Serial.printf("[ack] poll ok: %d open incident(s) for %d vessel(s), "
+                "%d sent, %d unchanged, %d superseded\n",
+                events, nHandled, sent, unchanged, superseded);
 }
 
 // GET /api/mesh/chat?since_id= — everything said on the dashboard or by a boat
@@ -459,6 +544,19 @@ void pollChat() {
   String url = String(BACKEND_HOST) + "/api/mesh/chat?limit=10&since_id=" + String(lastChatId);
   if (!httpsBegin(client, https, url)) return;
   https.setTimeout(10000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   if (https.GET() != 200) { https.end(); return; }
 
@@ -559,6 +657,19 @@ void pollWarnings() {
   String url = String(BACKEND_HOST) + "/api/public/advisories";
   if (!httpsBegin(client, https, url)) return;
   https.setTimeout(10000);
+  // HTTP/1.0, so the response cannot come back chunked.
+  //
+  // Cloudflare fronts the backend and returns Transfer-Encoding: chunked with
+  // no Content-Length. HTTPClient::getStream() hands back the RAW socket and
+  // does not de-chunk it, so the parser is fed the chunk-size line ahead of
+  // the body. ArduinoJson reads that leading hex size as a bare JSON number,
+  // accepts it as the whole document, and returns SUCCESS - an empty result
+  // with no error to log. Not hypothetical: it is why this gateway reported
+  // "0 open incident(s)" against a feed serving 22 of them, for days, while
+  // every other indicator looked healthy.
+  //
+  // HTTP/1.0 has no chunked encoding, so the body arrives whole.
+  https.useHTTP10(true);
 
   if (https.GET() != 200) { https.end(); return; }
 
@@ -727,7 +838,10 @@ void oledDraw() {
 
   oled.setCursor(0, 50);
   oled.print(F("Ack  : "));
-  oled.print(opsToken.length() ? F("armed") : F("no token"));
+  if (!GATEWAY_API_KEY[0])      oled.print(F("no key"));
+  else if (lastAckHttp == 200)  oled.print(F("armed"));
+  else if (lastAckHttp == 0)    oled.print(F("waiting"));
+  else                        { oled.print(F("http ")); oled.print(lastAckHttp); }
 
   // ":>" in the bottom-right corner. At text size 1 a glyph is 6x8, so two
   // characters start 12px in from the right edge and clear the text on that
@@ -747,8 +861,14 @@ unsigned long lastBeacon   = 0;
 unsigned long lastWarnPoll = 0;
 
 void setup() {
+  // Compiler-filled build stamp, first line out of the box.
+  //
+  // "Did that board actually get the new firmware?" has cost more time on
+  // this project than any single bug. __DATE__/__TIME__ are baked in at
+  // compile time, so this answers it in one glance and cannot drift.
   Serial.begin(115200);
   delay(300);
+  Serial.printf("\n\n[boot] AqOneShore build %s %s\n", __DATE__, __TIME__);
   Serial.println("\n=== AqOne shore gateway " + String(NODE_NAME) + " ===");
 
   oledSetup();

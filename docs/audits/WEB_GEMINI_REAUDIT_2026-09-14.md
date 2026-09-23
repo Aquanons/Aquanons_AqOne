@@ -141,7 +141,7 @@ Retain the existing response-order guard.
 
 `docs/audits/WEB_AUDIT_2026-09-13.md:310` says every finding is remediated, despite R1-R5 above.
 Its closure table also relabels F11 as secondary UI wiring, although the original F11 is login/password handling.
-`docs/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md:3` still says no implementation started, while every phase and acceptance gate is checked off.
+`docs/archive/plans/WEB_REMEDIATION_IMPLEMENTATION_PLAN.md:3` still says no implementation started, while every phase and acceptance gate is checked off.
 Its Phase 3 and Phase 5 ledger hashes refer to different existing commits from the ones on the reviewed HEAD history; update them to the actual reviewed checkpoints.
 
 The plan checks off the full backend suite and full-repository Ruff gate, but the status entry records only 24 selected backend tests and lint on three files.

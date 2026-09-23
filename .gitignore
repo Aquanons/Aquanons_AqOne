@@ -65,8 +65,16 @@ firmware/buoy/.pio/
 .vscode/.browse.c_cpp.db*
 CMakeLists.txt.user
 
+# Architecture build & staging
+.artifacts_build/
+.codex-finalizer/
+
 # Node / misc
 node_modules/
 *.log
 .DS_Store
 Thumbs.db
+~$*
+
+# Per-worktree agent handoff, see docs/58. Untracked on purpose.
+/HANDOFF.md

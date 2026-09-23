@@ -38,9 +38,6 @@ dependencies:
   flutter_map: ^8.3.1
   latlong2: ^0.10.1
 
-  # Tappable emergency contact numbers.
-  url_launcher: ^6.3.2
-
   # WiFi Chathub (Heltec WiFi relay). Versions pinned to what the source
   # project resolved.
   web_socket_channel: ^3.0.1

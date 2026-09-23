@@ -1,12 +1,14 @@
 # 02 — LoAM Packet Spec (LoRa binary frame)
 
-The radio contract between buoy firmware (Daniel) and the gateway (Arnold).
+The radio contract between boat pods, stationary sensor-relay buoys, and the
+shore gateway. The firmware owner is Daniel and the gateway owner is Arnold.
 Any packet that does not parse and verify is dropped; there is no negotiation.
 
 ## Scope
 
-This doc defines the wire format for every LoRa frame in the mesh: SOS,
-mesh ACK, ping, and status. It does **not** cover the phone↔buoy WiFi hop
+This doc defines the wire format for every LoRa frame in the hybrid network:
+SOS, mesh ACK, ping, status, sensor telemetry, and downlink advisories. It does
+**not** cover the phone↔boat pod WiFi hop
 (`docs/03_PHONE_BUOY_WIFI.md`) or the gateway→backend hop
 (`docs/04_INGEST_API.md`).
 
@@ -33,6 +35,19 @@ trailing signature.
 
 Max frame size = 22 + 64 + 8 = **94 bytes**, comfortably inside a LoRa packet
 at the radio settings below.
+
+## Node roles
+
+- **Boat pod:** Originates SOS and optional boat telemetry, then sends directly
+  to the shore gateway whenever possible.
+- **Stationary sensor buoy:** Provides fixed-location telemetry and may relay
+  frames when a direct boat-to-gateway path is unavailable.
+- **Relay buoy:** Forwards new frames using TTL flooding and the seen-set.
+- **Shore gateway:** Receives and acknowledges frames, forwards accepted events
+  to the backend, and sends downlink warnings or responder updates.
+
+Direct boat-pod frames use `HOPS = 0`. Relay buoys mutate `RELAY_ID`, decrement
+`TTL`, and increment `HOPS` without re-signing the origin frame.
 
 ## Frame types (`TYPE`)
 
@@ -64,21 +79,33 @@ detected before parsing the rest.
 ```json
 {
   "v": 1,
-  "kind": "sos",
-  "boat": "BG-123",
+  "vid": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "ts": 1790000000,
+  "bid": "BUOY01",
+  "sq": 7,
+  "tt": "self_declared",
   "lat": 11.6050,
   "lon": 122.3125,
-  "note": "engine down"
+  "boat": "BG-123",
+  "n": "engine down"
 }
 ```
 
 | Field | Required | Notes |
 |---|---|---|
 | `v` | yes | `1` |
-| `kind` | yes | `"sos"` |
-| `boat` | yes | Display name, ≤ 32 chars. |
-| `lat` / `lon` | no | Decimal degrees; omit if the phone has no fix. |
-| `note` | no | ≤ 64 chars free text. |
+| `vid` | yes | Vessel id, always 32 chars. With `ts` it forms the backend's de-duplication key. |
+| `ts` | yes | `client_ts`, the handset's own send time. |
+| `bid` | yes | Id of the buoy that queued this call. |
+| `sq` | yes | The queuing buoy's SOS counter — the value it returned to the handset from `POST /v1/sos`, persisted in NVS so it survives a reboot. **This is the handset's matching key**: a LoRa frame has no room for a `local_id`, so when the dispatcher's answer comes back down the app pairs it to the right outbox record by this number alone. Not to be confused with the frame header's `SEQ`, which rotates on every retransmission by design. |
+| `tt` | no | Trust tier; defaults to `self_declared`. |
+| `lat` / `lon` | no | Decimal degrees; omit if the phone has no fix. Never sent as `0,0` — that is a real position in the Gulf of Guinea. |
+| `boat` | no | Display name, ≤ 32 chars. **Sheds first** when the payload will not fit: the backend already has it from registration and looks it up by `vid`. |
+| `n` | no | ≤ 64 chars free text. **Sheds last** — the fisher's note exists nowhere else. |
+
+There is deliberately no `kind`: `TYPE 0x01` in the authenticated header
+already says what this is, and in the tightest payload in the system those 13
+bytes are better spent on `sq`.
 
 ### ACK (`0x02`)
 
@@ -200,12 +227,12 @@ agree or packets never decode.
 
 ## Relay rules
 
-- On receive, a buoy verifies `MAGIC`/`VERSION`, parses, checks the seen-set,
-  and if new: stores it, decrements `TTL` by 1, increments `HOPS` by 1, and
-  re-transmits **only if** `TTL > 0`.
+- On receive, a stationary relay buoy verifies `MAGIC`/`VERSION`, parses,
+  checks the seen-set, and if new: stores it, decrements `TTL` by 1, increments
+  `HOPS` by 1, and re-transmits **only if** `TTL > 0`.
 - Duplicate `(SRC_ID, SEQ, TYPE)` frames are dropped (small recent seen-set).
-- If `WANTS_ACK` is set and the receiving endpoint is the destination (a
-  gateway for `SOS`), it sends an `ACK` back. Buoys may also ack to claim
+- If `WANTS_ACK` is set and the receiving endpoint is the destination (the shore
+  gateway for `SOS`), it sends an `ACK` back. Relay buoys may also ack to claim
   receipt; the ack travels the same flooding rules.
 - Gateways never re-transmit; on receipt they verify the signature, then
   hand the frame to the ingest pipeline (`docs/04_INGEST_API.md`).
@@ -222,8 +249,9 @@ A receiver must drop, without forwarding, any frame where:
 
 ## Worked example
 
-A signed SOS from external id `0x00010001`, seq 42, TTL 5, payload
-`{"v":1,"kind":"sos","boat":"BG-123"}` (34 bytes):
+A signed SOS from external id `0x00010001`, seq 42, TTL 5. The payload bytes
+below are a short illustrative string, chosen to keep the hex readable — not
+the current SOS field set above; this example is about the frame layout:
 
 ```
 A5 01 01 03 00 01 00 01 00 01 00 01 00 2A 00 00 00 00 05 00 00 22
