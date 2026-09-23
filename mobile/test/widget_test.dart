@@ -49,6 +49,7 @@ SosRecord _record({
   int? seq,
   String? ackedBy,
   String? etaAt,
+  String? resolvedAt,
 }) {
   return SosRecord(
     localId: 'local-1',
@@ -62,6 +63,7 @@ SosRecord _record({
     buoyId: seq == null ? null : 'BUOY01',
     ackedBy: ackedBy,
     etaAt: etaAt,
+    resolvedAt: resolvedAt,
   );
 }
 
@@ -197,6 +199,24 @@ void main() {
 
       expect(find.text('Rescue ETA'), findsOneWidget);
       expect(find.text('Delayed — still on the way'), findsOneWidget);
+    });
+
+    testWidgets('resolved card points back to a new SOS if danger remains',
+        (tester) async {
+      await tester.pumpWidget(
+        _host(
+          DeliveryStateTile(
+            record: _record(
+              resolvedAt: DateTime.now().toUtc().toIso8601String(),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Still in danger? Send another SOS.'),
+        findsOneWidget,
+      );
     });
   });
 }

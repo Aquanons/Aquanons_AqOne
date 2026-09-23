@@ -857,6 +857,10 @@
   "@resolvedDescription": {
     "description": "SAFETY CRITICAL. Line under the Incident resolved heading on the SOS status card. Must not read as 'stay put, help is coming'."
   },
+  "resolvedStillEndangered": "Still in danger? Send another SOS.",
+  "@resolvedStillEndangered": {
+    "description": "SAFETY CRITICAL. Warning line on a resolved SOS card for an accidental resolve: tells the fisher to raise a new SOS if the danger is not over."
+  },
   "cropPhotoTitle": "Position your photo",
   "@cropPhotoTitle": {
     "description": "AppBar title on the avatar crop screen."
