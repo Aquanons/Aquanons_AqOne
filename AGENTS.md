@@ -124,6 +124,26 @@ treat them as correct; see `mobile/lib/l10n/README.md`.
   you changed. The backend uses pytest + ruff once scaffolded; firmware uses
   PlatformIO build; mobile uses `flutter analyze` + `flutter test`.
 
+## Agent handoff
+
+The live handoff file is root `HANDOFF.md`, written from `.agents/templates/docs/HANDOFF.md`.
+Each git worktree maintains its own `HANDOFF.md`, which is ignored and never committed.
+The specification is in `docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md`.
+On arrival, read `HANDOFF.md` if present before taking action.
+If **Status** is `COMPLETED`, treat the handoff as background context only and follow the user prompt.
+If **Status** is `ACTIVE`, run `git status` and `git diff --stat` to inspect the working tree.
+Compare that output against **Working Tree Evidence** and report any mismatch to the user before your first edit.
+Treat any file changed after the **Updated** timestamp as unrecorded work.
+Continue execution from **The Baton** unless the user directs otherwise.
+On departure during multi-step tasks, update `HANDOFF.md` after every verified step and before stopping.
+Set **Updated** to the current timestamp in ISO 8601 format with `+08:00`.
+Specify exactly one concrete action in **The Baton**, giving a command or file edit rather than a vague goal.
+Trivial single edits or one-shot questions require no handoff update.
+When the overall objective is done and verified, set **Status** to `COMPLETED` with final verification evidence.
+Do not delete `HANDOFF.md` on completion so the next arriving agent can see what just finished.
+Name secrets by environment variable or config key, such as `LOAM_KEY` or `DATABASE_URL`, and never write their values.
+Formal approvals are recorded in the approved doc header, and `HANDOFF.md` only links to that document.
+
 ## Ponytail: lazy senior dev mode
 
 Applies to every change in this repo. Source: https://github.com/dietrichgebert/ponytail

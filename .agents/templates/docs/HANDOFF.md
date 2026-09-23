@@ -1,39 +1,48 @@
-# Current handoff
+# Agent Handoff
 
-Created: [ISO 8601 timestamp +08:00]
-Updated: [ISO 8601 timestamp +08:00]
-State: Awaiting approval
-Feature: [ID]
+<!--
+Template for the root HANDOFF.md. Spec: docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md.
+Copy to the working tree root, replace every {placeholder}, delete this comment.
+Update after every verified step, not only at the end.
+Keep it to about 60 lines: summaries only, no transcripts, tool dumps, or full diffs.
+Never write secret values. Name them by key instead (LOAM_KEY, DATABASE_URL).
+-->
 
-## Read first
+- **Status**: ACTIVE
+- **Updated**: {YYYY-MM-DDTHH:MM:SS+08:00}
+- **Agent**: {Claude Code | Codex | Antigravity} ({model})
+- **Branch**: `{branch}`
+- **Worktree**: `{absolute path of this working tree}`
 
-[Relative links to project rules, index, approved baseline, architecture, feature, and plan.]
-Reread these files and inspect actual Git status before acting; prior chat memory is not authoritative.
+## 1. Objective
 
-## Approval and allowed work
+{What the task is, in one to three sentences.}
 
-| Document | Approved revision or commit | Actual Len chat approval reference |
-| --- | --- | --- |
+## 2. Approved Scope
 
-Allowed phases: None until approval is recorded.
-Architecture and behavior changes return to Len; this handoff cannot override the linked specs.
+- {`docs/NN_NAME.md` Revision N, approved by Len {timestamp}, or "none - no spec for this task"}
 
-## Progress and working tree
+## 3. Settled Decisions
 
-[Current phase, completed and unfinished work, checkpoint messages or verified hashes, and unrelated edits to preserve.]
-Reconcile this record with Git before resuming, especially after an interrupted commit.
+- {Decision} - rejected {alternative} because {reason}.
 
-## Checks and evidence
+## 4. Done and Verified
 
-[Actual checks run, results, environments, evidence links, and checks not run.]
+- {Step} - verified by `{command}` ({result}).
 
-## Blockers and attempts
+## 5. Working Tree Evidence
 
-| Problem | Fix-and-check attempts used (maximum 3) | Changes tried and observed result | Required decision or access |
-| --- | --- | --- | --- |
+As of **Updated** above.
+Any file changed after that time is unrecorded work.
 
-Do not reset a count on a new session or silently reinterpret a failed check as passing.
+- **Modified**: `{path}`
+- **Untracked**: `{path}`
+- **Last check**: `{test or lint command}` - {pass / fail, with count}
 
-## Next action
+## 6. The Baton
 
-[One concrete next action within approved scope, or the decision needed to unblock it.]
+> {One concrete action: the exact command to run, or the file and the change to make.}
+
+## 7. Open Questions for Len
+
+- {Blocking decision, or "none"}
