@@ -102,6 +102,8 @@ class _FakePool:
     async def fetch(self, query: str, *args):
         if 'FROM sos_events' in query and 'resolved_at IS NULL' in query:
             return [row for row in self.sos_events.values() if row['resolved_at'] is None]
+        if 'FROM sos_events' in query and 'resolved_at IS NOT NULL' in query:
+            return [row for row in self.sos_events.values() if row['resolved_at'] is not None]
         return []
 
     async def fetchrow(self, query: str, *args):
@@ -414,3 +416,23 @@ def test_ack_by_local_id_reveals_only_the_named_incidents_ack(monkeypatch):
     assert 'lat' not in event
     assert 'lon' not in event
     assert 'note' not in event
+
+
+def test_recent_lists_only_resolved_incidents_with_sender_report(monkeypatch):
+    pool = _FakePool()
+    pool.seed(id=1, resolved_at=datetime.now(UTC), fisher_reply=2,
+              skipper_name='Jade N. Salvador', phone='+63999',
+              license_type='boatr', license_number='NWB-1')
+    pool.seed(id=2)
+    _patch(monkeypatch, pool)
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get('/api/sos/recent', headers=_operator_headers())
+
+    assert response.status_code == 200
+    events = response.json()['events']
+    assert [e['id'] for e in events] == [1]
+    assert events[0]['skipper_name'] == 'Jade N. Salvador'
+    assert events[0]['fisher_reply'] == 2
+    assert events[0]['resolved_at'] is not None
+

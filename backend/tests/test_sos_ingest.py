@@ -49,6 +49,7 @@ def test_reading_sos_still_requires_a_token(monkeypatch):
     monkeypatch.delenv('DATABASE_URL', raising=False)
     with TestClient(app, raise_server_exceptions=False) as client:
         assert client.get('/api/sos/active').status_code == 401
+        assert client.get('/api/sos/recent').status_code == 401
         assert client.post('/api/sos/1/acknowledge').status_code == 401
         assert client.post('/api/sos/1/reply', json={'reply': 1}).status_code == 401
 

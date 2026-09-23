@@ -3020,6 +3020,7 @@ body {
 .sos-drawer-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -3051,7 +3052,8 @@ body {
   font-weight: 600;
   text-align: right;
   color: var(--text);
-  word-break: break-word;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sos-owner-value {
@@ -4842,6 +4844,8 @@ h3.buoy-drawer-title {
 }
 .incident-feed-row:last-child { border-bottom: none; }
 .incident-feed-row:hover { background: rgba(56,189,248,0.05); }
+.incident-feed-resolved { cursor: default; opacity: 0.85; }
+.incident-feed-resolved:hover { background: none; }
 .incident-feed-info { flex: 1; min-width: 0; }
 .incident-feed-desc {
   font-size: 11px;
