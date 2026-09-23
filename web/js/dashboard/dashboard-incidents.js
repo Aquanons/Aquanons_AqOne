@@ -58,6 +58,11 @@
     else if (data.alertType === 'squall') sosDrawerHeader.classList.add('type-squall');
     sosDrawerTitle.textContent = data.headerText;
 
+    var regBadgeEl = document.getElementById('sos-registration-badge');
+    if (regBadgeEl && typeof ns.registrationBadgeHtml === 'function') {
+      regBadgeEl.innerHTML = ns.registrationBadgeHtml(data.licenseType);
+    }
+
     var timerLabel = document.getElementById('sos-timer-label');
     if (data.alertType === 'overdue') {
       timerLabel.textContent = 'Time Since Last Contact';
