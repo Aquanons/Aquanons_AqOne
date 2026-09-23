@@ -76,5 +76,5 @@ node_modules/
 Thumbs.db
 ~$*
 
-# Per-worktree agent handoff, see docs/43. Untracked on purpose.
+# Per-worktree agent handoff, see docs/58. Untracked on purpose.
 /HANDOFF.md

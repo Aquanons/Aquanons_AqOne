@@ -237,7 +237,7 @@ Every handoff has these sections, in this order:
 - [x] 1.1 Append to `.gitignore`, with a one-line comment above it saying why:
 
   ```
-  # Per-worktree agent handoff, see docs/43. Untracked on purpose.
+  # Per-worktree agent handoff, see docs/58. Untracked on purpose.
   /HANDOFF.md
   ```
 
@@ -342,6 +342,11 @@ Every handoff has these sections, in this order:
 | 2026-09-23 | Review: fast suite, lint, ignore rule, file diffs | `python -m unittest discover -s .agents/tests -v`; `python -m ruff check .agents/tests`; `git check-ignore -v HANDOFF.md` | Pass: 16 run, 0 failures, 6 skipped; lint clean; `.gitignore:75`; Len's 8 `AGENTS.md` lines intact; `git status` matches Gemini's evidence (Claude Code) |
 | 2026-09-23 | T10: real Claude Code session receives Gemini's handoff | Session resume on Windows | Pass: `SessionStart:resume` hook injected `HANDOFF.md` before any file read (Claude Code) |
 | 2026-09-23 | T5: Antigravity follows arrival rule | Not run | Open: skipped inside Antigravity, and Len declined a rerun from Claude Code; Gemini arriving from Claude's handoff is informal evidence only |
+| 2026-09-23 | Phase C1: renumber spec to 58, index, update live pointers | `python -m unittest discover -s .agents/tests -p "test_handoff.py" -k "SpecDocument" -v` | Pass: 4 run, 0 failures; spec renumbered, indexed in `docs/SPEC_INDEX.md`, 0 stale pointers (Antigravity / Gemini) |
+| 2026-09-23 | Phase C2: entry files agree on Render and ownership | `python -m unittest discover -s .agents/tests -p "test_handoff.py" -k "EntryFileFacts" -v` | Pass: 3 run, 0 failures; Arnold owns dashboard, Jade owns mobile, no Railway in entry files (Antigravity / Gemini) |
+| 2026-09-23 | Phase C3: implementation-plan skill merge and mode support | `python -m unittest discover -s .agents/tests -p "test_plan_mode.py" -v` | Pass: 6 run, 0 failures, 1 skipped; skill copies byte-identical, 53 lines, 0 em dashes, auto & hard-stop declared (Antigravity / Gemini) |
+| 2026-09-23 | Phase C3 / T14: Claude Code toggles plan mode in sandbox | `$env:HANDOFF_E2E = "1"; python -m unittest test_plan_mode.PlanModeToggle.test_claude_toggles_plan_mode -v` | Pass: 1 run, 0 failures in 15.7s; Claude Code toggled plan header to hard-stop without running tasks (Antigravity / Gemini) |
+| 2026-09-23 | Phase C4: full test suite and lint check | `python -m unittest discover -s .agents/tests -v`; `python -m ruff check .agents/tests` | Pass: 30 run, 0 failures, 7 skipped; lint clean, 0 errors (Antigravity / Gemini) |
 
 ### Revisit when
 
@@ -423,38 +428,38 @@ No commits, no product code, no em dashes in new text, and never touch `docs/sec
 
 #### Phase C1: Renumber (REQ-008)
 
-- [ ] C1.1 Rename with `git mv docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
-- [ ] C1.2 Replace every live pointer to the old path or to `docs/43`: the `AGENTS.md` handoff section, the `.gitignore` comment, the template comment, the `test_handoff.py` docstring, and `HANDOFF.md`.
+- [x] C1.1 Rename with `git mv docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
+- [x] C1.2 Replace every live pointer to the old path or to `docs/43`: the `AGENTS.md` handoff section, the `.gitignore` comment, the template comment, the `test_handoff.py` docstring, and `HANDOFF.md`.
   Find them with `grep -rn -e "docs/43" -e "43_MULTI_AGENT" AGENTS.md CLAUDE.md .gitignore HANDOFF.md .agents`.
-- [ ] C1.3 Update the Phase 1.1 code block in Part B to the new `.gitignore` comment so the doc matches the file.
-- [ ] C1.4 Add a row for the doc to the "Current sources of truth" table in `docs/SPEC_INDEX.md`, with status `Active specification`.
+- [x] C1.3 Update the Phase 1.1 code block in Part B to the new `.gitignore` comment so the doc matches the file.
+- [x] C1.4 Add a row for the doc to the "Current sources of truth" table in `docs/SPEC_INDEX.md`, with status `Active specification`.
 - **Verify**: `test_spec_renumbered`, `test_no_live_pointer_to_old_spec`, `test_spec_is_indexed`, `test_spec_has_required_header`.
 
 #### Phase C2: Entry-file facts (REQ-009)
 
 - [x] C2.1 `AGENTS.md` line 18 already matches AC-20 on master; no edit.
-- [ ] C2.2 `AGENTS.md` ownership table: Jade row to the Flutter app (mobile), Arnold row to the dashboard, ingest pipeline and gateway.
-- [ ] C2.3 `Public REST + SSE` row in both `AGENTS.md` and `CLAUDE.md`: `backend (Lenard), dashboard (Arnold)`.
-- [ ] C2.4 Check nothing else in either file says Railway.
+- [x] C2.2 `AGENTS.md` ownership table: Jade row to the Flutter app (mobile), Arnold row to the dashboard, ingest pipeline and gateway.
+- [x] C2.3 `Public REST + SSE` row in both `AGENTS.md` and `CLAUDE.md`: `backend (Lenard), dashboard (Arnold)`.
+- [x] C2.4 Check nothing else in either file says Railway.
 - **Verify**: `test_entry_files_say_render_not_railway`, `test_ownership_matches_len`, `test_public_api_consumer_is_arnold`.
 
 #### Phase C3: Plan execution modes (REQ-010)
 
-- [ ] C3.1 Write one merged `implementation-plan` skill, starting from Len's toolkit version, which already has the handoff wording.
+- [x] C3.1 Write one merged `implementation-plan` skill, starting from Len's toolkit version, which already has the handoff wording.
   On this branch the tracked `.agents/` copy is master's older hard-stop version, so start from `git show e5c538a:.agents/skills/implementation-plan/SKILL.md`, and add:
   - frontmatter `argument-hint: "[create <feature> | execute | status | mode auto|hard-stop]"`;
   - an "Execution mode" section with the table, default-by-scale rule, toggle forms, target-plan rule, and next-phase-boundary rule from REQ-010;
   - in "Create a plan", add `**Execution mode:**` to the plan header and propose the default to Len;
   - in "Execute or resume", replace "Proceed automatically through the remaining approved phases without requesting routine sign-off." with behavior that depends on the mode.
   Keep it short: the current `.agents/` copy is 42 lines, so aim for under 70.
-- [ ] C3.2 Write the result byte-for-byte to both `.agents/skills/implementation-plan/SKILL.md` and `.claude/skills/implementation-plan/SKILL.md`; the `.claude/` copy is new on this branch.
+- [x] C3.2 Write the result byte-for-byte to both `.agents/skills/implementation-plan/SKILL.md` and `.claude/skills/implementation-plan/SKILL.md`; the `.claude/` copy is new on this branch.
 - **Verify**: the `PlanModeSkill` tests pass; then run the opt-in `test_claude_toggles_plan_mode` (AC-28) with `HANDOFF_E2E=1`.
 
 #### Phase C4: Evidence and handoff
 
-- [ ] C4.1 Fast suite and lint green.
-- [ ] C4.2 Record results in the Evidence table.
-- [ ] C4.3 Write the departure handoff to Claude Code, `COMPLETED` if green.
+- [x] C4.1 Fast suite and lint green.
+- [x] C4.2 Record results in the Evidence table.
+- [x] C4.3 Write the departure handoff to Claude Code, `COMPLETED` if green.
 
 ### C.3 Scenario tests added
 

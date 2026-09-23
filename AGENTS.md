@@ -28,9 +28,9 @@ steps. If you are unsure whether a step is done, ask.
 | Person | Owns |
 |---|---|
 | Lenard | Lead dev — backend, architecture, deployment |
-| Arnold | Full stack — ingest pipeline, gateway |
+| Arnold | Dashboard, ingest pipeline, gateway |
 | Daniel | Hardware/firmware — buoy. Critical path. |
-| Jade | Dashboard |
+| Jade | Flutter app (mobile) |
 | Doreen Kay | UI/UX, pitch deck |
 
 ## Deliberately NOT building (do not implement)
@@ -60,7 +60,7 @@ change, update the doc first and tell the affected owners.
 | LoRa binary frame | `docs/02_LOAM_PACKET_SPEC.md` | firmware (Daniel), gateway (Arnold) |
 | Phone ↔ buoy WiFi HTTP | `docs/03_PHONE_BUOY_WIFI.md` | firmware (Daniel), mobile (Jade/Doreen) |
 | Gateway → backend HTTPS | `docs/04_INGEST_API.md` | gateway (Arnold), backend (Lenard) |
-| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Jade) |
+| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Arnold) |
 | Delivery states | `docs/06_DELIVERY_STATES.md` | all — the four states are the product language |
 | Mobile UI strings | `docs/22_LOCALIZATION_PLAN.md` | mobile (Jade/Doreen Kay) |
 
@@ -128,7 +128,7 @@ treat them as correct; see `mobile/lib/l10n/README.md`.
 
 The live handoff file is root `HANDOFF.md`, written from `.agents/templates/docs/HANDOFF.md`.
 Each git worktree maintains its own `HANDOFF.md`, which is ignored and never committed.
-The specification is in `docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md`.
+The specification is in `docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
 On arrival, read `HANDOFF.md` if present before taking action.
 If **Status** is `COMPLETED`, treat the handoff as background context only and follow the user prompt.
 If **Status** is `ACTIVE`, run `git status` and `git diff --stat` to inspect the working tree.

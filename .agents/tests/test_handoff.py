@@ -1,4 +1,4 @@
-"""Acceptance tests for docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md.
+"""Acceptance tests for docs/58_MULTI_AGENT_HANDOFF_SPEC.md.
 
 Fast checks:  python -m unittest discover -s .agents/tests -v
 Agent checks: set HANDOFF_E2E=1 first. They call claude, codex and agy

@@ -33,7 +33,7 @@ All workstreams interoperate through these documents. If a contract needs to cha
 | LoRa binary frame | `docs/02_LOAM_PACKET_SPEC.md` | firmware (Daniel), gateway (Arnold) |
 | Phone ↔ buoy WiFi HTTP | `docs/03_PHONE_BUOY_WIFI.md` | firmware (Daniel), mobile (Jade/Doreen) |
 | Gateway → backend HTTPS | `docs/04_INGEST_API.md` | gateway (Arnold), backend (Lenard) |
-| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Jade) |
+| Public REST + SSE | `docs/05_PUBLIC_API.md` | backend (Lenard), dashboard (Arnold) |
 | Delivery states | `docs/06_DELIVERY_STATES.md` | all — the four states are the product language |
 | Mobile UI strings | `docs/22_LOCALIZATION_PLAN.md` | mobile (Jade/Doreen Kay) |
 

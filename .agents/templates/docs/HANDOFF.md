@@ -1,7 +1,7 @@
 # Agent Handoff
 
 <!--
-Template for the root HANDOFF.md. Spec: docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md.
+Template for the root HANDOFF.md. Spec: docs/58_MULTI_AGENT_HANDOFF_SPEC.md.
 Copy to the working tree root, replace every {placeholder}, delete this comment.
 Update after every verified step, not only at the end.
 Keep it to about 60 lines: summaries only, no transcripts, tool dumps, or full diffs.
