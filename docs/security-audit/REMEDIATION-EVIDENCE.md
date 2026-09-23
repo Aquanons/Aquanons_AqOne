@@ -1,0 +1,149 @@
+# Security Audit Remediation Evidence
+
+This document tracks gate runs, test counts, and probe statuses across remediation phases.
+The probes defined in `backend/tests/security_probes/` and `mobile/test_security_probes/` serve as the acceptance criteria.
+
+## Phase 0: Branch and baseline
+
+### Environment
+
+- Date: 2026-09-23T13:37:00+08:00
+- Branch: `fix/security-audit-remediation`
+- Base commit: `35a7822`
+- OS: Windows 10
+- Python: 3.11.9
+- Flutter: 3.29.0 (Dart 3.7.0)
+- PostgreSQL: 18.4 (throwaway cluster on localhost:55432)
+
+### Verification Gates
+
+#### 1. Backend Default Gate
+
+Commands executed from `backend/`:
+```powershell
+Remove-Item Env:DATABASE_URL, Env:AQONE_SECURITY_PROBES -ErrorAction SilentlyContinue
+python -m ruff check .
+python -m pytest -q -p no:cacheprovider
+```
+
+Result:
+- Ruff: All checks passed.
+- Pytest default suite: 387 passed, 5 skipped, 1 xfailed in 27.02s.
+- Status: PASSED.
+
+#### 2. Mobile Gate
+
+Commands executed from `mobile/`:
+```powershell
+flutter gen-l10n
+flutter analyze
+flutter test
+flutter test test_security_probes
+```
+
+Result:
+- `flutter gen-l10n`: Generated localization files successfully.
+- `flutter analyze`: No issues found.
+- `flutter test`: 259 passed, 0 failed.
+- `flutter test test_security_probes`: 1 passed (control), 5 failed (expected red probes).
+- Status: PASSED.
+
+#### 3. Web Gate
+
+Commands executed from repository root:
+```powershell
+node --test web/test/*.test.js
+Get-ChildItem web/js, web/test -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
+```
+
+Result:
+- Node test runner: 149 passed, 0 failed in 1593ms.
+- Syntax verification: All JavaScript files pass syntax check.
+- Status: PASSED.
+
+#### 4. Security Probe Gate (Baseline)
+
+Database instance:
+- Local throwaway PostgreSQL 18 cluster initialized on port 55432 with trust authentication.
+
+Command executed from `backend/`:
+```powershell
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+python -m pytest tests/security_probes -p no:cacheprovider -q
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL
+```
+
+Result:
+- Total test items: 43.
+- Passed: 3 (all 3 control tests).
+- Failed / Error: 40 (all 40 security probes reflecting open audit findings).
+- Status: PASSED (baseline confirmed).
+
+### Probe Status List (Baseline)
+
+#### Backend Probes - Green / Controls (3 passed)
+
+1. `tests/security_probes/test_probe_auth.py::test_squall_control_admin_reaches_the_model_write` (Control)
+2. `tests/security_probes/test_probe_ingest_trust.py::test_contact_control_present_timestamp_is_accepted` (Control)
+3. `tests/security_probes/test_probe_public_disclosure.py::test_hotspot_control_five_reporters_publish` (Control)
+
+#### Backend Probes - Red / Open Findings (40 failed/error)
+
+1. `tests/security_probes/test_probe_anomaly.py::test_contact_without_coordinates_does_not_abort_fleet_evaluation` (FAILED)
+2. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation` (FAILED)
+3. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation` (FAILED)
+4. `tests/security_probes/test_probe_anomaly.py::test_failed_evaluation_does_not_commit_score_deactivation` (ERROR)
+5. `tests/security_probes/test_probe_anomaly.py::test_one_ordinary_live_trip_evaluates_on_real_postgres` (ERROR)
+6. `tests/security_probes/test_probe_anomaly.py::test_measure_whole_fleet_evaluation_cost` (ERROR)
+7. `tests/security_probes/test_probe_auth.py::test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password` (FAILED)
+8. `tests/security_probes/test_probe_auth.py::test_token_for_an_account_that_no_longer_exists_is_rejected` (FAILED)
+9. `tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[mdrrmo]` (FAILED)
+10. `tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[lgu]` (FAILED)
+11. `tests/security_probes/test_probe_catch.py::test_one_vessel_cannot_rewrite_another_vessels_catch_log` (ERROR)
+12. `tests/security_probes/test_probe_ingest_trust.py::test_request_text_cannot_mark_a_current_reading_qualified` (FAILED)
+13. `tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp` (FAILED)
+14. `tests/security_probes/test_probe_public_disclosure.py::test_public_sea_condition_does_not_expose_operator_account` (FAILED)
+15. `tests/security_probes/test_probe_public_disclosure.py::test_hotspot_cell_needs_five_distinct_reporters[3]` (FAILED)
+16. `tests/security_probes/test_probe_public_disclosure.py::test_hotspot_cell_needs_five_distinct_reporters[4]` (FAILED)
+17. `tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[UPLINK_SSID]` (FAILED)
+18. `tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[UPLINK_PASS]` (FAILED)
+19. `tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[GATEWAY_API_KEY]` (FAILED)
+20. `tests/security_probes/test_probe_repo_static.py::test_loam_key_is_not_the_repository_default` (FAILED)
+21. `tests/security_probes/test_probe_repo_static.py::test_loam_signature_key_is_selected_per_source_id` (FAILED)
+22. `tests/security_probes/test_probe_repo_static.py::test_loam_control_headers_are_byte_identical` (FAILED)
+23. `tests/security_probes/test_probe_repo_static.py::test_shore_verifies_the_backend_certificate` (FAILED)
+24. `tests/security_probes/test_probe_repo_static.py::test_buoy_warning_cache_orders_updates_by_revision` (FAILED)
+25. `tests/security_probes/test_probe_repo_static.py::test_tx_ring_keeps_capacity_for_distress_frames` (FAILED)
+26. `tests/security_probes/test_probe_repo_static.py::test_release_build_does_not_fall_back_to_debug_signing` (FAILED)
+27. `tests/security_probes/test_probe_repo_static.py::test_tracked_release_apk_is_not_debug_signed` (FAILED)
+28. `tests/security_probes/test_probe_resource_bounds.py::test_demo_weather_rejects_ten_thousand_coordinate_cells` (FAILED)
+29. `tests/security_probes/test_probe_resource_bounds.py::test_mesh_chat_has_a_retention_or_admission_control` (FAILED)
+30. `tests/security_probes/test_probe_resource_bounds.py::test_public_squall_does_not_load_week_old_readings` (ERROR)
+31. `tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_self_assert_responder_confirmation` (FAILED)
+32. `tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key` (FAILED)
+33. `tests/security_probes/test_probe_sos.py::test_genuine_sos_survives_a_burst_of_anonymous_sos` (ERROR)
+34. `tests/security_probes/test_probe_sos.py::test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy` (ERROR)
+35. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips-None]` (FAILED)
+36. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips/PROBE-TRIP-None]` (FAILED)
+37. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[PATCH-/api/v1/trips/PROBE-TRIP-body2]` (FAILED)
+38. `tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[POST-/api/advisories/delivery-body0]` (FAILED)
+39. `tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[GET-/api/advisories/101/deliveries-None]` (FAILED)
+40. `tests/security_probes/test_probe_unauth_routes.py::test_anonymous_caller_cannot_replace_an_existing_vessel_identity` (ERROR)
+
+#### Mobile Probes - Green / Controls (1 passed)
+
+1. `mobile/test_security_probes/sos_probes_test.dart: [mobile.sos.standdown-intent-treated-resolved:control] an accepted stand-down is resolved` (PASSED)
+
+#### Mobile Probes - Red / Open Findings (5 failed)
+
+1. `mobile/test_security_probes/sos_probes_test.dart: [mobile.sos.standdown-intent-treated-resolved] a stand-down the backend rejected (503) is not shown as resolved` (FAILED)
+2. `mobile/test_security_probes/sos_probes_test.dart: [mobile.sos.standdown-intent-treated-resolved] a stand-down never sent (no backend id yet) is not shown as resolved` (FAILED)
+3. `mobile/test_security_probes/sos_probes_test.dart: [mobile.sos.buoy-only-reply-unroutable] handset half: the reply to a buoy-only SOS is delivered` (FAILED)
+4. `mobile/test_security_probes/sos_probes_test.dart: [mobile.eta.server-clock-discarded] rescue ETA is measured against server time, not the phone clock` (FAILED)
+5. `mobile/test_security_probes/squall_probes_test.dart: [mobile.squall.ack-survives-missed-clear] a squall six hours later on the same buoys alarms again after a missed clear` (FAILED)
+
+### Credential Leak Verification
+
+- Scanned all files under `docs/security-audit/probe-runs/` for occurrences of sensitive literals (`UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY`) using both UTF-8 and UTF-16LE byte patterns.
+- Verified that zero plaintext secrets are present.

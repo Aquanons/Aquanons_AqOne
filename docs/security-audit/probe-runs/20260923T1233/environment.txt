@@ -1,0 +1,12 @@
+RUN_ID: 20260923T1233
+GIT_HEAD: ef6cc7d46e8e89d28cdbb84c028671d7d46ed5c0
+GIT_STATUS:
+ M backend/tests/conftest.py
+?? backend/tests/security_probes/
+?? docs/security-audit/PROBES.md
+?? mobile/test_security_probes/
+
+PYTHON: Python 3.11.9
+FLUTTER: Flutter 3.44.7 GÇó channel stable GÇó https://github.com/flutter/flutter.git
+POSTGRES: postgres (PostgreSQL) 18.4
+POSTGRES_URL: postgresql://postgres:probe@localhost:55432/postgres

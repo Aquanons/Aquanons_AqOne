@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="40" skipped="0" tests="43" time="10.968" timestamp="2026-09-23T12:38:26.353196+08:00" hostname="Lens-Nitro"><testcase classname="tests.security_probes.test_probe_anomaly" name="test_contact_without_coordinates_does_not_abort_fleet_evaluation" time="0.002"><properties><property name="finding" value="backend.contacts.optional-position-crash" /></properties><failure message="Failed: one accepted contact without coordinates aborts evaluation for every vessel: TypeError(&quot;float() argument must be a string or a real number, not 'NoneType'&quot;)">@pytest.mark.finding('backend.contacts.optional-position-crash')
+    def test_contact_without_coordinates_does_not_abort_fleet_evaluation():
+        now = now_utc()
+        try:
+            ContactEventIn(
+                event_id='e1', vessel_id='V-NOPOS', trip_id='T-NOPOS', buoy_id='B1',
+                observed_at=now, source='live',
+            )
+        except ValidationError:
+            return  # ingest refuses position-less contacts, so the crash is unreachable
+        rows = [
+            _contact_row('V-NOPOS', 'T-NOPOS', now - timedelta(hours=1), lat=None, lon=None),
+            _contact_row('V-OK', 'T-OK', now - timedelta(hours=1)),
+        ]
+        try:
+&gt;           eligible = eligible_latest_trips(rows, as_of=now)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security_probes\test_probe_anomaly.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\ai\anomaly_service.py:136: in eligible_latest_trips
+    for vessel_id, trip_id, contacts in _group_latest_trips(rows):
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+rows = [{'vessel_id': 'V-NOPOS', 'trip_id': 'T-NOPOS', 'buoy_id': 'B1', 'observed_at': datetime.datetime(2026, 9, 23, 3, 38, ... 'buoy_id': 'B1', 'observed_at': datetime.datetime(2026, 9, 23, 3, 38, 28, 189771, tzinfo=datetime.timezone.utc), ...}]
+
+    def _group_latest_trips(rows: list[dict[str, object]]) -&gt; list[tuple[str, str, list[ContactPoint]]]:
+        grouped: dict[tuple[str, str], list[ContactPoint]] = {}
+        for row in rows:
+            key = (str(row['vessel_id']), str(row['trip_id']))
+            grouped.setdefault(key, []).append(
+                ContactPoint(
+                    buoy_id=str(row['buoy_id']),
+                    observed_at=row['observed_at'],
+&gt;                   latitude=float(row['latitude']),
+                             ^^^^^^^^^^^^^^^^^^^^^^
+                    longitude=float(row['longitude']),
+                )
+            )
+E           TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+app\ai\anomaly_service.py:78: TypeError
+
+During handling of the above exception, another exception occurred:
+
+    @pytest.mark.finding('backend.contacts.optional-position-crash')
+    def test_contact_without_coordinates_does_not_abort_fleet_evaluation():
+        now = now_utc()
+        try:
+            ContactEventIn(
+                event_id='e1', vessel_id='V-NOPOS', trip_id='T-NOPOS', buoy_id='B1',
+                observed_at=now, source='live',
+            )
+        except ValidationError:
+            return  # ingest refuses position-less contacts, so the crash is unreachable
+        rows = [
+            _contact_row('V-NOPOS', 'T-NOPOS', now - timedelta(hours=1), lat=None, lon=None),
+            _contact_row('V-OK', 'T-OK', now - timedelta(hours=1)),
+        ]
+        try:
+            eligible = eligible_latest_trips(rows, as_of=now)
+        except (TypeError, ValueError) as exc:
+&gt;           pytest.fail(f'one accepted contact without coordinates aborts evaluation for every vessel: {exc!r}')
+E           Failed: one accepted contact without coordinates aborts evaluation for every vessel: TypeError("float() argument must be a string or a real number, not 'NoneType'")
+
+tests\security_probes\test_probe_anomaly.py:50: Failed</failure></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation" time="0.002"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties><failure message="AssertionError: an open trip with no contacts for a never-seen vessel aborts evaluation: KeyError('V-FRESH') (active scores already deactivated before the crash: True)&#10;assert KeyError('V-FRESH') is None">@pytest.mark.finding('backend.ai.anomaly.zero-contact-poison-run')
+    def test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation():
+        error, deactivated = _run_evaluation([], [_trip_state('T-ZERO', 'V-FRESH', 'open')])
+&gt;       assert error is None, (
+            f'an open trip with no contacts for a never-seen vessel aborts evaluation: {error!r} '
+            f'(active scores already deactivated before the crash: {deactivated})'
+        )
+E       AssertionError: an open trip with no contacts for a never-seen vessel aborts evaluation: KeyError('V-FRESH') (active scores already deactivated before the crash: True)
+E       assert KeyError('V-FRESH') is None
+
+tests\security_probes\test_probe_anomaly.py:75: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation" time="0.002"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties><failure message="AssertionError: an open zero-contact trip for a vessel with history aborts evaluation: IndexError('list index out of range') (active scores already deactivated before the crash: True)&#10;assert IndexError('list index out of range') is None">@pytest.mark.finding('backend.ai.anomaly.zero-contact-poison-run')
+    def test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation():
+        history = [
+            _contact_row('V-OLD', 'T-OLD', now_utc() - timedelta(days=3, hours=h)) for h in range(3)
+        ]
+        trip_states = [_trip_state('T-OLD', 'V-OLD', 'completed'), _trip_state('T-NEW', 'V-OLD', 'open')]
+        error, deactivated = _run_evaluation(history, trip_states)
+&gt;       assert error is None, (
+            f'an open zero-contact trip for a vessel with history aborts evaluation: {error!r} '
+            f'(active scores already deactivated before the crash: {deactivated})'
+        )
+E       AssertionError: an open zero-contact trip for a vessel with history aborts evaluation: IndexError('list index out of range') (active scores already deactivated before the crash: True)
+E       assert IndexError('list index out of range') is None
+
+tests\security_probes\test_probe_anomaly.py:88: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_failed_evaluation_does_not_commit_score_deactivation" time="0.580"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties><failure message="AssertionError: evaluation raised KeyError('V-FRESH') after committing is_active=FALSE on the seeded live alert - the partial run emptied the responder queue&#10;assert (KeyError('V-FRESH') is None or False)">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_9ce6dd6f0b93'
+
+    @pytest.mark.finding('backend.ai.anomaly.zero-contact-poison-run')
+    def test_failed_evaluation_does_not_commit_score_deactivation(probe_db):
+        """On real Postgres: does a zero-contact crash leave the live alert queue
+        emptied? Safe = the run succeeds, or nothing it did was committed."""
+        now = now_utc()
+    
+        async def body(conn):
+            await _seed_live_alert(conn, now)
+            await conn.execute("INSERT INTO vessels (id, boat_name) VALUES ('V-FRESH', 'V-FRESH')")
+            await conn.execute(
+                "INSERT INTO vessel_trips (trip_id, vessel_id, status) VALUES ('T-ZERO', 'V-FRESH', 'open')"
+            )
+            return await _evaluate_and_read_back(conn, now)
+    
+        error, still_active = run_db(probe_db, body)
+&gt;       assert error is None or still_active, (
+            f'evaluation raised {error!r} after committing is_active=FALSE on the seeded live alert - '
+            'the partial run emptied the responder queue'
+        )
+E       AssertionError: evaluation raised KeyError('V-FRESH') after committing is_active=FALSE on the seeded live alert - the partial run emptied the responder queue
+E       assert (KeyError('V-FRESH') is None or False)
+
+tests\security_probes\test_probe_anomaly.py:136: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_one_ordinary_live_trip_evaluates_on_real_postgres" time="0.551"><properties><property name="finding" value="new.backend.anomaly.jsonb-parameter-encoding" /></properties><failure message="AssertionError: scoring one ordinary live trip on real Postgres raised DataError(&quot;invalid input for query argument $2: {'vessel_id': 'V-LIVE', 'trip_count': 0,... (expected str, got dict)&quot;)&#10;assert DataError(&quot;invalid input for query argument $2: {'vessel_id': 'V-LIVE', 'trip_count': 0,... (expected str, got dict)&quot;) is None">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_a8298a0879e4'
+
+    @pytest.mark.finding('new.backend.anomaly.jsonb-parameter-encoding')
+    def test_one_ordinary_live_trip_evaluates_on_real_postgres(probe_db):
+        """Not in the audit. Found while writing these probes: evaluate_and_persist
+        passes Python lists to $N::jsonb and app/db.py registers no JSON codec, so
+        asyncpg may reject every score write. The unit suite only uses fakes."""
+        now = now_utc()
+    
+        async def body(conn):
+            await _seed_live_alert(conn, now)
+            await conn.execute(
+                '''
+                INSERT INTO buoy_contacts (event_id, buoy_id, vessel_id, trip_id, observed_at,
+                                           latitude, longitude, source, is_synthetic,
+                                           contact_type, contact_value)
+                SELECT 'c' || g, 'B1', 'V-LIVE', 'T-NOW', $1::timestamptz - (g || ' minutes')::interval,
+                       11.66, 122.44, 'live', FALSE, 'mesh_ping', 'c' || g
+                FROM generate_series(10, 30, 10) AS g
+                ''',
+                now,
+            )
+            return await _evaluate_and_read_back(conn, now)
+    
+        error, _ = run_db(probe_db, body)
+&gt;       assert error is None, f'scoring one ordinary live trip on real Postgres raised {error!r}'
+E       AssertionError: scoring one ordinary live trip on real Postgres raised DataError("invalid input for query argument $2: {'vessel_id': 'V-LIVE', 'trip_count': 0,... (expected str, got dict)")
+E       assert DataError("invalid input for query argument $2: {'vessel_id': 'V-LIVE', 'trip_count': 0,... (expected str, got dict)") is None
+
+tests\security_probes\test_probe_anomaly.py:165: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_measure_whole_fleet_evaluation_cost" time="1.562"><properties><property name="finding" value="backend.ai.anomaly.authenticated-whole-fleet-recompute:measure" /></properties><failure message="probe_harness.ProbeBroken: evaluation crashed on the synthetic fleet: DataError(&quot;invalid input for query argument $2: {'vessel_id': 'M000', 'trip_count': 4, '... (expected str, got dict)&quot;)">&gt;   ???
+
+asyncpg/protocol/prepared_stmt.pyx:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+asyncpg/protocol/codecs/base.pyx:251: in asyncpg.protocol.protocol.Codec.encode
+    ???
+asyncpg/protocol/codecs/base.pyx:153: in asyncpg.protocol.protocol.Codec.encode_scalar
+    ???
+asyncpg/pgproto/codecs/json.pyx:16: in asyncpg.pgproto.pgproto.jsonb_encode
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+&gt;   ???
+E   TypeError: expected str, got dict
+
+asyncpg/pgproto/codecs/text.pyx:12: TypeError
+
+The above exception was the direct cause of the following exception:
+
+probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_9bf4a37e29d0'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x0000021B89170900&gt;
+
+    @pytest.mark.finding('backend.ai.anomaly.authenticated-whole-fleet-recompute:measure')
+    def test_measure_whole_fleet_evaluation_cost(probe_db, record_property):
+        """MEASURE only: records cost at one synthetic scale; never a verdict."""
+        now = now_utc()
+        vessels, contacts_per_vessel = 200, 50
+    
+        async def seed(conn):
+            await conn.execute("INSERT INTO buoys (id, label, lat, lon) VALUES ('B1', 'B1', 11.66, 122.44)")
+            await conn.executemany(
+                'INSERT INTO vessels (id, boat_name) VALUES ($1, $1)',
+                [(f'M{v:03d}',) for v in range(vessels)],
+            )
+            await conn.executemany(
+                '''
+                INSERT INTO buoy_contacts (event_id, buoy_id, vessel_id, trip_id, observed_at,
+                                           latitude, longitude, source, is_synthetic,
+                                           contact_type, contact_value)
+                VALUES ($1, 'B1', $2, $3, $4, 11.66, 122.44, 'live', FALSE, 'mesh_ping', $1)
+                ''',
+                [
+                    (f'm-{v}-{c}', f'M{v:03d}', f'M{v:03d}-T{c // 10}', now - timedelta(hours=c))
+                    for v in range(vessels) for c in range(contacts_per_vessel)
+                ],
+            )
+    
+        run_db(probe_db, seed)
+    
+        async def evaluate(conn):
+            started = time.perf_counter()
+            rows = await evaluate_and_persist(conn, as_of=now, include_synthetic=False)
+            return time.perf_counter() - started, len(rows)
+    
+        try:
+&gt;           elapsed, scored = run_db(probe_db, evaluate)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\security_probes\test_probe_anomaly.py:201: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\security_probes\probe_harness.py:113: in run_db
+    return asyncio.run(go())
+           ^^^^^^^^^^^^^^^^^
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py:190: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:654: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests\security_probes\probe_harness.py:109: in go
+    return await body(conn)
+           ^^^^^^^^^^^^^^^^
+tests\security_probes\test_probe_anomaly.py:197: in evaluate
+    rows = await evaluate_and_persist(conn, as_of=now, include_synthetic=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\ai\anomaly_service.py:201: in evaluate_and_persist
+    await conn.execute(
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:357: in execute
+    _, status, _ = await self._execute(
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:1873: in _execute
+    result, _ = await self.__execute(
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:1970: in __execute
+    result, stmt = await self._do_execute(
+C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:2033: in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+asyncpg/protocol/protocol.pyx:184: in bind_execute
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+&gt;   ???
+E   asyncpg.exceptions.DataError: invalid input for query argument $2: {'vessel_id': 'M000', 'trip_count': 4, '... (expected str, got dict)
+
+asyncpg/protocol/prepared_stmt.pyx:204: DataError
+
+The above exception was the direct cause of the following exception:
+
+probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_9bf4a37e29d0'
+record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x0000021B89170900&gt;
+
+    @pytest.mark.finding('backend.ai.anomaly.authenticated-whole-fleet-recompute:measure')
+    def test_measure_whole_fleet_evaluation_cost(probe_db, record_property):
+        """MEASURE only: records cost at one synthetic scale; never a verdict."""
+        now = now_utc()
+        vessels, contacts_per_vessel = 200, 50
+    
+        async def seed(conn):
+            await conn.execute("INSERT INTO buoys (id, label, lat, lon) VALUES ('B1', 'B1', 11.66, 122.44)")
+            await conn.executemany(
+                'INSERT INTO vessels (id, boat_name) VALUES ($1, $1)',
+                [(f'M{v:03d}',) for v in range(vessels)],
+            )
+            await conn.executemany(
+                '''
+                INSERT INTO buoy_contacts (event_id, buoy_id, vessel_id, trip_id, observed_at,
+                                           latitude, longitude, source, is_synthetic,
+                                           contact_type, contact_value)
+                VALUES ($1, 'B1', $2, $3, $4, 11.66, 122.44, 'live', FALSE, 'mesh_ping', $1)
+                ''',
+                [
+                    (f'm-{v}-{c}', f'M{v:03d}', f'M{v:03d}-T{c // 10}', now - timedelta(hours=c))
+                    for v in range(vessels) for c in range(contacts_per_vessel)
+                ],
+            )
+    
+        run_db(probe_db, seed)
+    
+        async def evaluate(conn):
+            started = time.perf_counter()
+            rows = await evaluate_and_persist(conn, as_of=now, include_synthetic=False)
+            return time.perf_counter() - started, len(rows)
+    
+        try:
+            elapsed, scored = run_db(probe_db, evaluate)
+        except Exception as exc:
+&gt;           raise ProbeBroken(f'evaluation crashed on the synthetic fleet: {exc!r}') from exc
+E           probe_harness.ProbeBroken: evaluation crashed on the synthetic fleet: DataError("invalid input for query argument $2: {'vessel_id': 'M000', 'trip_count': 4, '... (expected str, got dict)")
+
+tests\security_probes\test_probe_anomaly.py:203: ProbeBroken</failure></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password" time="0.015"><properties><property name="finding" value="backend.auth.login-timing-enumeration" /></properties><failure message="AssertionError: login for an unknown email ran bcrypt 0 times; a known email with a wrong password runs it once, so response time reveals which emails have accounts&#10;assert 0 == 1&#10; +  where 0 = len([])">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89641490&gt;
+
+    @pytest.mark.finding('backend.auth.login-timing-enumeration')
+    def test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password(monkeypatch):
+        """Deterministic stand-in for a timing measurement: bcrypt is the only
+        expensive step, so count how often it runs on each branch."""
+        install_pool(monkeypatch, FakeConn(), 'app.api.auth')
+        calls = []
+    
+        def counting_verify(password, password_hash):
+            calls.append(password_hash)
+            return False
+    
+        monkeypatch.setattr('app.api.auth.verify_password', counting_verify)
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post('/api/login', json={'email': 'nobody@example.com', 'password': 'x'})
+        require_status(response, 401)
+&gt;       assert len(calls) == 1, (
+            f'login for an unknown email ran bcrypt {len(calls)} times; a known email with a wrong '
+            'password runs it once, so response time reveals which emails have accounts'
+        )
+E       AssertionError: login for an unknown email ran bcrypt 0 times; a known email with a wrong password runs it once, so response time reveals which emails have accounts
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests\security_probes\test_probe_auth.py:29: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_token_for_an_account_that_no_longer_exists_is_rejected" time="0.008"><properties><property name="finding" value="backend.operator-jwt.no-server-revocation" /></properties><failure message="AssertionError: a token for a non-existent operator was accepted (HTTP 200); the server consulted 0 database queries to check it&#10;assert 200 == 401&#10; +  where 200 = &lt;Response [200 OK]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B895F5390&gt;
+
+    @pytest.mark.finding('backend.operator-jwt.no-server-revocation')
+    def test_token_for_an_account_that_no_longer_exists_is_rejected(monkeypatch):
+        """The fake database holds no users at all, standing in for an account
+        that was deleted or disabled after the token was issued."""
+        conn = FakeConn()
+        install_pool(monkeypatch, conn, 'app.api.auth')
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.get('/api/me', headers=operator_headers(user_id=987654))
+&gt;       assert response.status_code == 401, (
+            f'a token for a non-existent operator was accepted (HTTP {response.status_code}); '
+            f'the server consulted {len(conn.calls)} database queries to check it'
+        )
+E       AssertionError: a token for a non-existent operator was accepted (HTTP 200); the server consulted 0 database queries to check it
+E       assert 200 == 401
+E        +  where 200 = &lt;Response [200 OK]&gt;.status_code
+
+tests\security_probes\test_probe_auth.py:43: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_non_admin_operator_cannot_replace_the_live_squall_model[mdrrmo]" time="0.169"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement" /></properties><failure message="AssertionError: with ALLOW_TRAINING=true a mdrrmo token got HTTP 200 and 1 model write(s) to the live squall artifact&#10;assert (not [namespace(calibration='probe', top_features=[])])">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B897DC110&gt;
+role = 'mdrrmo'
+
+    @pytest.mark.finding('backend.ai.squall.flag-authorizes-live-model-replacement')
+    @pytest.mark.parametrize('role', ['mdrrmo', 'lgu'])
+    def test_non_admin_operator_cannot_replace_the_live_squall_model(monkeypatch, role):
+        writes = _stub_training(monkeypatch)
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post('/api/ai/squall/train', headers=operator_headers(role=role))
+&gt;       assert not writes and response.status_code == 403, (
+            f'with ALLOW_TRAINING=true a {role} token got HTTP {response.status_code} and '
+            f'{len(writes)} model write(s) to the live squall artifact'
+        )
+E       AssertionError: with ALLOW_TRAINING=true a mdrrmo token got HTTP 200 and 1 model write(s) to the live squall artifact
+E       assert (not [namespace(calibration='probe', top_features=[])])
+
+tests\security_probes\test_probe_auth.py:73: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_non_admin_operator_cannot_replace_the_live_squall_model[lgu]" time="0.008"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement" /></properties><failure message="AssertionError: with ALLOW_TRAINING=true a lgu token got HTTP 200 and 1 model write(s) to the live squall artifact&#10;assert (not [namespace(calibration='probe', top_features=[])])">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B8975F3D0&gt;
+role = 'lgu'
+
+    @pytest.mark.finding('backend.ai.squall.flag-authorizes-live-model-replacement')
+    @pytest.mark.parametrize('role', ['mdrrmo', 'lgu'])
+    def test_non_admin_operator_cannot_replace_the_live_squall_model(monkeypatch, role):
+        writes = _stub_training(monkeypatch)
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post('/api/ai/squall/train', headers=operator_headers(role=role))
+&gt;       assert not writes and response.status_code == 403, (
+            f'with ALLOW_TRAINING=true a {role} token got HTTP {response.status_code} and '
+            f'{len(writes)} model write(s) to the live squall artifact'
+        )
+E       AssertionError: with ALLOW_TRAINING=true a lgu token got HTTP 200 and 1 model write(s) to the live squall artifact
+E       assert (not [namespace(calibration='probe', top_features=[])])
+
+tests\security_probes\test_probe_auth.py:73: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_squall_control_admin_reaches_the_model_write" time="0.008"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_catch" name="test_one_vessel_cannot_rewrite_another_vessels_catch_log" time="0.736"><properties><property name="finding" value="backend.catch.global-idempotency-cross-vessel-write" /></properties><failure message="AssertionError: VESSEL-A reusing VESSEL-B's local_id (HTTP 200, body {&quot;catch_log&quot;:{&quot;id&quot;:1,&quot;created&quot;:false,&quot;duplicate&quot;:true,&quot;created_at&quot;:&quot;2026-09-23T04:38:32.066956+00:00&quot;}}) changed VESSEL-B's row to [{'vessel_id': 'VESSEL-B', 'species_name': 'injected', 'method': 'injected', 'notes': 'injected', 'share_for_hotspots': True}]&#10;assert [{'vessel_id'...jected', ...}] == [{'vessel_id'...': None, ...}]&#10;  &#10;  At index 0 diff: {'vessel_id': 'VESSEL-B', 'species_name': 'injected', 'method': 'injected', 'notes': 'injected', 'share_for_hotspots': True} != {'vessel_id': 'VESSEL-B', 'species_name': None, 'method': None, 'notes': None, 'share_for_hotspots': False}&#10;  Use -v to get more diff">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_cd8954e08977'
+
+    @pytest.mark.finding('backend.catch.global-idempotency-cross-vessel-write')
+    def test_one_vessel_cannot_rewrite_another_vessels_catch_log(probe_db):
+        victim = {
+            'vessel_id': 'VESSEL-B', 'local_id': 'shared-key', 'estimated_quantity_kg': 5,
+            'catch_date': '2026-09-01', 'share_for_hotspots': False,
+        }
+        attacker = {
+            **victim, 'vessel_id': 'VESSEL-A', 'species_name': 'injected', 'method': 'injected',
+            'notes': 'injected', 'share_for_hotspots': True,
+        }
+        try:
+            with TestClient(app, raise_server_exceptions=False) as client:
+                _as_vessel('VESSEL-B')
+                require_status(client.post('/api/catch-logs', json=victim), 200)
+                _as_vessel('VESSEL-A')
+                second = client.post('/api/catch-logs', json=attacker)
+        finally:
+            app.dependency_overrides.pop(require_vessel_device, None)
+    
+        rows = run_db(
+            probe_db,
+            lambda conn: conn.fetch(
+                'SELECT vessel_id, species_name, method, notes, share_for_hotspots FROM catch_logs '
+                'ORDER BY vessel_id'
+            ),
+        )
+        victim_rows = [dict(row) for row in rows if row['vessel_id'] == 'VESSEL-B']
+&gt;       assert victim_rows == [
+            {'vessel_id': 'VESSEL-B', 'species_name': None, 'method': None, 'notes': None,
+             'share_for_hotspots': False},
+        ], (
+            f'VESSEL-A reusing VESSEL-B\'s local_id (HTTP {second.status_code}, body {second.text[:200]}) '
+            f'changed VESSEL-B\'s row to {victim_rows}'
+        )
+E       AssertionError: VESSEL-A reusing VESSEL-B's local_id (HTTP 200, body {"catch_log":{"id":1,"created":false,"duplicate":true,"created_at":"2026-09-23T04:38:32.066956+00:00"}}) changed VESSEL-B's row to [{'vessel_id': 'VESSEL-B', 'species_name': 'injected', 'method': 'injected', 'notes': 'injected', 'share_for_hotspots': True}]
+E       assert [{'vessel_id'...jected', ...}] == [{'vessel_id'...': None, ...}]
+E         
+E         At index 0 diff: {'vessel_id': 'VESSEL-B', 'species_name': 'injected', 'method': 'injected', 'notes': 'injected', 'share_for_hotspots': True} != {'vessel_id': 'VESSEL-B', 'species_name': None, 'method': None, 'notes': None, 'share_for_hotspots': False}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_catch.py:46: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_request_text_cannot_mark_a_current_reading_qualified" time="0.006"><properties><property name="finding" value="backend.current-ingest.unbound-calibration-claim" /></properties><failure message="AssertionError: calibration_status=qualified was stored from request text for a buoy with no bound instrument or calibration record; drift treats such rows as production-grade&#10;assert 'qualified' != 'qualified'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B896A8D50&gt;
+
+    @pytest.mark.finding('backend.current-ingest.unbound-calibration-claim')
+    def test_request_text_cannot_mark_a_current_reading_qualified(monkeypatch):
+        conn = FakeConn(_current_responder)
+        install_pool(monkeypatch, conn, 'app.api.current_events')
+        monkeypatch.setenv('GATEWAY_API_KEY', GATEWAY_KEY)
+        body = {
+            'event_id': 'probe-current-1', 'buoy_id': 'BUOY-NO-INSTRUMENT',
+            'observed_at': now_utc().isoformat(), 'observed_u_mps': 0.2, 'observed_v_mps': 0.1,
+            'source': 'live', 'calibration_status': 'qualified',
+        }
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post('/api/v1/current-events', json=body, headers={'X-Api-Key': GATEWAY_KEY})
+        if response.status_code in (400, 403, 422):
+            return
+        require_status(response, 200)
+        stored = conn.calls_matching('INSERT INTO current_observations')[0][2][CALIBRATION_ARG]
+&gt;       assert stored != 'qualified', (
+            'calibration_status=qualified was stored from request text for a buoy with no bound '
+            'instrument or calibration record; drift treats such rows as production-grade'
+        )
+E       AssertionError: calibration_status=qualified was stored from request text for a buoy with no bound instrument or calibration record; drift treats such rows as production-grade
+E       assert 'qualified' != 'qualified'
+
+tests\security_probes\test_probe_ingest_trust.py:46: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_contact_ingest_rejects_a_day_ahead_timestamp" time="0.001"><properties><property name="finding" value="backend.contacts.future-timestamp-anomaly-suppression" /></properties><failure message="Failed: DID NOT RAISE ValidationError">@pytest.mark.finding('backend.contacts.future-timestamp-anomaly-suppression')
+    def test_contact_ingest_rejects_a_day_ahead_timestamp():
+        """current_events.py already rejects &gt;5 min of future skew; contacts does not."""
+&gt;       with pytest.raises(ValidationError):
+E       Failed: DID NOT RAISE ValidationError
+
+tests\security_probes\test_probe_ingest_trust.py:64: Failed</failure></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_contact_control_present_timestamp_is_accepted" time="0.001"><properties><property name="finding" value="backend.contacts.future-timestamp-anomaly-suppression:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_public_sea_condition_does_not_expose_operator_account" time="0.010"><properties><property name="finding" value="backend.public-sea-condition.operator-identity-disclosure" /></properties><failure message="AssertionError: anonymous GET /api/public/sea-condition returned operator account fields ['set_by_name', 'set_by_user_id']&#10;assert ('operator.au...mple.invalid' not in '{&quot;current&quot;:...095+00:00&quot;}}'&#10;  &#10;  'operator.audit@example.invalid' is contained here:&#10;    by_name&quot;:&quot;operator.audit@example.invalid&quot;,&quot;created_at&quot;:&quot;2026-09-23T04:38:32.216095+00:00&quot;}}&#10;  ?           ++++++++++++++++++++++++++++++)">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B891A2110&gt;
+
+    @pytest.mark.finding('backend.public-sea-condition.operator-identity-disclosure')
+    def test_public_sea_condition_does_not_expose_operator_account(monkeypatch):
+        install_pool(monkeypatch, FakeConn(_sea_condition_responder), 'app.api.public', 'app.api.sea_condition')
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.get('/api/public/sea-condition')
+        require_status(response, 200)
+        current = response.json()['current']
+        leaked = {key: current[key] for key in ('set_by_user_id', 'set_by_name') if key in current}
+&gt;       assert OPERATOR_EMAIL not in response.text and not leaked, (
+            f'anonymous GET /api/public/sea-condition returned operator account fields {sorted(leaked)}'
+        )
+E       AssertionError: anonymous GET /api/public/sea-condition returned operator account fields ['set_by_name', 'set_by_user_id']
+E       assert ('operator.au...mple.invalid' not in '{"current":...095+00:00"}}'
+E         
+E         'operator.audit@example.invalid' is contained here:
+E           by_name":"operator.audit@example.invalid","created_at":"2026-09-23T04:38:32.216095+00:00"}}
+E         ?           ++++++++++++++++++++++++++++++)
+
+tests\security_probes\test_probe_public_disclosure.py:32: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[3]" time="0.001"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 3 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 3
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 3 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:49: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[4]" time="0.001"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 4 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 4
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 4 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:49: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_control_five_reporters_publish" time="0.001"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[UPLINK_SSID]" time="0.001"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: UPLINK_SSID in the tracked shore sketch is a concrete 20-character value, not a placeholder&#10;assert None&#10; +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')&#10; +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search">name = 'UPLINK_SSID'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+&gt;       assert PLACEHOLDER.search(value), (
+            f'{name} in the tracked shore sketch is a concrete {len(value)}-character value, not a placeholder'
+        )
+E       AssertionError: UPLINK_SSID in the tracked shore sketch is a concrete 20-character value, not a placeholder
+E       assert None
+E        +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')
+E        +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search
+
+tests\security_probes\test_probe_repo_static.py:43: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[UPLINK_PASS]" time="0.001"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: UPLINK_PASS in the tracked shore sketch is a concrete 8-character value, not a placeholder&#10;assert None&#10; +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')&#10; +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search">name = 'UPLINK_PASS'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+&gt;       assert PLACEHOLDER.search(value), (
+            f'{name} in the tracked shore sketch is a concrete {len(value)}-character value, not a placeholder'
+        )
+E       AssertionError: UPLINK_PASS in the tracked shore sketch is a concrete 8-character value, not a placeholder
+E       assert None
+E        +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')
+E        +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search
+
+tests\security_probes\test_probe_repo_static.py:43: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[GATEWAY_API_KEY]" time="0.001"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: GATEWAY_API_KEY in the tracked shore sketch is a concrete 12-character value, not a placeholder&#10;assert None&#10; +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')&#10; +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search">name = 'GATEWAY_API_KEY'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+&gt;       assert PLACEHOLDER.search(value), (
+            f'{name} in the tracked shore sketch is a concrete {len(value)}-character value, not a placeholder'
+        )
+E       AssertionError: GATEWAY_API_KEY in the tracked shore sketch is a concrete 12-character value, not a placeholder
+E       assert None
+E        +  where None = &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt;('<redacted>')
+E        +    where &lt;built-in method search of re.Pattern object at 0x0000021B878C3CF0&gt; = re.compile('^$|your|change|example|placeholder|xxx|&lt;.*&gt;', re.IGNORECASE).search
+
+tests\security_probes\test_probe_repo_static.py:43: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_key_is_not_the_repository_default" time="0.001"><properties><property name="finding" value="firmware.loam.shared-default-key" /></properties><failure message="AssertionError: LOAM_KEY is still the published default in AqOneLoam.h&#10;assert 'aqone-dev-key-change-me' != 'aqone-dev-key-change-me'">@pytest.mark.finding('firmware.loam.shared-default-key')
+    def test_loam_key_is_not_the_repository_default():
+        value = _string_constant(LOAM_BUOY, 'LOAM_KEY')
+&gt;       assert value != 'aqone-dev-key-change-me', 'LOAM_KEY is still the published default in AqOneLoam.h'
+E       AssertionError: LOAM_KEY is still the published default in AqOneLoam.h
+E       assert 'aqone-dev-key-change-me' != 'aqone-dev-key-change-me'
+
+tests\security_probes\test_probe_repo_static.py:51: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_signature_key_is_selected_per_source_id" time="0.001"><properties><property name="finding" value="firmware.loam.shared-default-key" /></properties><failure message="AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)&#10;assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)&#10; +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000021B88788BA0&gt;)">@pytest.mark.finding('firmware.loam.shared-default-key')
+    def test_loam_signature_key_is_selected_per_source_id():
+        """One global key means any holder can sign as any SRC_ID."""
+        hmac_calls = re.findall(r'mbedtls_md_hmac_starts\([^;]*;', _code(LOAM_BUOY))
+&gt;       assert hmac_calls and all('LOAM_KEY' not in call for call in hmac_calls), (
+            f'every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY ({len(hmac_calls)} call sites)'
+        )
+E       AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)
+E       assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)
+E        +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000021B88788BA0&gt;)
+
+tests\security_probes\test_probe_repo_static.py:58: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_control_headers_are_byte_identical" time="0.001"><properties><property name="finding" value="firmware.loam.shared-default-key:control" /></properties><failure message="AssertionError: assert b'// AqOneLoa..._WHITE);\n}\n' == b'  // AqOneL..._WHITE);\n}\n'&#10;  &#10;  At index 0 diff: b'/' != b' '&#10;  Use -v to get more diff">@pytest.mark.finding('firmware.loam.shared-default-key:control')
+    def test_loam_control_headers_are_byte_identical():
+&gt;       assert LOAM_BUOY.read_bytes() == LOAM_SHORE.read_bytes()
+E       AssertionError: assert b'// AqOneLoa..._WHITE);\n}\n' == b'  // AqOneL..._WHITE);\n}\n'
+E         
+E         At index 0 diff: b'/' != b' '
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_repo_static.py:65: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_verifies_the_backend_certificate" time="0.004"><properties><property name="finding" value="firmware.shore.tls-peer-verification-disabled" /></properties><failure message="AssertionError: the shore sketch calls WiFiClientSecure::setInsecure()&#10;assert 'setInsecure()' not in '\n\n\n\n\n\...= true;\n}\n'&#10;  &#10;  'setInsecure()' is contained here:&#10;    &#10;      client.setInsecure();&#10;      return https.begin(client, url);&#10;    }&#10;    ...&#10;  &#10;  ...Full output truncated (791 lines hidden), use '-vv' to show">@pytest.mark.finding('firmware.shore.tls-peer-verification-disabled')
+    def test_shore_verifies_the_backend_certificate():
+        code = _code(SHORE)
+&gt;       assert 'setInsecure()' not in code, 'the shore sketch calls WiFiClientSecure::setInsecure()'
+E       AssertionError: the shore sketch calls WiFiClientSecure::setInsecure()
+E       assert 'setInsecure()' not in '\n\n\n\n\n\...= true;\n}\n'
+E         
+E         'setInsecure()' is contained here:
+E           
+E             client.setInsecure();
+E             return https.begin(client, url);
+E           }
+E           ...
+E         
+E         ...Full output truncated (791 lines hidden), use '-vv' to show
+
+tests\security_probes\test_probe_repo_static.py:71: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_buoy_warning_cache_orders_updates_by_revision" time="0.002"><properties><property name="finding" value="firmware.warning.missing-revision-tombstone" /></properties><failure message="AssertionError: the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, so a replayed older frame replaces a newer one&#10;assert None&#10; +  where None = &lt;function search at 0x0000021BD2DFFBA0&gt;('\\b(rev|revision|version|ver)\\b', 'case T_WARN: {\n      if (!parsed) break;\n      int wid = p[&quot;id&quot;] | 0;\n      if (!wid) break;\n\n      uint32_t exp... id=%d prio=%s\\n&quot;, wid, cachedWarnings[slot].priority);\n      meshRelay(raw, total, f);\n      break;\n    }\n\n    ', re.IGNORECASE)&#10; +    where &lt;function search at 0x0000021BD2DFFBA0&gt; = re.search&#10; +    and   re.IGNORECASE = re.I">@pytest.mark.finding('firmware.warning.missing-revision-tombstone')
+    def test_buoy_warning_cache_orders_updates_by_revision():
+        block = _case_block(_code(BUOY), 'T_WARN')
+&gt;       assert re.search(r'\b(rev|revision|version|ver)\b', block, re.I), (
+            'the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, '
+            'so a replayed older frame replaces a newer one'
+        )
+E       AssertionError: the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, so a replayed older frame replaces a newer one
+E       assert None
+E        +  where None = &lt;function search at 0x0000021BD2DFFBA0&gt;('\\b(rev|revision|version|ver)\\b', 'case T_WARN: {\n      if (!parsed) break;\n      int wid = p["id"] | 0;\n      if (!wid) break;\n\n      uint32_t exp... id=%d prio=%s\\n", wid, cachedWarnings[slot].priority);\n      meshRelay(raw, total, f);\n      break;\n    }\n\n    ', re.IGNORECASE)
+E        +    where &lt;function search at 0x0000021BD2DFFBA0&gt; = re.search
+E        +    and   re.IGNORECASE = re.I
+
+tests\security_probes\test_probe_repo_static.py:83: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_tx_ring_keeps_capacity_for_distress_frames" time="0.001"><properties><property name="finding" value="firmware.buoy.chat-starves-sos-tx-ring" /></properties><failure message="AssertionError: txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with no reserved capacity (runtime starvation still needs a bench test)&#10;assert None">@pytest.mark.finding('firmware.buoy.chat-starves-sos-tx-ring')
+    def test_tx_ring_keeps_capacity_for_distress_frames():
+        loam = _code(LOAM_BUOY)
+        enqueue = loam[loam.index('bool txEnqueue('):]
+        enqueue = enqueue[: enqueue.index('\n}') + 2]
+        guarded = re.search(r'reserve|priority|T_SOS|T_CHAT|chatInFlight|CHAT_MAX', enqueue, re.I)
+&gt;       assert guarded, (
+            'txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with '
+            'no reserved capacity (runtime starvation still needs a bench test)'
+        )
+E       AssertionError: txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with no reserved capacity (runtime starvation still needs a bench test)
+E       assert None
+
+tests\security_probes\test_probe_repo_static.py:95: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_release_build_does_not_fall_back_to_debug_signing" time="0.001"><properties><property name="finding" value="mobile.release.debug-signing-fallback" /></properties><failure message="AssertionError: the release buildType falls back to the debug signing config when key.properties is absent&#10;assert not &lt;re.Match object; span=(3726, 3759), match='signingConfigs.getByName(&quot;debug&quot;)'&gt;">@pytest.mark.finding('mobile.release.debug-signing-fallback')
+    def test_release_build_does_not_fall_back_to_debug_signing():
+        gradle = GRADLE.read_text('utf-8')
+        fallback = re.search(r'signingConfigs\.getByName\("debug"\)', gradle)
+&gt;       assert not fallback, 'the release buildType falls back to the debug signing config when key.properties is absent'
+E       AssertionError: the release buildType falls back to the debug signing config when key.properties is absent
+E       assert not &lt;re.Match object; span=(3726, 3759), match='signingConfigs.getByName("debug")'&gt;
+
+tests\security_probes\test_probe_repo_static.py:105: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_tracked_release_apk_is_not_debug_signed" time="1.270"><properties><property name="finding" value="mobile.release.debug-signing-fallback" /></properties><failure message="AssertionError: mobile/releases/aqone-release.apk carries an &quot;Android Debug&quot; signing certificate&#10;assert b'Android Debug' not in b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\x00\x00\x00{/\xf1\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8c\x01\x8c\x01&amp;g\x00\x00l\xff\xf4\x03\x00\x00'&#10; +  where b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\x00\x00\x00{/\xf1\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8c\x01\x8c\x01&amp;g\x00\x00l\xff\xf4\x03\x00\x00' = read_bytes()&#10; +    where read_bytes = WindowsPath('C:/Users/User/Desktop/PersonalProjects/00-HACKATHONS-COMPETITIONS/00-HACKATHONS/00-2026-FIRST-YEAR/2026-Aquanons/AIHackathon2026_Aquanons_AqOne/mobile/releases/aqone-release.apk').read_bytes">@pytest.mark.finding('mobile.release.debug-signing-fallback')
+    def test_tracked_release_apk_is_not_debug_signed():
+        """Heuristic: the Android debug certificate's subject is 'CN=Android Debug'.
+        Confirm with apksigner verify --print-certs if this fails."""
+        if not TRACKED_APK.exists():
+            return
+&gt;       assert b'Android Debug' not in TRACKED_APK.read_bytes(), (
+            'mobile/releases/aqone-release.apk carries an "Android Debug" signing certificate'
+        )
+E       AssertionError: mobile/releases/aqone-release.apk carries an "Android Debug" signing certificate
+E       assert b'Android Debug' not in b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\x00\x00\x00{/\xf1\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8c\x01\x8c\x01&amp;g\x00\x00l\xff\xf4\x03\x00\x00'
+E        +  where b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\x00\x00\x00{/\xf1\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8c\x01\x8c\x01&amp;g\x00\x00l\xff\xf4\x03\x00\x00' = read_bytes()
+E        +    where read_bytes = WindowsPath('C:/Users/User/Desktop/PersonalProjects/00-HACKATHONS-COMPETITIONS/00-HACKATHONS/00-2026-FIRST-YEAR/2026-Aquanons/AIHackathon2026_Aquanons_AqOne/mobile/releases/aqone-release.apk').read_bytes
+
+tests\security_probes\test_probe_repo_static.py:114: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_demo_weather_rejects_ten_thousand_coordinate_cells" time="0.011"><properties><property name="finding" value="backend.demo-weather.unbounded-coordinate-expansion" /></properties><failure message="Failed: DID NOT RAISE ValueError">@pytest.mark.finding('backend.demo-weather.unbounded-coordinate-expansion')
+    def test_demo_weather_rejects_ten_thousand_coordinate_cells():
+        many = 10_000
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE ValueError
+
+tests\security_probes\test_probe_resource_bounds.py:18: Failed</failure></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_public_squall_does_not_load_week_old_readings" time="0.755"><properties><property name="finding" value="backend.public-squall.unbounded-history-load" /></properties><failure message="AssertionError: one anonymous request loaded 5090 readings, 5000 of them over two days old; the load grows with retained history&#10;assert not [{'buoy_id': 'B2', 'observed_at': datetime.datetime(2026, 9, 12, 17, 19, 34, 98581, tzinfo=datetime.timezone.utc), 'pr...ved_at': datetime.datetime(2026, 9, 12, 17, 24, 34, 98581, tzinfo=datetime.timezone.utc), 'pressure_hpa': 1010.0}, ...]">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_686a580ece8a'
+
+    @pytest.mark.finding('backend.public-squall.unbounded-history-load')
+    def test_public_squall_does_not_load_week_old_readings(probe_db):
+        """GET /api/public/squall calls _load_rows(conn, live=True) per request."""
+        now = now_utc()
+        old_rows = 5_000
+    
+        async def body(conn):
+            await conn.executemany(
+                'INSERT INTO buoys (id, label, lat, lon, is_synthetic) VALUES ($1, $1, $2, 122.44, FALSE)',
+                [('B1', 11.66), ('B2', 11.67), ('B3', 11.68)],
+            )
+            await conn.executemany(
+                'INSERT INTO barometric_readings (buoy_id, observed_at, pressure_hpa, is_synthetic) '
+                'VALUES ($1, $2, 1010.0, FALSE)',
+                [(f'B{i % 3 + 1}', now - timedelta(days=7, minutes=i)) for i in range(old_rows)]
+                + [(f'B{i % 3 + 1}', now - timedelta(minutes=i)) for i in range(90)],
+            )
+            readings, _, _ = await _load_rows(conn, live=True)
+            return readings
+    
+        readings = run_db(probe_db, body)
+        stale = [r for r in readings if r['observed_at'] &lt; now - timedelta(days=2)]
+&gt;       assert not stale, (
+            f'one anonymous request loaded {len(readings)} readings, {len(stale)} of them over two days old; '
+            'the load grows with retained history'
+        )
+E       AssertionError: one anonymous request loaded 5090 readings, 5000 of them over two days old; the load grows with retained history
+E       assert not [{'buoy_id': 'B2', 'observed_at': datetime.datetime(2026, 9, 12, 17, 19, 34, 98581, tzinfo=datetime.timezone.utc), 'pr...ved_at': datetime.datetime(2026, 9, 12, 17, 24, 34, 98581, tzinfo=datetime.timezone.utc), 'pressure_hpa': 1010.0}, ...]
+
+tests\security_probes\test_probe_resource_bounds.py:44: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_mesh_chat_has_a_retention_or_admission_control" time="0.059"><properties><property name="finding" value="backend.mesh.unbounded-public-storage" /></properties><failure message="AssertionError: no retention job, cleanup statement, or rate limiter for anonymous mesh_chat rows&#10;assert []">@pytest.mark.finding('backend.mesh.unbounded-public-storage')
+    def test_mesh_chat_has_a_retention_or_admission_control():
+        """Static: any DELETE/retention for mesh_chat, or a limiter on its POST route."""
+        sources = [
+            *(REPO_ROOT / 'backend' / 'app').rglob('*.py'),
+            *(REPO_ROOT / 'backend' / 'migrations').glob('*.sql'),
+            *(REPO_ROOT / 'backend').glob('*.py'),
+            *REPO_ROOT.glob('render.yaml'),
+        ]
+        pattern = re.compile(r'DELETE\s+FROM\s+mesh_chat|mesh_chat.*retention|pg_cron|RateLimit|slowapi', re.I)
+        hits = [str(path.relative_to(REPO_ROOT)) for path in sources if pattern.search(path.read_text('utf-8'))]
+&gt;       assert hits, 'no retention job, cleanup statement, or rate limiter for anonymous mesh_chat rows'
+E       AssertionError: no retention job, cleanup statement, or rate limiter for anonymous mesh_chat rows
+E       assert []
+
+tests\security_probes\test_probe_resource_bounds.py:61: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_anonymous_sos_cannot_self_assert_responder_confirmation" time="0.010"><properties><property name="finding" value="backend.sos.untrusted-provenance-claims" /></properties><failure message="AssertionError: an unauthenticated request stored trust_tier=confirmed_by_responder on a new incident&#10;assert 'confirmed_by_responder' != 'confirmed_by_responder'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89C723D0&gt;
+
+    @pytest.mark.finding('backend.sos.untrusted-provenance-claims')
+    def test_anonymous_sos_cannot_self_assert_responder_confirmation(monkeypatch):
+        response, args, _ = _post_anonymous_sos(monkeypatch, _sos(trust_tier='confirmed_by_responder'))
+        if response.status_code in (401, 403, 422):
+            return
+        require_status(response, 200)
+&gt;       assert args[TRUST_TIER_ARG] != 'confirmed_by_responder', (
+            'an unauthenticated request stored trust_tier=confirmed_by_responder on a new incident'
+        )
+E       AssertionError: an unauthenticated request stored trust_tier=confirmed_by_responder on a new incident
+E       assert 'confirmed_by_responder' != 'confirmed_by_responder'
+
+tests\security_probes\test_probe_sos.py:58: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key" time="0.007"><properties><property name="finding" value="backend.sos.untrusted-provenance-claims" /></properties><failure message="AssertionError: a request with no gateway key was stored as delivered_via_buoy=True with buoy_id='UNTRUSTED-BUOY'; buoys auto-registered: ['UNTRUSTED-BUOY']&#10;assert (not True)">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B8918B050&gt;
+
+    @pytest.mark.finding('backend.sos.untrusted-provenance-claims')
+    def test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key(monkeypatch):
+        body = _sos(source='buoy', buoy_id='UNTRUSTED-BUOY', src_id=4242, seq=7, local_id=None)
+        response, args, conn = _post_anonymous_sos(monkeypatch, body)
+        if response.status_code in (401, 403):
+            return
+        require_status(response, 200)
+        registered_buoys = [call[2][0] for call in conn.calls_matching('INSERT INTO buoys')]
+&gt;       assert not args[DELIVERED_VIA_BUOY_ARG] and args[BUOY_ID_ARG] is None, (
+            'a request with no gateway key was stored as delivered_via_buoy='
+            f'{args[DELIVERED_VIA_BUOY_ARG]} with buoy_id={args[BUOY_ID_ARG]!r}; '
+            f'buoys auto-registered: {registered_buoys}'
+        )
+E       AssertionError: a request with no gateway key was stored as delivered_via_buoy=True with buoy_id='UNTRUSTED-BUOY'; buoys auto-registered: ['UNTRUSTED-BUOY']
+E       assert (not True)
+
+tests\security_probes\test_probe_sos.py:71: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_genuine_sos_survives_a_burst_of_anonymous_sos" time="1.274"><properties><property name="finding" value="backend.sos.anonymous-incidents-crowd-dispatch-feed" /></properties><failure message="AssertionError: after 100 anonymous SOS (statuses {200: 100}) the dispatcher feed holds 100 incidents and the older genuine unresolved incident is gone&#10;assert 'GENUINE-1' in ['FLOOD-099', 'FLOOD-098', 'FLOOD-097', 'FLOOD-096', 'FLOOD-095', 'FLOOD-094', ...]">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_9b3a1715e33f'
+
+    @pytest.mark.finding('backend.sos.anonymous-incidents-crowd-dispatch-feed')
+    def test_genuine_sos_survives_a_burst_of_anonymous_sos(probe_db):
+        with TestClient(app, raise_server_exceptions=False) as client:
+            genuine = client.post('/api/sos', json=_sos(vessel_id='GENUINE-1', local_id='genuine-local'))
+            require_status(genuine, 200)
+            flood_statuses: dict[int, int] = {}
+            for i in range(100):
+                flood = client.post(
+                    '/api/sos',
+                    json=_sos(vessel_id=f'FLOOD-{i:03d}', client_ts=1_700_000_100 + i, local_id=None),
+                )
+                flood_statuses[flood.status_code] = flood_statuses.get(flood.status_code, 0) + 1
+            feed = client.get('/api/sos/active', headers=operator_headers())
+        require_status(feed, 200)
+        vessels = [event['vessel_id'] for event in feed.json()['events']]
+&gt;       assert 'GENUINE-1' in vessels, (
+            f'after 100 anonymous SOS (statuses {flood_statuses}) the dispatcher feed holds '
+            f'{len(vessels)} incidents and the older genuine unresolved incident is gone'
+        )
+E       AssertionError: after 100 anonymous SOS (statuses {200: 100}) the dispatcher feed holds 100 incidents and the older genuine unresolved incident is gone
+E       assert 'GENUINE-1' in ['FLOOD-099', 'FLOOD-098', 'FLOOD-097', 'FLOOD-096', 'FLOOD-095', 'FLOOD-094', ...]
+
+tests\security_probes\test_probe_sos.py:93: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy" time="0.878"><properties><property name="finding" value="mobile.sos.buoy-only-reply-unroutable" /></properties><failure message="AssertionError: handset reply returned HTTP 404; the buoy-only incident still has fisher_reply=None resolved_at=None&#10;assert None == 2">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_479e08eef827'
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B8975E850&gt;
+
+    @pytest.mark.finding('mobile.sos.buoy-only-reply-unroutable')
+    def test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy(probe_db, monkeypatch):
+        """Backend half. The un-enrolled handset replies with
+        POST /api/sos/reply/{its own local_id} (mobile/lib/services/backend_client.dart
+        replyToSos); a buoy-only SOS never carried that local_id to the backend.
+        Encodes today's handset request - revisit when the fix changes the route.
+        """
+        monkeypatch.setenv('GATEWAY_API_KEY', GATEWAY_KEY)
+        body = _sos(
+            vessel_id='BUOY-ONLY-V', client_ts=1_700_000_500, source='buoy',
+            buoy_id='BUOY01', src_id=65537, seq=42, local_id=None,
+        )
+        with TestClient(app, raise_server_exceptions=False) as client:
+            ingest = client.post('/api/sos', json=body, headers={'X-Api-Key': GATEWAY_KEY})
+            require_status(ingest, 200)
+            reply = client.post('/api/sos/reply/1755248500123-abcdef12', json={'reply': 2})
+    
+        stored = run_db(
+            probe_db,
+            lambda conn: conn.fetchrow(
+                'SELECT fisher_reply, resolved_at FROM sos_events WHERE vessel_id = $1', 'BUOY-ONLY-V'
+            ),
+        )
+&gt;       assert stored['fisher_reply'] == 2, (
+            f'handset reply returned HTTP {reply.status_code}; the buoy-only incident still has '
+            f'fisher_reply={stored["fisher_reply"]} resolved_at={stored["resolved_at"]}'
+        )
+E       AssertionError: handset reply returned HTTP 404; the buoy-only incident still has fisher_reply=None resolved_at=None
+E       assert None == 2
+
+tests\security_probes\test_probe_sos.py:122: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[GET-/api/v1/trips-None]" time="0.011"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties><failure message="AssertionError: GET /api/v1/trips with no credentials reached the handler (HTTP 503)&#10;assert 503 in (401, 403)&#10; +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B8925B650&gt;
+method = 'GET', path = '/api/v1/trips', body = None
+
+    @pytest.mark.finding('backend.trips.unbound-public-access')
+    @pytest.mark.parametrize(('method', 'path', 'body'), TRIP_ROUTES)
+    def test_trip_route_requires_a_bound_principal(monkeypatch, method, path, body):
+        response = _anonymous(monkeypatch, method, path, body)
+&gt;       assert response.status_code in (401, 403), (
+            f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
+        )
+E       AssertionError: GET /api/v1/trips with no credentials reached the handler (HTTP 503)
+E       assert 503 in (401, 403)
+E        +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code
+
+tests\security_probes\test_probe_unauth_routes.py:51: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[GET-/api/v1/trips/PROBE-TRIP-None]" time="0.007"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties><failure message="AssertionError: GET /api/v1/trips/PROBE-TRIP with no credentials reached the handler (HTTP 503)&#10;assert 503 in (401, 403)&#10; +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89CA7FD0&gt;
+method = 'GET', path = '/api/v1/trips/PROBE-TRIP', body = None
+
+    @pytest.mark.finding('backend.trips.unbound-public-access')
+    @pytest.mark.parametrize(('method', 'path', 'body'), TRIP_ROUTES)
+    def test_trip_route_requires_a_bound_principal(monkeypatch, method, path, body):
+        response = _anonymous(monkeypatch, method, path, body)
+&gt;       assert response.status_code in (401, 403), (
+            f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
+        )
+E       AssertionError: GET /api/v1/trips/PROBE-TRIP with no credentials reached the handler (HTTP 503)
+E       assert 503 in (401, 403)
+E        +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code
+
+tests\security_probes\test_probe_unauth_routes.py:51: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[PATCH-/api/v1/trips/PROBE-TRIP-body2]" time="0.008"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties><failure message="AssertionError: PATCH /api/v1/trips/PROBE-TRIP with no credentials reached the handler (HTTP 503)&#10;assert 503 in (401, 403)&#10; +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89C58910&gt;
+method = 'PATCH', path = '/api/v1/trips/PROBE-TRIP'
+body = {'welfare_status': 'safe', 'expected_return_at': '2030-01-01T00:00:00Z'}
+
+    @pytest.mark.finding('backend.trips.unbound-public-access')
+    @pytest.mark.parametrize(('method', 'path', 'body'), TRIP_ROUTES)
+    def test_trip_route_requires_a_bound_principal(monkeypatch, method, path, body):
+        response = _anonymous(monkeypatch, method, path, body)
+&gt;       assert response.status_code in (401, 403), (
+            f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
+        )
+E       AssertionError: PATCH /api/v1/trips/PROBE-TRIP with no credentials reached the handler (HTTP 503)
+E       assert 503 in (401, 403)
+E        +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code
+
+tests\security_probes\test_probe_unauth_routes.py:51: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_warning_delivery_route_requires_an_authority[POST-/api/advisories/delivery-body0]" time="0.011"><properties><property name="finding" value="backend.warning-delivery.unbound-state-authority" /></properties><failure message="AssertionError: POST /api/advisories/delivery with no credentials reached the handler (HTTP 503)&#10;assert 503 in (401, 403)&#10; +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89CA73D0&gt;
+method = 'POST', path = '/api/advisories/delivery'
+body = {'warning_id': 101, 'delivery_state': 'user_acknowledged', 'vessel_id': 'dummy-victim', 'occurred_at': '2026-01-01T00:00:00Z', ...}
+
+    @pytest.mark.finding('backend.warning-delivery.unbound-state-authority')
+    @pytest.mark.parametrize(('method', 'path', 'body'), WARNING_DELIVERY_ROUTES)
+    def test_warning_delivery_route_requires_an_authority(monkeypatch, method, path, body):
+        response = _anonymous(monkeypatch, method, path, body)
+&gt;       assert response.status_code in (401, 403), (
+            f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
+        )
+E       AssertionError: POST /api/advisories/delivery with no credentials reached the handler (HTTP 503)
+E       assert 503 in (401, 403)
+E        +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code
+
+tests\security_probes\test_probe_unauth_routes.py:60: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_warning_delivery_route_requires_an_authority[GET-/api/advisories/101/deliveries-None]" time="0.009"><properties><property name="finding" value="backend.warning-delivery.unbound-state-authority" /></properties><failure message="AssertionError: GET /api/advisories/101/deliveries with no credentials reached the handler (HTTP 503)&#10;assert 503 in (401, 403)&#10; +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021B89C99250&gt;
+method = 'GET', path = '/api/advisories/101/deliveries', body = None
+
+    @pytest.mark.finding('backend.warning-delivery.unbound-state-authority')
+    @pytest.mark.parametrize(('method', 'path', 'body'), WARNING_DELIVERY_ROUTES)
+    def test_warning_delivery_route_requires_an_authority(monkeypatch, method, path, body):
+        response = _anonymous(monkeypatch, method, path, body)
+&gt;       assert response.status_code in (401, 403), (
+            f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
+        )
+E       AssertionError: GET /api/advisories/101/deliveries with no credentials reached the handler (HTTP 503)
+E       assert 503 in (401, 403)
+E        +  where 503 = &lt;Response [503 Service Unavailable]&gt;.status_code
+
+tests\security_probes\test_probe_unauth_routes.py:60: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_anonymous_caller_cannot_replace_an_existing_vessel_identity" time="0.647"><properties><property name="finding" value="backend.vessel-profile.unbound-owner-write" /></properties><failure message="AssertionError: a second unauthenticated POST (HTTP 200) replaced the identity dispatchers see for VESSEL-B with {'skipper_name': 'Impostor', 'license_number': 'FAKE-999', 'phone': '+639179999999'}&#10;assert {'skipper_nam...639179999999'} == {'skipper_nam...639170000001'}&#10;  &#10;  Differing items:&#10;  {'skipper_name': 'Impostor'} != {'skipper_name': 'Real Owner'}&#10;  {'license_number': 'FAKE-999'} != {'license_number': 'REAL-001'}&#10;  {'phone': '+639179999999'} != {'phone': '+639170000001'}&#10;  Use -v to get more diff">probe_db = 'postgresql://postgres:probe@localhost:55432/aqone_probe_74705c861eab'
+
+    @pytest.mark.finding('backend.vessel-profile.unbound-owner-write')
+    def test_anonymous_caller_cannot_replace_an_existing_vessel_identity(probe_db):
+        owner = {
+            'vessel_id': 'VESSEL-B', 'boat': 'NW-B', 'skipper_name': 'Real Owner',
+            'license_type': 'motorized', 'license_number': 'REAL-001', 'phone': '+639170000001',
+        }
+        attacker = {**owner, 'skipper_name': 'Impostor', 'license_number': 'FAKE-999', 'phone': '+639179999999'}
+        with TestClient(app, raise_server_exceptions=False) as client:
+            first = client.post('/api/vessel-profile', json=owner)
+            require_status(first, 200)
+            overwrite = client.post('/api/vessel-profile', json=attacker)
+    
+        stored = run_db(
+            probe_db,
+            lambda conn: conn.fetchrow(
+                'SELECT skipper_name, license_number, phone FROM vessels WHERE id = $1', 'VESSEL-B'
+            ),
+        )
+&gt;       assert dict(stored) == {
+            'skipper_name': 'Real Owner', 'license_number': 'REAL-001', 'phone': '+639170000001',
+        }, (
+            f'a second unauthenticated POST (HTTP {overwrite.status_code}) replaced the identity '
+            f'dispatchers see for VESSEL-B with {dict(stored)}'
+        )
+E       AssertionError: a second unauthenticated POST (HTTP 200) replaced the identity dispatchers see for VESSEL-B with {'skipper_name': 'Impostor', 'license_number': 'FAKE-999', 'phone': '+639179999999'}
+E       assert {'skipper_nam...639179999999'} == {'skipper_nam...639170000001'}
+E         
+E         Differing items:
+E         {'skipper_name': 'Impostor'} != {'skipper_name': 'Real Owner'}
+E         {'license_number': 'FAKE-999'} != {'license_number': 'REAL-001'}
+E         {'phone': '+639179999999'} != {'phone': '+639170000001'}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_unauth_routes.py:83: AssertionError</failure></testcase></testsuite></testsuites>

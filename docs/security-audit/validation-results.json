@@ -1,0 +1,667 @@
+{
+  "run": {
+    "run_id": "20260923T1233",
+    "started_at": "2026-09-23T12:33:40+08:00",
+    "finished_at": "2026-09-23T12:42:00+08:00",
+    "git_head": "ef6cc7d46e8e89d28cdbb84c028671d7d46ed5c0",
+    "worktree_dirty_before": true,
+    "python": "3.11.9",
+    "flutter": "3.44.7",
+    "postgres": "18.4",
+    "db_probes_ran": true,
+    "agent": "Antigravity (Gemini 3.8 Flash)"
+  },
+  "findings": [
+    {
+      "id": "backend.sos.untrusted-provenance-claims",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_self_assert_responder_confirmation",
+          "outcome": "failed",
+          "message": "AssertionError: an unauthenticated request stored trust_tier confirmed_by_responder"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key",
+          "outcome": "failed",
+          "message": "AssertionError: a request with no gateway key was stored as delivered_over_mesh"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.sos.anonymous-incidents-crowd-dispatch-feed",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_sos.py::test_genuine_sos_survives_a_burst_of_anonymous_sos",
+          "outcome": "failed",
+          "message": "AssertionError: after 100 anonymous SOS (statuses {200: 100}) the genuine SOS is missing from the 50-incident feed"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "mobile.sos.buoy-only-reply-unroutable",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_sos.py::test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy",
+          "outcome": "failed",
+          "message": "AssertionError: handset reply returned HTTP 404; the buoy-only SOS was never assigned a backend id"
+        },
+        {
+          "test_id": "mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.buoy-only-reply-unroutable] handset half: the reply to a buoy-only SOS is delivered",
+          "outcome": "failed",
+          "message": "Expected: true, Actual: false; the reply was posted to [/api/sos/reply/buoy-only-sos]"
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Both backend and handset probe halves failed assertions, confirming unroutable reply."
+    },
+    {
+      "id": "backend.trips.unbound-public-access",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips-None]",
+          "outcome": "failed",
+          "message": "AssertionError: GET /api/v1/trips with no credentials reached the handler"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips/PROBE-TRIP-None]",
+          "outcome": "failed",
+          "message": "AssertionError: GET /api/v1/trips/PROBE-TRIP with no credentials reached the handler"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[PATCH-/api/v1/trips/PROBE-TRIP-body2]",
+          "outcome": "failed",
+          "message": "AssertionError: PATCH /api/v1/trips/PROBE-TRIP with no credentials reached the handler"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.warning-delivery.unbound-state-authority",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[POST-/api/advisories/delivery-body0]",
+          "outcome": "failed",
+          "message": "AssertionError: POST /api/advisories/delivery with no credentials reached the handler"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[GET-/api/advisories/101/deliveries-None]",
+          "outcome": "failed",
+          "message": "AssertionError: GET /api/advisories/101/deliveries with no credentials reached the handler"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.vessel-profile.unbound-owner-write",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_unauth_routes.py::test_anonymous_caller_cannot_replace_an_existing_vessel_identity",
+          "outcome": "failed",
+          "message": "AssertionError: a second unauthenticated POST (HTTP 200) replaced vessel VESSEL-VICTIM's name"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.public-sea-condition.operator-identity-disclosure",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_public_disclosure.py::test_public_sea_condition_does_not_expose_operator_account",
+          "outcome": "failed",
+          "message": "AssertionError: anonymous GET /api/public/sea-condition returned set_by_user_id=42, exposing the operator account id"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.hotspots.minimum-cohort-policy-drift",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_public_disclosure.py::test_hotspot_cell_needs_five_distinct_reporters[3]",
+          "outcome": "failed",
+          "message": "AssertionError: a cell built from only 3 vessels is published"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_public_disclosure.py::test_hotspot_cell_needs_five_distinct_reporters[4]",
+          "outcome": "failed",
+          "message": "AssertionError: a cell built from only 4 vessels is published"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_public_disclosure.py::test_hotspot_control_five_reporters_publish",
+          "outcome": "passed",
+          "message": ""
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Probes for cohort sizes 3 and 4 failed safe assertions; control probe with 5 reporters passed."
+    },
+    {
+      "id": "backend.current-ingest.unbound-calibration-claim",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_ingest_trust.py::test_request_text_cannot_mark_a_current_reading_qualified",
+          "outcome": "failed",
+          "message": "AssertionError: calibration_status=qualified was stored from unverified request JSON"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.contacts.future-timestamp-anomaly-suppression",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp",
+          "outcome": "failed",
+          "message": "Failed: DID NOT RAISE ValidationError"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_ingest_trust.py::test_contact_control_present_timestamp_is_accepted",
+          "outcome": "passed",
+          "message": ""
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Day-ahead timestamp was accepted without error; present timestamp control passed."
+    },
+    {
+      "id": "backend.contacts.optional-position-crash",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_contact_without_coordinates_does_not_abort_fleet_evaluation",
+          "outcome": "failed",
+          "message": "Failed: one accepted contact without coordinates aborts evaluation for every vessel: TypeError(\"float() argument must be a string or a real number, not 'NoneType'\")"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.ai.anomaly.zero-contact-poison-run",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation",
+          "outcome": "failed",
+          "message": "AssertionError: an open trip with no contacts for a never-seen vessel aborts evaluation: KeyError('V-FRESH')"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation",
+          "outcome": "failed",
+          "message": "AssertionError: an open zero-contact trip for a vessel with history aborts evaluation: IndexError('list index out of range')"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_failed_evaluation_does_not_commit_score_deactivation",
+          "outcome": "failed",
+          "message": "AssertionError: evaluation raised KeyError('V-FRESH') after committing is_active=FALSE on the seeded live alert - the partial run emptied the responder queue"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.ai.anomaly.authenticated-whole-fleet-recompute",
+      "verdict": "INCONCLUSIVE",
+      "evidence_level": "measure",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_measure_whole_fleet_evaluation_cost",
+          "outcome": "error",
+          "message": "probe_harness.ProbeBroken: evaluation crashed on the synthetic fleet: DataError(\"invalid input for query argument $2: {'vessel_id': 'M000', ... expected str, got dict)\")"
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Measurement probe threw ProbeBroken because evaluate_and_persist crashes on real Postgres due to new.backend.anomaly.jsonb-parameter-encoding."
+    },
+    {
+      "id": "new.backend.anomaly.jsonb-parameter-encoding",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_anomaly.py::test_one_ordinary_live_trip_evaluates_on_real_postgres",
+          "outcome": "failed",
+          "message": "AssertionError: scoring one ordinary live trip on real Postgres raised DataError(\"invalid input for query argument $2: {'vessel_id': 'V-LIVE', ... expected str, got dict)\")"
+        }
+      ],
+      "controls_ok": true,
+      "notes": "evaluate_and_persist passes unencoded python dicts to jsonb parameters without a registered asyncpg codec."
+    },
+    {
+      "id": "backend.auth.login-timing-enumeration",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_auth.py::test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password",
+          "outcome": "failed",
+          "message": "AssertionError: login for an unknown email ran bcrypt 0 times; a known email with a wrong password runs it once, so response time reveals which emails have accounts"
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Harness email payload domain changed from .invalid to .com to satisfy Pydantic EmailStr."
+    },
+    {
+      "id": "backend.operator-jwt.no-server-revocation",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_auth.py::test_token_for_an_account_that_no_longer_exists_is_rejected",
+          "outcome": "failed",
+          "message": "AssertionError: a token for a non-existent operator was accepted (HTTP 200); the server consulted 0 database queries to check it"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.ai.squall.flag-authorizes-live-model-replacement",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[mdrrmo]",
+          "outcome": "failed",
+          "message": "AssertionError: with ALLOW_TRAINING=true a mdrrmo token got HTTP 200 on POST /api/ai/squall/train"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_auth.py::test_non_admin_operator_cannot_replace_the_live_squall_model[lgu]",
+          "outcome": "failed",
+          "message": "AssertionError: with ALLOW_TRAINING=true a lgu token got HTTP 200 on POST /api/ai/squall/train"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_auth.py::test_squall_control_admin_reaches_the_model_write",
+          "outcome": "passed",
+          "message": ""
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Both non-admin roles (mdrrmo, lgu) could trigger squall training; admin control passed."
+    },
+    {
+      "id": "backend.catch.global-idempotency-cross-vessel-write",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_catch.py::test_one_vessel_cannot_rewrite_another_vessels_catch_log",
+          "outcome": "failed",
+          "message": "AssertionError: VESSEL-A reusing VESSEL-B's local_id (HTTP 200) changed VESSEL-B's row to injected values"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.demo-weather.unbounded-coordinate-expansion",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_resource_bounds.py::test_demo_weather_rejects_ten_thousand_coordinate_cells",
+          "outcome": "failed",
+          "message": "Failed: DID NOT RAISE ValueError"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.public-squall.unbounded-history-load",
+      "verdict": "CONFIRMED",
+      "evidence_level": "postgres",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_resource_bounds.py::test_public_squall_does_not_load_week_old_readings",
+          "outcome": "failed",
+          "message": "AssertionError: one anonymous request loaded 5090 readings, 5080 of them older than 6 hours (oldest was 7 days ago)"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "backend.mesh.unbounded-public-storage",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_resource_bounds.py::test_mesh_chat_has_a_retention_or_admission_control",
+          "outcome": "failed",
+          "message": "AssertionError: no retention job, cleanup statement, or rate limit found across the backend"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "firmware.shore.committed-uplink-credential",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[UPLINK_SSID]",
+          "outcome": "failed",
+          "message": "AssertionError: UPLINK_SSID in the tracked shore sketch is a concrete 13-character value, not a placeholder"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[UPLINK_PASS]",
+          "outcome": "failed",
+          "message": "AssertionError: UPLINK_PASS in the tracked shore sketch is a concrete 8-character value, not a placeholder"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_shore_sketch_holds_no_concrete_credential[GATEWAY_API_KEY]",
+          "outcome": "failed",
+          "message": "AssertionError: GATEWAY_API_KEY in the tracked shore sketch is a concrete 24-character value, not a placeholder"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "firmware.loam.shared-default-key",
+      "verdict": "INCONCLUSIVE",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_loam_key_is_not_the_repository_default",
+          "outcome": "failed",
+          "message": "AssertionError: LOAM_KEY is still the published default in AqOneLoam.h"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_loam_signature_key_is_selected_per_source_id",
+          "outcome": "failed",
+          "message": "AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (3 call sites)"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_loam_control_headers_are_byte_identical",
+          "outcome": "failed",
+          "message": "AssertionError: assert b'// AqOneLoam.h' == b'  // AqOneLoam.h'"
+        }
+      ],
+      "controls_ok": false,
+      "notes": "Control probe test_loam_control_headers_are_byte_identical failed due to two leading whitespace characters on line 1 of firmware/shore/AqOneShore/AqOneLoam.h, rendering finding INCONCLUSIVE per Rule 1."
+    },
+    {
+      "id": "firmware.shore.tls-peer-verification-disabled",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_shore_verifies_the_backend_certificate",
+          "outcome": "failed",
+          "message": "AssertionError: the shore sketch calls WiFiClientSecure::setInsecure()"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "firmware.warning.missing-revision-tombstone",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_buoy_warning_cache_orders_updates_by_revision",
+          "outcome": "failed",
+          "message": "AssertionError: the buoy T_WARN handler overwrites a cached warning without checking if the incoming revision is newer"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "firmware.buoy.chat-starves-sos-tx-ring",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_tx_ring_keeps_capacity_for_distress_frames",
+          "outcome": "failed",
+          "message": "AssertionError: txEnqueue takes the first free slot for any frame kind; no slots are reserved for T_SOS or distress"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "mobile.release.debug-signing-fallback",
+      "verdict": "CONFIRMED",
+      "evidence_level": "static",
+      "probes": [
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_release_build_does_not_fall_back_to_debug_signing",
+          "outcome": "failed",
+          "message": "AssertionError: the release buildType falls back to the debug signingConfig when signing configs are missing"
+        },
+        {
+          "test_id": "tests/security_probes/test_probe_repo_static.py::test_tracked_release_apk_is_not_debug_signed",
+          "outcome": "failed",
+          "message": "AssertionError: mobile/releases/aqone-release.apk carries an Android Debug certificate"
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Verified additionally via apksigner: CN=Android Debug, O=Android, C=US."
+    },
+    {
+      "id": "mobile.sos.standdown-intent-treated-resolved",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved] a stand-down the backend rejected (503) is not shown as resolved",
+          "outcome": "failed",
+          "message": "Expected: false, Actual: <true>; the backend refused the stand-down, yet the handset treats it as resolved"
+        },
+        {
+          "test_id": "mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved] a stand-down never sent (no backend id yet) is not shown as resolved",
+          "outcome": "failed",
+          "message": "Expected: false, Actual: <true>; nothing reached the backend, yet the handset treats it as resolved"
+        },
+        {
+          "test_id": "mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved:control] an accepted stand-down is resolved",
+          "outcome": "passed",
+          "message": ""
+        }
+      ],
+      "controls_ok": true,
+      "notes": "Both rejected and un-sent standdown probes failed safe assertion; accepted control passed."
+    },
+    {
+      "id": "mobile.eta.server-clock-discarded",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "mobile/test_security_probes/sos_probes_test.dart::[mobile.eta.server-clock-discarded] rescue ETA is measured against server time, not the phone clock",
+          "outcome": "failed",
+          "message": "Expected: false, Actual: <true>; the server says 20 minutes remain, but a phone clock skew causes immediate expiration"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "mobile.squall.ack-survives-missed-clear",
+      "verdict": "CONFIRMED",
+      "evidence_level": "fake",
+      "probes": [
+        {
+          "test_id": "mobile/test_security_probes/squall_probes_test.dart::[mobile.squall.ack-survives-missed-clear] a squall six hours later on the same buoys alarms again after a missed clear",
+          "outcome": "failed",
+          "message": "Expected: <2>, Actual: <1>; the second squall reuses identity \"B01,B02\", so the ack suppressed the second alarm"
+        }
+      ],
+      "controls_ok": true,
+      "notes": ""
+    },
+    {
+      "id": "mobile.location.undisclosed-weather-coordinate-egress",
+      "verdict": "TRACE_CONFIRMED",
+      "evidence_level": "trace",
+      "probes": [],
+      "controls_ok": true,
+      "notes": "Confirmed by code trace T1: device coordinates egress to backend and open-meteo without disclosure."
+    },
+    {
+      "id": "mobile.map.undisclosed-location-derived-tile-egress",
+      "verdict": "TRACE_CONFIRMED",
+      "evidence_level": "trace",
+      "probes": [],
+      "controls_ok": true,
+      "notes": "Confirmed by code trace T2: absent offline MBTiles causes map to request OpenStreetMap tiles for device fix without disclosure."
+    },
+    {
+      "id": "firmware.buoy.sos-queue-untrusted-capacity",
+      "verdict": "NEEDS_HARDWARE",
+      "evidence_level": "trace",
+      "probes": [],
+      "controls_ok": true,
+      "notes": "Trace T3 answered. Bench testing on physical ESP32-S3 hardware required to evaluate queue exhaustion dynamics."
+    }
+  ],
+  "measurements": [
+    {
+      "id": "backend.ai.anomaly.authenticated-whole-fleet-recompute",
+      "metrics": {}
+    }
+  ],
+  "traces": [
+    {
+      "id": "T1",
+      "answers": [
+        {
+          "question": 1,
+          "answer": "yes",
+          "evidence": "mobile/lib/ui/home_page.dart:112, 116, 183, 226; mobile/lib/services/location_service.dart:75-96"
+        },
+        {
+          "question": 2,
+          "answer": "both",
+          "evidence": "mobile/lib/services/forecast_provider.dart:86-99, 115-128, 169-171, 184-189, 200-205"
+        },
+        {
+          "question": 3,
+          "answer": "yes",
+          "evidence": "mobile/lib/ui/home_page.dart:244; mobile/lib/data/forecast_cache.dart:17, 31; mobile/lib/models/forecast_outlook.dart:153-160"
+        },
+        {
+          "question": 4,
+          "answer": "privacyPolicy (\"Privacy Policy\") at mobile/lib/l10n/app_en.arb:281 links to InfoCopy.privacy at mobile/lib/ui/info_page.dart:102-104 (\"Position is only sent as part of an SOS you deliberately send. The app does not track or transmit your location in the background, and it does not record where you fish.\") and identityUnverifiedNotice at mobile/lib/l10n/app_en.arb:297. LocationFailure.denied at mobile/lib/services/location_service.dart:50 states \"AqOne needs location permission to send your position.\"",
+          "evidence": "mobile/lib/l10n/app_en.arb:281, 297; mobile/lib/ui/info_page.dart:102-104; mobile/lib/services/location_service.dart:50"
+        }
+      ],
+      "verdict": "TRACE_CONFIRMED"
+    },
+    {
+      "id": "T2",
+      "answers": [
+        {
+          "question": 1,
+          "answer": "yes",
+          "evidence": "mobile/lib/ui/venture_page.dart:208, 293-295, 674"
+        },
+        {
+          "question": 2,
+          "answer": "yes",
+          "evidence": "mobile/lib/services/mbtiles_provider.dart:223-232; mobile/lib/services/tile_cache.dart:171-190; mobile/lib/ui/venture_page.dart:688-690; mobile/lib/core/config.dart:86-87"
+        },
+        {
+          "question": 3,
+          "answer": "no",
+          "evidence": "mobile/pubspec.yaml:119-127 (assets/map/new_washington.mbtiles is not declared); mobile/assets/map/ directory does not exist on disk"
+        },
+        {
+          "question": 4,
+          "answer": "Same privacy policy text as T1.4: privacyPolicy in mobile/lib/l10n/app_en.arb:281 and InfoCopy.privacy in mobile/lib/ui/info_page.dart:102-104 state position is only sent as part of a deliberate SOS.",
+          "evidence": "mobile/lib/l10n/app_en.arb:281; mobile/lib/ui/info_page.dart:102-104"
+        }
+      ],
+      "verdict": "TRACE_CONFIRMED"
+    },
+    {
+      "id": "T3",
+      "answers": [
+        {
+          "question": 1,
+          "answer": "12",
+          "evidence": "firmware/buoy/AqOneBuoy/AqOneBuoy.ino:128"
+        },
+        {
+          "question": 2,
+          "answer": "(vessel_id, client_ts); yes, varying client_ts allows one handset to allocate new queue entries until MAX_QUEUE is full",
+          "evidence": "firmware/buoy/AqOneBuoy/AqOneBuoy.ino:486-523"
+        },
+        {
+          "question": 3,
+          "answer": "yes, answers HTTP 503 {\"error\":\"queue full\"}",
+          "evidence": "firmware/buoy/AqOneBuoy/AqOneBuoy.ino:505-509"
+        },
+        {
+          "question": 4,
+          "answer": "yes, slots freed only upon matching signed ACK (or unencodable payload drop), and persist across reboot in NVS",
+          "evidence": "firmware/buoy/AqOneBuoy/AqOneBuoy.ino:157-175, 419-423, 873-888, 1107"
+        }
+      ],
+      "verdict": "NEEDS_HARDWARE"
+    }
+  ],
+  "apk_signer": {
+    "checked": true,
+    "subject": "CN=Android Debug, O=Android, C=US",
+    "sha256": "a8e90fc589764bb96b405ff5a9332b369db27f2b8b92aaec08a7d1ef0961dba4"
+  },
+  "probe_changes": [
+    {
+      "file": "backend/tests/security_probes/test_probe_auth.py",
+      "reason": "Pydantic EmailStr rejected RFC 2606 .invalid TLD with HTTP 422; changed to .com to allow test to reach login handler",
+      "change": "Changed nobody@example.invalid to nobody@example.com in test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password"
+    },
+    {
+      "file": "backend/tests/security_probes/test_probe_anomaly.py",
+      "reason": "Untyped parameter $1 in $1 - interval expression was inferred as interval by Postgres, causing DatatypeMismatchError during test fixture insertion into buoy_contacts",
+      "change": "Added explicit ::timestamptz cast to $1 in buoy_contacts seeding query of test_one_ordinary_live_trip_evaluates_on_real_postgres"
+    }
+  ],
+  "new_observations": [
+    "firmware/shore/AqOneShore/AqOneLoam.h:1 contains two leading whitespace characters compared to firmware/buoy/AqOneBuoy/AqOneLoam.h, causing test_loam_control_headers_are_byte_identical to fail byte comparison and marking firmware.loam.shared-default-key INCONCLUSIVE.",
+    "backend/app/ai/anomaly_service.py:204-256 passes Python dicts and lists directly into $N::jsonb query parameters without a registered asyncpg JSON codec in app/db.py, causing DataError on real Postgres for both test_one_ordinary_live_trip_evaluates_on_real_postgres (CONFIRMED) and test_measure_whole_fleet_evaluation_cost (ProbeBroken).",
+    "mobile/releases/aqone-release.apk was verified using apksigner to be signed by CN=Android Debug, O=Android, C=US (SHA-256 a8e90fc589764bb96b405ff5a9332b369db27f2b8b92aaec08a7d1ef0961dba4), confirming finding mobile.release.debug-signing-fallback."
+  ],
+  "default_suites": {
+    "backend": "387 passed, 5 skipped, 1 xfailed",
+    "mobile": "258 passed"
+  }
+}
