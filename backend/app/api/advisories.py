@@ -5,11 +5,12 @@ import logging
 from datetime import UTC, date, datetime, timedelta, timezone
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
+from app.api.contacts import require_gateway_key
 from app.audit import record_audit_event
-from app.auth import require_responder_roles
+from app.auth import require_responder_roles, require_user
 from app.db import get_pool
 
 logger = logging.getLogger(__name__)
@@ -418,7 +419,7 @@ class WarningDeliveryIn(BaseModel):
         return self
 
 
-@router.post('/delivery', status_code=200)
+@router.post('/delivery', status_code=200, dependencies=[Depends(require_gateway_key)])
 async def record_warning_delivery(payload: WarningDeliveryIn) -> dict[str, Any]:
     """Record a hop or acknowledgement event in the warning delivery lifecycle."""
     occurred_at = payload.occurred_at or datetime.now(UTC)
@@ -481,7 +482,7 @@ async def record_warning_delivery(payload: WarningDeliveryIn) -> dict[str, Any]:
     }
 
 
-@router.get('/{advisory_id}/deliveries', status_code=200)
+@router.get('/{advisory_id}/deliveries', status_code=200, dependencies=[Depends(require_user)])
 async def get_warning_deliveries(advisory_id: int) -> dict[str, Any]:
     """Fetch the delivery events and reached states for a warning."""
     pool = get_pool()

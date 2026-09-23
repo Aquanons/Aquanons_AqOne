@@ -152,6 +152,9 @@ require_device_admin_roles = Depends(require_roles(*DEVICE_ADMIN_ROLES))
 require_admin_role = Depends(require_roles(*ADMIN_ROLES))
 
 
+bearer_scheme = _bearer
+
+
 async def require_vessel_device(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict[str, Any]:
@@ -196,3 +199,53 @@ async def require_vessel_device(
         'vessel_id': row['vessel_id'],
         'label': row['label'],
     }
+
+
+async def get_vessel_device_from_token(token: str) -> dict[str, Any] | None:
+    try:
+        claims = decode_token(token)
+    except HTTPException:
+        return None
+    if claims.get('kind') != 'vessel_device':
+        return None
+
+    device_id_text = claims.get('device_id')
+    vessel_id = claims.get('vessel_id')
+    if not isinstance(device_id_text, str) or not isinstance(vessel_id, str):
+        return None
+
+    try:
+        device_id = int(device_id_text)
+    except ValueError:
+        return None
+
+    from app.db import get_pool
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            '''
+            UPDATE vessel_devices
+               SET last_seen_at = NOW()
+             WHERE id = $1
+            RETURNING id, vessel_id, label, revoked_at
+            ''',
+            device_id,
+        )
+
+    if row is None or row['revoked_at'] is not None or row['vessel_id'] != vessel_id:
+        return None
+
+    return {
+        'device_id': row['id'],
+        'vessel_id': row['vessel_id'],
+        'label': row['label'],
+    }
+
+
+async def get_optional_vessel_device(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> dict[str, Any] | None:
+    if credentials is None or not credentials.credentials:
+        return None
+    return await get_vessel_device_from_token(credentials.credentials)

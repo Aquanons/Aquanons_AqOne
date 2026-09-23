@@ -270,10 +270,11 @@ def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
     pool = _IngestFakePool()
     monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
     monkeypatch.setattr(sos_api, 'get_pool', lambda: pool)
+    monkeypatch.setenv('GATEWAY_API_KEY', 'test-gateway-key')
     body = _payload(source='buoy', buoy_id='SHORE01', src_id=255, seq=1)
     del body['local_id']
     with TestClient(app, raise_server_exceptions=False) as client:
-        response = client.post('/api/sos', json=body)
+        response = client.post('/api/sos', json=body, headers={'X-Api-Key': 'test-gateway-key'})
 
     assert response.status_code == 200
     queries = [q for q, _ in pool.statements]
@@ -281,6 +282,54 @@ def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
     sos_insert = next(i for i, q in enumerate(queries) if 'INSERT INTO sos_events' in q)
     assert buoy_insert < sos_insert
     assert pool.statements[buoy_insert][1] == ('SHORE01',)
+
+
+def test_buoy_sos_without_gateway_key_drops_buoy_provenance(monkeypatch):
+    """Anonymous SOS claiming buoy provenance has buoy fields dropped and no buoy auto-registered."""
+    from app import db as app_db
+    from app.api import sos as sos_api
+
+    class _IngestFakePool:
+        def __init__(self):
+            self.statements = []
+
+        async def execute(self, query, *args):
+            self.statements.append((query, args))
+
+        async def fetchrow(self, query, *args):
+            self.statements.append((query, args))
+            return {
+                'id': 7, 'was_inserted': True, 'vessel_id': args[0], 'client_ts': args[1],
+                'delivered_direct': args[11], 'delivered_via_buoy': args[12], 'acknowledged_at': None,
+            }
+
+        def acquire(self):
+            return self
+
+        def transaction(self):
+            return self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _IngestFakePool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(sos_api, 'get_pool', lambda: pool)
+    body = _payload(source='buoy', buoy_id='SHORE01', src_id=255, seq=1)
+    del body['local_id']
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/sos', json=body)
+
+    assert response.status_code == 200
+    queries = [q for q, _ in pool.statements]
+    assert not any('INSERT INTO buoys' in q for q in queries)
+    sos_call = next(call for call in pool.statements if 'INSERT INTO sos_events' in call[0])
+    assert sos_call[1][8] is None
+    assert sos_call[1][11] is True
+    assert sos_call[1][12] is False
 
 
 def test_shore_gateway_wire_payload_validates(monkeypatch):

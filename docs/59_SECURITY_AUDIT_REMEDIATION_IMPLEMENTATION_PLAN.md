@@ -162,26 +162,26 @@ Checkpoint message: `fix(anomaly): make evaluation atomic and robust on real Pos
 ## Phase 2: Distress path integrity
 
 Requirements: SEC-06, SEC-07, SEC-08, SEC-09, SEC-10, SEC-11
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] Contracts first: update `docs/04_INGEST_API.md` (SOS buoy provenance needs `X-Api-Key`, warning delivery needs `X-Api-Key`) and `docs/05_PUBLIC_API.md` (trips auth, vessel-profile overwrite rule, delivery read is operator-only, the `/api/sos/active` feed is untruncated).
-- [ ] SEC-06 in `app/api/sos.py` `ingest_sos`: the endpoint stays unauthenticated and never rejects.
+- [x] Contracts first: update `docs/04_INGEST_API.md` (SOS buoy provenance needs `X-Api-Key`, warning delivery needs `X-Api-Key`) and `docs/05_PUBLIC_API.md` (trips auth, vessel-profile overwrite rule, delivery read is operator-only, the `/api/sos/active` feed is untruncated).
+- [x] SEC-06 in `app/api/sos.py` `ingest_sos`: the endpoint stays unauthenticated and never rejects.
   - Store `trust_tier='self_declared'` unless the request carries a valid vessel device bearer for the same `vessel_id`; then allow `phone_verified`. Never accept `confirmed_by_responder` from ingest.
   - Accept `source='buoy'`, `buoy_id`, `src_id`, `seq` only with a valid `X-Api-Key` (reuse `require_gateway_key`'s comparison as a non-raising helper). Without it, store the SOS as a direct delivery and drop the buoy fields, so no buoy row is auto-registered.
-- [ ] SEC-07: remove `LIMIT 100` from `active_sos` so every unresolved incident is returned. Check the dashboard (`web/js/dashboard/dashboard-live-sos.js`) renders a long list without breaking.
-- [ ] SEC-08 in `app/api/vessel_profile.py`: an unauthenticated POST may create a profile or fill blank fields, but changing a non-blank identity field needs a vessel device bearer bound to that `vessel_id`; otherwise answer 409 and change nothing. In `mobile/lib/services/backend_client.dart` `registerVesselProfile`, send the vessel bearer when one exists (`_withVesselAuth`).
-- [ ] SEC-09 in `app/api/trips.py`: GET routes need an operator (`require_user`). POST and PATCH need either an operator with a responder role, or a vessel device bearer whose vessel matches the trip. No client calls these routes today (checked: `mobile/lib`, `web/js`, firmware), so nothing else changes.
-- [ ] SEC-10 in `app/api/advisories.py`: `POST /api/advisories/delivery` needs the gateway key (`require_gateway_key`), and `GET /api/advisories/{id}/deliveries` needs an operator (`require_user`). The shore firmware header lands in Phase 5; until then, gateway delivery posts get 401. That is acceptable because no gateway is deployed.
-- [ ] SEC-11: new migration `029_catch_logs_vessel_scoped_local_id.sql` drops `uq_catch_logs_local_id` and creates a unique index on `(vessel_id, local_id) WHERE local_id IS NOT NULL`. Update the `ON CONFLICT` target in `app/api/catch.py`, and grep for any other `ON CONFLICT (local_id)` on `catch_logs`.
-- [ ] Update the existing tests that asserted the old behaviour (for example `tests/test_vessel_profile.py`, `tests/test_sos_ingest.py`), and add default-suite tests for the new rules.
+- [x] SEC-07: remove `LIMIT 100` from `active_sos` so every unresolved incident is returned. Check the dashboard (`web/js/dashboard/dashboard-live-sos.js`) renders a long list without breaking.
+- [x] SEC-08 in `app/api/vessel_profile.py`: an unauthenticated POST may create a profile or fill blank fields, but changing a non-blank identity field needs a vessel device bearer bound to that `vessel_id`; otherwise answer 409 and change nothing. In `mobile/lib/services/backend_client.dart` `registerVesselProfile`, send the vessel bearer when one exists (`_withVesselAuth`).
+- [x] SEC-09 in `app/api/trips.py`: GET routes need an operator (`require_user`). POST and PATCH need either an operator with a responder role, or a vessel device bearer whose vessel matches the trip. No client calls these routes today (checked: `mobile/lib`, `web/js`, firmware), so nothing else changes.
+- [x] SEC-10 in `app/api/advisories.py`: `POST /api/advisories/delivery` needs the gateway key (`require_gateway_key`), and `GET /api/advisories/{id}/deliveries` needs an operator (`require_user`). The shore firmware header lands in Phase 5; until then, gateway delivery posts get 401. That is acceptable because no gateway is deployed.
+- [x] SEC-11: new migration `029_catch_logs_vessel_scoped_local_id.sql` drops `uq_catch_logs_local_id` and creates a unique index on `(vessel_id, local_id) WHERE local_id IS NOT NULL`. Update the `ON CONFLICT` target in `app/api/catch.py`, and grep for any other `ON CONFLICT (local_id)` on `catch_logs`.
+- [x] Update the existing tests that asserted the old behaviour (for example `tests/test_vessel_profile.py`, `tests/test_sos_ingest.py`), and add default-suite tests for the new rules.
 
 ### Verification
 
-- [ ] Backend and web gates pass.
-- [ ] Probe gate: every SEC-06 to SEC-11 probe passes. The Phase 1 probes stay green.
-- [ ] `python migrate.py` applies `029` cleanly on a fresh probe database (the probe fixture does this).
+- [x] Backend and web gates pass.
+- [x] Probe gate: every SEC-06 to SEC-11 probe passes. The Phase 1 probes stay green.
+- [x] `python migrate.py` applies `029` cleanly on a fresh probe database (the probe fixture does this).
 
 Checkpoint message: `fix(sos): stop anonymous callers forging provenance or overwriting vessel data`
 

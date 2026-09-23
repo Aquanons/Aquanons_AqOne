@@ -58,6 +58,8 @@ def test_register_upserts_into_vessels(monkeypatch):
             self.args = None
 
         async def fetchrow(self, query, *args):
+            if 'SELECT id, boat_name' in query:
+                return None
             self.query = query
             self.args = args
             return {
@@ -84,13 +86,135 @@ def test_register_upserts_into_vessels(monkeypatch):
 
     assert response.status_code == 200
     assert 'ON CONFLICT (id) DO UPDATE' in pool.query
-    assert "CASE WHEN $2 = '' THEN vessels.boat_name ELSE $2 END" in pool.query
+    assert 'vessels.boat_name' in pool.query
     body = response.json()
     assert body['vessel_id'] == 'V001'
     assert body['boat'] == 'NW-001'
     assert body['skipper_name'] == 'Juan Dela Cruz'
     assert body['license_number'] == 'NWB-2026-08412'
     assert body['phone'] == '+639171234567'
+
+
+def test_register_rejects_overwrite_of_non_blank_identity_without_auth(monkeypatch):
+    """SEC-08: Anonymous callers cannot overwrite existing non-blank owner identity."""
+    from app import db as app_db
+    from app.api import vessel_profile as profile_api
+
+    class _ExistingPool:
+        async def fetchrow(self, query, *args):
+            if 'SELECT id, boat_name' in query:
+                return {
+                    'id': 'V001', 'boat_name': 'NW-001',
+                    'skipper_name': 'Original Skipper', 'license_type': 'motorized',
+                    'license_number': 'NWB-2026-08412', 'phone': '+639171234567',
+                }
+            return None
+
+        def acquire(self):
+            return self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _ExistingPool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(profile_api, 'get_pool', lambda: pool)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        # Attempt to change skipper name anonymously
+        response = client.post('/api/vessel-profile', json=_payload(skipper_name='Impostor'))
+    assert response.status_code == 409
+
+
+def test_register_allows_overwrite_with_vessel_auth(monkeypatch):
+    """SEC-08: Authenticated vessel device bearer can modify existing identity."""
+    from app import db as app_db
+    from app.api import vessel_profile as profile_api
+    from app.auth import get_optional_vessel_device
+
+    class _ExistingPool:
+        def __init__(self):
+            self.updated = False
+
+        async def fetchrow(self, query, *args):
+            if 'SELECT id, boat_name' in query:
+                return {
+                    'id': 'V001', 'boat_name': 'NW-001',
+                    'skipper_name': 'Original Skipper', 'license_type': 'motorized',
+                    'license_number': 'NWB-2026-08412', 'phone': '+639171234567',
+                }
+            self.updated = True
+            return {
+                'id': args[0], 'boat_name': args[1] or 'NW-001',
+                'skipper_name': args[2], 'license_type': args[3],
+                'license_number': args[4], 'phone': args[5],
+                'profile_updated_at': None,
+            }
+
+        def acquire(self):
+            return self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _ExistingPool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(profile_api, 'get_pool', lambda: pool)
+    app.dependency_overrides[get_optional_vessel_device] = lambda: {'vessel_id': 'V001', 'device_id': 1}
+    try:
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post('/api/vessel-profile', json=_payload(skipper_name='Updated Skipper'))
+        assert response.status_code == 200
+        assert pool.updated is True
+    finally:
+        app.dependency_overrides.pop(get_optional_vessel_device, None)
+
+
+def test_register_allows_filling_blanks_without_auth(monkeypatch):
+    """SEC-08: Anonymous callers CAN fill blank fields or skeleton boat."""
+    from app import db as app_db
+    from app.api import vessel_profile as profile_api
+
+    class _SkeletonPool:
+        def __init__(self):
+            self.updated = False
+
+        async def fetchrow(self, query, *args):
+            if 'SELECT id, boat_name' in query:
+                return {
+                    'id': 'V001', 'boat_name': 'V001',  # skeleton boat_name is id
+                    'skipper_name': None, 'license_type': 'none',
+                    'license_number': '', 'phone': None,
+                }
+            self.updated = True
+            return {
+                'id': args[0], 'boat_name': args[1] or 'NW-001',
+                'skipper_name': args[2], 'license_type': args[3],
+                'license_number': args[4], 'phone': args[5],
+                'profile_updated_at': None,
+            }
+
+        def acquire(self):
+            return self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _SkeletonPool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(profile_api, 'get_pool', lambda: pool)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/vessel-profile', json=_payload())
+    assert response.status_code == 200
+    assert pool.updated is True
 
 
 def test_active_feed_carries_the_vessel_profile(monkeypatch):

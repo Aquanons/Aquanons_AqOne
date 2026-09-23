@@ -184,38 +184,54 @@ definition of done).
 Operator-authenticated (bearer token, `require_user`). The dashboard polls
 this rather than the SSE feed below (`web/js/dashboard/dashboard-live-sos.js`).
 
-Returns **every unresolved SOS event**, newest first — including one a
-dispatcher has already acknowledged. An acknowledged event stays in this feed
+Returns **every unresolved SOS event**, newest first - including one a
+dispatcher has already acknowledged.
+The feed is untruncated (no arbitrary row limit), guaranteeing that an influx of
+simultaneous incidents cannot crowd genuine active calls out of the dispatcher view.
+An acknowledged event stays in this feed
 until a dispatcher calls `POST /api/sos/{id}/resolve` or the fisher replies
 `SAFE_NOW` (`POST /api/sos/{id}/reply`, `docs/13_RESPONDER_LOOP.md`); dropping
-it as soon as it is acknowledged — the previous behaviour — hid the fisher's
-subsequent reply from the dispatcher. Each row carries `acknowledged_at`,
+it as soon as it is acknowledged - the previous behaviour - hid the fisher's
+subsequent reply from the dispatcher.
+Each row carries `acknowledged_at`,
 `acked_by`, `eta_at`, `responder_status`, `responder_status_label`,
 `responder_note`, `fisher_reply`, `fisher_replied_at`, `resolved_at`
 (always `null` here, since a resolved row has left the feed), and `is_synthetic`
 (boolean, `true` for scripted/demo scenario events and `false` for genuine distress
-calls) alongside the fields `GET /api/v1/sos` documents above. Each event also
+calls) alongside the fields `GET /api/v1/sos` documents above.
+Each event also
 carries the vessel's declared owner identity from `POST /api/vessel-profile`
 below when one is on file: `skipper_name`, `license_type`, `license_number`
 and `phone` (empty strings / `none` when the fleet has not registered that
-vessel yet — never fabricated). Clients must derive
+vessel yet - never fabricated).
+Clients must derive
 display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
 
-### `POST /api/vessel-profile` — declare a vessel's owner identity
+### `POST /api/vessel-profile` - declare a vessel's owner identity
 
-Unauthenticated, for the same reason SOS ingest is (`POST /api/sos`): a
+Unauthenticated for initial registration, for the same reason SOS ingest is (`POST /api/sos`): a
 fisherman at sea has no account to hold, and this is the same self-declared
-identity as the distress call itself. The read side — `GET /api/sos/active`
-above — stays dispatcher-gated, so an unauthenticated write only ever
+identity as the distress call itself.
+The read side - `GET /api/sos/active`
+above - stays dispatcher-gated, so an unauthenticated write only ever
 describes the one vessel its caller claims to be.
 
 The handset (`mobile/lib/data/identity_store.dart` `toRegistrationPayload()`)
 pushes this once when onboarding completes, again at startup for a remembered
 skipper, and again on every profile edit (`mobile/lib/main.dart`, best-effort
-and never blocking an SOS). It is an idempotent upsert keyed on `vessel_id`, so
+and never blocking an SOS).
+It is an idempotent upsert keyed on `vessel_id`, so
 retries converge and the vessel may already exist as the skeleton an SOS made.
+
+**Profile overwrite rule**: An unauthenticated request can create a new vessel profile
+or populate blank/null fields on an existing skeleton.
+However, modifying any existing non-blank identity field (`skipper_name`, `license_type`,
+`license_number`, `phone`, `boat`) requires device authentication via a valid vessel-device
+bearer token bound to that `vessel_id`.
+If an unauthenticated caller attempts to overwrite non-blank identity fields, the server
+rejects the request with `409 Conflict` and discards all changes.
 
 ```
 POST /api/vessel-profile
@@ -231,7 +247,8 @@ POST /api/vessel-profile
 
 `trust_tier` is deliberately not accepted here: the trusted-status model
 (`docs/16_QA_DISCLOSURES.md`) only lets a responder/verification path upgrade
-a vessel, and an unauthenticated claim cannot confirm itself. The SOS ingest
+a vessel, and an unauthenticated claim cannot confirm itself.
+The SOS ingest
 snapshots the tier on the incident itself, which is what the dashboard shows.
 Length caps mirror the handset's own (`mobile/lib/core/config.dart`); anything
 beyond them is rejected with 422 before any DB write.
@@ -509,6 +526,12 @@ notices needs to see and edit drafts and past advisories too; only the
 public route above filters. Create/update accept `cover_image` as the
 write-side field name; the response echoes it back as `image_url` like every
 other advisory read.
+
+### `GET /api/advisories/{id}/deliveries` - warning delivery tracking
+
+Operator-authenticated (`require_user`).
+Returns the chronological hop-by-hop delivery records and reached states for the specified advisory.
+Anonymous callers receive HTTP 401.
 
 ## Sea condition — **implemented**
 
@@ -1143,6 +1166,25 @@ response capped at 5000 rows, stamped with `generated_at`, the applied
 filters, and whether the cap truncated the result. Each call to either
 route records its own `ops.audit_search`/`ops.audit_export` access event
 (not deduplicated — an admin's own deliberate query is not polling).
+
+## Vessel trips (/api/v1/trips)
+
+Vessel trip registration, tracking, and voluntary amendments.
+
+### `GET /api/v1/trips`, `GET /api/v1/trips/{trip_id}`
+
+Operator-authenticated (`require_user`).
+Returns trips matching optional filters or a single trip by identifier.
+Anonymous callers receive HTTP 401.
+
+### `POST /api/v1/trips`, `PATCH /api/v1/trips/{trip_id}`
+
+Restricted to authorized actors.
+Requires either:
+- An operator token with a responder role (`mdrrmo`, `lgu`, `admin`).
+- A vessel device bearer token whose bound `vessel_id` matches the trip's `vessel_id`.
+Anonymous callers receive HTTP 401.
+Non-responder operators or mismatching vessel devices receive HTTP 403.
 
 ## Roles
 

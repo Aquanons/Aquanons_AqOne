@@ -298,7 +298,10 @@ gateway's OLED shows `Ack : no key` and it says so on serial every poll.
 Warning events track the hop-by-hop delivery of safety advisories down to the
 fisher:
 
-### `POST /api/advisories/delivery` — record a warning delivery state
+### `POST /api/advisories/delivery` - record a warning delivery state
+
+Requires `X-Api-Key` header with a valid gateway API key.
+Anonymous or unauthorized callers receive HTTP 401.
 
 Request body (JSON):
 
@@ -325,6 +328,18 @@ Request body (JSON):
 Deduplication: submissions for `(warning_id, delivery_state, buoy_id, vessel_id)`
 are idempotent (`deduped: true`), preserving the earliest occurrence and
 authoritative receipt time.
+
+## SOS ingest provenance rules (`POST /api/sos`)
+
+The SOS ingest endpoint (`POST /api/sos`) accepts distress calls from either the handset (direct internet) or the shore gateway (relayed LoRa frame).
+To guarantee life-safety delivery, the endpoint never rejects an unauthenticated distress call.
+However, provenance claims are strictly gated:
+- Claiming buoy relay provenance (`source: 'buoy'`, `buoy_id`, `src_id`, `seq`) requires a valid `X-Api-Key` header matching `GATEWAY_API_KEY`.
+- If an unauthenticated caller submits buoy fields without a valid gateway key, the distress call is safely accepted but stored as a direct delivery (`source: 'direct'`), and all buoy fields (`buoy_id`, `src_id`, `seq`, `delivered_via_buoy`) are dropped.
+- This prevents untrusted callers from forging mesh delivery states or injecting unregistered buoy rows into the database.
+- Trust tier: incoming `trust_tier` is stored as `self_declared` unless verified by a bound vessel device token (`phone_verified`).
+- The value `confirmed_by_responder` is never accepted from ingest.
+
 
 ## Dedupe and ordering
 

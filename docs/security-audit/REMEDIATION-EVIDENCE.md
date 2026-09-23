@@ -239,3 +239,114 @@ Probe `test_measure_whole_fleet_evaluation_cost` executed against real Postgres:
 1. `tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp`: PASSED (was FAILED) [SEC-04]
 2. `tests/security_probes/test_probe_ingest_trust.py::test_contact_control_present_timestamp_is_accepted`: PASSED (Control)
 
+## Phase 2: Distress path integrity
+
+### Environment
+
+- Date: 2026-09-23T20:40:00+08:00
+- Branch: `fix/security-audit-remediation`
+- Requirements: SEC-06, SEC-07, SEC-08, SEC-09, SEC-10, SEC-11
+- Contract changes:
+  - `docs/04_INGEST_API.md`: Documented gateway key requirement for buoy provenance claims on SOS ingest and warning delivery.
+  - `docs/05_PUBLIC_API.md`: Documented untruncated `/api/sos/active` feed, vessel profile overwrite 409 conflict rules, `GET /api/advisories/{id}/deliveries` operator access, and `Vessel trips (/api/v1/trips)` authorization rules.
+
+### Verification Gates
+
+#### 1. Backend Default Gate
+
+Commands executed from `backend/`:
+```powershell
+ruff check app tests
+pytest -q -p no:cacheprovider
+```
+
+Result:
+- Ruff: All checks passed.
+- Pytest default suite: 398 passed, 5 skipped, 1 xfailed in 15.83s.
+- Status: PASSED.
+
+#### 2. Mobile Gate
+
+Commands executed from `mobile/`:
+```powershell
+flutter gen-l10n
+flutter analyze
+flutter test
+```
+
+Result:
+- Flutter analyze: No issues found (ran in 50.6s).
+- Flutter test: 259 passed, 0 failed.
+- Status: PASSED.
+
+#### 3. Web Gate
+
+Commands executed from repository root:
+```powershell
+node --test web/test/*.test.js
+```
+
+Result:
+- Node test runner: 149 passed, 0 failed.
+- Status: PASSED.
+
+#### 4. Security Probe Gate (Throwaway PostgreSQL 18 on Port 55432)
+
+Command executed from `backend/`:
+```powershell
+$dataDir = "$env:TEMP\aqone_probe_pg_data"
+if (!(Test-Path $dataDir)) { & 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $dataDir -U postgres -A trust -E UTF8 }
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir -o '-p 55432' -l "$env:TEMP\aqone_probe_pg.log" start
+Start-Sleep -Seconds 2
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+python -m pytest tests/security_probes -v -p no:cacheprovider
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir stop
+```
+
+Result:
+- Total probe items: 43.
+- Passed: 20 (was 10 in Phase 1; +10 net passed).
+- Failed: 23 (was 33 in Phase 1; remaining open findings for Phase 3-5).
+- Migration 029 (`029_catch_logs_vessel_scoped_local_id.sql`) applied cleanly on fresh probe database.
+- Status: PASSED.
+
+### Probe Status Changes (Phase 2)
+
+#### Distress & Provenance Probes (SEC-06, SEC-07): All Green
+
+1. `tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_self_assert_responder_confirmation`: PASSED (was FAILED) [SEC-06]
+2. `tests/security_probes/test_probe_sos.py::test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key`: PASSED (was FAILED) [SEC-06]
+3. `tests/security_probes/test_probe_sos.py::test_genuine_sos_survives_a_burst_of_anonymous_sos`: PASSED (was FAILED) [SEC-07]
+
+#### Vessel Profile Identity Probes (SEC-08): Green
+
+1. `tests/security_probes/test_probe_unauth_routes.py::test_anonymous_caller_cannot_replace_an_existing_vessel_identity`: PASSED (was FAILED) [SEC-08]
+
+#### Trips & Welfare Monitoring Probes (SEC-09): All Green
+
+1. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips-None]`: PASSED (was FAILED) [SEC-09]
+2. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[GET-/api/v1/trips/PROBE-TRIP-None]`: PASSED (was FAILED) [SEC-09]
+3. `tests/security_probes/test_probe_unauth_routes.py::test_trip_route_requires_a_bound_principal[PATCH-/api/v1/trips/PROBE-TRIP-body2]`: PASSED (was FAILED) [SEC-09]
+
+#### Warning Delivery Authority Probes (SEC-10): All Green
+
+1. `tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[POST-/api/advisories/delivery-body0]`: PASSED (was FAILED) [SEC-10]
+2. `tests/security_probes/test_probe_unauth_routes.py::test_warning_delivery_route_requires_an_authority[GET-/api/advisories/101/deliveries-None]`: PASSED (was FAILED) [SEC-10]
+
+#### Catch Logs Vessel Scoping Probes (SEC-11): Green
+
+1. `tests/security_probes/test_probe_catch.py::test_one_vessel_cannot_rewrite_another_vessels_catch_log`: PASSED (was FAILED) [SEC-11]
+
+#### Phase 1 Regression Check: Probes Stay Green
+
+1. `tests/security_probes/test_probe_anomaly.py::test_one_ordinary_live_trip_evaluates_on_real_postgres`: PASSED [SEC-01]
+2. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation`: PASSED [SEC-02]
+3. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation`: PASSED [SEC-02]
+4. `tests/security_probes/test_probe_anomaly.py::test_failed_evaluation_does_not_commit_score_deactivation`: PASSED [SEC-02]
+5. `tests/security_probes/test_probe_anomaly.py::test_contact_without_coordinates_does_not_abort_fleet_evaluation`: PASSED [SEC-03]
+6. `tests/security_probes/test_probe_anomaly.py::test_measure_whole_fleet_evaluation_cost`: PASSED [SEC-05]
+7. `tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp`: PASSED [SEC-04]
+8. Controls (3): PASSED.
+

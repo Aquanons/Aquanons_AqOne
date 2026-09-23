@@ -15,6 +15,7 @@ from app.main import app
 class _FakePool:
     def __init__(self) -> None:
         now = datetime.now(UTC)
+        self.queries: list[str] = []
         self.vessels: dict[str, dict[str, object]] = {}
         self.pairings: list[dict[str, object]] = []
         self.devices: dict[int, dict[str, object]] = {
@@ -90,7 +91,8 @@ class _FakePool:
 
     async def execute(self, query: str, *args):
         if 'INSERT INTO vessels' in query:
-            vessel_id, boat_name = args
+            vessel_id = args[0]
+            boat_name = args[1] if len(args) > 1 else vessel_id
             self.vessels[vessel_id] = {'id': vessel_id, 'boat_name': boat_name}
             return 'INSERT 0 1'
         if 'INSERT INTO vessel_device_pairings' in query:
@@ -148,6 +150,7 @@ class _FakePool:
         return []
 
     async def fetchrow(self, query: str, *args):
+        self.queries.append(query)
         if 'SELECT revoked_at FROM vessel_devices' in query:
             device = self.devices.get(int(args[0]))
             if device is None:
@@ -445,3 +448,27 @@ def test_refresh_rejects_revoked_device(monkeypatch):
         )
 
     assert response.status_code == 401
+
+
+def test_catch_log_conflict_target_is_vessel_scoped(monkeypatch):
+    """SEC-11: Catch log upsert uses vessel-scoped unique conflict target."""
+    pool = _FakePool()
+    _patch_pools(monkeypatch, pool)
+    token = create_vessel_device_token(1, 'V001')
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post(
+            '/api/catch-logs',
+            headers={'Authorization': f'Bearer {token}'},
+            json={
+                'vessel_id': 'V001',
+                'local_id': 'catch-scoped-1',
+                'species_name': 'Galunggong',
+                'estimated_quantity_kg': 12,
+                'catch_date': '2026-08-16',
+            },
+        )
+
+    assert response.status_code == 200
+    insert_query = next(q for q in pool.queries if 'INSERT INTO catch_logs' in q)
+    assert 'ON CONFLICT (vessel_id, local_id) WHERE local_id IS NOT NULL' in insert_query

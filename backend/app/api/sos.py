@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.contacts import require_gateway_key
+from app.api.contacts import is_valid_gateway_key, require_gateway_key
 from app.audit import record_audit_event
-from app.auth import require_responder_roles, require_user, require_vessel_device
+from app.auth import get_optional_vessel_device, require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
@@ -129,7 +129,11 @@ class SosIn(BaseModel):
 
 
 @router.post('', status_code=200)
-async def ingest_sos(payload: SosIn) -> dict[str, object]:
+async def ingest_sos(
+    payload: SosIn,
+    api_key: str | None = Header(default=None, alias='X-Api-Key'),
+    vessel_device: dict[str, Any] | None = Depends(get_optional_vessel_device),
+) -> dict[str, object]:
     """Accept an SOS from either transport. Idempotent.
 
     First arrival creates the incident. A second arrival of the same emergency
@@ -140,6 +144,35 @@ async def ingest_sos(payload: SosIn) -> dict[str, object]:
     Always returns the same event id, so a client retrying - or both transports
     succeeding - is safe.
     """
+    # SEC-06: Store trust_tier='self_declared' unless the request carries a valid
+    # vessel device bearer for the same vessel_id; then allow phone_verified.
+    # Never accept confirmed_by_responder from ingest.
+    trust_tier = 'self_declared'
+    if (
+        vessel_device is not None
+        and vessel_device.get('vessel_id') == payload.vessel_id
+        and payload.trust_tier == 'phone_verified'
+    ):
+        trust_tier = 'phone_verified'
+
+    # SEC-06: Accept source='buoy', buoy_id, src_id, seq only with a valid X-Api-Key.
+    # Without it, store the SOS as a direct delivery and drop the buoy fields,
+    # so no buoy row is auto-registered.
+    has_valid_gateway = is_valid_gateway_key(api_key)
+
+    if has_valid_gateway and payload.source == 'buoy':
+        buoy_id = payload.buoy_id
+        src_id = payload.src_id
+        seq = payload.seq
+        delivered_direct = False
+        delivered_via_buoy = True
+    else:
+        buoy_id = None
+        src_id = None
+        seq = None
+        delivered_direct = True
+        delivered_via_buoy = False
+
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
         # The vessel may be unknown: a handset can raise an SOS before it
@@ -159,14 +192,14 @@ async def ingest_sos(payload: SosIn) -> dict[str, object]:
         # key into buoys, and a gateway reports whatever id its board was
         # flashed with - often one no one has registered. Without this, the
         # insert fails, the gateway never acks, and the SOS never lands.
-        if payload.buoy_id:
+        if buoy_id:
             await conn.execute(
                 '''
                     INSERT INTO buoys (id, label)
                     VALUES ($1, $1)
                     ON CONFLICT (id) DO NOTHING
                     ''',
-                payload.buoy_id,
+                buoy_id,
             )
 
         row = await conn.fetchrow(
@@ -198,13 +231,13 @@ async def ingest_sos(payload: SosIn) -> dict[str, object]:
             payload.lat,
             payload.lon,
             payload.note,
-            payload.trust_tier,
+            trust_tier,
             payload.local_id,
-            payload.buoy_id,
-            payload.src_id,
-            payload.seq,
-            payload.source == 'direct',
-            payload.source == 'buoy',
+            buoy_id,
+            src_id,
+            seq,
+            delivered_direct,
+            delivered_via_buoy,
         )
 
     return {
@@ -311,7 +344,6 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
             LEFT JOIN vessels v ON v.id = e.vessel_id
             WHERE e.resolved_at IS NULL
             ORDER BY e.created_at DESC
-            LIMIT 100
             '''
         )
     timestamp_columns = (

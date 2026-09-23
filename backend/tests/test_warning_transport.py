@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app import db as app_db
 from app.api import advisories as advisories_api
+from app.auth import create_token
 from app.main import app
 
 
@@ -80,16 +81,23 @@ class _FakeWarnPool:
         return _FakeWarnAcquire(_FakeWarnConn(self))
 
 
+GATEWAY_KEY = 'test-gateway-key'
+GW_HEADERS = {'X-Api-Key': GATEWAY_KEY}
+OP_HEADERS = {'Authorization': f'Bearer {create_token(1, "mdrrmo@test.local", "mdrrmo")}'}
+
+
 def test_warning_delivery_lifecycle_and_validation(monkeypatch):
     fake_pool = _FakeWarnPool()
     monkeypatch.setattr(app_db, 'get_pool', lambda: fake_pool)
     monkeypatch.setattr(advisories_api, 'get_pool', lambda: fake_pool)
+    monkeypatch.setenv('GATEWAY_API_KEY', GATEWAY_KEY)
 
     with TestClient(app, raise_server_exceptions=False) as client:
         # Invalid delivery state
         res_bad = client.post(
             '/api/advisories/delivery',
             json={'warning_id': 101, 'delivery_state': 'delivered_somewhere'},
+            headers=GW_HEADERS,
         )
         assert res_bad.status_code == 422
 
@@ -97,6 +105,7 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
         res_404 = client.post(
             '/api/advisories/delivery',
             json={'warning_id': 999, 'delivery_state': 'gateway_accepted'},
+            headers=GW_HEADERS,
         )
         assert res_404.status_code == 404
 
@@ -108,6 +117,7 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
                 'delivery_state': 'gateway_accepted',
                 'buoy_id': 'SHORE01',
             },
+            headers=GW_HEADERS,
         )
         assert res_gw.status_code == 200
         assert res_gw.json()['delivery_state'] == 'gateway_accepted'
@@ -120,6 +130,7 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
                 'delivery_state': 'buoy_received',
                 'buoy_id': 'BUOY01',
             },
+            headers=GW_HEADERS,
         )
         assert res_buoy.status_code == 200
 
@@ -132,6 +143,7 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
                 'vessel_id': 'NW-001',
                 'buoy_id': 'BUOY01',
             },
+            headers=GW_HEADERS,
         )
         assert res_phone.status_code == 200
 
@@ -142,6 +154,7 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
                 'warning_id': 101,
                 'delivery_state': 'user_acknowledged',
             },
+            headers=GW_HEADERS,
         )
         assert res_ack_no_vessel.status_code == 422
 
@@ -153,11 +166,12 @@ def test_warning_delivery_lifecycle_and_validation(monkeypatch):
                 'delivery_state': 'user_acknowledged',
                 'vessel_id': 'NW-001',
             },
+            headers=GW_HEADERS,
         )
         assert res_ack.status_code == 200
 
         # Query deliveries for warning 101
-        res_list = client.get('/api/advisories/101/deliveries')
+        res_list = client.get('/api/advisories/101/deliveries', headers=OP_HEADERS)
         assert res_list.status_code == 200
         events = res_list.json()['deliveries']
         assert len(events) == 4
@@ -199,6 +213,7 @@ def test_warning_delivery_deduplication_and_idempotency(monkeypatch):
     fake_pool = _FakeWarnPool()
     monkeypatch.setattr(app_db, 'get_pool', lambda: fake_pool)
     monkeypatch.setattr(advisories_api, 'get_pool', lambda: fake_pool)
+    monkeypatch.setenv('GATEWAY_API_KEY', GATEWAY_KEY)
 
     with TestClient(app, raise_server_exceptions=False) as client:
         payload = {
@@ -206,17 +221,36 @@ def test_warning_delivery_deduplication_and_idempotency(monkeypatch):
             'delivery_state': 'buoy_received',
             'buoy_id': 'BUOY01',
         }
-        res1 = client.post('/api/advisories/delivery', json=payload)
+        res1 = client.post('/api/advisories/delivery', json=payload, headers=GW_HEADERS)
         assert res1.status_code == 200
 
         # Submitting the identical delivery event again
-        res2 = client.post('/api/advisories/delivery', json=payload)
+        res2 = client.post('/api/advisories/delivery', json=payload, headers=GW_HEADERS)
         assert res2.status_code == 200
         assert res2.json().get('deduped') is True
 
-        res_list = client.get('/api/advisories/101/deliveries')
+        res_list = client.get('/api/advisories/101/deliveries', headers=OP_HEADERS)
         events = res_list.json()['deliveries']
         assert len(events) == 1, "Duplicate delivery event was inserted instead of deduped"
+
+
+def test_advisories_delivery_unauthenticated_rejected(monkeypatch):
+    """SEC-10: Delivery POST requires gateway key, deliveries GET requires operator auth."""
+    fake_pool = _FakeWarnPool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: fake_pool)
+    monkeypatch.setattr(advisories_api, 'get_pool', lambda: fake_pool)
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        # POST without gateway key -> 401
+        res_post = client.post(
+            '/api/advisories/delivery',
+            json={'warning_id': 101, 'delivery_state': 'gateway_accepted'},
+        )
+        assert res_post.status_code == 401
+
+        # GET without operator token -> 401
+        res_get = client.get('/api/advisories/101/deliveries')
+        assert res_get.status_code == 401
 
 
 def test_loam_frame_codec_and_relay_tamper_detection():

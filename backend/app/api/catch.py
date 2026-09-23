@@ -93,7 +93,7 @@ async def ingest_catch_log(
                   share_for_hotspots
                 )
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-                ON CONFLICT (local_id) WHERE local_id IS NOT NULL DO UPDATE SET
+                ON CONFLICT (vessel_id, local_id) WHERE local_id IS NOT NULL DO UPDATE SET
                   -- A retried upload of the same local_id fills in whatever
                   -- was missing rather than overwriting what already landed.
                   -- Never touches quantity_kg/quantity_confirmed - those are

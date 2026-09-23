@@ -5,9 +5,17 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 import asyncpg
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
+from app.auth import (
+    RESPONDER_ROLES,
+    bearer_scheme,
+    decode_token,
+    get_vessel_device_from_token,
+    require_user,
+)
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/v1/trips', tags=['trips'])
@@ -60,9 +68,9 @@ def _serialise_trip(row: asyncpg.Record) -> dict[str, Any]:
         'trip_id': row['trip_id'],
         'vessel_id': row['vessel_id'],
         'departure_at': row['departure_at'].isoformat() if row['departure_at'] else None,
-        'expected_return_at': row['expected_return_at'].isoformat()
-        if row['expected_return_at']
-        else None,
+        'expected_return_at': (
+            row['expected_return_at'].isoformat() if row['expected_return_at'] else None
+        ),
         'expected_checkin_interval_minutes': row['expected_checkin_interval_minutes'],
         'status': row['status'],
         'welfare_status': row['welfare_status'],
@@ -79,29 +87,70 @@ def _serialise_trip(row: asyncpg.Record) -> dict[str, Any]:
     }
 
 
+async def _authorize_mutation(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> tuple[str, dict[str, Any] | None]:
+    """Authorize trip mutation by responder operator or vessel device.
+
+    Returns (kind, device_dict_if_vessel). Raises 401 or 403 on authorization failure.
+    """
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(status_code=401, detail='authentication required')
+
+    claims = decode_token(credentials.credentials)
+    kind = claims.get('kind', 'user')
+    if kind == 'user':
+        role = claims.get('role')
+        if role not in RESPONDER_ROLES:
+            raise HTTPException(status_code=403, detail='responder role required')
+        return ('user', None)
+
+    if kind == 'vessel_device':
+        device = await get_vessel_device_from_token(credentials.credentials)
+        if device is None:
+            raise HTTPException(status_code=401, detail='device credential invalid or revoked')
+        return ('vessel_device', device)
+
+    raise HTTPException(status_code=401, detail='invalid token')
+
+
 @router.post('', status_code=200)
-async def create_or_register_trip(payload: TripCreateIn) -> dict[str, Any]:
+async def create_or_register_trip(
+    payload: TripCreateIn,
+    auth: tuple[str, dict[str, Any] | None] = Depends(_authorize_mutation),
+) -> dict[str, Any]:
     """Register or record an open/active vessel trip.
 
     Idempotent on trip_id: retries return existing record without overwriting.
     Allows departure_at to be NULL for fishers already at sea upon first upload.
     """
+    kind, device = auth
+    if (
+        kind == 'vessel_device'
+        and device is not None
+        and device['vessel_id'] != payload.vessel_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail='vessel device does not match trip vessel',
+        )
+
     now = datetime.now(UTC)
     reported_at = payload.reported_at or now
 
     pool = get_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            '''
+            """
             INSERT INTO vessels (id, boat_name)
             VALUES ($1, $1)
             ON CONFLICT (id) DO NOTHING
-            ''',
+            """,
             payload.vessel_id,
         )
 
         row = await conn.fetchrow(
-            '''
+            """
             INSERT INTO vessel_trips (
               trip_id, vessel_id, departure_at, expected_return_at,
               expected_checkin_interval_minutes, status, welfare_status,
@@ -111,7 +160,7 @@ async def create_or_register_trip(payload: TripCreateIn) -> dict[str, Any]:
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             ON CONFLICT (trip_id) DO NOTHING
             RETURNING *
-            ''',
+            """,
             payload.trip_id,
             payload.vessel_id,
             payload.departure_at,
@@ -141,14 +190,30 @@ async def create_or_register_trip(payload: TripCreateIn) -> dict[str, Any]:
 
 
 @router.patch('/{trip_id}', status_code=200)
-async def update_trip(trip_id: str, payload: TripUpdateIn) -> dict[str, Any]:
+async def update_trip(
+    trip_id: str,
+    payload: TripUpdateIn,
+    auth: tuple[str, dict[str, Any] | None] = Depends(_authorize_mutation),
+) -> dict[str, Any]:
     """Apply voluntary amendments, welfare status update, or completion to a trip."""
+    kind, device = auth
+
     now = datetime.now(UTC)
     pool = get_pool()
     async with pool.acquire() as conn:
         existing = await conn.fetchrow('SELECT * FROM vessel_trips WHERE trip_id = $1', trip_id)
         if existing is None:
             raise HTTPException(status_code=404, detail='trip not found')
+
+        if (
+            kind == 'vessel_device'
+            and device is not None
+            and device['vessel_id'] != existing['vessel_id']
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail='vessel device does not match trip vessel',
+            )
 
         # Build amendments entry if note supplied
         new_amendments = existing['amendments']
@@ -172,7 +237,7 @@ async def update_trip(trip_id: str, payload: TripUpdateIn) -> dict[str, Any]:
             )
 
         updated_row = await conn.fetchrow(
-            '''
+            """
             UPDATE vessel_trips
                SET status = COALESCE($2, status),
                    welfare_status = COALESCE($3, welfare_status),
@@ -184,7 +249,7 @@ async def update_trip(trip_id: str, payload: TripUpdateIn) -> dict[str, Any]:
                    updated_at = $7
              WHERE trip_id = $1
             RETURNING *
-            ''',
+            """,
             trip_id,
             payload.status,
             payload.welfare_status,
@@ -199,7 +264,10 @@ async def update_trip(trip_id: str, payload: TripUpdateIn) -> dict[str, Any]:
 
 
 @router.get('/{trip_id}', status_code=200)
-async def get_trip(trip_id: str) -> dict[str, Any]:
+async def get_trip(
+    trip_id: str,
+    _: dict[str, Any] = Depends(require_user),
+) -> dict[str, Any]:
     """Get single trip by trip_id."""
     pool = get_pool()
     async with pool.acquire() as conn:
@@ -214,19 +282,20 @@ async def list_trips(
     vessel_id: str | None = Query(default=None),
     status: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
+    _: dict[str, Any] = Depends(require_user),
 ) -> dict[str, Any]:
     """List trips with optional filtering by vessel_id or status."""
     pool = get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            '''
+            """
             SELECT *
               FROM vessel_trips
              WHERE ($1::TEXT IS NULL OR vessel_id = $1)
                AND ($2::TEXT IS NULL OR status = $2)
              ORDER BY COALESCE(departure_at, created_at) DESC, id DESC
              LIMIT $3
-            ''',
+            """,
             vessel_id,
             status,
             limit,

@@ -25,6 +25,12 @@ def reject_future_clock_skew(value: datetime) -> datetime:
     return value
 
 
+def is_valid_gateway_key(api_key: str | None) -> bool:
+    """Non-raising check whether an X-Api-Key matches GATEWAY_API_KEY."""
+    configured_key = os.environ.get('GATEWAY_API_KEY', '')
+    return bool(configured_key and api_key is not None and hmac.compare_digest(api_key, configured_key))
+
+
 async def require_gateway_key(
     api_key: str | None = Header(default=None, alias='X-Api-Key'),
 ) -> None:
@@ -37,8 +43,7 @@ async def require_gateway_key(
     handset nor the public dashboard can hold this key, so neither can
     manufacture a contact event.
     """
-    configured_key = os.environ.get('GATEWAY_API_KEY', '')
-    if not configured_key or api_key is None or not hmac.compare_digest(api_key, configured_key):
+    if not is_valid_gateway_key(api_key):
         raise HTTPException(status_code=401, detail='invalid gateway key')
 
 

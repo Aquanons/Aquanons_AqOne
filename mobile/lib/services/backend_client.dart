@@ -311,7 +311,7 @@ class BackendClient {
         _request(
           'POST',
           EndpointGuard.backend(_baseUrl, '/api/vessel-profile'),
-          headers: const {'Content-Type': 'application/json'},
+          headers: _withVesselAuth(const {'Content-Type': 'application/json'}),
           body: jsonEncode(payload),
         ),
       ).timeout(AqOneConfig.backendTimeout);
