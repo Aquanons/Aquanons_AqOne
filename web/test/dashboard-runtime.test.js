@@ -238,6 +238,52 @@ test('Phase 1 - F01: Secure rendering prevents unescaped HTML injection', async 
     assert.ok(feedList.innerHTML.includes('&lt;script&gt;evil()&lt;/script&gt;'), 'script tag must be escaped');
   });
 
+  await t.test('resolved feed renders sender reports from /api/sos/recent escaped', async () => {
+    const resolvedList = createStubElement('div', 'resolved-feed-list');
+    const ns = {
+      ready: true,
+      OPS_CENTER: [11.7, 122.4],
+      OPS_ZOOM: 11,
+      shoreStations: [],
+      initialBuoys: [],
+      vessels: [],
+      incidents: [],
+      map: { setView() {}, on() {} },
+      openPanel() {},
+      closePanel() {},
+      allAlerts: () => [],
+      alertIcon: () => '<span class="icon"></span>',
+      escapeHtml: escapeHtml,
+      registrationBadgeHtml: (type) => (type && type !== 'none' ? 'Registered Boat' : 'Unregistered Boat'),
+      authFetch: () => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ events: [{
+          id: 7,
+          vessel_id: 'V007',
+          boat: 'Test Boat',
+          note: '<img src=x onerror="pwn()">engine failure',
+          skipper_name: 'Juan Dela Cruz',
+          phone: '+63917',
+          license_type: 'boatr',
+          fisher_reply: 2,
+          created_at: '2026-01-01T00:00:00Z',
+          resolved_at: '2026-01-02T00:00:00Z'
+        }]})
+      })
+    };
+
+    const { window, document } = createDOMContext({ 'resolved-feed-list': resolvedList }, ns);
+    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-buoy-health.js'), 'utf8');
+    const context = vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns }));
+    vm.runInContext(code, context);
+    await new Promise(r => setTimeout(r, 10));
+
+    assert.ok(resolvedList.innerHTML.includes('Juan Dela Cruz'), 'sender rendered');
+    assert.ok(!resolvedList.innerHTML.includes('<img src=x'), 'note must be escaped');
+    assert.ok(resolvedList.innerHTML.includes('SAFE NOW'), 'fisher report rendered');
+    assert.ok(resolvedList.innerHTML.includes('Registered Boat'), 'registration pill rendered');
+  });
+
   await t.test('sea condition in dashboard-emergency-advisory.js escapes reason and setByName', async () => {
     const seaCurrent = createStubElement('div', 'sea-condition-current');
     const ns = {

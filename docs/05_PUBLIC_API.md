@@ -203,6 +203,14 @@ display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
 
+### `GET /api/sos/recent` — resolved-incident history (dashboard panel)
+
+Operator-authenticated, same shape as `/api/sos/active` (including the
+vessel-profile join). Returns resolved events, newest first, capped at 20.
+`/active` drops an incident the moment it is resolved, so without this the
+dashboard's resolved-incidents panel would have no record of who was resolved
+or what the fisher's last report on it was.
+
 ### `POST /api/vessel-profile` — declare a vessel's owner identity
 
 Unauthenticated, for the same reason SOS ingest is (`POST /api/sos`): a

@@ -279,6 +279,17 @@ async def ack_by_local_id(local_id: str) -> dict[str, object]:
     }
 
 
+def _event_json(row: Any) -> dict[str, object]:
+    timestamp_columns = (
+        'created_at', 'acknowledged_at', 'eta_at', 'fisher_replied_at', 'resolved_at',
+    )
+    data = dict(row)
+    for col in timestamp_columns:
+        data[col] = _iso(row[col])
+    data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
+    return data
+
+
 @protected_router.get('/active')
 async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     """Every unresolved SOS event, newest first. Dispatcher view.
@@ -318,15 +329,39 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
         'created_at', 'acknowledged_at', 'eta_at', 'fisher_replied_at', 'resolved_at',
     )
 
-    events: list[dict[str, object]] = []
-    for row in rows:
-        data = dict(row)
-        for col in timestamp_columns:
-            data[col] = _iso(row[col])
-        data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
-        events.append(data)
+    return {'events': [_event_json(row) for row in rows]}
 
-    return {'events': events}
+
+@protected_router.get('/recent')
+async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
+    """Resolved SOS events, newest first. Dispatcher history view.
+
+    `/active` drops an incident the moment it is resolved, so without this
+    the dashboard has no record of who was resolved or what the fisher's
+    last report on it was. Same shape as `/active`, including the vessel
+    profile join, so the history rows render with sender and reply intact.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''
+            SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
+                   e.trust_tier,
+                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
+                   e.eta_at, e.responder_status, e.responder_note,
+                   e.fisher_reply, e.fisher_replied_at, e.resolved_at,
+                   e.is_synthetic,
+                   v.skipper_name, v.license_type, v.license_number, v.phone
+            FROM sos_events e
+            LEFT JOIN vessels v ON v.id = e.vessel_id
+            WHERE e.resolved_at IS NOT NULL
+            ORDER BY e.resolved_at DESC
+            LIMIT 20
+            '''
+        )
+
+    return {'events': [_event_json(row) for row in rows]}
 
 
 # How long a resolved incident keeps appearing in the downlink feed.
