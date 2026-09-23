@@ -23,6 +23,10 @@ MODE_FIELD = re.compile(r"^\*\*Execution mode:\*\* (auto|hard-stop)\s*$", re.MUL
 
 
 class PlanModeSkill(unittest.TestCase):
+    def setUp(self):
+        for rel in SKILL_COPIES:
+            self.assertTrue((ROOT / rel).exists(), f"{rel} missing")
+
     def test_copies_are_byte_identical(self):  # AC-24
         first, second = ((ROOT / rel).read_bytes() for rel in SKILL_COPIES)
         self.assertTrue(first == second, "implementation-plan skill copies differ")

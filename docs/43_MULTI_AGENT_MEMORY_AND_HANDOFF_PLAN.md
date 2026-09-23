@@ -8,8 +8,8 @@
 **Execution mode:** auto
 
 - **Document ID**: `docs/58_MULTI_AGENT_HANDOFF_SPEC.md`, renumbered from 43 in Revision 4 because master already uses 43 for the DTI pitch plan.
-- **Revision**: 4, approved for execution by Len in chat, 2026-09-23.
-- **History**: R1 2026-09-23T07:56+08:00 Antigravity; R2 08:00 Claude Code (Council review); R3 08:14 Claude Code (Q1, Q2, plan, tests), executed by Antigravity; R4 10:30 Claude Code (Part C follow-ups).
+- **Revision**: 5, approved for execution by Len in chat, 2026-09-23.
+- **History**: R1 2026-09-23T07:56+08:00 Antigravity; R2 08:00 Claude Code (Council review); R3 08:14 Claude Code (Q1, Q2, plan, tests), executed by Antigravity; R4 10:30 Claude Code (Part C follow-ups); R5 10:54 Claude Code (Part C rebased onto `origin/master`).
 - **Tests**: `.agents/tests/test_handoff.py`, `.agents/tests/test_plan_mode.py`
 - **Executor**: Antigravity (Gemini), per root `HANDOFF.md`
 
@@ -351,14 +351,16 @@ Every handoff has these sections, in this order:
 
 ---
 
-## Part C - Revision 4 follow-ups
+## Part C - Revision 5 follow-ups
 
 Claude Code reviewed the Revision 3 execution and found issues that come from this branch being 173 commits behind `origin/master`, from drift between `AGENTS.md` and `CLAUDE.md`, and from two diverged copies of the `implementation-plan` skill.
 
 ### Len's decisions, 2026-09-23
 
-- Stay on `codex/security-audit-stale-base`; it also carries the security audit.
-  Only fix what will not fight master at merge time; everything else is listed under C.4 for after the merge.
+- Work moved to branch `claude/handoff-and-security-report`, based on `origin/master` (tip `a268957`, PR #68).
+  It carries master, the security audit from `codex/security-audit-preserved` (`a08753d`, byte-identical `docs/security-audit/`), and this handoff work (`822af36`).
+  `codex/security-audit-stale-base` is retired; its demo fix `b0bc245` is already covered by master.
+- This convention's `HANDOFF.md` template replaces the earlier toolkit template on master.
 - Jade owns the Flutter app; Arnold owns the dashboard.
 - The `implementation-plan` skill supports two execution modes, chosen per plan by the feature's scale, with a command to toggle between them.
 
@@ -374,11 +376,12 @@ It is typed `SPEC` because it is a standing convention, and because master allow
 - AC-18: No live pointer (`AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.agents/rules/GEMINI.md`, the template, the test docstrings, `HANDOFF.md`) still names the old path or `docs/43`.
   Historical mentions inside this doc may stay.
 - AC-19: The doc starts with master's required header block, plus `**Execution mode:**`.
+- AC-29: `docs/SPEC_INDEX.md` links the renamed doc.
 
 #### REQ-009: Entry files agree on facts
 
 - AC-20: `AGENTS.md` build step 1 is character-for-character the same as master's, including master's em dash (U+2014) after "Deployed skeleton": `1. Deployed skeleton <U+2014> FastAPI on Render, green /health/ready, migrations run.`
-  The em dash stays on this line only so the merge with master is clean; the em dash cleanup waits for C.4.
+  Already true on the new base; master made this change.
 - AC-21: Neither `AGENTS.md` nor `CLAUDE.md` mentions Railway.
 - AC-22: In both files, the ownership row for Jade names the Flutter app, and the row for Arnold names the dashboard.
 - AC-23: In both files, the `Public REST + SSE` contract row names `dashboard (Arnold)`.
@@ -410,7 +413,8 @@ Acceptance criteria:
 
 ### C.2 Implementation plan
 
-Same rules as Part B: this branch, no commits, keep Len's 8 `AGENTS.md` lines, no product code, no em dashes in new text.
+Work in the worktree `.claude/worktrees/handoff-on-master` on branch `claude/handoff-and-security-report`.
+No commits, no product code, no em dashes in new text, and never touch `docs/security-audit/`.
 
 - **Execution mode**: auto (docs and agent tooling only, 3 phases).
 - **Test command**: `python -m unittest discover -s .agents/tests -v`
@@ -419,15 +423,16 @@ Same rules as Part B: this branch, no commits, keep Len's 8 `AGENTS.md` lines, n
 
 #### Phase C1: Renumber (REQ-008)
 
-- [ ] C1.1 Rename `docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md` to `docs/58_MULTI_AGENT_HANDOFF_SPEC.md` (a plain rename; the file is untracked).
+- [ ] C1.1 Rename with `git mv docs/43_MULTI_AGENT_MEMORY_AND_HANDOFF_PLAN.md docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
 - [ ] C1.2 Replace every live pointer to the old path or to `docs/43`: the `AGENTS.md` handoff section, the `.gitignore` comment, the template comment, the `test_handoff.py` docstring, and `HANDOFF.md`.
   Find them with `grep -rn -e "docs/43" -e "43_MULTI_AGENT" AGENTS.md CLAUDE.md .gitignore HANDOFF.md .agents`.
 - [ ] C1.3 Update the Phase 1.1 code block in Part B to the new `.gitignore` comment so the doc matches the file.
-- **Verify**: `test_spec_renumbered`, `test_no_live_pointer_to_old_spec`, `test_spec_has_required_header`.
+- [ ] C1.4 Add a row for the doc to the "Current sources of truth" table in `docs/SPEC_INDEX.md`, with status `Active specification`.
+- **Verify**: `test_spec_renumbered`, `test_no_live_pointer_to_old_spec`, `test_spec_is_indexed`, `test_spec_has_required_header`.
 
 #### Phase C2: Entry-file facts (REQ-009)
 
-- [ ] C2.1 `AGENTS.md` line 18: make it exactly the AC-20 line.
+- [x] C2.1 `AGENTS.md` line 18 already matches AC-20 on master; no edit.
 - [ ] C2.2 `AGENTS.md` ownership table: Jade row to the Flutter app (mobile), Arnold row to the dashboard, ingest pipeline and gateway.
 - [ ] C2.3 `Public REST + SSE` row in both `AGENTS.md` and `CLAUDE.md`: `backend (Lenard), dashboard (Arnold)`.
 - [ ] C2.4 Check nothing else in either file says Railway.
@@ -435,13 +440,14 @@ Same rules as Part B: this branch, no commits, keep Len's 8 `AGENTS.md` lines, n
 
 #### Phase C3: Plan execution modes (REQ-010)
 
-- [ ] C3.1 Write one merged `implementation-plan` skill, starting from the `.agents/` copy (Len's toolkit version, which already has the handoff wording), and add:
+- [ ] C3.1 Write one merged `implementation-plan` skill, starting from Len's toolkit version, which already has the handoff wording.
+  On this branch the tracked `.agents/` copy is master's older hard-stop version, so start from `git show e5c538a:.agents/skills/implementation-plan/SKILL.md`, and add:
   - frontmatter `argument-hint: "[create <feature> | execute | status | mode auto|hard-stop]"`;
   - an "Execution mode" section with the table, default-by-scale rule, toggle forms, target-plan rule, and next-phase-boundary rule from REQ-010;
   - in "Create a plan", add `**Execution mode:**` to the plan header and propose the default to Len;
   - in "Execute or resume", replace "Proceed automatically through the remaining approved phases without requesting routine sign-off." with behavior that depends on the mode.
   Keep it short: the current `.agents/` copy is 42 lines, so aim for under 70.
-- [ ] C3.2 Copy the result byte-for-byte to both `.agents/skills/implementation-plan/SKILL.md` and `.claude/skills/implementation-plan/SKILL.md`.
+- [ ] C3.2 Write the result byte-for-byte to both `.agents/skills/implementation-plan/SKILL.md` and `.claude/skills/implementation-plan/SKILL.md`; the `.claude/` copy is new on this branch.
 - **Verify**: the `PlanModeSkill` tests pass; then run the opt-in `test_claude_toggles_plan_mode` (AC-28) with `HANDOFF_E2E=1`.
 
 #### Phase C4: Evidence and handoff
@@ -459,13 +465,12 @@ Same rules as Part B: this branch, no commits, keep Len's 8 `AGENTS.md` lines, n
 | T13 | Skill copies identical and declare modes | AC-24 to AC-27 | `test_plan_mode.py` `PlanModeSkill` |
 | T14 | Claude Code toggles a plan to `hard-stop` | AC-28 | `test_plan_mode.py` `test_claude_toggles_plan_mode`, opt-in |
 
-### C.4 Deferred until this branch merges with master
+### C.4 Follow-ups outside Part C
 
-Fixing these here would duplicate or conflict with master.
+The move to `origin/master` unblocked these; each is a separate task for Len to schedule.
 
-- Add this doc to master's `docs/SPEC_INDEX.md` and `docs/README.md` register.
 - Railway references still on master: `README.md`, contracts `docs/04_INGEST_API.md` and `docs/05_PUBLIC_API.md` (base URLs), `firmware/README.md`, and mobile comments and a test name.
-  The contract base URLs are the priority because agents and teammates copy them.
+  The contract base URLs are the priority because agents and teammates copy them; changing a contract means telling its owners first.
 - Em dash cleanup in `AGENTS.md` and `CLAUDE.md`.
-- Eight other skills differ between `.agents/skills/` and `.claude/skills/`: `council`, `security-audit`, and the six `ponytail` skills.
-- T3 (worktrees) needs these files committed; T5 (Antigravity) needs a run outside Antigravity.
+- Other skills differ between Len's local `.agents/skills/` and `.claude/skills/` toolkit copies: `council`, `security-audit`, and the six `ponytail` skills.
+- T3 (worktrees) can now run, since the hook and rules are committed; T5 (Antigravity) needs a run outside Antigravity.

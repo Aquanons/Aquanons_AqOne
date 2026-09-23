@@ -159,6 +159,10 @@ class SpecDocument(unittest.TestCase):
                 with self.subTest(file=name, stale=stale):
                     self.assertFalse(stale in text, f"{name} still points at {stale}")
 
+    def test_spec_is_indexed(self):  # AC-29
+        self.assertTrue(Path(SPEC).name in read("docs/SPEC_INDEX.md"),
+                        "docs/SPEC_INDEX.md does not link the handoff spec")
+
     def test_spec_has_required_header(self):  # AC-19
         self.assertTrue((ROOT / SPEC).exists(), f"{SPEC} missing")
         head = "\n".join(read(SPEC).splitlines()[:12])
