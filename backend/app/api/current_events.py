@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from typing import Literal
 
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.contacts import require_gateway_key, require_synthetic_demo_gate
+from app.api.contacts import (
+    reject_future_clock_skew,
+    require_gateway_key,
+    require_synthetic_demo_gate,
+)
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/v1', tags=['current-events'])
 
 # Physical-plausibility guard on current speeds (up to 5 m/s)
 _MAX_CURRENT_SPEED_MPS = 5.0
-
-# Tolerance for a buoy's clock running ahead of the server's
-_MAX_FUTURE_SKEW = timedelta(minutes=5)
 
 
 class CurrentEventIn(BaseModel):
@@ -39,10 +40,7 @@ class CurrentEventIn(BaseModel):
     @field_validator('observed_at')
     @classmethod
     def _reject_future_clock_skew(cls, value: datetime) -> datetime:
-        as_utc = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
-        if as_utc - datetime.now(UTC) > _MAX_FUTURE_SKEW:
-            raise ValueError('observed_at is too far in the future')
-        return value
+        return reject_future_clock_skew(value)
 
 
 @router.post('/current-events', dependencies=[Depends(require_gateway_key)], status_code=200)

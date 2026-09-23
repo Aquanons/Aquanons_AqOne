@@ -2,16 +2,27 @@ from __future__ import annotations
 
 import hmac
 import os
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/v1', tags=['contacts'])
+
+# Tolerance for a buoy's clock running ahead of the server's (docs/04_INGEST_API.md)
+_MAX_FUTURE_SKEW = timedelta(minutes=5)
+
+
+def reject_future_clock_skew(value: datetime) -> datetime:
+    """Reject timestamps more than 5 minutes ahead of server clock (docs/04_INGEST_API.md)."""
+    as_utc = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+    if as_utc - datetime.now(UTC) > _MAX_FUTURE_SKEW:
+        raise ValueError('observed_at is too far in the future')
+    return value
 
 
 async def require_gateway_key(
@@ -62,6 +73,11 @@ class ContactEventIn(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     source: Literal['live', 'synthetic']
+
+    @field_validator('observed_at')
+    @classmethod
+    def _reject_future_clock_skew(cls, value: datetime) -> datetime:
+        return reject_future_clock_skew(value)
 
 
 @router.post('/contacts', dependencies=[Depends(require_gateway_key)], status_code=200)

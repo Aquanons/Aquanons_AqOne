@@ -20,7 +20,11 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 
+import pytest
+from pydantic import ValidationError
+
 from app.ai import anomaly_service
+from app.api.contacts import ContactEventIn
 
 
 class _FakeConnection:
@@ -35,6 +39,16 @@ class _FakeConnection:
     async def execute(self, query: str, *args):
         self.executed.append((query, args))
         return 'OK'
+
+    def transaction(self):
+        class _NullContext:
+            async def __aenter__(self):
+                return None
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+        return _NullContext()
 
 
 def test_demo_evaluation_disabled_by_default(monkeypatch):
@@ -180,3 +194,81 @@ def test_evaluate_and_persist_score_changes_only_when_the_clock_advances():
     # Still overdue further past the expected-contact window - later must not
     # score lower, and here it should be strictly higher.
     assert late_score > early_score
+
+
+def test_zero_contact_trip_evaluates_with_fleet_profile_and_persists():
+    """SEC-02: Zero-contact trip for a fresh vessel falls back to fleet profile and uses departure_at/reported_at."""
+    as_of = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
+    departure = as_of - timedelta(hours=3)
+
+    class _ZeroContactConn(_FakeConnection):
+        async def fetch(self, query: str, *args):
+            self.executed.append((query, args))
+            if 'FROM buoy_contacts' in query:
+                return []
+            if 'FROM vessel_trips' in query:
+                return [{
+                    'trip_id': 'T-ZERO',
+                    'vessel_id': 'V-FRESH',
+                    'status': 'open',
+                    'welfare_status': 'unknown',
+                    'departure_at': departure,
+                    'expected_return_at': None,
+                    'expected_checkin_interval_minutes': None,
+                    'reported_at': None,
+                    'amendments': [],
+                }]
+            return []
+
+    conn = _ZeroContactConn([])
+    scores = asyncio.run(anomaly_service.evaluate_and_persist(conn, as_of=as_of, include_synthetic=False))
+    assert len(scores) == 1
+    assert scores[0]['vessel_id'] == 'V-FRESH'
+
+    score_insert = next(args for q, args in conn.executed if 'INSERT INTO vessel_anomaly_scores' in q)
+    assert score_insert[3] == departure
+
+
+def test_contact_without_coordinates_skipped_without_crashing():
+    """SEC-03: Contacts with missing coordinates are safely skipped without aborting evaluation."""
+    as_of = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
+    rows = [
+        _row('V-GOOD', 'trip-good', 'B01', as_of - timedelta(hours=1)),
+        {
+            'vessel_id': 'V-BAD',
+            'trip_id': 'trip-bad',
+            'buoy_id': 'B01',
+            'observed_at': as_of - timedelta(hours=1),
+            'latitude': None,
+            'longitude': None,
+            'is_synthetic': False,
+        },
+    ]
+    latest = anomaly_service.eligible_latest_trips(rows, as_of=as_of)
+    vessels = {v for v, _, _ in latest}
+    assert 'V-GOOD' in vessels
+    assert 'V-BAD' not in vessels
+
+
+def test_contact_event_in_rejects_future_clock_skew():
+    """SEC-04: ContactEventIn rejects observed_at more than 5 minutes in the future."""
+    now = datetime.now(UTC)
+    valid = ContactEventIn(
+        event_id='e1',
+        vessel_id='V1',
+        trip_id='T1',
+        buoy_id='B1',
+        observed_at=now,
+        source='live',
+    )
+    assert valid.observed_at == now
+
+    with pytest.raises(ValidationError):
+        ContactEventIn(
+            event_id='e2',
+            vessel_id='V1',
+            trip_id='T1',
+            buoy_id='B1',
+            observed_at=now + timedelta(minutes=6),
+            source='live',
+        )

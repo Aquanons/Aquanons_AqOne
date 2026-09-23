@@ -19,10 +19,43 @@ read-only").
 
 from __future__ import annotations
 
+import json
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
-from app.ai.trip_profile import ContactPoint, build_profiles_from_contacts, score_trip
+from app.ai.trip_profile import (
+    ContactPoint,
+    _build_profile,
+    build_profiles_from_contacts,
+    score_trip,
+)
+
+
+def _json_dumps(data: Any) -> str:
+    def _default(obj: Any) -> str:
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+    return json.dumps(data, default=_default)
+
+
+def _determine_last_contact_at(
+    contacts: list[ContactPoint],
+    trip_state: dict[str, object] | None,
+    as_of: datetime,
+) -> datetime:
+    if contacts:
+        return contacts[-1].observed_at
+    if trip_state:
+        dep = trip_state.get('departure_at')
+        if dep is not None:
+            return dep if isinstance(dep, datetime) else datetime.fromisoformat(str(dep))
+        rep = trip_state.get('reported_at')
+        if rep is not None:
+            return rep if isinstance(rep, datetime) else datetime.fromisoformat(str(rep))
+    return as_of
 
 # Decided 2026-08-29 (docs/38 Phase 2 stop-and-ask condition, project lead) -
 # see docs/08_DEMO_AND_STATUS.md for the recorded rationale. How long after a
@@ -56,8 +89,10 @@ async def _load_trip_rows(conn, *, include_synthetic: bool) -> list[dict[str, ob
     source_clause = "bc.source IN ('live', 'synthetic')" if include_synthetic else "bc.source = 'live'"
     rows = await conn.fetch(
         f'''
-        SELECT bc.vessel_id, bc.trip_id, bc.buoy_id, bc.observed_at, bc.latitude,
-               bc.longitude, bc.is_synthetic
+        SELECT bc.vessel_id, bc.trip_id, bc.buoy_id, bc.observed_at,
+               COALESCE(bc.latitude, b.lat) AS latitude,
+               COALESCE(bc.longitude, b.lon) AS longitude,
+               bc.is_synthetic
         FROM buoy_contacts bc
         JOIN buoys b ON b.id = bc.buoy_id
         WHERE {source_clause}
@@ -70,6 +105,8 @@ async def _load_trip_rows(conn, *, include_synthetic: bool) -> list[dict[str, ob
 def _group_latest_trips(rows: list[dict[str, object]]) -> list[tuple[str, str, list[ContactPoint]]]:
     grouped: dict[tuple[str, str], list[ContactPoint]] = {}
     for row in rows:
+        if row.get('latitude') is None or row.get('longitude') is None:
+            continue
         key = (str(row['vessel_id']), str(row['trip_id']))
         grouped.setdefault(key, []).append(
             ContactPoint(
@@ -106,7 +143,7 @@ async def _load_trip_states(conn) -> dict[str, dict[str, object]]:
     rows = await conn.fetch(
         '''
         SELECT trip_id, vessel_id, status, welfare_status, departure_at,
-               expected_return_at, expected_checkin_interval_minutes, amendments
+               expected_return_at, expected_checkin_interval_minutes, reported_at, amendments
         FROM vessel_trips
         '''
     )
@@ -170,97 +207,117 @@ async def evaluate_and_persist(conn, *, as_of: datetime, include_synthetic: bool
     ages out of the freshness window or completes a newer trip drops out of
     `is_active = TRUE` without any row being deleted or truncated.
     """
-    rows = await _load_trip_rows(conn, include_synthetic=include_synthetic)
-    trip_states = await _load_trip_states(conn)
-    eligible = eligible_latest_trips(rows, as_of=as_of, trip_states=trip_states)
-    candidate_trip_ids = {trip_id for _, trip_id, _ in eligible}
-    profiles = build_profiles_from_contacts(
-        rows, built_at=as_of, as_of=as_of, exclude_trip_ids=candidate_trip_ids, trip_states=trip_states,
-    )
-    trip_is_synthetic = _trip_is_synthetic(rows)
+    async with conn.transaction():
+        rows = await _load_trip_rows(conn, include_synthetic=include_synthetic)
+        trip_states = await _load_trip_states(conn)
+        eligible = eligible_latest_trips(rows, as_of=as_of, trip_states=trip_states)
+        candidate_trip_ids = {trip_id for _, trip_id, _ in eligible}
+        profiles = build_profiles_from_contacts(
+            rows, built_at=as_of, as_of=as_of, exclude_trip_ids=candidate_trip_ids, trip_states=trip_states,
+        )
+        trip_is_synthetic = _trip_is_synthetic(rows)
 
-    scope = [True, False] if include_synthetic else [False]
-    await conn.execute(
-        'UPDATE vessel_anomaly_scores SET is_active = FALSE WHERE is_synthetic = ANY($1::boolean[])',
-        scope,
-    )
+        scope = [True, False] if include_synthetic else [False]
+        await conn.execute(
+            'UPDATE vessel_anomaly_scores SET is_active = FALSE WHERE is_synthetic = ANY($1::boolean[])',
+            scope,
+        )
 
-    score_rows: list[dict[str, object]] = []
-    for vessel_id, trip_id, contacts in eligible:
-        profile = profiles[vessel_id]
-        trip_state = trip_states.get(trip_id)
-        score = score_trip(
-            profile,
-            contacts,
-            as_of=as_of,
-            trip_id=trip_id,
-            trip_state=trip_state,
-        )
-        score_rows.append(score.to_response())
-        is_synthetic = trip_is_synthetic.get((vessel_id, trip_id), True)
-        await conn.execute(
-            '''
-            INSERT INTO vessel_profiles (
-              vessel_id, profile_json, trip_count, low_confidence, rebuilt_at, is_synthetic
-            ) VALUES ($1, $2::jsonb, $3, $4, $5, $6)
-            ON CONFLICT (vessel_id) DO UPDATE SET
-              profile_json = EXCLUDED.profile_json,
-              trip_count = EXCLUDED.trip_count,
-              low_confidence = EXCLUDED.low_confidence,
-              rebuilt_at = EXCLUDED.rebuilt_at,
-              is_synthetic = EXCLUDED.is_synthetic
-            ''',
-            vessel_id,
-            profile.to_json(),
-            profile.trip_count,
-            profile.low_confidence,
-            datetime.now(UTC),
-            is_synthetic,
-        )
-        await conn.execute(
-            '''
-            INSERT INTO vessel_anomaly_scores (
-              vessel_id, trip_id, observed_at, last_contact_at, score, status,
-              factors, expected_next_buoy_id, expected_window_start,
-              expected_window_end, is_active, low_confidence, updated_at,
-              is_synthetic
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14)
-            ON CONFLICT (vessel_id, trip_id) DO UPDATE SET
-              observed_at = EXCLUDED.observed_at,
-              last_contact_at = EXCLUDED.last_contact_at,
-              score = EXCLUDED.score,
-              status = EXCLUDED.status,
-              factors = EXCLUDED.factors,
-              expected_next_buoy_id = EXCLUDED.expected_next_buoy_id,
-              expected_window_start = EXCLUDED.expected_window_start,
-              expected_window_end = EXCLUDED.expected_window_end,
-              is_active = EXCLUDED.is_active,
-              low_confidence = EXCLUDED.low_confidence,
-              updated_at = EXCLUDED.updated_at,
-              is_synthetic = EXCLUDED.is_synthetic
-            ''',
-            vessel_id,
-            trip_id,
-            as_of,
-            contacts[-1].observed_at,
-            score.score,
-            score.status,
-            [factor.__dict__ for factor in score.factors],
-            score.expected_contact.buoy_id,
-            score.expected_contact.window_start,
-            score.expected_contact.window_end,
-            score.status in {'watch', 'overdue', 'alert'},
-            profile.low_confidence,
-            datetime.now(UTC),
-            is_synthetic,
-        )
-        if score.status != 'normal':
-            await _upsert_case(conn, vessel_id, trip_id, score, contacts, as_of=as_of, is_synthetic=is_synthetic)
-    return score_rows
+        score_rows: list[dict[str, object]] = []
+        for vessel_id, trip_id, contacts in eligible:
+            profile = profiles.get(vessel_id)
+            if profile is None:
+                fleet_prof = profiles.get('fleet') or _build_profile('fleet', [], built_at=as_of, low_confidence=False)
+                profile = fleet_prof.for_vessel(vessel_id, low_confidence=True)
+            trip_state = trip_states.get(trip_id)
+            score = score_trip(
+                profile,
+                contacts,
+                as_of=as_of,
+                trip_id=trip_id,
+                trip_state=trip_state,
+            )
+            score_rows.append(score.to_response())
+            is_synthetic = trip_is_synthetic.get((vessel_id, trip_id), True)
+            last_contact_at = _determine_last_contact_at(contacts, trip_state, as_of)
+            await conn.execute(
+                '''
+                INSERT INTO vessel_profiles (
+                  vessel_id, profile_json, trip_count, low_confidence, rebuilt_at, is_synthetic
+                ) VALUES ($1, $2::jsonb, $3, $4, $5, $6)
+                ON CONFLICT (vessel_id) DO UPDATE SET
+                  profile_json = EXCLUDED.profile_json,
+                  trip_count = EXCLUDED.trip_count,
+                  low_confidence = EXCLUDED.low_confidence,
+                  rebuilt_at = EXCLUDED.rebuilt_at,
+                  is_synthetic = EXCLUDED.is_synthetic
+                ''',
+                vessel_id,
+                _json_dumps(profile.to_json()),
+                profile.trip_count,
+                profile.low_confidence,
+                datetime.now(UTC),
+                is_synthetic,
+            )
+            await conn.execute(
+                '''
+                INSERT INTO vessel_anomaly_scores (
+                  vessel_id, trip_id, observed_at, last_contact_at, score, status,
+                  factors, expected_next_buoy_id, expected_window_start,
+                  expected_window_end, is_active, low_confidence, updated_at,
+                  is_synthetic
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14)
+                ON CONFLICT (vessel_id, trip_id) DO UPDATE SET
+                  observed_at = EXCLUDED.observed_at,
+                  last_contact_at = EXCLUDED.last_contact_at,
+                  score = EXCLUDED.score,
+                  status = EXCLUDED.status,
+                  factors = EXCLUDED.factors,
+                  expected_next_buoy_id = EXCLUDED.expected_next_buoy_id,
+                  expected_window_start = EXCLUDED.expected_window_start,
+                  expected_window_end = EXCLUDED.expected_window_end,
+                  is_active = EXCLUDED.is_active,
+                  low_confidence = EXCLUDED.low_confidence,
+                  updated_at = EXCLUDED.updated_at,
+                  is_synthetic = EXCLUDED.is_synthetic
+                ''',
+                vessel_id,
+                trip_id,
+                as_of,
+                last_contact_at,
+                score.score,
+                score.status,
+                _json_dumps([factor.__dict__ for factor in score.factors]),
+                score.expected_contact.buoy_id,
+                score.expected_contact.window_start,
+                score.expected_contact.window_end,
+                score.status in {'watch', 'overdue', 'alert'},
+                profile.low_confidence,
+                datetime.now(UTC),
+                is_synthetic,
+            )
+            if score.status != 'normal':
+                await _upsert_case(
+                    conn,
+                    vessel_id,
+                    trip_id,
+                    score,
+                    as_of=as_of,
+                    last_contact_at=last_contact_at,
+                    is_synthetic=is_synthetic,
+                )
+        return score_rows
 
 
 async def _upsert_case(
-    conn, vessel_id: str, trip_id: str, score, contacts, *, as_of: datetime, is_synthetic: bool
+    conn,
+    vessel_id: str,
+    trip_id: str,
+    score,
+    *,
+    as_of: datetime,
+    last_contact_at: datetime,
+    is_synthetic: bool,
 ) -> None:
     """Create or refresh the persistent review case for a non-normal score
     (docs/38 Phase 3). Only the score-derived snapshot columns are written
@@ -296,9 +353,9 @@ async def _upsert_case(
         case_type,
         score.score,
         score.status,
-        [factor.__dict__ for factor in score.factors],
+        _json_dumps([factor.__dict__ for factor in score.factors]),
         'synthetic' if is_synthetic else 'live',
         as_of,
-        contacts[-1].observed_at,
+        last_contact_at,
         is_synthetic,
     )

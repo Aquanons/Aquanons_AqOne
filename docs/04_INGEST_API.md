@@ -146,7 +146,7 @@ Request body (JSON):
 | `vessel_id` | yes | Vessel identifier, ≤ 32 chars. |
 | `trip_id` | yes | Identifies the vessel's current trip, ≤ 64 chars. |
 | `buoy_id` | yes | Must already be a registered buoy; an unrecognized id is rejected rather than silently creating one. |
-| `observed_at` | yes | RFC 3339 timestamp of the contact itself, not the ingest time. |
+| `observed_at` | yes | RFC 3339 timestamp of the contact itself, not the ingest time. Rejected if more than 5 minutes ahead of the server clock - that indicates a broken buoy clock, not a real future contact. |
 | `latitude` / `longitude` | no | Last known position at this contact, if the buoy has it. |
 | `source` | yes | `live` for a real field contact, `synthetic` for demo/test data. Production trip-anomaly evaluation only ever reads `live` rows — see docs/38 Phase 1 item 5. Neither the handset nor the public dashboard can submit a contact event at all, live or synthetic; only a holder of `GATEWAY_API_KEY` can. |
 
@@ -168,7 +168,7 @@ the original contact, not a new one — no second logical contact is ever
 created, and the response is otherwise identical either way so a retrying
 gateway does not need to branch on it.
 
-Errors: `401` bad/missing API key; `422` malformed body (bad timestamp,
+Errors: `401` bad/missing API key; `422` malformed body (bad/future timestamp,
 empty/oversized id, missing/invalid `source`); `400` unknown `buoy_id`.
 
 ## Pressure events (buoy barometric telemetry)

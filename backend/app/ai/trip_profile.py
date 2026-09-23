@@ -204,6 +204,8 @@ def _compress_route(contacts: list[ContactPoint]) -> list[str]:
 def _group_trip_samples(rows: list[dict[str, Any]]) -> dict[str, list[TripSample]]:
     grouped: dict[str, dict[str, list[ContactPoint]]] = defaultdict(lambda: defaultdict(list))
     for row in rows:
+        if row.get('latitude') is None or row.get('longitude') is None:
+            continue
         grouped[str(row['vessel_id'])][str(row['trip_id'])].append(
             ContactPoint(
                 buoy_id=str(row['buoy_id']),
@@ -252,7 +254,7 @@ def build_profiles_from_contacts(
     grouped = _group_trip_samples(filtered_rows)
     all_trips = [trip for trips in grouped.values() for trip in trips]
     fleet = _build_profile('fleet', all_trips, built_at, low_confidence=False)
-    profiles: dict[str, VesselProfile] = {}
+    profiles: dict[str, VesselProfile] = {'fleet': fleet}
     for vessel_id, trips in grouped.items():
         if len(trips) < ANOMALY_CONFIG['minimum_trips_for_confidence']:
             profiles[vessel_id] = fleet.for_vessel(vessel_id, low_confidence=True)
@@ -264,6 +266,12 @@ def build_profiles_from_contacts(
         v_id = str(r['vessel_id'])
         if v_id not in profiles:
             profiles[v_id] = fleet.for_vessel(v_id, low_confidence=True)
+
+    if trip_states:
+        for state in trip_states.values():
+            v_id = str(state.get('vessel_id') or '')
+            if v_id and v_id not in profiles:
+                profiles[v_id] = fleet.for_vessel(v_id, low_confidence=True)
 
     return profiles
 
@@ -452,8 +460,15 @@ def score_trip(
         dep_tz = (
             _ensure_tz(dep_at)
             if isinstance(dep_at, datetime)
-            else (_ensure_tz(datetime.fromisoformat(str(dep_at))) if dep_at else as_of)
+            else (_ensure_tz(datetime.fromisoformat(str(dep_at))) if dep_at else None)
         )
+        rep_at = trip_state.get('reported_at') if trip_state else None
+        rep_tz = (
+            _ensure_tz(rep_at)
+            if isinstance(rep_at, datetime)
+            else (_ensure_tz(datetime.fromisoformat(str(rep_at))) if rep_at else None)
+        )
+        last_contact_tz = dep_tz or rep_tz or as_of
         exp_ret = trip_state.get('expected_return_at') if trip_state else None
         if exp_ret:
             exp_ret_tz = (
@@ -469,7 +484,7 @@ def score_trip(
                 time_str = exp_ret_tz.strftime("%H:%M")
                 explanation = f'Overdue past expected return deadline ({time_str}) with zero contacts observed.'
                 factor = _score_factor(score_val, 1.0, explanation, 'overdue')
-                expected = ExpectedContact(None, dep_tz, exp_ret_tz, exp_ret_tz, 0)
+                expected = ExpectedContact(None, dep_tz or as_of, exp_ret_tz, exp_ret_tz, 0)
                 return AnomalyScore(
                     profile.vessel_id,
                     effective_trip_id,
@@ -479,7 +494,7 @@ def score_trip(
                     expected,
                     True,
                     as_of,
-                    as_of,
+                    last_contact_tz,
                     profile,
                 )
         expected = ExpectedContact(None, as_of, as_of, as_of, 0)
@@ -493,7 +508,7 @@ def score_trip(
             expected,
             profile.low_confidence,
             as_of,
-            as_of,
+            last_contact_tz,
             profile,
         )
 

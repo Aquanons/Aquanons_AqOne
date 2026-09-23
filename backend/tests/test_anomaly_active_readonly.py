@@ -51,6 +51,9 @@ class _FakePool:
     def acquire(self):
         return self
 
+    def transaction(self):
+        return self
+
     async def __aenter__(self):
         return self
 

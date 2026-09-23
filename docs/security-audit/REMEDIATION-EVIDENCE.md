@@ -147,3 +147,95 @@ Result:
 
 - Scanned all files under `docs/security-audit/probe-runs/` for occurrences of sensitive literals (`UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY`) using both UTF-8 and UTF-16LE byte patterns.
 - Verified that zero plaintext secrets are present.
+
+## Phase 1: Anomaly evaluation works on real Postgres
+
+### Environment
+
+- Date: 2026-09-23T18:55:00+08:00
+- Branch: `fix/security-audit-remediation`
+- Requirements: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05
+- Contract changes: `docs/04_INGEST_API.md` updated with 5-minute future clock skew rejection for contact events (owned by Arnold).
+
+### Verification Gates
+
+#### 1. Backend Default Gate
+
+Commands executed from `backend/`:
+```powershell
+ruff check app tests
+pytest -q -p no:cacheprovider
+```
+
+Result:
+- Ruff: All checks passed.
+- Pytest default suite: 390 passed, 5 skipped, 1 xfailed in 28.45s.
+- Status: PASSED.
+
+#### 2. Mobile Gate
+
+Commands executed from `mobile/`:
+```powershell
+flutter analyze
+flutter test
+```
+
+Result:
+- Flutter analyze: No issues found (0 warnings, 0 errors).
+- Flutter test: 259 passed, 0 failed.
+- Status: PASSED.
+
+#### 3. Web Gate
+
+Commands executed from repository root:
+```powershell
+node --test web/test/*.test.js
+```
+
+Result:
+- Node test runner: 149 passed, 0 failed.
+- Status: PASSED.
+
+#### 4. Security Probe Gate (Throwaway PostgreSQL 18 on Port 55432)
+
+Command executed from `backend/`:
+```powershell
+$dataDir = "$env:TEMP\aqone_probe_pg_data"
+if (!(Test-Path $dataDir)) { & 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $dataDir -U postgres -A trust -E UTF8 }
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir -o '-p 55432' -l "$env:TEMP\aqone_probe_pg.log" start
+Start-Sleep -Seconds 2
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+python -m pytest tests/security_probes -p no:cacheprovider -s
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir stop
+```
+
+Result:
+- Total probe items: 43.
+- Passed: 10 (was 3 in baseline; +7 net passed).
+- Failed: 33 (was 40 in baseline; remaining open findings for Phase 2-5).
+- Status: PASSED.
+
+### SEC-05 Measurement Probe
+
+Probe `test_measure_whole_fleet_evaluation_cost` executed against real Postgres:
+- Output: `MEASURE {"contacts": 10000, "vessels": 200, "scored_trips": 200, "elapsed_seconds": 0.702}`
+- Scored 200 trips across 10,000 contact events in 0.702 seconds.
+
+### Probe Status Changes (Phase 1)
+
+#### Anomaly Probes (SEC-01, SEC-02, SEC-03, SEC-05): All Green
+
+1. `tests/security_probes/test_probe_anomaly.py::test_one_ordinary_live_trip_evaluates_on_real_postgres`: PASSED (was ERROR) [SEC-01]
+2. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation`: PASSED (was FAILED) [SEC-02]
+3. `tests/security_probes/test_probe_anomaly.py::test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation`: PASSED (was FAILED) [SEC-02]
+4. `tests/security_probes/test_probe_anomaly.py::test_failed_evaluation_does_not_commit_score_deactivation`: PASSED (was ERROR) [SEC-02]
+5. `tests/security_probes/test_probe_anomaly.py::test_contact_without_coordinates_does_not_abort_fleet_evaluation`: PASSED (was FAILED) [SEC-03]
+6. `tests/security_probes/test_probe_anomaly.py::test_measure_whole_fleet_evaluation_cost`: PASSED (was ERROR) [SEC-05]
+
+#### Ingest Trust Probes (SEC-04): Green
+
+1. `tests/security_probes/test_probe_ingest_trust.py::test_contact_ingest_rejects_a_day_ahead_timestamp`: PASSED (was FAILED) [SEC-04]
+2. `tests/security_probes/test_probe_ingest_trust.py::test_contact_control_present_timestamp_is_accepted`: PASSED (Control)
+

@@ -139,23 +139,23 @@ Checkpoint message: `test(security): add audit verification probes and results`
 ## Phase 1: Anomaly evaluation works on real Postgres
 
 Requirements: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] SEC-01: `profile.to_json()` returns a dict and `factors`/`reasons` are lists, but asyncpg without a codec wants a `str` for `$N::jsonb`. Follow the repo's existing convention (`json.dumps` at the call site, as `trips.py` and `advisories.py` do) in `app/ai/anomaly_service.py`. Then grep every `::jsonb` parameter under `backend/app` (`demo/scenarios.py`, `simulation/generator.py`, `audit.py` included) and make each argument a `str`. Do not register a global codec: existing reads `json.loads` string results.
-- [ ] SEC-01: make sure non-JSON values inside factors (datetimes) serialise; use ISO strings, not `default=str` on unknown types.
-- [ ] SEC-02: in `evaluate_and_persist`, run the whole evaluation inside `async with conn.transaction():` so a failure commits nothing. Handle eligible trips with zero contacts: fall back to the fleet profile when `profiles` has no entry for the vessel, and write `last_contact_at` from the trip's `departure_at`, then `reported_at`, then `as_of` (the column is `NOT NULL`). Check `_upsert_case` and `score_trip` for the same empty-list assumption.
-- [ ] SEC-03: in `_load_trip_rows`, use the buoy's position when the contact has none (`COALESCE(bc.latitude, b.lat)`, same for longitude). In `_group_latest_trips`, skip any row whose coordinates are still `None`, so one row can never abort the fleet.
-- [ ] SEC-04: move `current_events.py`'s `_reject_future_clock_skew` validator (5-minute skew) somewhere both models can import it, and apply it to `ContactEventIn.observed_at`. Update `docs/04_INGEST_API.md` "Contact events" with the rule.
-- [ ] SEC-05: no code change. Run the measure probe and record its numbers in the evidence file.
-- [ ] Add a unit test in `backend/tests/` for each of SEC-02, SEC-03 and SEC-04 in the existing fake-pool style, so the default suite also guards them.
+- [x] SEC-01: `profile.to_json()` returns a dict and `factors`/`reasons` are lists, but asyncpg without a codec wants a `str` for `$N::jsonb`. Follow the repo's existing convention (`json.dumps` at the call site, as `trips.py` and `advisories.py` do) in `app/ai/anomaly_service.py`. Then grep every `::jsonb` parameter under `backend/app` (`demo/scenarios.py`, `simulation/generator.py`, `audit.py` included) and make each argument a `str`. Do not register a global codec: existing reads `json.loads` string results.
+- [x] SEC-01: make sure non-JSON values inside factors (datetimes) serialise; use ISO strings, not `default=str` on unknown types.
+- [x] SEC-02: in `evaluate_and_persist`, run the whole evaluation inside `async with conn.transaction():` so a failure commits nothing. Handle eligible trips with zero contacts: fall back to the fleet profile when `profiles` has no entry for the vessel, and write `last_contact_at` from the trip's `departure_at`, then `reported_at`, then `as_of` (the column is `NOT NULL`). Check `_upsert_case` and `score_trip` for the same empty-list assumption.
+- [x] SEC-03: in `_load_trip_rows`, use the buoy's position when the contact has none (`COALESCE(bc.latitude, b.lat)`, same for longitude). In `_group_latest_trips`, skip any row whose coordinates are still `None`, so one row can never abort the fleet.
+- [x] SEC-04: move `current_events.py`'s `_reject_future_clock_skew` validator (5-minute skew) somewhere both models can import it, and apply it to `ContactEventIn.observed_at`. Update `docs/04_INGEST_API.md` "Contact events" with the rule.
+- [x] SEC-05: no code change. Run the measure probe and record its numbers in the evidence file.
+- [x] Add a unit test in `backend/tests/` for each of SEC-02, SEC-03 and SEC-04 in the existing fake-pool style, so the default suite also guards them.
 
 ### Verification
 
-- [ ] Backend default gate passes.
-- [ ] Probe gate: every SEC-01 to SEC-04 probe passes, and the SEC-05 measure probe passes with metrics recorded.
-- [ ] Evidence: Phase 1 section in `REMEDIATION-EVIDENCE.md`.
+- [x] Backend default gate passes.
+- [x] Probe gate: every SEC-01 to SEC-04 probe passes, and the SEC-05 measure probe passes with metrics recorded.
+- [x] Evidence: Phase 1 section in `REMEDIATION-EVIDENCE.md`.
 
 Checkpoint message: `fix(anomaly): make evaluation atomic and robust on real Postgres`
 

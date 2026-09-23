@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from typing import Literal
 
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.contacts import require_gateway_key, require_synthetic_demo_gate
+from app.api.contacts import (
+    reject_future_clock_skew,
+    require_gateway_key,
+    require_synthetic_demo_gate,
+)
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/v1', tags=['pressure-events'])
@@ -20,12 +24,6 @@ router = APIRouter(prefix='/api/v1', tags=['pressure-events'])
 # this one only rejects garbage input.
 _PRESSURE_MIN_HPA = 850.0
 _PRESSURE_MAX_HPA = 1100.0
-
-# Tolerance for a buoy's clock running ahead of the server's. Only bounds the
-# future - a delayed gateway resend after an outage carries an old
-# observed_at and must still be accepted; Phase 2's freshness gate decides
-# separately whether old data is still trustworthy for a live nowcast.
-_MAX_FUTURE_SKEW = timedelta(minutes=5)
 
 
 class PressureEventIn(BaseModel):
@@ -47,10 +45,7 @@ class PressureEventIn(BaseModel):
     @field_validator('observed_at')
     @classmethod
     def _reject_future_clock_skew(cls, value: datetime) -> datetime:
-        as_utc = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
-        if as_utc - datetime.now(UTC) > _MAX_FUTURE_SKEW:
-            raise ValueError('observed_at is too far in the future')
-        return value
+        return reject_future_clock_skew(value)
 
 
 @router.post('/pressure-events', dependencies=[Depends(require_gateway_key)], status_code=200)
