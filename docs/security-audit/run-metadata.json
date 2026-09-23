@@ -1,0 +1,44 @@
+{
+  "run_id": "AIHackathon2026_Aquanons_AqOne-run-1",
+  "repo": "Aquanons/Aquanons_AqOne",
+  "target": "C:\\Users\\User\\Desktop\\PersonalProjects\\00-HACKATHONS-COMPETITIONS\\00-HACKATHONS\\00-2026-FIRST-YEAR\\2026-Aquanons\\AIHackathon2026_Aquanons_AqOne",
+  "source_ref": {
+    "commit": "c5312b8711cb48ba89a0f014d060b62ccd5d9a5f",
+    "worktree_dirty": false,
+    "advanced_during_run_from": "3d73232696863a3cae271157635fbeda314c789f",
+    "delta_review": "Only artifacts/competitions/enactus/AqOne-Endorsement-Letter.pdf was added and mobile/assets/audio/sos_alarm.wav changed; reviewed code and configuration paths were unchanged. The binary assets received metadata/provenance-only source review and were not parsed or executed."
+  },
+  "profile": "standard",
+  "scope_paths": ["."],
+  "budget": null,
+  "execution_policy": "sandboxed-source-and-local-only",
+  "selected_companion_files": [
+    "CLIENT-SIDE.md",
+    "CLOUD-AND-DEPLOYMENT.md",
+    "DATA-ISOLATION-AND-LIFECYCLE.md",
+    "DESKTOP-MOBILE-AND-LOCAL-IPC.md",
+    "MEMORY-SAFETY-AND-BINARY.md",
+    "PROTOCOLS-RPC-AND-MESSAGING.md",
+    "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md",
+    "SUPPLY-CHAIN-AND-RELEASE.md",
+    "WEB-PROTOCOL-AND-AUTH.md"
+  ],
+  "excluded_companion_files": {
+    "AI-AND-LLM.md": "The repository contains conventional predictive models but no LLM, RAG, prompt, agent, tool-calling, or MCP boundary."
+  },
+  "prior_run_paths": [],
+  "prior_run_status": "no_compatible_prior_skill_run_found",
+  "shared_file_owners": {
+    "run-metadata.json": "parent",
+    "architecture.md": "parent",
+    "coverage-ledger.json": "parent",
+    "findings.json": "parent",
+    "REPORT.md": "parent",
+    "FINDINGS-DETAIL.md": "parent",
+    "NEEDS-VALIDATION.md": "parent"
+  },
+  "run_status": "complete",
+  "resume_note": "Audit completion was finalized on preservation branch codex/security-audit-preserved at c5312b8711cb48ba89a0f014d060b62ccd5d9a5f. Existing reconnaissance, coverage, candidate validation, critic, and hunter artifacts were preserved; all final candidate records received independent Phase 5 dispositions.",
+  "validation_status": "Candidate validation and independent final-record verification complete. All retained records remain needs_validation; no target-controlled code was executed.",
+  "validator_note": "The validator CLIs require POSIX O_NOFOLLOW and O_NONBLOCK constants and reject input on this Windows host. Their exported validation logic was run directly against the parsed JSON instead."
+}

@@ -1,0 +1,2474 @@
+[
+  {
+    "coverage_id": "backend-ai-control::authenticated-operator-to-shared-safety-model-and-compute::anomaly-recompute-and-squall-model-training::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "backend-ai-control",
+      "boundary": "authenticated-operator-to-shared-safety-model-and-compute",
+      "subsystem": "anomaly-recompute-and-squall-model-training",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "backend-ai-control",
+    "boundary": "authenticated-operator-to-shared-safety-model-and-compute",
+    "subsystem": "anomaly-recompute-and-squall-model-training",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "backend/app/main.py",
+      "backend/app/api/anomaly.py",
+      "backend/app/api/squall.py",
+      "backend/app/ai/anomaly_service.py",
+      "backend/app/ai/squall.py",
+      "docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Computational amplification attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Artifact provenance and publication attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "These are conventional statistical models without prompt, agent, retrieval, or tool authority."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 4,
+    "status": "candidate",
+    "agent_id": "hunter_wave4_ai",
+    "reviewed_paths": [
+      "Dockerfile",
+      "backend/.env.example",
+      "backend/app/ai/anomaly_service.py",
+      "backend/app/ai/run_anomaly_evaluation.py",
+      "backend/app/ai/squall.py",
+      "backend/app/ai/trip_profile.py",
+      "backend/app/api/anomaly.py",
+      "backend/app/api/squall.py",
+      "backend/app/api/trips.py",
+      "backend/app/auth.py",
+      "backend/app/db.py",
+      "backend/app/main.py",
+      "backend/tests/test_anomaly_active_readonly.py",
+      "backend/tests/test_calibration_and_replay.py",
+      "docs/05_PUBLIC_API.md",
+      "docs/38_AUTOMATIC_DISTRESS_DETECTION_IMPLEMENTATION_PLAN.md",
+      "docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md",
+      "docs/42_DATA_STRATEGY_RESPONSIBLE_AI_IMPLEMENTATION_PLAN.md",
+      "docs/45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md",
+      "render.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave4_ai",
+        "reviewed_paths": [
+          "Dockerfile",
+          "backend/.env.example",
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/run_anomaly_evaluation.py",
+          "backend/app/ai/squall.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/anomaly.py",
+          "backend/app/api/squall.py",
+          "backend/app/api/trips.py",
+          "backend/app/auth.py",
+          "backend/app/main.py",
+          "backend/tests/test_anomaly_active_readonly.py",
+          "backend/tests/test_calibration_and_replay.py",
+          "docs/05_PUBLIC_API.md",
+          "docs/38_AUTOMATIC_DISTRESS_DETECTION_IMPLEMENTATION_PLAN.md",
+          "docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md",
+          "docs/45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md",
+          "render.yaml"
+        ],
+        "invariant": "Shared anomaly recomputation and squall model publication must be narrowly authorized, bounded, atomic, and resilient to accepted edge-case records.",
+        "method": "source",
+        "result": "Every signed user may trigger whole-fleet anomaly evaluation; accepted zero-contact trips can fail after the active projection is cleared; and, if ALLOW_TRAINING is enabled, every signed user may synchronously overwrite the live squall artifact without atomic publication or rollback.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv01",
+        "reviewed_paths": [
+          "Dockerfile",
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/anomaly.py",
+          "backend/app/auth.py",
+          "backend/app/db.py",
+          "backend/app/main.py",
+          "backend/tests/test_anomaly_active_readonly.py"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.ai.anomaly.authenticated-whole-fleet-recompute and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv02r",
+        "reviewed_paths": [
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/run_anomaly_evaluation.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/anomaly.py",
+          "backend/app/api/trips.py",
+          "backend/app/main.py"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.ai.anomaly.zero-contact-poison-run and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv03",
+        "reviewed_paths": [
+          "backend/.env.example",
+          "backend/app/ai/squall.py",
+          "backend/app/api/squall.py",
+          "backend/app/auth.py",
+          "backend/app/main.py",
+          "docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md",
+          "docs/42_DATA_STRATEGY_RESPONSIBLE_AI_IMPLEMENTATION_PLAN.md",
+          "render.yaml"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.ai.squall.flag-authorizes-live-model-replacement and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.ai.anomaly.authenticated-whole-fleet-recompute",
+      "backend.ai.anomaly.zero-contact-poison-run",
+      "backend.ai.squall.flag-authorizes-live-model-replacement"
+    ],
+    "unresolved": [
+      "Runtime effects and deployment controls were not observed because the required sandbox and deployment facts are unavailable."
+    ]
+  },
+  {
+    "coverage_id": "backend-database::backend-to-postgres::migrations-retention-audit::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "backend-database",
+      "boundary": "backend-to-postgres",
+      "subsystem": "migrations-retention-audit",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "backend-database",
+    "boundary": "backend-to-postgres",
+    "subsystem": "migrations-retention-audit",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "backend/app/db.py",
+      "backend/app/audit.py",
+      "backend/migrate.py",
+      "backend/migrations"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Derived-data and disclosure attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Export, backup, restore, and migration attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter_backend",
+    "reviewed_paths": [
+      "backend/app/db.py",
+      "backend/app/audit.py",
+      "backend/migrate.py",
+      "backend/migrations"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_backend",
+        "reviewed_paths": [
+          "backend/app/db.py",
+          "backend/app/audit.py",
+          "backend/migrate.py",
+          "backend/migrations"
+        ],
+        "invariant": "Database migrations, audit storage, and lifecycle paths must not expose protected records through a weaker path.",
+        "method": "source",
+        "result": "Queries are parameterized, audit export is admin-gated, audit metadata is allowlisted and bounded, and no lower-trust export, restore, deletion, or migration path was found.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-demo-mode::runtime-configuration-to-live-data::demo-router-synthetic-data-and-reset::ATTACK-CLASSES.md%23Chained%20vulnerabilities%20and%20trust%20boundaries",
+    "canonical_refs": {
+      "surface": "backend-demo-mode",
+      "boundary": "runtime-configuration-to-live-data",
+      "subsystem": "demo-router-synthetic-data-and-reset",
+      "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries"
+    },
+    "surface": "backend-demo-mode",
+    "boundary": "runtime-configuration-to-live-data",
+    "subsystem": "demo-router-synthetic-data-and-reset",
+    "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "starting_paths": [
+      "backend/app/main.py",
+      "backend/app/api/demo.py",
+      "backend/app/demo/scenarios.py",
+      "backend/app/demo/weather.py",
+      "backend/app/api/contacts.py",
+      "backend/app/api/pressure_events.py",
+      "backend/app/api/current_events.py",
+      "render.yaml"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "selected_companion_blocks": [
+      "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+      "CLOUD-AND-DEPLOYMENT.md#Configuration and secret lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Tenant and object-isolation attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Universal moves",
+      "CLOUD-AND-DEPLOYMENT.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "covered",
+    "agent_id": "hunter_wave2_edge",
+    "reviewed_paths": [
+      "backend/app/api/contacts.py",
+      "backend/app/api/current_events.py",
+      "backend/app/api/demo.py",
+      "backend/app/api/pressure_events.py",
+      "backend/app/demo/scenarios.py",
+      "backend/app/main.py",
+      "render.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_edge",
+        "reviewed_paths": [
+          "backend/app/api/contacts.py",
+          "backend/app/api/current_events.py",
+          "backend/app/api/demo.py",
+          "backend/app/api/pressure_events.py",
+          "backend/app/demo/scenarios.py",
+          "backend/app/main.py",
+          "render.yaml"
+        ],
+        "invariant": "Demo mutation and synthetic-data operations must be gated and isolated from live safety decisions.",
+        "method": "source",
+        "result": "The demo router is conditionally mounted; mutating routes require the demo key; reset is scoped by demo tag; synthetic pressure/current require both keys; live anomaly evaluation excludes synthetic rows.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-demo-weather::anonymous-internet-to-demo-process-resources::public-coordinate-list-parsing-and-response-expansion::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+    "canonical_refs": {
+      "surface": "backend-demo-weather",
+      "boundary": "anonymous-internet-to-demo-process-resources",
+      "subsystem": "public-coordinate-list-parsing-and-response-expansion",
+      "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+    },
+    "surface": "backend-demo-weather",
+    "boundary": "anonymous-internet-to-demo-process-resources",
+    "subsystem": "public-coordinate-list-parsing-and-response-expansion",
+    "attack_class": "ATTACK-CLASSES.md#Resource and file handling",
+    "starting_paths": [
+      "backend/app/main.py",
+      "backend/app/api/demo.py",
+      "backend/app/demo/weather.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Computational amplification attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "The demo weather routes are deterministic parsers and response generators."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 4,
+    "status": "candidate",
+    "agent_id": "hunter_wave4_demo",
+    "reviewed_paths": [
+      "Dockerfile",
+      "backend/.env.example",
+      "backend/app/api/demo.py",
+      "backend/app/demo/weather.py",
+      "backend/app/main.py",
+      "backend/requirements.txt",
+      "docs/29_DEMO_IMPLEMENTATION_PLAN_LUNA.md",
+      "render.yaml",
+      "web/js/dangerZonePredictor.js",
+      "web/js/demo-control.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave4_demo",
+        "reviewed_paths": [
+          "Dockerfile",
+          "backend/.env.example",
+          "backend/app/api/demo.py",
+          "backend/app/demo/weather.py",
+          "backend/app/main.py",
+          "backend/requirements.txt",
+          "docs/29_DEMO_IMPLEMENTATION_PLAN_LUNA.md",
+          "render.yaml",
+          "web/js/dangerZonePredictor.js",
+          "web/js/demo-control.js"
+        ],
+        "invariant": "A public demo-weather request must have an effective coordinate-cardinality and ingress-work bound before it can allocate per-coordinate parser state and an amplified response in the shared FastAPI process.",
+        "method": "source",
+        "result": "When DEMO_MODE mounts the router, both weather routes omit the demo-key dependency and accept unrestricted coordinate strings that are split and expanded into one response object per coordinate. No source-visible cardinality, rate, or process-work bound prevents anonymous amplification.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv09",
+        "reviewed_paths": [
+          "backend/app/api/demo.py",
+          "backend/app/demo/weather.py",
+          "backend/app/main.py",
+          "docs/29_DEMO_IMPLEMENTATION_PLAN_LUNA.md",
+          "render.yaml"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.demo-weather.unbounded-coordinate-expansion and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.demo-weather.unbounded-coordinate-expansion"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-gateway-ingest::gateway-to-backend::contact-pressure-current-source-provenance::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "backend-gateway-ingest",
+      "boundary": "gateway-to-backend",
+      "subsystem": "contact-pressure-current-source-provenance",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "backend-gateway-ingest",
+    "boundary": "gateway-to-backend",
+    "subsystem": "contact-pressure-current-source-provenance",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "backend/app/api/contacts.py",
+      "backend/app/api/pressure_events.py",
+      "backend/app/api/current_events.py",
+      "backend/app/ai/anomaly_service.py",
+      "backend/app/api/squall.py",
+      "backend/app/api/drift.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#API-key and mTLS attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#RPC identity and authorization attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Replay, ordering, and transaction attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Universal moves",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter_wave2_core",
+    "reviewed_paths": [
+      "backend/app/ai/anomaly_service.py",
+      "backend/app/ai/current_field.py",
+      "backend/app/ai/run_anomaly_evaluation.py",
+      "backend/app/ai/trip_profile.py",
+      "backend/app/api/anomaly.py",
+      "backend/app/api/contacts.py",
+      "backend/app/api/current_events.py",
+      "backend/app/api/drift.py",
+      "backend/app/api/pressure_events.py",
+      "backend/app/api/squall.py",
+      "backend/migrations/002_simulation.sql",
+      "backend/migrations/025_drift_qualification_and_provenance.sql",
+      "docs/04_INGEST_API.md",
+      "docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md",
+      "docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_core",
+        "reviewed_paths": [
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/current_field.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/contacts.py",
+          "backend/app/api/current_events.py",
+          "backend/app/api/drift.py",
+          "backend/app/api/pressure_events.py",
+          "backend/app/api/squall.py",
+          "docs/04_INGEST_API.md"
+        ],
+        "invariant": "Gateway telemetry must remain safe for consumers, must not use impossible occurrence times, and must not acquire production qualification from an unbound claim.",
+        "method": "source",
+        "result": "Optional contact coordinates are consumed as numeric, contact timestamps lack parallel future-skew controls, and current production qualification trusts caller-selected labels under one shared gateway key.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv06",
+        "reviewed_paths": [
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/anomaly.py",
+          "backend/app/api/contacts.py",
+          "backend/migrations/002_simulation.sql"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.contacts.future-timestamp-anomaly-suppression and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv07",
+        "reviewed_paths": [
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/run_anomaly_evaluation.py",
+          "backend/app/api/anomaly.py",
+          "backend/app/api/contacts.py",
+          "backend/migrations/002_simulation.sql",
+          "docs/04_INGEST_API.md"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.contacts.optional-position-crash and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv08",
+        "reviewed_paths": [
+          "backend/app/ai/current_field.py",
+          "backend/app/api/contacts.py",
+          "backend/app/api/current_events.py",
+          "backend/app/api/drift.py",
+          "backend/migrations/025_drift_qualification_and_provenance.sql",
+          "docs/04_INGEST_API.md",
+          "docs/54_FIELD_READINESS_AND_MEASUREMENT_HANDOFF.md",
+          "docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.current-ingest.unbound-calibration-claim and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.contacts.optional-position-crash",
+      "backend.contacts.future-timestamp-anomaly-suppression",
+      "backend.current-ingest.unbound-calibration-claim"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-operator-api::operator-to-backend::auth-roles-devices-audit::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "backend-operator-api",
+      "boundary": "operator-to-backend",
+      "subsystem": "auth-roles-devices-audit",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "backend-operator-api",
+    "boundary": "operator-to-backend",
+    "subsystem": "auth-roles-devices-audit",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "backend/app/auth.py",
+      "backend/app/api/auth.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/api/ops_audit.py",
+      "backend/app/main.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Browser-session attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#MFA, passkey, and account-transition attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_backend",
+    "reviewed_paths": [
+      "backend/app/api/auth.py",
+      "backend/app/api/ops_audit.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/auth.py",
+      "backend/app/main.py",
+      "backend/tests/test_login_audit.py"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_backend",
+        "reviewed_paths": [
+          "backend/app/auth.py",
+          "backend/app/api/auth.py",
+          "backend/app/api/vessel_auth.py",
+          "backend/app/api/ops_audit.py",
+          "backend/app/main.py"
+        ],
+        "invariant": "Anonymous authentication failures must not reveal whether an operator account exists, while roles and device credentials remain resource-bound.",
+        "method": "source",
+        "result": "Role and device checks are present, but unknown-email login short-circuits before bcrypt while a known email with wrong password executes bcrypt.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv04",
+        "reviewed_paths": [
+          "backend/app/api/auth.py",
+          "backend/app/auth.py",
+          "backend/tests/test_login_audit.py"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.auth.login-timing-enumeration and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.auth.login-timing-enumeration"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-operator-workflows::operator-to-backend::incident-response-ai-and-shared-safety-state::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "backend-operator-workflows",
+      "boundary": "operator-to-backend",
+      "subsystem": "incident-response-ai-and-shared-safety-state",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "backend-operator-workflows",
+    "boundary": "operator-to-backend",
+    "subsystem": "incident-response-ai-and-shared-safety-state",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "backend/app/api/anomaly.py",
+      "backend/app/api/anomaly_cases.py",
+      "backend/app/api/drift.py",
+      "backend/app/api/squall.py",
+      "backend/app/api/sea_condition.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/advisories.py",
+      "backend/app/auth.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Browser-session attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Tenant and object-isolation attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Replay, ordering, and transaction attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter_wave2_core",
+    "reviewed_paths": [
+      "backend/app/api/advisories.py",
+      "backend/app/api/anomaly_cases.py",
+      "backend/app/api/drift.py",
+      "backend/app/api/sea_condition.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/squall.py",
+      "backend/app/auth.py",
+      "backend/app/main.py",
+      "backend/migrations/005_auth.sql",
+      "docs/guides/07_SECURITY.md",
+      "render.yaml",
+      "web/js/profile.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_core",
+        "reviewed_paths": [
+          "backend/app/api/advisories.py",
+          "backend/app/api/anomaly_cases.py",
+          "backend/app/api/drift.py",
+          "backend/app/api/sea_condition.py",
+          "backend/app/api/sos.py",
+          "backend/app/api/squall.py",
+          "backend/app/auth.py",
+          "backend/app/main.py",
+          "render.yaml",
+          "web/js/profile.js"
+        ],
+        "invariant": "Ending or revoking an operator session must prevent its bearer credential from continuing to authorize shared safety mutations.",
+        "method": "source",
+        "result": "Operator JWTs have no server-side session or account-state check; browser logout only clears local storage and the checked-in deployment lifetime is 168 hours.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv12",
+        "reviewed_paths": [
+          "backend/app/api/sea_condition.py",
+          "backend/app/auth.py",
+          "backend/migrations/005_auth.sql",
+          "docs/guides/07_SECURITY.md",
+          "render.yaml",
+          "web/js/profile.js"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.operator-jwt.no-server-revocation and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.operator-jwt.no-server-revocation"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-public-api::anonymous-to-backend::login-enrollment-chat-sos::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+    "canonical_refs": {
+      "surface": "backend-public-api",
+      "boundary": "anonymous-to-backend",
+      "subsystem": "login-enrollment-chat-sos",
+      "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+    },
+    "surface": "backend-public-api",
+    "boundary": "anonymous-to-backend",
+    "subsystem": "login-enrollment-chat-sos",
+    "attack_class": "ATTACK-CLASSES.md#Resource and file handling",
+    "starting_paths": [
+      "backend/app/api/auth.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/api/mesh.py",
+      "backend/app/api/sos.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Computational amplification attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_backend",
+    "reviewed_paths": [
+      "backend/app/api/auth.py",
+      "backend/app/api/mesh.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/main.py",
+      "backend/migrations/010_mesh_chat.sql",
+      "render.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_backend",
+        "reviewed_paths": [
+          "backend/app/api/auth.py",
+          "backend/app/api/vessel_auth.py",
+          "backend/app/api/mesh.py",
+          "backend/app/api/sos.py",
+          "backend/migrations/010_mesh_chat.sql"
+        ],
+        "invariant": "Anonymous endpoints must bound persistent shared-resource growth without breaking emergency availability.",
+        "method": "source",
+        "result": "Per-message sizes are bounded, but public mesh chat inserts every valid request and source shows no aggregate quota, expiry, retention, deduplication, or cleanup.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv11",
+        "reviewed_paths": [
+          "backend/app/api/mesh.py",
+          "backend/app/main.py",
+          "backend/migrations/010_mesh_chat.sql",
+          "render.yaml"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.mesh.unbounded-public-storage and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.mesh.unbounded-public-storage"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-public-api::anonymous-to-backend::sos-trips-profiles-warnings::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "backend-public-api",
+      "boundary": "anonymous-to-backend",
+      "subsystem": "sos-trips-profiles-warnings",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "backend-public-api",
+    "boundary": "anonymous-to-backend",
+    "subsystem": "sos-trips-profiles-warnings",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "backend/app/main.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/trips.py",
+      "backend/app/api/vessel_profile.py",
+      "backend/app/api/advisories.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#API-key and mTLS attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Tenant and object-isolation attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_backend",
+    "reviewed_paths": [
+      "backend/app/ai/anomaly_service.py",
+      "backend/app/ai/trip_profile.py",
+      "backend/app/api/advisories.py",
+      "backend/app/api/catch.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/trips.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/api/vessel_profile.py",
+      "backend/app/main.py",
+      "backend/tests/test_warning_transport.py",
+      "docs/05_PUBLIC_API.md",
+      "docs/06_DELIVERY_STATES.md",
+      "firmware/shore/AqOneShore/AqOneShore.ino",
+      "web/js/dashboard/dashboard-incidents.js",
+      "web/js/dashboard/dashboard-live-sos.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_backend",
+        "reviewed_paths": [
+          "backend/app/main.py",
+          "backend/app/api/sos.py",
+          "backend/app/api/trips.py",
+          "backend/app/api/vessel_profile.py",
+          "backend/app/api/advisories.py",
+          "backend/app/ai/trip_profile.py"
+        ],
+        "invariant": "Anonymous emergency availability must not grant unbound authority over another vessel's trip, identity, or warning-delivery state.",
+        "method": "source",
+        "result": "Trips expose global read/write, profile upsert trusts a caller-selected vessel ID, and warning delivery POST/GET lack state-specific principal binding.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv17",
+        "reviewed_paths": [
+          "backend/app/ai/anomaly_service.py",
+          "backend/app/ai/trip_profile.py",
+          "backend/app/api/catch.py",
+          "backend/app/api/trips.py",
+          "backend/app/main.py"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.trips.unbound-public-access and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv18",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "backend/app/api/vessel_auth.py",
+          "backend/app/api/vessel_profile.py",
+          "backend/app/main.py",
+          "docs/05_PUBLIC_API.md",
+          "web/js/dashboard/dashboard-incidents.js",
+          "web/js/dashboard/dashboard-live-sos.js"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.vessel-profile.unbound-owner-write and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv19",
+        "reviewed_paths": [
+          "backend/app/api/advisories.py",
+          "backend/app/main.py",
+          "backend/tests/test_warning_transport.py",
+          "docs/06_DELIVERY_STATES.md",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.warning-delivery.unbound-state-authority and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.trips.unbound-public-access",
+      "backend.vessel-profile.unbound-owner-write",
+      "backend.warning-delivery.unbound-state-authority"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-public-api::anonymous-to-backend::sos-trips-profiles-warnings::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "backend-public-api",
+      "boundary": "anonymous-to-backend",
+      "subsystem": "sos-trips-profiles-warnings",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "backend-public-api",
+    "boundary": "anonymous-to-backend",
+    "subsystem": "sos-trips-profiles-warnings",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "backend/app/api/sos.py",
+      "backend/app/api/trips.py",
+      "backend/app/api/advisories.py",
+      "docs/04_INGEST_API.md",
+      "docs/05_PUBLIC_API.md",
+      "docs/06_DELIVERY_STATES.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#RPC identity and authorization attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Replay, ordering, and transaction attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Universal moves",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_backend",
+    "reviewed_paths": [
+      "backend/app/api/advisories.py",
+      "backend/app/api/sos.py",
+      "backend/app/main.py",
+      "docs/04_INGEST_API.md",
+      "docs/05_PUBLIC_API.md",
+      "docs/06_DELIVERY_STATES.md",
+      "mobile/lib/data/identity_store.dart",
+      "mobile/lib/models/sos_record.dart",
+      "mobile/lib/models/trust_tier.dart",
+      "web/js/dashboard/dashboard-live-sos.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_backend",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "backend/app/api/advisories.py",
+          "mobile/lib/models/trust_tier.dart",
+          "docs/04_INGEST_API.md",
+          "docs/05_PUBLIC_API.md",
+          "docs/06_DELIVERY_STATES.md"
+        ],
+        "invariant": "Only the authoritative component or responder may create stronger safety provenance.",
+        "method": "source",
+        "result": "Anonymous SOS accepts and persists the highest trust tier and buoy source without binding either claim to a responder or gateway credential.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv16",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "backend/app/main.py",
+          "docs/05_PUBLIC_API.md",
+          "mobile/lib/data/identity_store.dart",
+          "mobile/lib/models/sos_record.dart",
+          "web/js/dashboard/dashboard-live-sos.js"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.sos.untrusted-provenance-claims and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.sos.untrusted-provenance-claims"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-public-sos::anonymous-internet-to-emergency-storage-and-operator-workload::sos-ingest-capacity-and-incident-amplification::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+    "canonical_refs": {
+      "surface": "backend-public-sos",
+      "boundary": "anonymous-internet-to-emergency-storage-and-operator-workload",
+      "subsystem": "sos-ingest-capacity-and-incident-amplification",
+      "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+    },
+    "surface": "backend-public-sos",
+    "boundary": "anonymous-internet-to-emergency-storage-and-operator-workload",
+    "subsystem": "sos-ingest-capacity-and-incident-amplification",
+    "attack_class": "ATTACK-CLASSES.md#Resource and file handling",
+    "starting_paths": [
+      "backend/app/api/sos.py",
+      "backend/migrations/001_init.sql",
+      "backend/migrations/007_sos_ingest.sql",
+      "backend/app/main.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Failure and recovery attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "The SOS path has no LLM, retrieval, tool-calling, or agent boundary."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 4,
+    "status": "candidate",
+    "agent_id": "hunter_wave4_sos",
+    "reviewed_paths": [
+      "Dockerfile",
+      "backend/app/api/sos.py",
+      "backend/app/main.py",
+      "backend/migrations/001_init.sql",
+      "backend/migrations/007_sos_ingest.sql",
+      "backend/migrations/008_responder_loop.sql",
+      "render.yaml",
+      "web/js/dashboard/dashboard-live-sos.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave4_sos",
+        "reviewed_paths": [
+          "Dockerfile",
+          "backend/app/api/sos.py",
+          "backend/app/main.py",
+          "backend/migrations/001_init.sql",
+          "backend/migrations/007_sos_ingest.sql",
+          "backend/migrations/008_responder_loop.sql",
+          "render.yaml",
+          "web/js/dashboard/dashboard-live-sos.js"
+        ],
+        "invariant": "Anonymous emergency ingestion must remain available without allowing caller-selected uniqueness values to create enough persistent unresolved incidents and related identities to crowd a genuine SOS out of the dispatcher's bounded active feed.",
+        "method": "source",
+        "result": "POST /api/sos is anonymous; distinct caller-controlled vessel_id/client_ts pairs persist unresolved SOS rows and can create vessel and buoy rows. No source-visible aggregate quota, expiry, or retention control bounds the path, while the dispatcher feed returns only the newest 100 unresolved rows.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv15",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "backend/app/main.py",
+          "backend/migrations/007_sos_ingest.sql",
+          "backend/migrations/008_responder_loop.sql",
+          "web/js/dashboard/dashboard-live-sos.js"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.sos.anonymous-incidents-crowd-dispatch-feed and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.sos.anonymous-incidents-crowd-dispatch-feed"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "backend-vessel-device-api::vessel-device-to-backend::pairing-catch-sos-reply-and-revocation::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "backend-vessel-device-api",
+      "boundary": "vessel-device-to-backend",
+      "subsystem": "pairing-catch-sos-reply-and-revocation",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "backend-vessel-device-api",
+    "boundary": "vessel-device-to-backend",
+    "subsystem": "pairing-catch-sos-reply-and-revocation",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "backend/app/auth.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/api/catch.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/hotspots.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Browser-session attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Tenant and object-isolation attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter_wave2_core",
+    "reviewed_paths": [
+      "backend/app/api/catch.py",
+      "backend/app/api/hotspots.py",
+      "backend/app/api/sos.py",
+      "backend/app/api/vessel_auth.py",
+      "backend/app/auth.py",
+      "backend/migrations/011_catch_logs.sql"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_core",
+        "reviewed_paths": [
+          "backend/app/api/catch.py",
+          "backend/app/api/hotspots.py",
+          "backend/app/api/sos.py",
+          "backend/app/api/vessel_auth.py",
+          "backend/app/auth.py",
+          "backend/migrations/011_catch_logs.sql"
+        ],
+        "invariant": "A vessel-device credential may modify only records owned by its bound vessel, including idempotent retry paths.",
+        "method": "source",
+        "result": "Catch ingest checks body vessel ownership, but global local_id conflict updates the existing row without checking its vessel, including hotspot consent.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv05",
+        "reviewed_paths": [
+          "backend/app/api/catch.py",
+          "backend/app/auth.py",
+          "backend/migrations/011_catch_logs.sql"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.catch.global-idempotency-cross-vessel-write and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.catch.global-idempotency-cross-vessel-write"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "build-and-release::source-to-artifact::dependencies-signing-deployment::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "build-and-release",
+      "boundary": "source-to-artifact",
+      "subsystem": "dependencies-signing-deployment",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "build-and-release",
+    "boundary": "source-to-artifact",
+    "subsystem": "dependencies-signing-deployment",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      "Dockerfile",
+      "render.yaml",
+      "backend/requirements.txt",
+      "mobile/pubspec.yaml",
+      "mobile/pubspec.lock",
+      "mobile/android",
+      "firmware/platformio.ini",
+      ".gitignore"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [
+      "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Dependency and build-input attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#CI and automation attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Release and update attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Container and orchestration attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Configuration and secret lifecycle attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Universal moves",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_firmware",
+    "reviewed_paths": [
+      ".gitignore",
+      "Dockerfile",
+      "artifacts/competitions/enactus/AqOne-Endorsement-Letter.pdf",
+      "backend/requirements.txt",
+      "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+      "docs/archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md",
+      "firmware/platformio.ini",
+      "mobile/README.md",
+      "mobile/android/app/build.gradle.kts",
+      "mobile/android/key.properties.example",
+      "mobile/assets/audio/sos_alarm.wav",
+      "mobile/pubspec.lock",
+      "mobile/releases/SHA256SUMS.txt",
+      "mobile/releases/aqone-release.apk",
+      "render.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_firmware",
+        "reviewed_paths": [
+          ".gitignore",
+          "Dockerfile",
+          "artifacts/competitions/enactus/AqOne-Endorsement-Letter.pdf",
+          "backend/requirements.txt",
+          "firmware/platformio.ini",
+          "mobile/android/app/build.gradle.kts",
+          "mobile/assets/audio/sos_alarm.wav",
+          "mobile/pubspec.lock",
+          "mobile/releases/aqone-release.apk",
+          "render.yaml"
+        ],
+        "invariant": "A release artifact must fail closed when its production signing identity is unavailable, and tracked inputs must not silently substitute a public development identity.",
+        "method": "source",
+        "result": "The Android release variant selects debug signing when key.properties is absent. A release-named APK is tracked, but its current signer and distribution state are not source-visible. New binary assets were reviewed only for repository metadata/provenance.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv29",
+        "reviewed_paths": [
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "docs/archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md",
+          "mobile/README.md",
+          "mobile/android/app/build.gradle.kts",
+          "mobile/android/key.properties.example",
+          "mobile/releases/SHA256SUMS.txt"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.release.debug-signing-fallback and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "mobile.release.debug-signing-fallback"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "buoy-firmware::nearby-peer-to-buoy::wifi-http-and-persistent-queue::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+    "canonical_refs": {
+      "surface": "buoy-firmware",
+      "boundary": "nearby-peer-to-buoy",
+      "subsystem": "wifi-http-and-persistent-queue",
+      "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+    },
+    "surface": "buoy-firmware",
+    "boundary": "nearby-peer-to-buoy",
+    "subsystem": "wifi-http-and-persistent-queue",
+    "attack_class": "ATTACK-CLASSES.md#Resource and file handling",
+    "starting_paths": [
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "docs/03_PHONE_BUOY_WIFI.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#RPC identity and authorization attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_firmware",
+    "reviewed_paths": [
+      "docs/03_PHONE_BUOY_WIFI.md",
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "mobile/lib/services/buoy_client.dart",
+      "mobile/lib/services/sos_service.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_firmware",
+        "reviewed_paths": [
+          "docs/03_PHONE_BUOY_WIFI.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "mobile/lib/services/buoy_client.dart",
+          "mobile/lib/services/sos_service.dart"
+        ],
+        "invariant": "The open emergency access point must preserve immediate persistent queue capacity for a genuine fisher despite arbitrary nearby clients.",
+        "method": "source",
+        "result": "Unique unauthenticated submissions consume all twelve persistent slots; the next request receives 503 until a slot clears. The handset outbox retries, reducing the effect to delayed handoff.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv22r",
+        "reviewed_paths": [
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "mobile/lib/services/buoy_client.dart",
+          "mobile/lib/services/sos_service.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.buoy.sos-queue-untrusted-capacity and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "firmware.buoy.sos-queue-untrusted-capacity"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "dashboard-browser::untrusted-data-to-dom::dashboard-rendering-session::ATTACK-CLASSES.md%23Injection",
+    "canonical_refs": {
+      "surface": "dashboard-browser",
+      "boundary": "untrusted-data-to-dom",
+      "subsystem": "dashboard-rendering-session",
+      "attack_class": "ATTACK-CLASSES.md#Injection"
+    },
+    "surface": "dashboard-browser",
+    "boundary": "untrusted-data-to-dom",
+    "subsystem": "dashboard-rendering-session",
+    "attack_class": "ATTACK-CLASSES.md#Injection",
+    "starting_paths": [
+      "web/html",
+      "web/js",
+      "web/index.html"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#DOM and object-state attack classes",
+      "CLIENT-SIDE.md#Service-worker and browser-storage attack classes",
+      "CLIENT-SIDE.md#Cross-origin messaging and network attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [
+      {
+        "wave": 1,
+        "status": "covered",
+        "agent_id": "hunter_clients",
+        "reviewed_paths": [
+          "web/html/dashboard.html",
+          "web/js/dashboard-utils.js",
+          "web/js/dashboard/dashboard-core.js",
+          "web/js/dashboard/dashboard-incidents.js",
+          "web/js/dashboard/dashboard-emergency-advisory.js",
+          "web/js/profile.js"
+        ],
+        "local_checks": [
+          {
+            "agent_id": "hunter_clients",
+            "reviewed_paths": [
+              "web/html/dashboard.html",
+              "web/js/dashboard-utils.js",
+              "web/js/dashboard/dashboard-core.js",
+              "web/js/dashboard/dashboard-incidents.js",
+              "web/js/dashboard/dashboard-emergency-advisory.js",
+              "web/js/profile.js"
+            ],
+            "invariant": "Lower-trust values must not reach executable browser contexts or cross browser authority.",
+            "method": "source",
+            "result": "Shared escaping is loaded before dashboard modules; lower-trust strings are escaped or assigned with textContent/form values, and no reachable executable DOM sink was established.",
+            "artifact": null
+          }
+        ],
+        "result_fingerprints": [],
+        "unresolved": [],
+        "reassignment_reason": "Post-wave critic found that multiple reachable dashboard modules with untrusted-data HTML/SVG/Leaflet sinks were not included in the recorded source review."
+      }
+    ],
+    "wave": 6,
+    "status": "covered",
+    "agent_id": "hunter_wave6_dashboard_retry",
+    "reviewed_paths": [
+      "backend/app/ai/search.py",
+      "backend/app/api/advisories.py",
+      "backend/app/api/drift.py",
+      "backend/app/api/ops_audit.py",
+      "backend/app/api/sea_condition.py",
+      "backend/app/api/sos.py",
+      "backend/app/auth.py",
+      "web/html/dashboard.html",
+      "web/js/advisoryService.js",
+      "web/js/dangerZoneModel.js",
+      "web/js/dangerZonePredictor.js",
+      "web/js/dashboard-utils.js",
+      "web/js/dashboard/dashboard-ai-ops.js",
+      "web/js/dashboard/dashboard-alarm.js",
+      "web/js/dashboard/dashboard-buoy-health.js",
+      "web/js/dashboard/dashboard-core.js",
+      "web/js/dashboard/dashboard-emergency-advisory.js",
+      "web/js/dashboard/dashboard-hotspots.js",
+      "web/js/dashboard/dashboard-incidents.js",
+      "web/js/dashboard/dashboard-live-sos.js",
+      "web/js/dashboard/dashboard-markers.js",
+      "web/js/dashboard/dashboard-operations-audit.js",
+      "web/js/dashboard/dashboard-panels.js",
+      "web/js/dashboard/dashboard-profile-pill.js",
+      "web/js/dashboard/dashboard-sar.js",
+      "web/js/dashboard/dashboard-shortcuts-weather.js",
+      "web/js/dashboard/dashboard-tools.js",
+      "web/js/dashboard/dashboard-trip-checks.js",
+      "web/js/dashboard/dashboard-vessels-alerts.js",
+      "web/vendor/leaflet/leaflet.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave6_dashboard_retry",
+        "reviewed_paths": [
+          "backend/app/ai/search.py",
+          "backend/app/api/advisories.py",
+          "backend/app/api/drift.py",
+          "backend/app/api/ops_audit.py",
+          "backend/app/api/sea_condition.py",
+          "backend/app/api/sos.py",
+          "backend/app/auth.py",
+          "web/html/dashboard.html",
+          "web/js/advisoryService.js",
+          "web/js/dangerZoneModel.js",
+          "web/js/dangerZonePredictor.js",
+          "web/js/dashboard-utils.js",
+          "web/js/dashboard/dashboard-ai-ops.js",
+          "web/js/dashboard/dashboard-alarm.js",
+          "web/js/dashboard/dashboard-buoy-health.js",
+          "web/js/dashboard/dashboard-core.js",
+          "web/js/dashboard/dashboard-emergency-advisory.js",
+          "web/js/dashboard/dashboard-hotspots.js",
+          "web/js/dashboard/dashboard-incidents.js",
+          "web/js/dashboard/dashboard-live-sos.js",
+          "web/js/dashboard/dashboard-markers.js",
+          "web/js/dashboard/dashboard-operations-audit.js",
+          "web/js/dashboard/dashboard-panels.js",
+          "web/js/dashboard/dashboard-profile-pill.js",
+          "web/js/dashboard/dashboard-sar.js",
+          "web/js/dashboard/dashboard-shortcuts-weather.js",
+          "web/js/dashboard/dashboard-tools.js",
+          "web/js/dashboard/dashboard-trip-checks.js",
+          "web/js/dashboard/dashboard-vessels-alerts.js",
+          "web/vendor/leaflet/leaflet.js"
+        ],
+        "invariant": "Lower-trust SOS, vessel, advisory, AI, audit, weather, browser-storage, URL, and session fields must not reach executable DOM, SVG, Leaflet, URL, attribute, style, or event-handler contexts without context-appropriate controls.",
+        "method": "source",
+        "result": "All reviewed lower-trust strings are escaped or assigned through text-only sinks; remaining unescaped values are fixed labels, enums, integers, or numeric projections. Bearer tokens are attached only to same-origin repository-controlled API paths, and no controllable executable or cross-session sink survived tracing.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "flutter-web-target::browser-origin-and-storage::web-bootstrap-indexeddb-and-credential-persistence::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "flutter-web-target",
+      "boundary": "browser-origin-and-storage",
+      "subsystem": "web-bootstrap-indexeddb-and-credential-persistence",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "flutter-web-target",
+    "boundary": "browser-origin-and-storage",
+    "subsystem": "web-bootstrap-indexeddb-and-credential-persistence",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "mobile/web",
+      "mobile/lib/data/db_factory_web.dart",
+      "mobile/lib/data/app_database.dart",
+      "mobile/lib/data/secure_credential_store.dart",
+      "mobile/lib/core/endpoint_guard.dart"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#Service-worker and browser-storage attack classes",
+      "CLIENT-SIDE.md#Cross-origin messaging and network attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "covered",
+    "agent_id": "hunter_wave2_flutter",
+    "reviewed_paths": [
+      "Dockerfile",
+      "docs/08_DEMO_AND_STATUS.md",
+      "docs/13_RESPONDER_LOOP.md",
+      "docs/47_VISUAL_DESIGN_GUIDE.md",
+      "docs/guides/05_FLUTTER.md",
+      "mobile/lib/core/endpoint_guard.dart",
+      "mobile/lib/core/field_cipher.dart",
+      "mobile/lib/data/app_database.dart",
+      "mobile/lib/data/db_factory.dart",
+      "mobile/lib/data/db_factory_web.dart",
+      "mobile/lib/data/identity_store.dart",
+      "mobile/lib/data/secure_credential_store.dart",
+      "mobile/lib/main.dart",
+      "mobile/lib/services/backend_client.dart",
+      "mobile/pubspec.lock",
+      "mobile/pubspec.yaml",
+      "mobile/web/flutter_bootstrap.js",
+      "mobile/web/index.html",
+      "mobile/web/manifest.json",
+      "mobile/web/sqflite_sw.js",
+      "render.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_flutter",
+        "reviewed_paths": [
+          "Dockerfile",
+          "docs/08_DEMO_AND_STATUS.md",
+          "docs/13_RESPONDER_LOOP.md",
+          "docs/47_VISUAL_DESIGN_GUIDE.md",
+          "docs/guides/05_FLUTTER.md",
+          "mobile/lib/core/endpoint_guard.dart",
+          "mobile/lib/core/field_cipher.dart",
+          "mobile/lib/data/app_database.dart",
+          "mobile/lib/data/db_factory.dart",
+          "mobile/lib/data/db_factory_web.dart",
+          "mobile/lib/data/identity_store.dart",
+          "mobile/lib/data/secure_credential_store.dart",
+          "mobile/lib/main.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/pubspec.lock",
+          "mobile/pubspec.yaml",
+          "mobile/web/flutter_bootstrap.js",
+          "mobile/web/index.html",
+          "mobile/web/manifest.json",
+          "mobile/web/sqflite_sw.js",
+          "render.yaml"
+        ],
+        "invariant": "A shipped Flutter browser target must not expose vessel credentials or private persisted data across origins, accounts, workers, or stale lifecycle state.",
+        "method": "source",
+        "result": "Flutter web is a verification harness, not served by Docker/Render. Its bootstrap and SQLite worker load same-origin bundled assets, endpoints remain constrained, and source establishes no lower-authority same-origin reader or multi-account boundary.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "lora-mesh::radio-peer-to-mesh::frame-codec-keys-replay::ATTACK-CLASSES.md%23Cryptography%20and%20secrets",
+    "canonical_refs": {
+      "surface": "lora-mesh",
+      "boundary": "radio-peer-to-mesh",
+      "subsystem": "frame-codec-keys-replay",
+      "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets"
+    },
+    "surface": "lora-mesh",
+    "boundary": "radio-peer-to-mesh",
+    "subsystem": "frame-codec-keys-replay",
+    "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "starting_paths": [
+      "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+      "firmware/shore/AqOneShore/AqOneLoam.h",
+      "backend/app/mesh/loam.py",
+      "docs/02_LOAM_PACKET_SPEC.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "selected_companion_blocks": [
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Framing, schema, and interpretation attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Replay, ordering, and transaction attack classes",
+      "MEMORY-SAFETY-AND-BINARY.md#Bounds, integer, and representation attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Universal moves",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_firmware",
+    "reviewed_paths": [
+      "backend/app/mesh/loam.py",
+      "backend/tests/test_warning_transport.py",
+      "docs/02_LOAM_PACKET_SPEC.md",
+      "firmware/README.md",
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+      "firmware/platformio.ini",
+      "firmware/shore/AqOneShore/AqOneLoam.h",
+      "firmware/shore/AqOneShore/AqOneShore.ino"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_firmware",
+        "reviewed_paths": [
+          "backend/app/mesh/loam.py",
+          "backend/tests/test_warning_transport.py",
+          "docs/02_LOAM_PACKET_SPEC.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+          "firmware/shore/AqOneShore/AqOneLoam.h",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "Mesh authentication must bind frames to an origin identity, and warning lifecycle state must reject stale revisions.",
+        "method": "source",
+        "result": "Both firmware roles use one repository-known key instead of per-source lookup. Separately, firmware warning frames and caches omit revision/cancellation state, unlike the reference cache and protocol contract.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv23",
+        "reviewed_paths": [
+          "docs/02_LOAM_PACKET_SPEC.md",
+          "firmware/README.md",
+          "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+          "firmware/platformio.ini",
+          "firmware/shore/AqOneShore/AqOneLoam.h",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.loam.shared-default-key and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv25",
+        "reviewed_paths": [
+          "backend/app/mesh/loam.py",
+          "docs/02_LOAM_PACKET_SPEC.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.warning.missing-revision-tombstone and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "firmware.loam.shared-default-key",
+      "firmware.warning.missing-revision-tombstone"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "mobile-app::device-and-local-storage::network-storage-identity::ATTACK-CLASSES.md%23Cryptography%20and%20secrets",
+    "canonical_refs": {
+      "surface": "mobile-app",
+      "boundary": "device-and-local-storage",
+      "subsystem": "network-storage-identity",
+      "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets"
+    },
+    "surface": "mobile-app",
+    "boundary": "device-and-local-storage",
+    "subsystem": "network-storage-identity",
+    "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "starting_paths": [
+      "mobile/lib/core",
+      "mobile/lib/data",
+      "mobile/lib/services",
+      "mobile/android/app/src/main"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "selected_companion_blocks": [
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Application-state and device-lifecycle attack classes",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Privileged-helper and local-file attack classes",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Universal moves",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter_clients",
+    "reviewed_paths": [
+      "mobile/android/app/src/main/AndroidManifest.xml",
+      "mobile/android/app/src/main/res/xml/network_security_config.xml",
+      "mobile/lib/core/endpoint_guard.dart",
+      "mobile/lib/core/field_cipher.dart",
+      "mobile/lib/data/identity_store.dart",
+      "mobile/lib/data/secure_credential_store.dart",
+      "mobile/lib/services/backend_client.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_clients",
+        "reviewed_paths": [
+          "mobile/android/app/src/main/AndroidManifest.xml",
+          "mobile/android/app/src/main/res/xml/network_security_config.xml",
+          "mobile/lib/core/endpoint_guard.dart",
+          "mobile/lib/core/field_cipher.dart",
+          "mobile/lib/data/identity_store.dart",
+          "mobile/lib/data/secure_credential_store.dart",
+          "mobile/lib/services/backend_client.dart"
+        ],
+        "invariant": "Lower-trust apps, peers, backups, or logs must not obtain vessel credentials or sensitive profile data.",
+        "method": "source",
+        "result": "Credentials and field keys use platform secure storage; identity fields use AES-GCM; Android backup is disabled; backend endpoints require HTTPS and redirects are disabled. No lower-trust local reader was established.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "mobile-location-egress::handset-location-to-backend-and-third-party-weather-providers::permissioned-fix-selection-and-coordinate-disclosure::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "mobile-location-egress",
+      "boundary": "handset-location-to-backend-and-third-party-weather-providers",
+      "subsystem": "permissioned-fix-selection-and-coordinate-disclosure",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "mobile-location-egress",
+    "boundary": "handset-location-to-backend-and-third-party-weather-providers",
+    "subsystem": "permissioned-fix-selection-and-coordinate-disclosure",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "mobile/lib/services/location_service.dart",
+      "mobile/lib/ui/home_page.dart",
+      "mobile/lib/services/venture_feeds.dart",
+      "mobile/lib/services/forecast_provider.dart",
+      "mobile/lib/core/config.dart",
+      "mobile/android/app/src/main/AndroidManifest.xml"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Application-state and device-lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Derived-data and disclosure attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "Forecast scoring is conventional code with no LLM or tool-execution boundary."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 4,
+    "status": "candidate",
+    "agent_id": "hunter_wave4_location",
+    "reviewed_paths": [
+      "backend/app/api/public.py",
+      "docs/05_PUBLIC_API.md",
+      "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+      "mobile/android/app/src/main/AndroidManifest.xml",
+      "mobile/lib/core/config.dart",
+      "mobile/lib/data/forecast_cache.dart",
+      "mobile/lib/models/forecast_outlook.dart",
+      "mobile/lib/services/backend_client.dart",
+      "mobile/lib/services/forecast_provider.dart",
+      "mobile/lib/services/location_service.dart",
+      "mobile/lib/services/venture_feeds.dart",
+      "mobile/lib/ui/home_page.dart",
+      "mobile/lib/ui/info_page.dart",
+      "mobile/lib/ui/venture_page.dart",
+      "mobile/lib/ui/widgets/weather_card.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave4_location",
+        "reviewed_paths": [
+          "backend/app/api/public.py",
+          "docs/05_PUBLIC_API.md",
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "mobile/android/app/src/main/AndroidManifest.xml",
+          "mobile/lib/core/config.dart",
+          "mobile/lib/data/forecast_cache.dart",
+          "mobile/lib/models/forecast_outlook.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/lib/services/forecast_provider.dart",
+          "mobile/lib/services/location_service.dart",
+          "mobile/lib/services/venture_feeds.dart",
+          "mobile/lib/ui/home_page.dart",
+          "mobile/lib/ui/info_page.dart",
+          "mobile/lib/ui/venture_page.dart",
+          "mobile/lib/ui/widgets/weather_card.dart"
+        ],
+        "invariant": "A previously granted handset location permission must not silently authorize exact-coordinate disclosure to AqOne or third-party weather providers outside the SOS-only purpose stated to the fisher.",
+        "method": "source",
+        "result": "Home silently reuses an already-permitted last-known fix without age or accuracy limits, sends unrounded coordinates to AqOne and Open-Meteo paths, and caches returned/requested coordinates despite in-app text limiting position disclosure to deliberate SOS.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv27",
+        "reviewed_paths": [
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "mobile/lib/data/forecast_cache.dart",
+          "mobile/lib/models/forecast_outlook.dart",
+          "mobile/lib/services/forecast_provider.dart",
+          "mobile/lib/services/location_service.dart",
+          "mobile/lib/services/venture_feeds.dart",
+          "mobile/lib/ui/home_page.dart",
+          "mobile/lib/ui/info_page.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.location.undisclosed-weather-coordinate-egress and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "mobile.location.undisclosed-weather-coordinate-egress"
+    ],
+    "unresolved": [
+      "The required sandbox was unavailable, so outbound request URIs and cache writes were not observed with dummy coordinates."
+    ]
+  },
+  {
+    "coverage_id": "mobile-map-location-egress::handset-location-derived-map-viewport-to-openstreetmap::venture-map-camera-network-tile-fetch::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "mobile-map-location-egress",
+      "boundary": "handset-location-derived-map-viewport-to-openstreetmap",
+      "subsystem": "venture-map-camera-network-tile-fetch",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "mobile-map-location-egress",
+    "boundary": "handset-location-derived-map-viewport-to-openstreetmap",
+    "subsystem": "venture-map-camera-network-tile-fetch",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "mobile/lib/ui/venture_page.dart",
+      "mobile/lib/services/tile_cache.dart",
+      "mobile/lib/services/mbtiles_provider.dart",
+      "mobile/lib/core/config.dart",
+      "mobile/lib/ui/info_page.dart",
+      "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Application-state and device-lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Derived-data and disclosure attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "Map viewport and tile retrieval do not cross an LLM, agent, retrieval, or tool-execution boundary."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 5,
+    "status": "candidate",
+    "agent_id": "hunter_wave5_map",
+    "reviewed_paths": [
+      "docs/24_OFFLINE_MAP.md",
+      "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+      "mobile/android/app/src/main/AndroidManifest.xml",
+      "mobile/lib/core/config.dart",
+      "mobile/lib/services/location_service.dart",
+      "mobile/lib/services/mbtiles_provider.dart",
+      "mobile/lib/services/tile_cache.dart",
+      "mobile/lib/ui/app_shell.dart",
+      "mobile/lib/ui/info_page.dart",
+      "mobile/lib/ui/onboarding_page.dart",
+      "mobile/lib/ui/venture_page.dart",
+      "mobile/pubspec.yaml"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave5_map",
+        "reviewed_paths": [
+          "docs/24_OFFLINE_MAP.md",
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "mobile/android/app/src/main/AndroidManifest.xml",
+          "mobile/lib/core/config.dart",
+          "mobile/lib/services/location_service.dart",
+          "mobile/lib/services/mbtiles_provider.dart",
+          "mobile/lib/services/tile_cache.dart",
+          "mobile/lib/ui/app_shell.dart",
+          "mobile/lib/ui/info_page.dart",
+          "mobile/lib/ui/onboarding_page.dart",
+          "mobile/lib/ui/venture_page.dart",
+          "mobile/pubspec.yaml"
+        ],
+        "invariant": "Opening Venture after granting location access must not silently disclose a location-derived viewport to a third-party tile service contrary to the SOS-only privacy notice.",
+        "method": "source",
+        "result": "Venture requests a high-accuracy fix, centers at zoom 14.5, and uses OpenStreetMap network tiles on cache/MBTiles misses. The declared assets contain no MBTiles pack, while the privacy notice says position is transmitted only with deliberate SOS.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv28",
+        "reviewed_paths": [
+          "mobile/lib/core/config.dart",
+          "mobile/lib/services/location_service.dart",
+          "mobile/lib/services/mbtiles_provider.dart",
+          "mobile/lib/services/tile_cache.dart",
+          "mobile/lib/ui/app_shell.dart",
+          "mobile/lib/ui/info_page.dart",
+          "mobile/lib/ui/onboarding_page.dart",
+          "mobile/lib/ui/venture_page.dart",
+          "mobile/pubspec.yaml"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.map.undisclosed-location-derived-tile-egress and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "mobile.map.undisclosed-location-derived-tile-egress"
+    ],
+    "unresolved": [
+      "The required sandbox was unavailable, so exact tile requests and effective viewport precision were not observed with a dummy fix."
+    ]
+  },
+  {
+    "coverage_id": "mobile-offline-safety::backend-and-buoy-to-handset-state::sos-outbox-feed-cache-and-alarm-lifecycle::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "mobile-offline-safety",
+      "boundary": "backend-and-buoy-to-handset-state",
+      "subsystem": "sos-outbox-feed-cache-and-alarm-lifecycle",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "mobile-offline-safety",
+    "boundary": "backend-and-buoy-to-handset-state",
+    "subsystem": "sos-outbox-feed-cache-and-alarm-lifecycle",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "mobile/lib/services/sos_service.dart",
+      "mobile/lib/services/backend_client.dart",
+      "mobile/lib/services/buoy_client.dart",
+      "mobile/lib/services/venture_feeds.dart",
+      "mobile/lib/services/eta_notifier.dart",
+      "mobile/lib/data/outbox_store.dart",
+      "mobile/lib/data/forecast_cache.dart",
+      "mobile/lib/ui/app_shell.dart",
+      "mobile/lib/ui/venture_page.dart"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Application-state and device-lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Replay, ordering, and transaction attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Failure and recovery attack classes",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Universal moves",
+      "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Cryptographic storage and local-network protocol classes are covered by separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 3,
+    "status": "candidate",
+    "agent_id": "hunter_wave3_mobile",
+    "reviewed_paths": [
+      "backend/app/api/sos.py",
+      "backend/app/api/squall.py",
+      "docs/05_PUBLIC_API.md",
+      "docs/13_RESPONDER_LOOP.md",
+      "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+      "docs/50_FIELD_MEASUREMENT_AND_COMMISSIONING_PROTOCOL.md",
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "firmware/shore/AqOneShore/AqOneShore.ino",
+      "mobile/lib/data/outbox_store.dart",
+      "mobile/lib/l10n/app_en.arb",
+      "mobile/lib/models/sos_record.dart",
+      "mobile/lib/models/squall_watch.dart",
+      "mobile/lib/services/backend_client.dart",
+      "mobile/lib/services/buoy_client.dart",
+      "mobile/lib/services/eta_notifier.dart",
+      "mobile/lib/services/sos_alarm.dart",
+      "mobile/lib/services/sos_service.dart",
+      "mobile/lib/services/squall_alarm.dart",
+      "mobile/lib/services/venture_feeds.dart",
+      "mobile/lib/ui/app_shell.dart",
+      "mobile/lib/ui/venture_page.dart",
+      "mobile/lib/ui/widgets/delivery_state_tile.dart",
+      "mobile/lib/ui/widgets/responder_eta_dialog.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave3_mobile",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "docs/13_RESPONDER_LOOP.md",
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "mobile/lib/data/outbox_store.dart",
+          "mobile/lib/models/sos_record.dart",
+          "mobile/lib/models/squall_watch.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/lib/services/buoy_client.dart",
+          "mobile/lib/services/eta_notifier.dart",
+          "mobile/lib/services/sos_alarm.dart",
+          "mobile/lib/services/sos_service.dart",
+          "mobile/lib/services/squall_alarm.dart",
+          "mobile/lib/services/venture_feeds.dart",
+          "mobile/lib/ui/app_shell.dart",
+          "mobile/lib/ui/venture_page.dart"
+        ],
+        "invariant": "Offline SOS replies, stand-down state, ETA rendering, and hazard alarms must preserve authoritative routing, honest completion, clock-relative meaning, and new-event behavior across retry and missed updates.",
+        "method": "source",
+        "result": "Buoy-only replies use an unavailable local-id route, local stand-down intent is presented as remotely completed, server clock is discarded for ETA, and missed squall clear can preserve acknowledgement into a later same-buoy event.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv26",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "docs/50_FIELD_MEASUREMENT_AND_COMMISSIONING_PROTOCOL.md",
+          "mobile/lib/models/sos_record.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/lib/services/buoy_client.dart",
+          "mobile/lib/services/sos_service.dart",
+          "mobile/lib/ui/app_shell.dart",
+          "mobile/lib/ui/widgets/delivery_state_tile.dart",
+          "mobile/lib/ui/widgets/responder_eta_dialog.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.eta.server-clock-discarded and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv30",
+        "reviewed_paths": [
+          "backend/app/api/sos.py",
+          "docs/25_MOBILE_SECURITY_IMPLEMENTATION_PLAN.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "firmware/shore/AqOneShore/AqOneShore.ino",
+          "mobile/lib/data/outbox_store.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/lib/services/sos_service.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.sos.buoy-only-reply-unroutable and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv31",
+        "reviewed_paths": [
+          "mobile/lib/data/outbox_store.dart",
+          "mobile/lib/l10n/app_en.arb",
+          "mobile/lib/models/sos_record.dart",
+          "mobile/lib/services/backend_client.dart",
+          "mobile/lib/services/sos_service.dart",
+          "mobile/lib/ui/app_shell.dart",
+          "mobile/lib/ui/venture_page.dart",
+          "mobile/lib/ui/widgets/responder_eta_dialog.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.sos.standdown-intent-treated-resolved and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv32r",
+        "reviewed_paths": [
+          "backend/app/api/squall.py",
+          "docs/05_PUBLIC_API.md",
+          "mobile/lib/models/squall_watch.dart",
+          "mobile/lib/services/squall_alarm.dart",
+          "mobile/lib/services/venture_feeds.dart",
+          "mobile/lib/ui/app_shell.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint mobile.squall.ack-survives-missed-clear and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "mobile.sos.buoy-only-reply-unroutable",
+      "mobile.sos.standdown-intent-treated-resolved",
+      "mobile.eta.server-clock-discarded",
+      "mobile.squall.ack-survives-missed-clear"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "phone-buoy-local-network::nearby-peer-to-buoy-and-handset::websocket-chat-status-eta-and-warning-cache::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "phone-buoy-local-network",
+      "boundary": "nearby-peer-to-buoy-and-handset",
+      "subsystem": "websocket-chat-status-eta-and-warning-cache",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "phone-buoy-local-network",
+    "boundary": "nearby-peer-to-buoy-and-handset",
+    "subsystem": "websocket-chat-status-eta-and-warning-cache",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "mobile/lib/ui/chathubb.dart",
+      "mobile/lib/services/buoy_client.dart",
+      "mobile/lib/services/sos_service.dart",
+      "docs/03_PHONE_BUOY_WIFI.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Framing, schema, and interpretation attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#RPC identity and authorization attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Universal moves",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter_wave2_local_retry",
+    "reviewed_paths": [
+      "backend/app/api/mesh.py",
+      "docs/02_LOAM_PACKET_SPEC.md",
+      "docs/03_PHONE_BUOY_WIFI.md",
+      "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+      "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+      "mobile/lib/ui/chathubb.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_local_retry",
+        "reviewed_paths": [
+          "backend/app/api/mesh.py",
+          "docs/02_LOAM_PACKET_SPEC.md",
+          "docs/03_PHONE_BUOY_WIFI.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "firmware/buoy/AqOneBuoy/AqOneLoam.h",
+          "mobile/lib/ui/chathubb.dart"
+        ],
+        "invariant": "Unauthenticated chat traffic must remain subordinate to pending distress frames and must not consume every outbound LoRa slot needed by SOS.",
+        "method": "source",
+        "result": "Open WebSocket chat and SOS share a ten-slot first-free transmit ring with no priority, reservation, or eviction; a full chat ring defers SOS retry.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv20",
+        "reviewed_paths": [
+          "docs/02_LOAM_PACKET_SPEC.md",
+          "firmware/buoy/AqOneBuoy/AqOneBuoy.ino",
+          "firmware/buoy/AqOneBuoy/AqOneLoam.h"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.buoy.chat-starves-sos-tx-ring and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "firmware.buoy.chat-starves-sos-tx-ring"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "public-safety-feeds::anonymous-to-backend-and-upstream::forecast-hotspots-buoys-and-safety-nowcasts::ATTACK-CLASSES.md%23Feature%20abuse%20and%20data%20leakage",
+    "canonical_refs": {
+      "surface": "public-safety-feeds",
+      "boundary": "anonymous-to-backend-and-upstream",
+      "subsystem": "forecast-hotspots-buoys-and-safety-nowcasts",
+      "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage"
+    },
+    "surface": "public-safety-feeds",
+    "boundary": "anonymous-to-backend-and-upstream",
+    "subsystem": "forecast-hotspots-buoys-and-safety-nowcasts",
+    "attack_class": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "starting_paths": [
+      "backend/app/api/public.py",
+      "backend/app/api/hotspots.py",
+      "backend/app/api/sea_condition.py",
+      "backend/app/api/squall.py",
+      "backend/app/api/catch.py"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Derived-data and disclosure attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Computational amplification attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Failure and recovery attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP boundary exists in this unit."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary classes",
+        "reason": "Other material classes are assigned to separate deterministic units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter_wave2_edge",
+    "reviewed_paths": [
+      "backend/app/ai/squall.py",
+      "backend/app/api/catch.py",
+      "backend/app/api/hotspots.py",
+      "backend/app/api/public.py",
+      "backend/app/api/sea_condition.py",
+      "backend/app/api/squall.py",
+      "backend/app/main.py",
+      "backend/migrations/002_simulation.sql",
+      "backend/migrations/004_dashboard.sql",
+      "backend/tests/test_hotspots.py",
+      "docs/05_PUBLIC_API.md",
+      "docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md",
+      "mobile/lib/models/sea_condition.dart"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_wave2_edge",
+        "reviewed_paths": [
+          "backend/app/ai/squall.py",
+          "backend/app/api/catch.py",
+          "backend/app/api/hotspots.py",
+          "backend/app/api/public.py",
+          "backend/app/api/sea_condition.py",
+          "backend/app/api/squall.py",
+          "backend/migrations/002_simulation.sql",
+          "docs/05_PUBLIC_API.md",
+          "docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md"
+        ],
+        "invariant": "Anonymous feeds must disclose only intended public data, meet the approved privacy cohort, and bound database/model work.",
+        "method": "source",
+        "result": "Public sea condition includes operator identity fields, public squall loads complete retained pressure history, and hotspot cohort implementation uses three reporters despite an architecture rule of at least five.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv10",
+        "reviewed_paths": [
+          "backend/app/api/hotspots.py",
+          "backend/tests/test_hotspots.py",
+          "docs/05_PUBLIC_API.md",
+          "docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.hotspots.minimum-cohort-policy-drift and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv13",
+        "reviewed_paths": [
+          "backend/app/api/public.py",
+          "backend/app/api/sea_condition.py",
+          "backend/app/main.py",
+          "backend/migrations/004_dashboard.sql",
+          "mobile/lib/models/sea_condition.dart"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.public-sea-condition.operator-identity-disclosure and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv14",
+        "reviewed_paths": [
+          "backend/app/ai/squall.py",
+          "backend/app/api/public.py",
+          "backend/app/api/squall.py",
+          "backend/app/main.py",
+          "backend/migrations/002_simulation.sql"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint backend.public-squall.unbounded-history-load and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "backend.public-sea-condition.operator-identity-disclosure",
+      "backend.public-squall.unbounded-history-load",
+      "backend.hotspots.minimum-cohort-policy-drift"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "shore-gateway::gateway-to-backend::tls-credentials-ingest::ATTACK-CLASSES.md%23Chained%20vulnerabilities%20and%20trust%20boundaries",
+    "canonical_refs": {
+      "surface": "shore-gateway",
+      "boundary": "gateway-to-backend",
+      "subsystem": "tls-credentials-ingest",
+      "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries"
+    },
+    "surface": "shore-gateway",
+    "boundary": "gateway-to-backend",
+    "subsystem": "tls-credentials-ingest",
+    "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "starting_paths": [
+      "firmware/shore/AqOneShore/AqOneShore.ino",
+      "backend/app/api/sos.py",
+      "backend/app/api/advisories.py",
+      "backend/app/api/contacts.py",
+      "docs/04_INGEST_API.md"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#API-key and mTLS attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Ingress, network, and control-plane attack classes",
+      "PROTOCOLS-RPC-AND-MESSAGING.md#RPC identity and authorization attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#All blocks",
+        "reason": "No LLM, prompt, retrieval, tool-calling, agent, memory, or MCP trust boundary exists."
+      },
+      {
+        "block": "ATTACK-CLASSES.md#Other ordinary attack classes",
+        "reason": "Other material classes are assigned to separate deterministic coverage units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter_firmware",
+    "reviewed_paths": [
+      "README.md",
+      "backend/app/api/advisories.py",
+      "backend/app/api/contacts.py",
+      "backend/app/api/sos.py",
+      "docs/04_INGEST_API.md",
+      "firmware/README.md",
+      "firmware/shore/AqOneShore/AqOneShore.ino"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter_firmware",
+        "reviewed_paths": [
+          "backend/app/api/advisories.py",
+          "backend/app/api/contacts.py",
+          "backend/app/api/sos.py",
+          "docs/04_INGEST_API.md",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The gateway must authenticate the backend TLS peer and must not expose its uplink credential through tracked source.",
+        "method": "source",
+        "result": "All gateway HTTPS calls use setInsecure, including operator login and bearer-authenticated polling. The sketch also contains a concrete Wi-Fi password literal whose current validity is external.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv23r",
+        "reviewed_paths": [
+          "firmware/README.md",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.shore.committed-uplink-credential and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      },
+      {
+        "agent_id": "fv24",
+        "reviewed_paths": [
+          "README.md",
+          "firmware/shore/AqOneShore/AqOneShore.ino"
+        ],
+        "invariant": "The final record must accurately describe its source-grounded trust boundary and retain only decisive unresolved runtime or deployment blockers.",
+        "method": "source",
+        "result": "Independent Phase 5 review verified fingerprint firmware.shore.tls-peer-verification-disabled and retained verdict needs_validation at source commit c5312b8711cb48ba89a0f014d060b62ccd5d9a5f; no target code was executed.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "firmware.shore.tls-peer-verification-disabled",
+      "firmware.shore.committed-uplink-credential"
+    ],
+    "unresolved": []
+  }
+]
