@@ -13,6 +13,9 @@ This directory contains presentation decks, technical architecture diagrams, and
 | [`archive/architecture/AqOne_Editable_Architecture_Flowchart_v*.pptx`](archive/architecture/) | PowerPoint PPTX | Earlier revision milestones (v1–v5) preserved for audit trail and iteration history. | Archive |
 | [`competitions/enactus/AqOne_Enactus_Endorsement_Letter.docx`](competitions/enactus/AqOne_Enactus_Endorsement_Letter.docx) | Word DOCX | Official HEI head endorsement letter generated via [`tools/documents/create_endorsement_letter.py`](../tools/documents/create_endorsement_letter.py). | Competition reviewers |
 | [`competitions/technical-profile/AqOne_Technical_Profile_Aquanons-1.docx`](competitions/technical-profile/AqOne_Technical_Profile_Aquanons-1.docx) | Word DOCX | Project technical profile submission document. | Competition reviewers |
+| [`competitions/dti-workshop/AqOne_Module_2_Worksheets_Completed.docx`](competitions/dti-workshop/AqOne_Module_2_Worksheets_Completed.docx) | Word DOCX | Completed DTI workshop Module 2 worksheets. | DTI workshop mentors |
+| [`competitions/dti-workshop/AqOne_Customer_Test_Card.docx`](competitions/dti-workshop/AqOne_Customer_Test_Card.docx) | Word DOCX | DTI workshop customer test card. | DTI workshop mentors |
+| [`competitions/dti-workshop/startup-financing/`](competitions/dti-workshop/startup-financing/) | Excel XLSX, Word DOCX, PNG | DTI workshop startup financing exercises: the completed base exercises, the profitable and company cases, the profitability and grant ask update, and the company-case charts (break-even, cash flow, income statement, pre-operating costs). | DTI workshop mentors |
 
 ---
 
