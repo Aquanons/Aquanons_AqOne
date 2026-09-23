@@ -23,7 +23,6 @@ import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
 import '../services/venture_feeds.dart';
 import 'chathubb.dart';
-import 'checklist_page.dart';
 import 'widgets/compass_dial.dart';
 import 'widgets/offline_map_banner.dart';
 import 'widgets/squall_banner.dart';
@@ -833,14 +832,6 @@ class _VenturePageState extends State<VenturePage> {
           onTap: _locate,
         ),
         const SizedBox(height: 10),
-        _RoundButton(
-          icon: Icons.checklist_rounded,
-          tooltip: t.tripChecklistTooltip,
-          isActive: false,
-          isDark: isDark,
-          onTap: _openChecklist,
-        ),
-        const SizedBox(height: 10),
         // Chat sits immediately above SOS rather than in its own corner, so
         // every action on this screen is reachable from one thumb position.
         _RoundButton(
@@ -862,14 +853,6 @@ class _VenturePageState extends State<VenturePage> {
           onTap: _isSendingSos ? null : _handleSosTap,
         ),
       ],
-    );
-  }
-
-  Future<void> _openChecklist() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ChecklistPage(checklist: widget.checklist),
-      ),
     );
   }
 

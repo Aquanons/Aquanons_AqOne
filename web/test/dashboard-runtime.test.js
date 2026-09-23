@@ -50,8 +50,13 @@ function createStubElement(tag = 'div', id = '') {
     disabled: false,
     hidden: false,
     value: '',
+    src: '',
     _innerHTML: '',
     _textContent: '',
+    removeAttribute(name) {
+      if (name === 'src') this.src = '';
+      else delete this[name];
+    },
     focus() {
       if (this._ownerDocument) this._ownerDocument.activeElement = this;
     },
@@ -1118,7 +1123,7 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
     assert.equal(demoAlert.sosEventId, 'demo-sos-2', 'real backend ID must be preserved on synthetic row');
     assert.equal(demoAlert.drawerData.headerText, 'DEMO SOS — SIMULATED DISTRESS CALL');
     assert.equal(demoAlert.drawerData.skipperName, null);
-    assert.equal(demoAlert.drawerData.owner, 'Scripted Demo Boat', 'owner falls back to the boat without a profile');
+    assert.equal(demoAlert.drawerData.owner, null, 'owner stays null without a profile instead of impersonating the boat');
     assert.equal(demoAlert.drawerData.boat, 'Scripted Demo Boat');
     assert.equal(demoAlert.drawerData.license, null, 'no license claim is shown when none is on file');
     assert.equal(demoAlert.drawerData.phone, null);

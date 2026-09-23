@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 import '../core/config.dart';
 import '../core/tokens.dart';
@@ -262,7 +263,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _openWiFiSelection() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => const _WiFiSelectionScreen(),
+        builder: (context) => _WiFiSelectionScreen(service: widget.service),
       ),
     );
     _pollBuoy();
@@ -503,85 +504,56 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 // BUOY WIFI SELECTION PAGE
 // ==========================================
 
-class _BuoyNetworkItem {
-  final String ssid;
-  final int signalStrength;
-  /// Mutated as the user connects and disconnects; never supplied by a
-  /// caller, so it is initialised here rather than taking a constructor
-  /// parameter nobody passes.
-  bool isConnected = false;
-
-  _BuoyNetworkItem({
-    required this.ssid,
-    required this.signalStrength,
-  });
+String stripSsidQuotes(String? raw) {
+  final s = (raw ?? '').trim();
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+    return s.substring(1, s.length - 1);
+  }
+  if (s.isEmpty || s == '<unknown ssid>') {
+    return '';
+  }
+  return s;
 }
 
 class _WiFiSelectionScreen extends StatefulWidget {
-  const _WiFiSelectionScreen();
+  const _WiFiSelectionScreen({required this.service});
+
+  final SosService service;
 
   @override
   State<_WiFiSelectionScreen> createState() => _WiFiSelectionScreenState();
 }
 
 class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
-  bool _isScanning = false;
-  String? _connectingSsid;
+  bool _checking = true;
+  String _ssid = '';
+  BuoyStatus? _buoy;
 
-  final List<_BuoyNetworkItem> _networks = [
-    _BuoyNetworkItem(ssid: 'AqOne-Buoy-Alpha-01', signalStrength: 88),
-    _BuoyNetworkItem(ssid: 'AqOne-Buoy-Bravo-04', signalStrength: 65),
-    _BuoyNetworkItem(ssid: 'AqOne-Buoy-CoastGuard-02', signalStrength: 42),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
 
-  void _scan() async {
-    setState(() => _isScanning = true);
-    await Future<void>.delayed(const Duration(seconds: 2));
+  Future<void> _refresh() async {
+    setState(() => _checking = true);
+    var ssid = '';
+    try {
+      ssid = stripSsidQuotes(await NetworkInfo().getWifiName());
+    } catch (_) {}
+    final buoy = await widget.service.pollBuoy();
     if (!mounted) return;
-    setState(() => _isScanning = false);
-  }
-
-  void _toggleConnect(_BuoyNetworkItem item) async {
-    if (item.isConnected) {
-      setState(() => item.isConnected = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(AppLocalizations.of(context).buoyDisconnectSnack(item.ssid)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      setState(() => _connectingSsid = item.ssid);
-      await Future<void>.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
-      setState(() {
-        for (final net in _networks) {
-          net.isConnected = false;
-        }
-        item.isConnected = true;
-        _connectingSsid = null;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(AppLocalizations.of(context).buoyConnectSnack(item.ssid)),
-          backgroundColor: Colors.green.shade700,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  IconData _wifiIcon(int signal) {
-    if (signal > 75) return Icons.wifi_rounded;
-    if (signal > 40) return Icons.wifi_2_bar_rounded;
-    return Icons.wifi_1_bar_rounded;
+    setState(() {
+      _checking = false;
+      _ssid = ssid;
+      _buoy = buoy;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: palette.canvas,
@@ -590,7 +562,7 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          'Buoy Wi-Fi Networks',
+          t.wifiTitle,
           style: TextStyle(
             color: palette.primaryText,
             fontWeight: FontWeight.bold,
@@ -602,7 +574,7 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
         ),
         actions: [
           IconButton(
-            icon: _isScanning
+            icon: _checking
                 ? SizedBox(
                     width: 20,
                     height: 20,
@@ -612,7 +584,7 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
                     ),
                   )
                 : Icon(Icons.refresh_rounded, color: palette.primaryText),
-            onPressed: _isScanning ? null : _scan,
+            onPressed: _checking ? null : _refresh,
           ),
         ],
       ),
@@ -625,100 +597,47 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Available nearby buoys',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: palette.secondaryText,
+              Container(
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: palette.border),
                 ),
-              ),
-              const SizedBox(height: AqSpace.md),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: _networks.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AqSpace.sm),
-                  itemBuilder: (context, index) {
-                    final item = _networks[index];
-                    final isBusy = _connectingSsid == item.ssid;
-
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: palette.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: item.isConnected
-                              ? Colors.green.shade400
-                              : palette.border,
-                          width: item.isConnected ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AqSpace.lg,
-                          vertical: AqSpace.xs,
-                        ),
-                        leading: Icon(
-                          _wifiIcon(item.signalStrength),
-                          color: item.isConnected
-                              ? Colors.green.shade400
-                              : palette.primaryText,
-                          size: 28,
-                        ),
-                        title: Text(
-                          item.ssid,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AqSpace.lg,
+                    vertical: AqSpace.xs,
+                  ),
+                  leading: Icon(
+                    _ssid.isEmpty
+                        ? Icons.wifi_off_rounded
+                        : Icons.wifi_rounded,
+                    color: _ssid.isEmpty
+                        ? palette.secondaryText
+                        : palette.primaryText,
+                    size: 28,
+                  ),
+                  title: Text(
+                    _ssid.isEmpty ? t.wifiNotConnected : _ssid,
+                    style: TextStyle(
+                      color: palette.primaryText,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: _ssid.isEmpty
+                      ? Text(
+                          t.wifiJoinHint,
                           style: TextStyle(
-                            color: palette.primaryText,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Text(
-                          item.isConnected
-                              ? 'Connected'
-                              : 'Signal strength: ${item.signalStrength}%',
-                          style: TextStyle(
-                            color: item.isConnected
-                                ? Colors.green.shade400
-                                : palette.secondaryText,
+                            color: palette.secondaryText,
                             fontSize: 13,
                           ),
-                        ),
-                        trailing: isBusy
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: item.isConnected
-                                        ? Colors.red.shade400
-                                        : palette.border,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                onPressed: _connectingSsid != null
-                                    ? null
-                                    : () => _toggleConnect(item),
-                                child: Text(
-                                  item.isConnected ? 'Disconnect' : 'Connect',
-                                  style: TextStyle(
-                                    color: item.isConnected
-                                        ? Colors.red.shade400
-                                        : palette.primaryText,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                      ),
-                    );
-                  },
+                        )
+                      : null,
                 ),
               ),
+              const SizedBox(height: AqSpace.sm),
+              BuoyStatusCard(status: _buoy),
             ],
           ),
         ),
