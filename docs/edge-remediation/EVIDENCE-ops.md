@@ -1,0 +1,28 @@
+# Evidence: Operations (Phase 0a)
+
+Plan: `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0a.
+Runbook: `docs/runbooks/RENDER_FREE_DB_ROTATION.md`.
+Row counts only; never data, URLs or credentials.
+
+## 2026-09-24 - Runbook written
+
+- Render free-tier facts re-read from https://render.com/docs/free:
+  - 30-day expiry, then a 14-day grace period before deletion
+  - one free database per workspace, with no backups
+  - 15-minute idle spin-down
+  - 750 free hours a month; going over suspends all free web services
+- Local tools present: PostgreSQL 18.4 client (`pg_dump`, `pg_restore`, `psql`), and a local PostgreSQL 18 server on port 5432 (service running).
+- Rehearsal: **not yet run.**
+  No local admin credential is configured on this machine (`AQONE_PROBE_PG_ADMIN_URL` is unset), and Claude does not guess passwords.
+  Waiting for Len to run runbook Section 4.
+
+## Rehearsal results
+
+| Table | Before | After |
+| --- | --- | --- |
+| (pending) | | |
+
+## Rotations
+
+| Date | Outage | sos_events | vessels | users | New `DB_EXPIRES_AT` |
+| --- | --- | --- | --- | --- | --- |
