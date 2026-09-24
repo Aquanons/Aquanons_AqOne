@@ -205,9 +205,9 @@ Record the counts (numbers only) in `docs/edge-remediation/EVIDENCE-ops.md`.
 
 ## 6. Len actions (Phase 0a)
 
-- [ ] Open `aqone-db` on the Render dashboard and confirm its creation and expiry dates match Section 1 (created 2026-09-15, expiry 2026-10-15).
+- [x] Open `aqone-db` on the Render dashboard and confirm its creation and expiry dates match Section 1 (created 2026-09-15, expiry 2026-10-15).
   If they differ, correct this file.
-- [ ] Run the rehearsal (Section 4) and record the counts.
+- [x] Run the rehearsal (Section 4) and record the counts (passed 2026-09-24, see `docs/edge-remediation/EVIDENCE-ops.md`).
 - [ ] Set up the UptimeRobot monitor (Section 5).
 - [ ] Do the first real rotation by 2026-10-08 (Section 3).
 - [ ] Send the NTC inquiry (EC-M11):

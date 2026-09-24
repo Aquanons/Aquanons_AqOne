@@ -346,7 +346,7 @@ Phases with no row can merge in any order.
 ## 5. Phase 0a: Free-tier database safety (not gated)
 
 Requirements: EC-C5, EC-M14, EC-M11
-State: In progress - runbook written; waiting on Len's rehearsal and Render checks
+State: In progress - runbook written, expiry confirmed, rehearsal passed; waiting on Len's UptimeRobot monitor and NTC inquiry
 Owner: Claude writes; Len executes the Render steps.
 
 ### Tasks
@@ -363,17 +363,19 @@ Owner: Claude writes; Len executes the Render steps.
   One always-on free service uses about 744 of the 750 free instance hours a month, so it only fits if no other free service runs in the workspace.
   Going over suspends every free web service until the next month (Render docs, checked 2026-09-24).
 - [x] Record the NTC band inquiry as an open item in the runbook's "Len actions" list.
-- [ ] Len: confirm the real expiry date, do a dry run of the dump and restore against a local Postgres, set up UptimeRobot, and send the NTC inquiry.
+- [x] Len: confirm the real expiry date (confirmed in chat 2026-09-24: around 2026-10-15).
+- [x] Dry run of the dump and restore against a local Postgres (Claude, 2026-09-24, throwaway cluster).
+- [ ] Len: set up UptimeRobot and send the NTC inquiry.
 
 ### Verification
 
-- [ ] Dry run of dump and restore into local Postgres 18: row counts match for `sos_events`, `vessels`, `users` and `operations_audit_events`.
-- [ ] Evidence goes in `docs/edge-remediation/EVIDENCE-ops.md` (row counts only, never data).
+- [x] Dry run of dump and restore into local Postgres 18: row counts match for `sos_events`, `vessels`, `users` and `operations_audit_events`.
+- [x] Evidence goes in `docs/edge-remediation/EVIDENCE-ops.md` (row counts only, never data).
 
 ### Review and checkpoint
 
-- [ ] Review the runbook for secrets: environment variable names only.
-- [ ] Commit on `docs/edge-case-report`.
+- [x] Review the runbook for secrets: environment variable names only.
+- [x] Commit on `docs/edge-case-report` (runbook, merged as `c13010f`); rehearsal evidence committed on `edge/contracts`.
 
 Checkpoint message: `docs(ops): free-tier Render database rotation and keep-awake runbook`
 
