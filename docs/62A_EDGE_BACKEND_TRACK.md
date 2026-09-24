@@ -342,7 +342,7 @@ Checkpoint message: `feat(identity): official-only MDRRMO chat, device-bound pro
 
 Requirements: EC-C6 (backend), EC-H6 (schedule), EC-C5 (expiry data), EC-M18
 Merge after: B3
-State: Done - implementation checkpoint pending
+State: Done - fc77aad
 
 ### Tasks
 
