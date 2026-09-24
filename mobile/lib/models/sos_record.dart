@@ -254,6 +254,9 @@ class SosRecord {
       // distress call.
       'trust_tier': trustTier.wire,
     };
+    if (nonce != null) {
+      payload['nonce'] = nonce;
+    }
     if (lat != null) {
       payload['lat'] = lat;
     }

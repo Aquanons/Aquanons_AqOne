@@ -25,6 +25,10 @@ class RemoteSos {
     this.responderNote,
     this.fisherReply,
     this.resolvedAt,
+    this.nonce,
+    this.version,
+    this.resolutionCode,
+    this.reopenedAt,
   });
 
   final String id;
@@ -51,6 +55,10 @@ class RemoteSos {
   final String? responderNote;
   final int? fisherReply;
   final String? resolvedAt;
+  final int? nonce;
+  final int? version;
+  final String? resolutionCode;
+  final String? reopenedAt;
 
   static RemoteSos fromJson(Map<String, dynamic> json, {String? envelopeServerTime}) {
     final status = json['status'] as String?;
@@ -72,6 +80,10 @@ class RemoteSos {
       responderNote: json['responder_note'] as String?,
       fisherReply: (json['fisher_reply'] as num?)?.toInt(),
       resolvedAt: json['resolved_at'] as String?,
+      nonce: (json['nonce'] as num?)?.toInt(),
+      version: (json['version'] as num?)?.toInt(),
+      resolutionCode: json['resolution_code'] as String?,
+      reopenedAt: json['reopened_at'] as String?,
     );
   }
 }

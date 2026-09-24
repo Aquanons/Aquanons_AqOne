@@ -236,6 +236,22 @@ class OutboxStore {
     );
   }
 
+  /// Fills GPS position on an outbox record that was dispatched without a fix.
+  /// Only updates if lat/lon are still null.
+  Future<bool> fillPosition(String localId, double lat, double lon) async {
+    final db = await _db.database;
+    final count = await db.update(
+      'outbox',
+      <String, Object?>{
+        'lat': lat,
+        'lon': lon,
+      },
+      where: 'local_id = ? AND lat IS NULL AND lon IS NULL',
+      whereArgs: <Object?>[localId],
+    );
+    return count > 0;
+  }
+
   /// Record the fisher's own reply locally, so the button reflects reality even
   /// if the network call to the backend fails.
   Future<void> saveFisherReply(

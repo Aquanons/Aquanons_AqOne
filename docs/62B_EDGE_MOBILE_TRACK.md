@@ -143,11 +143,11 @@ Checkpoint message: `feat(mobile): foreground service keeps SOS delivery alive i
 
 Requirements: EC-C14 (phone), EC-H17, EC-C8 (phone), EC-L7 (phone), EC-H1
 Merge after: M1 (the backend ignores `nonce` until B2 merges, see master plan 1.2)
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `test/text_clamp_test.dart`, for `clampUtf8(text, maxBytes)`:
     - ASCII is unchanged
     - `ñ` at the boundary is dropped whole
@@ -160,21 +160,21 @@ State: Not started
     - `late fix re-posts same nonce with position`
     - `no fix after 5 minutes sends nothing more`
   - `test/buoy_client_test.dart`: `malformed UTF-8 body does not throw`.
-- [ ] `SosRecord`: add `nonce` (also in `toRow`, `fromRow`, `toBuoyPayload` and the backend JSON).
+- [x] `SosRecord`: add `nonce` (also in `toRow`, `fromRow`, `toBuoyPayload` and the backend JSON).
   `raiseSos` generates it with `Random.secure().nextInt(1 << 32)`.
-- [ ] `lib/models/text_clamp.dart`: `clampUtf8(String text, int maxBytes)`.
+- [x] `lib/models/text_clamp.dart`: `clampUtf8(String text, int maxBytes)`.
   Use it for the note (64 bytes) and boat name (32 bytes), replacing `_clampNote`'s `substring`.
   Rename the config constants to `maxNoteBytes` and `maxBoatBytes`.
-- [ ] `RemoteSos`: parse `nonce`, `version`, `resolution_code` and `reopened_at`.
+- [x] `RemoteSos`: parse `nonce`, `version`, `resolution_code` and `reopened_at`.
   `_applyRemote` builds a `byNonce` map and matches on `local_id`, then `nonce`, then `seq`.
-- [ ] `buoy_client.dart`: decode with `utf8.decode(bytes, allowMalformed: true)`.
-- [ ] GPS:
+- [x] `buoy_client.dart`: decode with `utf8.decode(bytes, allowMalformed: true)`.
+- [x] GPS:
   - `LocationService` gains `warmUp()`, called when the venture page opens and when a trip starts.
   - When a record has no fix, `SosService` waits up to 5 min for the first fix, then `OutboxStore.fillPosition(localId, lat, lon)` (only if still null), then re-sends direct and pod with the same nonce.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
+- [x] Gate commands green, with red and green runs recorded.
 - [ ] After B2 merges: an emulator SOS appears once in `/active` with its `nonce`, and a second press in the same second creates a second row.
 
 ### Review and checkpoint

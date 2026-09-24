@@ -8,6 +8,7 @@ import '../models/buoy_contact.dart';
 import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
+import '../models/text_clamp.dart';
 import 'backend_client.dart';
 import 'buoy_client.dart';
 import 'location_service.dart';
@@ -19,17 +20,23 @@ class SosService {
     required BuoyClient buoy,
     required BackendClient backend,
     required LocationService location,
+    Duration lateFixPollInterval = const Duration(seconds: 5),
+    Duration lateFixTimeout = const Duration(minutes: 5),
   })  : _outbox = outbox,
         _identity = identity,
         _buoy = buoy,
         _backend = backend,
-        _location = location;
+        _location = location,
+        _lateFixPollInterval = lateFixPollInterval,
+        _lateFixTimeout = lateFixTimeout;
 
   final OutboxStore _outbox;
   final IdentityStore _identity;
   final BuoyClient _buoy;
   final BackendClient _backend;
   final LocationService _location;
+  final Duration _lateFixPollInterval;
+  final Duration _lateFixTimeout;
 
   final StreamController<void> _changes = StreamController<void>.broadcast();
   Stream<void> get changes => _changes.stream;
@@ -70,6 +77,7 @@ class SosService {
       throw StateError('Vessel identity is not set up.');
     }
 
+    final nonce = Random.secure().nextInt(1 << 32);
     final fix = await _location.currentFix();
     final record = SosRecord(
       localId: _newLocalId(),
@@ -81,13 +89,42 @@ class SosService {
       lat: fix?.lat,
       lon: fix?.lon,
       note: _clampNote(note),
+      nonce: nonce,
     );
 
     await _outbox.insert(record);
     _changes.add(null);
 
     unawaited(_attemptRelay(record.localId));
+    if (fix == null) {
+      unawaited(_waitForLateFix(record.localId));
+    }
     return record;
+  }
+
+  Future<void> _waitForLateFix(String localId) async {
+    final deadline = DateTime.now().add(_lateFixTimeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(_lateFixPollInterval);
+      if (_changes.isClosed) {
+        return;
+      }
+      final current = await _outbox.byLocalId(localId);
+      if (current == null || current.hasFix) {
+        return;
+      }
+      final fix = await _location.currentFix();
+      if (fix != null) {
+        final filled = await _outbox.fillPosition(localId, fix.lat, fix.lon);
+        if (filled) {
+          await _attemptRelay(
+            localId,
+            routes: {SosRoute.pod, SosRoute.direct},
+          );
+        }
+        return;
+      }
+    }
   }
 
   OutboxStore get outbox => _outbox;
@@ -482,29 +519,58 @@ class SosService {
     }
     var changed = false;
 
-    final bySeq = <int, RemoteSos>{
-      for (final row in remote)
-        if (row.seq != null) row.seq!: row,
-    };
-
-    // Match on local_id first, seq only as a fallback.
-    //
-    // seq is assigned by the buoy ack, so an SOS that reached the backend
-    // over the direct path never has one. Matching on seq alone meant those
-    // records could never be reconciled and the fisher never learned they
-    // had been acknowledged - which, now that the direct path exists, is
-    // the common case rather than the edge case.
-    final byLocalId = <String, RemoteSos>{
-      for (final row in remote)
-        if (row.localId != null && row.localId!.isNotEmpty) row.localId!: row,
-    };
+    final claimedEvents = <RemoteSos>{};
+    final matches = <SosRecord, RemoteSos>{};
 
     for (final record in records) {
-      final seq = record.seq;
-      final match = byLocalId[record.localId] ?? (seq == null ? null : bySeq[seq]);
-      if (match == null) {
+      for (final event in remote) {
+        if (!claimedEvents.contains(event) &&
+            event.localId != null &&
+            event.localId!.isNotEmpty &&
+            event.localId == record.localId) {
+          matches[record] = event;
+          claimedEvents.add(event);
+          break;
+        }
+      }
+    }
+
+    for (final record in records) {
+      if (matches.containsKey(record) || record.nonce == null) {
         continue;
       }
+      for (final event in remote) {
+        if (!claimedEvents.contains(event) &&
+            event.nonce != null &&
+            event.nonce == record.nonce) {
+          matches[record] = event;
+          claimedEvents.add(event);
+          break;
+        }
+      }
+    }
+
+    for (final record in records) {
+      if (matches.containsKey(record) || record.seq == null) {
+        continue;
+      }
+      for (final event in remote) {
+        if (!claimedEvents.contains(event) &&
+            event.seq != null &&
+            event.seq == record.seq &&
+            (event.nonce == null ||
+                record.nonce == null ||
+                event.nonce == record.nonce)) {
+          matches[record] = event;
+          claimedEvents.add(event);
+          break;
+        }
+      }
+    }
+
+    for (final entry in matches.entries) {
+      final record = entry.key;
+      final match = entry.value;
       // _outbox.advance() merges state forward only (DeliveryState.merge),
       // so a stale or partial answer from either source can never regress an
       // already-confirmed state - see docs/06_DELIVERY_STATES.md.
@@ -591,9 +657,7 @@ class SosService {
     if (trimmed == null || trimmed.isEmpty) {
       return null;
     }
-    return trimmed.length <= AqOneConfig.maxNoteLength
-        ? trimmed
-        : trimmed.substring(0, AqOneConfig.maxNoteLength);
+    return clampUtf8(trimmed, AqOneConfig.maxNoteBytes);
   }
 
   static String _newLocalId() {

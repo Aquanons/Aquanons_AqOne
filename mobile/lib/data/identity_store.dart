@@ -7,6 +7,7 @@ import '../core/validators.dart';
 import '../models/license_type.dart';
 import '../models/trust_tier.dart';
 import '../core/field_cipher.dart';
+import '../models/text_clamp.dart';
 import 'app_database.dart';
 
 /// What this handset claims about itself.
@@ -240,7 +241,7 @@ class IdentityStore {
     final existing = await read();
     final identity = VesselIdentity(
       vesselId: existing?.vesselId ?? generateVesselId(),
-      boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatLength),
+      boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatBytes),
       skipperName: _clamp(
         Validators.normalizeName(skipperName),
         AqOneConfig.maxNameLength,
@@ -275,7 +276,7 @@ class IdentityStore {
     }
     await _write(
       existing.copyWith(
-        boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatLength),
+        boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatBytes),
       ),
     );
   }
@@ -333,7 +334,7 @@ class IdentityStore {
 
   static String _clamp(String value, int max) {
     final trimmed = value.trim();
-    return trimmed.length <= max ? trimmed : trimmed.substring(0, max);
+    return clampUtf8(trimmed, max);
   }
 
   static String generateVesselId() {

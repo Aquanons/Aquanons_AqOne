@@ -160,6 +160,7 @@ class _VenturePageState extends State<VenturePage> {
   @override
   void initState() {
     super.initState();
+    widget.location.warmUp();
     _sosSub = widget.sos.changes.listen((_) => _refreshSosStatus());
     _initTileProvider();
     _compassSub = _compass.readings.listen((CompassReading reading) {

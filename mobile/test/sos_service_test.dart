@@ -624,5 +624,288 @@ void main() {
     expect(history.any((r) => r.localId == 'stale-1'), isTrue);
     expect(isStale(staleRecord, DateTime.now()), isTrue);
   });
+
+  test('raiseSos assigns a 32-bit nonce and sends it on both routes', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(boat: 'Sea Breeze', skipperName: 'Pedro');
+    Map<String, dynamic>? buoyPayload;
+    Map<String, dynamic>? backendPayload;
+
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((request) async {
+        buoyPayload = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(jsonEncode({'accepted': true, 'seq': 1}), 200);
+      }),
+    );
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/api/sos') {
+          final bodyBytes = await request.finalize().toBytes();
+          backendPayload = jsonDecode(utf8.decode(bodyBytes)) as Map<String, dynamic>;
+        }
+        return _direct(200);
+      }),
+    );
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: buoy,
+      backend: backend,
+      location: LocationService(),
+    );
+
+    final record = await service.raiseSos();
+    expect(record.nonce, isNotNull);
+    expect(record.nonce!, greaterThanOrEqualTo(0));
+    expect(record.nonce!, lessThanOrEqualTo(0xFFFFFFFF));
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(buoyPayload?['nonce'], record.nonce);
+    expect(backendPayload?['nonce'], record.nonce);
+  });
+
+  test('same seq, different nonce matches the right record', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(boat: 'Sea Breeze', skipperName: 'Pedro');
+
+    const r1 = SosRecord(
+      localId: 'loc-1',
+      vesselId: 'fisher-7f3a',
+      boat: 'Sea Breeze',
+      clientTs: 1000,
+      state: DeliveryState.relayed,
+      seq: 10,
+      nonce: 111,
+    );
+    const r2 = SosRecord(
+      localId: 'loc-2',
+      vesselId: 'fisher-7f3a',
+      boat: 'Sea Breeze',
+      clientTs: 2000,
+      state: DeliveryState.relayed,
+      seq: 10,
+      nonce: 222,
+    );
+    await outbox.insert(r1);
+    await outbox.insert(r2);
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') return _direct(200);
+        if (request.url.path == '/api/sos/vessel/fisher-7f3a') {
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(jsonEncode({
+              'vessel_id': 'fisher-7f3a',
+              'server_time': '2026-09-24T12:00:00Z',
+              'events': [
+                {
+                  'id': 99,
+                  'seq': 10,
+                  'nonce': 222,
+                  'delivery_state': 'delivered',
+                }
+              ]
+            }))),
+            200,
+          );
+        }
+        return _direct(200);
+      }),
+    )..setVesselBearerToken('test-token');
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: noBuoy(),
+      backend: backend,
+      location: LocationService(),
+    );
+
+    await service.reconcile();
+
+    final updated1 = await outbox.byLocalId('loc-1');
+    final updated2 = await outbox.byLocalId('loc-2');
+    expect(updated1?.state, DeliveryState.relayed);
+    expect(updated2?.state, DeliveryState.delivered);
+  });
+
+  test('match order is localId, then nonce, then seq', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(boat: 'Sea Breeze', skipperName: 'Pedro');
+
+    const r1 = SosRecord(
+      localId: 'loc-1',
+      vesselId: 'fisher-7f3a',
+      boat: 'Sea Breeze',
+      clientTs: 1000,
+      state: DeliveryState.relayed,
+      seq: 1,
+      nonce: 100,
+    );
+    const r2 = SosRecord(
+      localId: 'loc-2',
+      vesselId: 'fisher-7f3a',
+      boat: 'Sea Breeze',
+      clientTs: 2000,
+      state: DeliveryState.relayed,
+      seq: 2,
+      nonce: 200,
+    );
+    const r3 = SosRecord(
+      localId: 'loc-3',
+      vesselId: 'fisher-7f3a',
+      boat: 'Sea Breeze',
+      clientTs: 3000,
+      state: DeliveryState.relayed,
+      seq: 3,
+      nonce: 300,
+    );
+    await outbox.insert(r1);
+    await outbox.insert(r2);
+    await outbox.insert(r3);
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') return _direct(200);
+        if (request.url.path == '/api/sos/vessel/fisher-7f3a') {
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(jsonEncode({
+              'vessel_id': 'fisher-7f3a',
+              'server_time': '2026-09-24T12:00:00Z',
+              'events': [
+                {
+                  'id': 1,
+                  'local_id': 'loc-1',
+                  'nonce': 200,
+                  'seq': 3,
+                  'delivery_state': 'delivered',
+                }
+              ]
+            }))),
+            200,
+          );
+        }
+        return _direct(200);
+      }),
+    )..setVesselBearerToken('test-token');
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: noBuoy(),
+      backend: backend,
+      location: LocationService(),
+    );
+
+    await service.reconcile();
+
+    final updated1 = await outbox.byLocalId('loc-1');
+    final updated2 = await outbox.byLocalId('loc-2');
+    final updated3 = await outbox.byLocalId('loc-3');
+    expect(updated1?.state, DeliveryState.delivered);
+    expect(updated2?.state, DeliveryState.relayed);
+    expect(updated3?.state, DeliveryState.relayed);
+  });
+
+  test('late fix re-posts same nonce with position', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(boat: 'Sea Breeze', skipperName: 'Pedro');
+
+    final sentPayloads = <Map<String, dynamic>>[];
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/api/sos') {
+          final bytes = await request.finalize().toBytes();
+          sentPayloads.add(jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>);
+        }
+        return _direct(200);
+      }),
+    );
+
+    final fakeLocation = _FakeLocationService(
+      fixQueue: [
+        null,
+        const Fix(lat: 11.58, lon: 122.75),
+      ],
+    );
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: noBuoy(),
+      backend: backend,
+      location: fakeLocation,
+      lateFixPollInterval: const Duration(milliseconds: 10),
+      lateFixTimeout: const Duration(milliseconds: 200),
+    );
+
+    final record = await service.raiseSos();
+    expect(record.lat, isNull);
+
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    final updated = await outbox.byLocalId(record.localId);
+    expect(updated?.lat, 11.58);
+    expect(updated?.lon, 122.75);
+    expect(updated?.nonce, record.nonce);
+
+    expect(sentPayloads.length, greaterThanOrEqualTo(2));
+    expect(sentPayloads.last['nonce'], record.nonce);
+    expect(sentPayloads.last['lat'], 11.58);
+    expect(sentPayloads.last['lon'], 122.75);
+  });
+
+  test('no fix after 5 minutes sends nothing more', () async {
+    final identityStore = IdentityStore(db);
+    await identityStore.ensure(boat: 'Sea Breeze', skipperName: 'Pedro');
+
+    final sentPayloads = <Map<String, dynamic>>[];
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/api/sos') {
+          final bytes = await request.finalize().toBytes();
+          sentPayloads.add(jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>);
+        }
+        return _direct(200);
+      }),
+    );
+
+    final fakeLocation = _FakeLocationService(fixQueue: [null]);
+
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: noBuoy(),
+      backend: backend,
+      location: fakeLocation,
+      lateFixPollInterval: const Duration(milliseconds: 10),
+      lateFixTimeout: const Duration(milliseconds: 50),
+    );
+
+    final record = await service.raiseSos();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    final updated = await outbox.byLocalId(record.localId);
+    expect(updated?.lat, isNull);
+    expect(sentPayloads.length, 1);
+  });
 }
+
+class _FakeLocationService extends LocationService {
+  _FakeLocationService({this.fixQueue = const []});
+  final List<Fix?> fixQueue;
+  int _callCount = 0;
+
+  @override
+  Future<Fix?> currentFix() async {
+    if (_callCount < fixQueue.length) {
+      return fixQueue[_callCount++];
+    }
+    return null;
+  }
+}
+
 

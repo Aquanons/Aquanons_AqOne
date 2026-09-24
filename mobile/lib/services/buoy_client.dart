@@ -93,7 +93,10 @@ class BuoyClient {
     if (response.statusCode != 200) {
       throw BuoyRejected(response.statusCode, 'status query failed');
     }
-    return _decode(response.body, BuoyStatus.fromJson);
+    return _decode(
+      utf8.decode(response.bodyBytes, allowMalformed: true),
+      BuoyStatus.fromJson,
+    );
   }
 
   Future<BuoyAck> handoff(SosRecord record) async {
@@ -122,7 +125,10 @@ class BuoyClient {
       throw BuoyRejected(response.statusCode, 'unexpected buoy response');
     }
 
-    final ack = _decode(response.body, BuoyAck.fromJson);
+    final ack = _decode(
+      utf8.decode(response.bodyBytes, allowMalformed: true),
+      BuoyAck.fromJson,
+    );
     if (!ack.accepted) {
       throw const BuoyRejected(200, 'buoy did not accept the SOS');
     }
@@ -159,7 +165,7 @@ class BuoyClient {
     if (response.statusCode != 200) {
       throw BuoyRejected(response.statusCode, 'sos status query failed');
     }
-    return _decodeEvents(response.body);
+    return _decodeEvents(utf8.decode(response.bodyBytes, allowMalformed: true));
   }
 
   /// `GET /v1/warnings` - what an offline handset polls to retrieve active
@@ -176,7 +182,7 @@ class BuoyClient {
     if (response.statusCode != 200) {
       throw BuoyRejected(response.statusCode, 'warnings query failed');
     }
-    return _decodeWarnings(response.body);
+    return _decodeWarnings(utf8.decode(response.bodyBytes, allowMalformed: true));
   }
 
   List<Advisory> _decodeWarnings(String body) {

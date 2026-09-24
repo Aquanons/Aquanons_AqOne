@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  characters: ^1.3.0
 
   # Localization (en / fil / akl). See docs/22_LOCALIZATION_PLAN.md.
   # Locale code is `fil`, not `tl`: flutter_localizations ships

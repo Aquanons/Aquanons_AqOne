@@ -58,6 +58,22 @@ Row counts and IDs only; never data, URLs or credentials.
 ### Manual / Device checks
 - `Pending - Len: release build on target phone, SOS pressed with pod and internet off, screen off for 30 min, then internet turned on. The SOS lands without opening the app.`
 
+## Phase M3: Incident nonce, byte-safe text and late GPS fill (2026-09-24)
 
+### Red run
+- Command: `flutter test test/text_clamp_test.dart test/buoy_client_test.dart test/sos_service_test.dart`
+- Output: failed to compile (missing `lib/models/text_clamp.dart`, `lateFixPollInterval` / late fix support in `SosService`).
 
+### Green run
+- Command: `flutter test test/text_clamp_test.dart test/buoy_client_test.dart test/sos_service_test.dart`
+- Output: All tests passed (38 passed).
+
+### Gate results
+- `flutter gen-l10n`: passed (0 errors)
+- `flutter analyze`: passed (0 issues found)
+- `flutter test`: passed (294 passed)
+- `flutter test test_security_probes`: passed (6 passed)
+
+### Manual / Device checks
+- `Pending - Len: After B2 merges: an emulator SOS appears once in /active with its nonce, and a second press in the same second creates a second row.`
 
