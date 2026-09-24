@@ -140,7 +140,7 @@ async def public_sea_condition() -> dict[str, object]:
             '''
             SELECT sc.*, u.full_name AS setter_full_name
             FROM sea_conditions sc
-            LEFT JOIN users u ON u.id = sc.set_by_user_id
+            LEFT JOIN users u ON u.id::text = sc.set_by_user_id
             ORDER BY sc.created_at DESC, sc.id DESC
             LIMIT 1
             '''
