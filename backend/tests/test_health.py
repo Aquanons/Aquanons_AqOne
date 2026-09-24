@@ -44,3 +44,22 @@ def test_startup_without_database_url_stays_alive(monkeypatch):
 
     assert health.status_code == 200
     assert ready.status_code == 503
+
+
+def test_ready_reports_the_deployed_commit(monkeypatch):
+    monkeypatch.setenv('DATABASE_URL', 'postgresql://example')
+    monkeypatch.setenv('RENDER_GIT_COMMIT', 'abc1234def')
+
+    async def fake_create_pool(_url):
+        return _FakePool()
+
+    monkeypatch.setattr(app_db.asyncpg, 'create_pool', fake_create_pool)
+
+    with TestClient(app) as client:
+        ready = client.get('/health/ready')
+        monkeypatch.delenv('RENDER_GIT_COMMIT')
+        local = client.get('/health/ready')
+
+    assert ready.status_code == 200
+    assert ready.json() == {'status': 'ok', 'commit': 'abc1234def'}
+    assert local.json() == {'status': 'ok', 'commit': None}

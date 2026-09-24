@@ -156,7 +156,7 @@ async def healthz() -> dict[str, str]:
 
 
 @app.get('/health/ready')
-async def ready() -> dict[str, str]:
+async def ready() -> dict[str, str | None]:
     try:
         pool = get_pool()
         async with pool.acquire() as conn:
@@ -164,7 +164,7 @@ async def ready() -> dict[str, str]:
     except Exception as exc:
         raise HTTPException(status_code=503, detail='database not ready') from exc
 
-    return {'status': 'ok'}
+    return {'status': 'ok', 'commit': os.environ.get('RENDER_GIT_COMMIT')}
 
 
 def _resolve_web_dir() -> Path | None:

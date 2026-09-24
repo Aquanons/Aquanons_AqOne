@@ -141,6 +141,18 @@ Liveness used by the platform and by demos. Returns `200`:
 { "status": "ok" }
 ```
 
+### `GET /health/ready`
+
+Readiness used by the Render healthcheck.
+Returns `200` once the database answers `SELECT 1`, otherwise `503` with `{"detail": "database not ready"}`.
+
+```json
+{ "status": "ok", "commit": "59c4827..." }
+```
+
+`commit` is the git commit Render built (`RENDER_GIT_COMMIT`), so anyone can confirm which build is live.
+It is `null` when the variable is unset, for example in a local run.
+
 ### `GET /api/v1/sos`
 
 List SOS events, newest first.
