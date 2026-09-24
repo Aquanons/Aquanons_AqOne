@@ -77,6 +77,20 @@ The dashboard and backend remain English-only.
 - The boat pod's ack payload carries the `seq` the phone records so later
   reconciliation can match rows.
 
+## Edge-case remediation contract (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Section 3.10).
+It lands with Track M phase M1 (`relayed`) and Track B phase B1 (reopen).
+
+- **`relayed` is not terminal (EC-C3).**
+  A pod's `accepted: true` only means the call is queued on the pod (`docs/03` E3.2).
+  While a record is `relayed`, the phone keeps trying the direct internet path on its backoff until the backend confirms `delivered`.
+  Once a relayed record is past the pod delivery deadline (10 minutes), the phone says so honestly ("not confirmed by the pod yet") instead of implying the call has landed.
+- **`resolved` is a flag, not a fifth state.**
+  The four states above are unchanged.
+  An incident that is resolved can be reopened (`docs/05` E5.2), which clears the flag; its delivery state stays where it was.
+  A state still only moves forward.
+
 ## Warning delivery states (downlink)
 
 Distinct from the four canonical SOS delivery states above. Warning delivery

@@ -263,6 +263,40 @@ A5 01 01 03 00 01 00 01 00 01 00 01 00 2A 00 00 00 00 05 00 00 22
 <8-byte SIG>
 ```
 
+## Edge-case remediation contract (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Section 3.9).
+Phase 0 reserves field names and fixes the text rule only.
+Relay, clock, node-ID and key rules are written by Track F's own contract step (docs/62D Phase F0) when that track opens.
+
+### E2.1 Reserved payload fields (Track F phase F1)
+
+| Field | Payloads | Type | Meaning |
+| --- | --- | --- | --- |
+| `nc` | SOS (`0x01`) and ETA (`0x06`, `T_ETA` in firmware) | uint32 | The phone's incident nonce (`docs/03` E3.1, `docs/04` E4.1). |
+| `rc` | ETA (`0x06`) only | small int | The resolution code, numbered in the order of `docs/05` E5.1 starting at 1. |
+
+`rc` values:
+
+| `rc` | `resolution_code` |
+| --- | --- |
+| absent | open (not resolved) |
+| 1 | `rescued` |
+| 2 | `safe_confirmed` |
+| 3 | `stood_down_by_fisher` |
+| 4 | `duplicate` |
+| 5 | `closed_unconfirmed` |
+| 6 | `unspecified` |
+
+Receivers ignore unknown payload keys, so frames without `nc` or `rc` stay valid.
+Both are payload additions, so they bump the payload `v` only when F1 makes them required (see "Versioning" below).
+
+### E2.2 UTF-8 text rule (Track F phase F1, EC-C8, EC-L7)
+
+- All text in every payload (`boat`, `n`, chat text, `ttl`, `txt`, responder notes) is UTF-8.
+- Any length limit is in bytes, and text is cut only on a character boundary, never inside a multi-byte sequence.
+- A receiver that still meets invalid UTF-8 replaces the bad bytes rather than dropping the frame or the connection.
+
 ## Versioning
 
 Bump `VERSION` on any breaking change. Non-breaking payload additions bump the

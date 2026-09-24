@@ -275,7 +275,8 @@ Posting (`POST /api/mesh/chat`) depends on the caller's credential:
 Anomaly changes:
 - The vessel-risk response (`GET /api/anomaly/active`) adds `monitoring` (`active` or `unavailable`) and `monitoring_reason`.
 - Anomaly statuses gain `check_needed`.
-- Contact events (`docs/04`) gain an optional `source` of `pod`, `handset` or `buoy`, defaulting to `buoy`.
+- Contact events (`docs/04`) gain an optional `contact_via` of `pod`, `handset` or `buoy`, defaulting to `buoy`.
+  (Phase 0 renamed it from `source`, which already means `live` or `synthetic` on that route.)
   Handset-only contacts never raise `overdue` on their own.
 
 Drift responses add `clock_suspect: bool`.
@@ -384,28 +385,30 @@ Checkpoint message: `docs(ops): free-tier Render database rotation and keep-awak
 ## 6. Phase 0: Contract freeze (Claude, before the tracks split)
 
 Requirements: all rows in Section 2 that change a contract
-State: Awaiting approval
+State: In review - contracts written on `edge/contracts`; PR open, waiting on Len's review and merge
 Gate: Section 1.4.
 
 ### Tasks
 
-- [ ] Create `edge/contracts` from `master`, and bring over docs/60, docs/61, this plan and the four track files.
-- [ ] Write Section 3 into its contract docs:
+- [x] Create `edge/contracts` from `master`, and bring over docs/60, docs/61, this plan and the four track files.
+- [x] Write Section 3 into its contract docs (each as a dated "Edge-case remediation contract" section, with **Changing:** pointers on the endpoints it changes):
   - 3.1, 3.8 and the gateway parts of 3.6 into `docs/04_INGEST_API.md`
   - 3.2 to 3.7 into `docs/05_PUBLIC_API.md`
   - 3.9 into `docs/03_PHONE_BUOY_WIFI.md` and `docs/02_LOAM_PACKET_SPEC.md` (the `nc`/`rc` reservation and the UTF-8 rule only)
   - 3.10 into `docs/06_DELIVERY_STATES.md`
-- [ ] Add the resolution code vocabulary to `docs/13_RESPONDER_LOOP.md`.
-- [ ] Add the new string keys from Track M's phase list to `docs/22_LOCALIZATION_PLAN.md`.
-- [ ] Add the badge rule (positive only; never colour or priority by tier) and the plausibility-tag style to `docs/47_VISUAL_DESIGN_GUIDE.md`.
-- [ ] Add the accepted risks from docs/61 Section 13 to `docs/16_QA_DISCLOSURES.md`.
-- [ ] Create `docs/edge-remediation/` with empty `EVIDENCE-backend.md`, `EVIDENCE-mobile.md`, `EVIDENCE-web.md` and `EVIDENCE-firmware.md`.
-- [ ] Notify the owners named in docs/61 Section 10: Arnold, Daniel, Jade and Doreen Kay.
+- [x] Add the resolution code vocabulary to `docs/13_RESPONDER_LOOP.md`.
+- [x] Add the new string keys from Track M's phase list to `docs/22_LOCALIZATION_PLAN.md`.
+- [x] Add the badge rule (positive only; never colour or priority by tier) and the plausibility-tag style to `docs/47_VISUAL_DESIGN_GUIDE.md`.
+- [x] Add the accepted risks from docs/61 Section 13 to `docs/16_QA_DISCLOSURES.md`.
+- [x] Create `docs/edge-remediation/` with empty `EVIDENCE-backend.md`, `EVIDENCE-mobile.md`, `EVIDENCE-web.md` and `EVIDENCE-firmware.md`.
+- [ ] Notify the owners named in docs/61 Section 10: Arnold, Daniel, Jade and Doreen Kay (Len; the message is drafted in the PR description).
 
 ### Verification
 
-- [ ] Every field and route in Section 3 appears in exactly one contract doc (a manual checklist in the PR description).
-- [ ] `git diff --stat master` lists only `docs/` paths.
+Phase 0 found one gap and closed it: Section 3.7's contact `source` collided with the existing `source` (`live` or `synthetic`) on `POST /api/v1/contacts`, so the frozen name is `contact_via` (`docs/04` E4.2, and B7 in 62A updated to match).
+
+- [x] Every field and route in Section 3 appears in exactly one contract doc (a manual checklist in the PR description).
+- [x] `git diff --stat master` lists only `docs/` paths.
 
 ### Review and checkpoint
 

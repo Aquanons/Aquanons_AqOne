@@ -89,6 +89,29 @@ assets to another incident.
 
 ---
 
+## Resolution codes (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track B phase B1, Track M phase M4 and Track W phase W2.
+A resolved incident carries one `resolution_code` (`docs/05` E5.1).
+This table is the one place that says what each code means and what the boat is told.
+The backend sends only the code; the phone maps it to localised text (never an enum field), and the dashboard shows the English label.
+
+| Code | Radio `rc` (`docs/02` E2.1) | Dispatcher meaning | Boat is told (ARB key) |
+| --- | --- | --- | --- |
+| `rescued` | 1 | The crew was picked up or assisted. | "Closed by MDRRMO." (`sosClosedByMdrrmo`) |
+| `safe_confirmed` | 2 | The dispatcher reached the boat and it is safe. | "Closed by MDRRMO." (`sosClosedByMdrrmo`) |
+| `stood_down_by_fisher` | 3 | The fisher replied `SAFE_NOW`. | "Closed by MDRRMO." (`sosClosedByMdrrmo`) |
+| `duplicate` | 4 | Another incident covers the same call. | Nothing new; the phone follows the surviving incident (`sosClosedDuplicate`). |
+| `closed_unconfirmed` | 5 | Closed without reaching the boat, for example a suspected prank. | "MDRRMO closed this call without reaching you. If you still need help, press SOS again." (`sosClosedUnconfirmed`) |
+| `unspecified` | 6 | Resolved without a reason (older dashboards). | Same as `closed_unconfirmed` (`sosClosedUnconfirmed`). |
+
+Rules:
+
+- A resolve with no reason is stored as `unspecified`, so the boat always gets the safe message by default (EC-M10).
+- `STILL_IN_DANGER` within 2 hours of a resolve reopens the incident and rings the dashboard (EC-M9, `docs/05` E5.2).
+- The dispatcher can reopen any resolved incident (`POST /api/sos/{id}/reopen`).
+- Codes are validated with MDRRMO before field use (docs/61 Section 12, decision 6).
+
 ## Phase 1 — direct path (no firmware needed)
 
 Deliverable: dispatcher acknowledges with an ETA, fisher sees it within one

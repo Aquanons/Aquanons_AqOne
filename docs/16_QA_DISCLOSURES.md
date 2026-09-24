@@ -395,3 +395,29 @@ Findings from the 2026-09 security audit that represent accepted operational ris
   Fishermen handsets communicate with nearby buoys via WiFi HTTP and directly with the backend via HTTPS when cellular connectivity resumes.
   Consumer mobile phones do not possess LoRa transceivers, so direct mesh downlinks to handsets are not supported by the hardware platform.
   Stand-down requests queue in the local SQLite outbox until network connectivity is re-established.
+
+### Edge-case review accepted risks
+
+From `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` Section 13, recorded here by `docs/62` Phase 0 (2026-09-24).
+Finding IDs are from `docs/60_EXTREME_EDGE_CASE_REPORT.md`.
+
+- **L12 - timestamps wrap in 2106:**
+  Firmware epoch fields are 32-bit and wrap in 2106.
+  Not worth a frame-format change.
+- **C12 residual - fake pod with no internet:**
+  A fake pod, combined with the phone having no internet for the whole emergency, still captures the SOS.
+  The phone keeps retrying the direct path (`docs/06`), so this closes as soon as it gets signal; pod pairing (docs/61 D11.3) closes the rest and is roadmap.
+- **C14 residual - racing the gateway with a second position:**
+  Anyone holding the shared radio key who races the gateway can attach a second position to a real call.
+  It is flagged to the dispatcher as `position_conflict` with both positions shown, never silently merged.
+- **C11 - shared radio key:**
+  Until per-node keys and signed broadcasts ship (docs/62D Phase F4, gated after build step 3), anyone holding the shared radio key, including one read from a stolen pod's flash, can forge ACKs, ETAs and warnings on the mesh.
+- **M18 residual - operator sessions:**
+  An idle operator session lasts up to 7 days.
+  It is revocable (SEC-12) and refreshed only while the dashboard is in use.
+- **H7 residual - person overboard:**
+  A person who goes overboard while the phone and pod stay aboard is not detected.
+  That needs a worn tag, which is roadmap.
+- **H20 residual - plausible decoys:**
+  Plausibility flags are advisory.
+  A determined decoy with a plausible position still pulls a rescue boat; that is a dispatch judgement, not a software one.

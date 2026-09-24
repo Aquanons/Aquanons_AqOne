@@ -398,9 +398,10 @@ State: Awaiting approval
     - `test_departure_hour_is_circular` (23:30 and 00:30 give about 00:00 with a small spread)
     - `test_distance_from_home_landing`
   - `tests/test_drift.py`: `test_drift_start_ignores_implausible_client_ts` (a `client_ts` 3 years old gives `created_at` and `clock_suspect == true`).
-- [ ] Add `migrations/037_contact_source_and_welfare_time.sql`: `buoy_contacts.source TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
+- [ ] Add `migrations/037_contact_via_and_welfare_time.sql`: `buoy_contacts.contact_via TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
   Add `vessel_trips.welfare_updated_at TIMESTAMPTZ` only if no welfare timestamp already exists; check `024_vessel_trips_and_current_events.sql` first.
-- [ ] `app/api/contacts.py`: `ContactEventIn.source` (optional, default `buoy`), stored.
+- [ ] `app/api/contacts.py`: `ContactEventIn.contact_via` (optional, default `buoy`), stored.
+  The existing `source` (`live` or `synthetic`) is unchanged; `docs/04` E4.2 froze the new name because `source` was taken.
 - [ ] `app/ai/trip_profile.py`:
   - Remove the new-profile `0.9` damping (around `:621`).
   - Add a `check_needed` status: after the fleet's 90th-percentile trip duration with no contacts and no declared return.
