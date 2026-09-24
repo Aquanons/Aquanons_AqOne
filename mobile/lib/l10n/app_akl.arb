@@ -237,5 +237,13 @@
   "sosStalePromptCancel": "Kanselahon",
   "onboardingBatteryWhy": "Sugti ro AqOne nga mag-andar sa background agud padayon nga magpadaea ro SOS maskin patay ro screen.",
   "sosPendingNotificationTitle": "Padayon nga ginapadaea ro SOS",
-  "sosPendingNotificationBody": "Padayon nga pagatinguhaon it AqOne hasta mabaton raya it MDRRMO."
+  "sosPendingNotificationBody": "Padayon nga pagatinguhaon it AqOne hasta mabaton raya it MDRRMO.",
+  "sosClosedByMdrrmo": "Ginsarado it MDRRMO.",
+  "sosClosedUnconfirmed": "Ginsarado it MDRRMO ro tawag nga raya nga uwa ka naabtan. Kung kinahangean mo pa it bulig, pinduton liwat ro SOS.",
+  "sosClosedDuplicate": "Raya nga tawag hay gintingob sa sambilog mo pang SOS.",
+  "sosReopened": "Ginbuksan liwat it MDRRMO ro imong tawag.",
+  "sosStandDownConfirmTitle": "Kanselahon ro pagsagip?",
+  "sosStandDownConfirmBody": "Kakanselahon ro pagsagip. Obrahon eang raya kung eowas eon ro tanan.",
+  "sosStandDownUndo": "I-undo - kinahangean ko pa it bulig",
+  "sosNoEtaYet": "Ginaayos eon ro bulig - uwa pa it oras it pag-abot."
 }

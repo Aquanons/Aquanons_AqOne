@@ -398,6 +398,9 @@ void main() {
     required String serverTime,
     String? etaAt,
     int? fisherReply,
+    String? resolvedAt,
+    String? resolutionCode,
+    String? reopenedAt,
   }) {
     return http.StreamedResponse(
       Stream<List<int>>.value(utf8.encode(jsonEncode(<String, Object?>{
@@ -416,7 +419,9 @@ void main() {
           'responder_status_label': 'Rescue boat on the way',
           'responder_note': 'On the way',
           'fisher_reply': fisherReply,
-          'resolved_at': null,
+          'resolved_at': resolvedAt,
+          'resolution_code': resolutionCode,
+          'reopened_at': reopenedAt,
         },
       }))),
       200,
@@ -891,6 +896,77 @@ void main() {
     final updated = await outbox.byLocalId(record.localId);
     expect(updated?.lat, isNull);
     expect(sentPayloads.length, 1);
+  });
+
+  test('closed record keeps reconciling for 2 hours to catch a reopen', () async {
+    final record = _record('local-reconcile-window');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.delivered);
+
+    final resolvedTime = DateTime.now().toUtc().subtract(const Duration(minutes: 30));
+    final resolvedIso = resolvedTime.toIso8601String();
+
+    var currentRemote = ackEnvelope(
+      'local-reconcile-window',
+      serverTime: DateTime.now().toUtc().toIso8601String(),
+      resolvedAt: resolvedIso,
+    );
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') {
+          return _direct(200);
+        }
+        if (request.url.path == '/api/sos/ack/local-reconcile-window') {
+          return currentRemote;
+        }
+        throw Exception('unexpected ${request.url.path}');
+      }),
+    );
+
+    final service = buildService(buoy: noBuoy(), backend: backend);
+    await service.reconcile();
+
+    var updated = await outbox.byLocalId(record.localId);
+    expect(updated!.resolvedAt, isNotNull);
+    expect(updated.isResolved, isTrue);
+
+    // 30 min since resolved: record should still be in awaitingReconcile
+    final awaiting30m = await outbox.awaitingReconcile(
+      excludedIds: service.closedIncidents,
+    );
+    expect(awaiting30m.any((r) => r.localId == record.localId), isTrue);
+
+    // Reopened event arrives!
+    final reopenedIso = DateTime.now().toUtc().toIso8601String();
+    currentRemote = ackEnvelope(
+      'local-reconcile-window',
+      serverTime: DateTime.now().toUtc().toIso8601String(),
+      reopenedAt: reopenedIso,
+    );
+
+    await service.reconcile();
+    updated = await outbox.byLocalId(record.localId);
+    expect(updated!.resolvedAt, isNull, reason: 'reopen clears resolved_at');
+    expect(updated.isResolved, isFalse);
+
+    // Now resolve with a timestamp > 2 hours ago
+    final oldResolvedTime = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+    currentRemote = ackEnvelope(
+      'local-reconcile-window',
+      serverTime: DateTime.now().toUtc().toIso8601String(),
+      resolvedAt: oldResolvedTime.toIso8601String(),
+    );
+
+    await service.reconcile();
+    updated = await outbox.byLocalId(record.localId);
+    expect(updated!.resolvedAt, isNotNull);
+
+    // After 2 hours, record is excluded
+    final awaitingOld = await outbox.awaitingReconcile(
+      excludedIds: service.closedIncidents,
+    );
+    expect(awaitingOld.any((r) => r.localId == record.localId), isFalse);
   });
 }
 

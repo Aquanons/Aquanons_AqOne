@@ -188,11 +188,11 @@ Checkpoint message: `feat(mobile): incident nonce, byte-safe SOS text, and late 
 
 Requirements: EC-M9, EC-M10, EC-H4 (phone)
 Merge after: M3 (it works without B1, falling back to `unspecified`; full behaviour after B1)
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `test/closure_text_test.dart`, for `closureMessage(l10n, code)`:
     - `rescued`, `safe_confirmed` and `stood_down_by_fisher` give `sosClosedByMdrrmo`
     - `closed_unconfirmed`, `unspecified` and null give `sosClosedUnconfirmed`
@@ -203,19 +203,19 @@ State: Not started
     - `no ETA copy when acknowledged without eta`
     - `reopened incident clears resolved card`
   - `test/sos_service_test.dart`: `closed record keeps reconciling for 2 hours to catch a reopen`.
-- [ ] `lib/ui/widgets/closure_text.dart`: `closureMessage(AppLocalizations l, String? code)`.
+- [x] `lib/ui/widgets/closure_text.dart`: `closureMessage(AppLocalizations l, String? code)`.
   This mapping lives in the UI layer because it produces display text.
-- [ ] `SosService`:
+- [x] `SosService`:
   - `_closedIncidents` excludes a record only once 2 h have passed since `resolvedAt`.
   - When a remote row has `reopened_at` later than the local `resolvedAt`, clear it with a new `OutboxStore.clearResolved(localId)`, which also resets the stand-down.
     Today `saveResponder` never clears.
-- [ ] `venture_page.dart`: the stand-down slide opens a confirmation (`sosStandDownConfirmTitle`, `sosStandDownConfirmBody`).
+- [x] `venture_page.dart`: the stand-down slide opens a confirmation (`sosStandDownConfirmTitle`, `sosStandDownConfirmBody`).
   After sending, show an Undo bar for 2 min (`sosStandDownUndo`) that calls `replyToSos(localId, 1)`.
-- [ ] `responder_eta_dialog.dart`: when acknowledged with a null ETA, show `sosNoEtaYet` ("Help is being arranged - no arrival time yet").
+- [x] `responder_eta_dialog.dart`: when acknowledged with a null ETA, show `sosNoEtaYet` ("Help is being arranged - no arrival time yet").
 
 ### Verification
 
-Gate commands green, with red and green runs recorded.
+- [x] Gate commands green, with red and green runs recorded.
 
 ### Review and checkpoint
 

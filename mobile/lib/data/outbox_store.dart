@@ -221,6 +221,21 @@ class OutboxStore {
     return true;
   }
 
+  /// Clears resolution and stand-down when an incident is reopened.
+  Future<void> clearResolved(String localId) async {
+    final db = await _db.database;
+    await db.update(
+      'outbox',
+      <String, Object?>{
+        'resolved_at': null,
+        'fisher_reply': null,
+        'fisher_reply_synced': 0,
+      },
+      where: 'local_id = ?',
+      whereArgs: <Object?>[localId],
+    );
+  }
+
   /// Updates the note on an SOS already in the outbox.
   ///
   /// Used by the post-dispatch "what's wrong?" follow-up: the initial send

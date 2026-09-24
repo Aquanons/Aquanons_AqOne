@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import '../core/config.dart';
 import '../data/identity_store.dart';
 import '../data/outbox_store.dart';
@@ -47,6 +49,11 @@ class SosService {
   bool _reconcileRunning = false;
   final Set<String> _closedIncidents = <String>{};
   final Map<String, int> _pendingReplies = <String, int>{};
+
+  Duration closureReconcileWindow = const Duration(hours: 2);
+
+  @visibleForTesting
+  Set<String> get closedIncidents => _closedIncidents;
 
   void start() {
     _relayTimer ??= Timer.periodic(
@@ -440,9 +447,19 @@ class SosService {
     }
     _reconcileRunning = true;
     try {
-      final pending = await _outbox.awaitingReconcile(
-        excludedIds: _closedIncidents,
-      );
+      final allAwaiting = await _outbox.awaitingReconcile();
+      final now = DateTime.now().toUtc();
+      for (final r in allAwaiting) {
+        final res = r.resolvedTime;
+        if (res != null && now.difference(res) >= closureReconcileWindow) {
+          _closedIncidents.add(r.localId);
+        } else if (res != null) {
+          _closedIncidents.remove(r.localId);
+        }
+      }
+      final pending = allAwaiting
+          .where((r) => !_closedIncidents.contains(r.localId))
+          .toList(growable: false);
       if (pending.isEmpty) {
         return;
       }
@@ -608,7 +625,28 @@ class SosService {
         }
       }
 
-      final shouldMarkSynced = match.resolvedAt != null ||
+      // Reopen handling: when remote row has reopened_at later than local resolvedAt,
+      // clear it with OutboxStore.clearResolved(localId), which also resets the stand-down.
+      final localResolved = record.resolvedTime;
+      final remoteReopened = match.reopenedAt != null
+          ? DateTime.tryParse(match.reopenedAt!)?.toUtc()
+          : null;
+      final remoteResolved = match.resolvedAt != null
+          ? DateTime.tryParse(match.resolvedAt!)?.toUtc()
+          : null;
+
+      final isReopened = remoteReopened != null &&
+          (localResolved == null || remoteReopened.isAfter(localResolved)) &&
+          (remoteResolved == null || remoteReopened.isAfter(remoteResolved));
+
+      if (isReopened) {
+        await _outbox.clearResolved(record.localId);
+        _closedIncidents.remove(record.localId);
+        changed = true;
+      }
+
+      final resolvedAtToSave = isReopened ? null : match.resolvedAt;
+      final shouldMarkSynced = resolvedAtToSave != null ||
           (record.fisherReply != null && match.fisherReply == record.fisherReply);
 
       // Responder details live alongside the delivery state: the ETA and
@@ -619,7 +657,7 @@ class SosService {
         etaAt: adjustedEtaAt,
         responderStatus: match.responderStatus,
         responderNote: match.responderNote ?? match.responderStatusLabel,
-        resolvedAt: match.resolvedAt,
+        resolvedAt: resolvedAtToSave,
         fisherReplySynced: shouldMarkSynced ? true : null,
       );
       if (stored) {
@@ -644,8 +682,13 @@ class SosService {
         } catch (_) {}
       }
 
-      if (match.resolvedAt != null && !_pendingReplies.containsKey(record.localId)) {
-        _closedIncidents.add(record.localId);
+      if (resolvedAtToSave != null && !_pendingReplies.containsKey(record.localId)) {
+        final resTime = remoteResolved ?? DateTime.now().toUtc();
+        if (DateTime.now().toUtc().difference(resTime) >= closureReconcileWindow) {
+          _closedIncidents.add(record.localId);
+        } else {
+          _closedIncidents.remove(record.localId);
+        }
       }
 
     }

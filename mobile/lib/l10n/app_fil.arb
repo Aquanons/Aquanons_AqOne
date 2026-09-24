@@ -132,5 +132,13 @@
   "sosStalePromptCancel": "Kanselahin",
   "onboardingBatteryWhy": "Pahintulutan ang AqOne na gumana sa background upang patuloy na maipadala ang SOS kahit nakapatay ang screen.",
   "sosPendingNotificationTitle": "Kasalukuyang ipinapadala ang SOS",
-  "sosPendingNotificationBody": "Patuloy na susubukan ng AqOne hanggang sa matanggap ito ng MDRRMO."
+  "sosPendingNotificationBody": "Patuloy na susubukan ng AqOne hanggang sa matanggap ito ng MDRRMO.",
+  "sosClosedByMdrrmo": "Isinara ng MDRRMO.",
+  "sosClosedUnconfirmed": "Isinara ng MDRRMO ang tawag na ito nang hindi ka naaabot. Kung kailangan mo pa rin ng tulong, pindutin muli ang SOS.",
+  "sosClosedDuplicate": "Ang tawag na ito ay pinagsama sa isa mo pang SOS.",
+  "sosReopened": "Muling binuksan ng MDRRMO ang iyong tawag.",
+  "sosStandDownConfirmTitle": "Kanselahin ang pagsagip?",
+  "sosStandDownConfirmBody": "Kakanselahin ang pagsagip. Gawin lamang ito kung ligtas na ang lahat.",
+  "sosStandDownUndo": "I-undo - kailangan ko pa rin ng tulong",
+  "sosNoEtaYet": "Inaayos na ang tulong - wala pang oras ng pagdating."
 }

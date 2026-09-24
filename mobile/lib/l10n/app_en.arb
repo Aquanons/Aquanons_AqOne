@@ -1108,5 +1108,37 @@
   "sosPendingNotificationBody": "AqOne keeps trying until MDRRMO receives it.",
   "@sosPendingNotificationBody": {
     "description": "Body shown in foreground notification while an SOS call is not yet delivered."
+  },
+  "sosClosedByMdrrmo": "Closed by MDRRMO.",
+  "@sosClosedByMdrrmo": {
+    "description": "Shown on resolved SOS card when MDRRMO closed the call with confirmation."
+  },
+  "sosClosedUnconfirmed": "MDRRMO closed this call without reaching you. If you still need help, press SOS again.",
+  "@sosClosedUnconfirmed": {
+    "description": "Shown on resolved SOS card when closed unconfirmed or unspecified."
+  },
+  "sosClosedDuplicate": "This call was merged with your other SOS.",
+  "@sosClosedDuplicate": {
+    "description": "Shown on resolved SOS card when closed as duplicate."
+  },
+  "sosReopened": "MDRRMO reopened your call.",
+  "@sosReopened": {
+    "description": "Notice shown when MDRRMO reopens a previously closed SOS."
+  },
+  "sosStandDownConfirmTitle": "Call off the rescue?",
+  "@sosStandDownConfirmTitle": {
+    "description": "Title for confirmation dialog when fisher slides to stand down SOS."
+  },
+  "sosStandDownConfirmBody": "Rescue will be called off. Only do this if everyone is safe.",
+  "@sosStandDownConfirmBody": {
+    "description": "Body for stand down confirmation dialog."
+  },
+  "sosStandDownUndo": "Undo - I still need help",
+  "@sosStandDownUndo": {
+    "description": "Undo button shown for 2 minutes after standing down an SOS."
+  },
+  "sosNoEtaYet": "Help is being arranged - no arrival time yet.",
+  "@sosNoEtaYet": {
+    "description": "Shown in responder ETA dialog when acknowledged without an arrival time."
   }
 }

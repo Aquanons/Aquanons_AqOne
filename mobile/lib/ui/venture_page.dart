@@ -373,7 +373,7 @@ class _VenturePageState extends State<VenturePage> {
       enableDrag: false,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _EmergencyDetailsSheet(
+      builder: (ctx) => EmergencyDetailsSheet(
         boat: widget.identity.boat,
         onSubmitNote: (note) async {
           try {
@@ -388,9 +388,20 @@ class _VenturePageState extends State<VenturePage> {
         },
         onStandDown: () async {
           await widget.sos.standDown(record.localId);
-          if (mounted) {
-            _snack('SOS stood down.');
-          }
+          if (!mounted) return;
+          final t = AppLocalizations.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(minutes: 2),
+              content: Text(t.standDownTitle),
+              action: SnackBarAction(
+                label: t.sosStandDownUndo,
+                onPressed: () {
+                  widget.sos.replyToSos(record.localId, 1);
+                },
+              ),
+            ),
+          );
         },
       ),
     );
@@ -1326,8 +1337,10 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
 /// (updating the note already on file at the MDRRMO) or stand the alert
 /// down if it went out by mistake - both remain available at once, they are
 /// not mutually exclusive steps.
-class _EmergencyDetailsSheet extends StatefulWidget {
-  const _EmergencyDetailsSheet({
+@visibleForTesting
+class EmergencyDetailsSheet extends StatefulWidget {
+  const EmergencyDetailsSheet({
+    super.key,
     required this.boat,
     required this.onSubmitNote,
     required this.onStandDown,
@@ -1338,11 +1351,11 @@ class _EmergencyDetailsSheet extends StatefulWidget {
   final Future<void> Function() onStandDown;
 
   @override
-  State<_EmergencyDetailsSheet> createState() =>
+  State<EmergencyDetailsSheet> createState() =>
       _EmergencyDetailsSheetState();
 }
 
-class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
+class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
   _EmergencyType? _selected;
   final TextEditingController _custom = TextEditingController();
   bool _submitting = false;
@@ -1378,6 +1391,29 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
   }
 
   Future<void> _standDown() async {
+    final t = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.sosStandDownConfirmTitle),
+        content: Text(t.sosStandDownConfirmBody),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.actionCancel),
+          ),
+          FilledButton(
+            key: const Key('confirm_stand_down'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: _danger),
+            child: Text(t.standDownTitle),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() => _standingDown = true);
     await widget.onStandDown();
     if (mounted) {
@@ -1581,6 +1617,12 @@ class _SlideToActionState extends State<_SlideToAction> {
         _dragging = false;
       });
       widget.onConfirmed!();
+      if (mounted) {
+        setState(() {
+          _confirmed = false;
+          _fraction = 0;
+        });
+      }
     } else {
       setState(() {
         _dragging = false;

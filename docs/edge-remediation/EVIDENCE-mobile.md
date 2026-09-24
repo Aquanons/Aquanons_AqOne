@@ -77,3 +77,23 @@ Row counts and IDs only; never data, URLs or credentials.
 ### Manual / Device checks
 - `Pending - Len: After B2 merges: an emulator SOS appears once in /active with its nonce, and a second press in the same second creates a second row.`
 
+## Phase M4: Stand-down safety, closure text and reopen (2026-09-24)
+
+### Red run
+- Command: `flutter test test/closure_text_test.dart test/widget_test.dart test/sos_service_test.dart`
+- Output:
+  - `test/closure_text_test.dart`: passed.
+  - `test/widget_test.dart`: failed (stand-down needs confirmation, no ETA copy when acknowledged without eta, reopened incident clears resolved card, undo within 2 minutes sends still-in-danger).
+  - `test/sos_service_test.dart`: failed (`closed record keeps reconciling for 2 hours to catch a reopen`).
+
+### Green run
+- Command: `flutter test test/closure_text_test.dart test/widget_test.dart test/sos_service_test.dart`
+- Output: All tests passed (41 passed).
+
+### Gate results
+- `flutter gen-l10n`: passed (0 errors)
+- `flutter analyze`: passed (0 issues found)
+- `flutter test`: passed (302 passed)
+- `flutter test test_security_probes`: passed (6 passed)
+
+
