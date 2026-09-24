@@ -23,6 +23,7 @@ from app.api.hotspots import router as hotspots_router
 from app.api.mesh import router as mesh_router
 from app.api.metrics import router as metrics_router
 from app.api.ops_audit import router as ops_audit_router
+from app.api.ops_status import router as ops_status_router
 from app.api.pressure_events import router as pressure_events_router
 from app.api.public import router as public_router
 from app.api.sea_condition import router as sea_condition_router
@@ -132,6 +133,7 @@ app.include_router(public_advisories_router)
 # carries its own require_responder_roles/require_admin_role guard
 # (app/api/ops_audit.py), same self-guarded pattern as advisories_router.
 app.include_router(ops_audit_router)
+app.include_router(ops_status_router)
 
 # Everything else requires a valid bearer token. Declaring it here rather than
 # on each route means a newly added endpoint is protected by default - the safe

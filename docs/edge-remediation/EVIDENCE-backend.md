@@ -39,3 +39,17 @@ Row counts and IDs only; never data, URLs or credentials.
 - `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; the fresh manual database applied migrations through 033.
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. Failures are unchanged Phase 6 deferred probes: two hotspot cohort probes and the firmware shared LoRa key probe.
 - Manual local `curl` POST with a 70-byte UTF-8 note returned HTTP 200; PostgreSQL stored 64 bytes across 32 valid UTF-8 characters.
+## Phase B3 - Downlink cap and gateway last-seen
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_downlink_policy.py`: collection failed because `app.incidents.downlink` does not exist.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/test_edge_downlink_pg.py --tb=short`: 3 failed. The feed returned 30 rows instead of 12; `gateway_status` did not exist; and `/api/ops/status` returned 404.
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 466 passed, 26 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 487 passed, 5 skipped, 1 xfailed.
+- B3 policy plus downlink regression tests: 15 passed; B3 PostgreSQL/API tests: 3 passed.
+- `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; fresh PostgreSQL probes applied migration 034.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. Failures remain the Phase 6 deferred hotspot cohort and shared LoRa key probes.

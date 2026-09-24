@@ -13,6 +13,7 @@ from app.audit import record_audit_event
 from app.auth import get_optional_vessel_device, require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
 from app.incidents.delivery import delivery_state
+from app.incidents.downlink import OPEN_WINDOW, RESOLVED_WINDOW, select_downlink
 from app.incidents.lifecycle import ResolutionCode, can_reopen, fisher_reply_reopens, resolution_code_from
 from app.incidents.text import truncate_utf8
 
@@ -313,25 +314,11 @@ async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     return {'events': [_event_json(row) for row in rows]}
 
 
-# How long a resolved incident keeps appearing in the downlink feed.
-#
-# /active drops an incident the moment a dispatcher resolves it, which is
-# correct for a dashboard - the case is closed and the operator should stop
-# looking at it. It is wrong for the radio: the shore gateway polls on a 45 s
-# cycle, so an incident acknowledged and then resolved between two polls would
-# leave the mesh without the closure ever going out, and the handset would
-# count down an ETA for a rescue that already finished. Holding resolved
-# incidents in this feed for a while gives the gateway room to see the final
-# state and send it down. Six hours is far longer than it needs and still
-# bounded, so the feed cannot grow without limit.
-DOWNLINK_RESOLVED_WINDOW_HOURS = 6
-
-
 @gateway_router.get('/downlink', dependencies=[Depends(require_gateway_key)])
 async def sos_downlink() -> dict[str, object]:
     """Return one vessel's latest answer fields without dispatcher data."""
     pool = get_pool()
-    async with pool.acquire() as conn:
+    async with pool.acquire() as conn, conn.transaction():
         rows = await conn.fetch(
             '''
             SELECT DISTINCT ON (e.vessel_id)
@@ -341,15 +328,32 @@ async def sos_downlink() -> dict[str, object]:
                    e.responder_status, e.responder_note, e.resolved_at,
                    e.resolution_code, e.version, e.reopened_at
             FROM sos_events e
-            WHERE e.resolved_at IS NULL
-               OR e.resolved_at > NOW() - make_interval(hours => $1)
+            WHERE e.is_synthetic IS FALSE
+              AND (
+                (e.resolved_at IS NULL AND GREATEST(
+                  e.created_at, COALESCE(e.acknowledged_at, e.created_at),
+                  COALESCE(e.reopened_at, e.created_at), COALESCE(e.fisher_replied_at, e.created_at)
+                ) > NOW() - $1::INTERVAL)
+                OR e.resolved_at > NOW() - $2::INTERVAL
+              )
             ORDER BY e.vessel_id, e.created_at DESC
-            LIMIT 100
             ''',
-            DOWNLINK_RESOLVED_WINDOW_HOURS,
+            OPEN_WINDOW,
+            RESOLVED_WINDOW,
         )
+        await conn.execute(
+            '''
+            INSERT INTO gateway_status (gateway_key, last_poll_at)
+            VALUES ('default', NOW())
+            ON CONFLICT (gateway_key) DO UPDATE SET last_poll_at = EXCLUDED.last_poll_at
+            '''
+        )
+        rows = select_downlink(rows, datetime.now(UTC))
+    events = [_event_json(row) for row in rows]
+    for event in events:
+        event.pop('created_at', None)
     return {
-        'events': [_event_json(row) for row in rows]
+        'events': events
     }
 
 

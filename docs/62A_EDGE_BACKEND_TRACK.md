@@ -179,7 +179,7 @@ State: Not started
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_downlink_policy.py` (pure), for `select_downlink(candidates, now)`:
     - never returns more than 12
     - band order is acknowledged-open, then unacknowledged-open, then resolved
@@ -191,18 +191,18 @@ State: Not started
     - `test_downlink_caps_and_orders_by_priority` (30 vessels in a mix of states)
     - `test_downlink_poll_records_gateway_last_seen`
     - `test_ops_status_reports_gateway_last_poll` (operator only; the gateway key gets 401)
-- [ ] Create `app/incidents/downlink.py` containing:
+- [x] Create `app/incidents/downlink.py` containing:
   - `DOWNLINK_MAX = 12`, `OPEN_WINDOW`, `RESOLVED_WINDOW`
   - `last_change(row)`: the latest of `created_at`, `acknowledged_at`, `resolved_at`, `reopened_at` and `fisher_replied_at`
   - `priority_band(row)`
   - `select_downlink(candidates, now)`
 
   A docstring states why 12: it is the smallest table on the path (gateway `MAX_VESSELS`, and buoy `MAX_TRACKED` after F1).
-- [ ] `sos_downlink()`: SQL fetches candidates (newest per vessel, non-synthetic, inside the widest window), then Python calls `select_downlink`.
+- [x] `sos_downlink()`: SQL fetches candidates (newest per vessel, non-synthetic, inside the widest window), then Python calls `select_downlink`.
   Remove `LIMIT 100`, and delete the old `DOWNLINK_RESOLVED_WINDOW_HOURS` constant in favour of the policy module.
-- [ ] Add `migrations/034_gateway_status.sql`: `gateway_status (gateway_key TEXT PRIMARY KEY, last_poll_at TIMESTAMPTZ NOT NULL)`.
+- [x] Add `migrations/034_gateway_status.sql`: `gateway_status (gateway_key TEXT PRIMARY KEY, last_poll_at TIMESTAMPTZ NOT NULL)`.
   The downlink route upserts `'default'` on every poll.
-- [ ] Create `app/api/ops_status.py` with `GET /api/ops/status` (`require_user`), returning `gateway_last_poll_at` and `gateway_stale` (older than 135 s).
+- [x] Create `app/api/ops_status.py` with `GET /api/ops/status` (`require_user`), returning `gateway_last_poll_at` and `gateway_stale` (older than 135 s).
   B6 extends this route.
   Register it in `main.py` with the other protected routers.
 
@@ -225,7 +225,7 @@ State: Not started
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_triage.py` (pure):
     - `triage_key` sorts unacknowledged before acknowledged, corroborated before not, then newest
     - `flood_status(events, now)` is active above 10 unknown vessels in 60 s
@@ -275,7 +275,7 @@ State: Not started
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_chat_policy.py` (pure):
     - `sender_is_reserved` catches "MDRRMO", "mdrrm0", "M.D.R.R.M.O", "Coast Guard", "PCG", "PAGASA", "Admin" and "Official", and passes "Juan", "Mang Dodong" and "Bangka 7"
     - `chat_origin(credential)` for operator, vessel, gateway and anonymous
@@ -337,7 +337,7 @@ State: Not started
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_escalation.py` (pure), for `due_for_escalation(events, now)`:
     - unacknowledged, non-synthetic, open, older than 2 min, with no `escalated_at`: due
     - acknowledged, synthetic, resolved or already escalated: not due
@@ -387,7 +387,7 @@ State: Not started
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_anomaly_source.py`:
     - `test_monitoring_unavailable_without_contacts` (no contact in 30 min gives `monitoring == "unavailable"` with a reason)
     - `test_silent_vessel_evaluated_for_72h`

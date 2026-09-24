@@ -38,6 +38,9 @@ def _row(**overrides):
         'id': 41,
         'vessel_id': 'NW-001',
         'seq': 7,
+        'created_at': dt.datetime.now(dt.UTC),
+        'fisher_replied_at': None,
+        'reopened_at': None,
         'delivered_direct': False,
         'delivered_via_buoy': True,
         'acknowledged_at': None,
@@ -62,8 +65,12 @@ class _FakePool:
         self.rows = rows if rows is not None else [_row()]
         self.fetch_args: tuple = ()
         self.last_query: str = ''
+        self.executed: list[tuple[str, tuple]] = []
 
     def acquire(self):
+        return self
+
+    def transaction(self):
         return self
 
     async def __aenter__(self):
@@ -78,6 +85,10 @@ class _FakePool:
         if 'FROM sos_events' in query:
             return self.rows
         return []
+
+    async def execute(self, query: str, *args):
+        self.executed.append((query, args))
+        return 'INSERT 0 1'
 
 
 def _client_with(monkeypatch, rows=None):
@@ -186,15 +197,15 @@ def test_resolved_incidents_are_held_for_the_downlink_window(monkeypatch):
     ETA for a rescue that already finished.
     """
     client, pool = _client_with(monkeypatch, [
-        _row(resolved_at=dt.datetime(2026, 9, 21, 3, 50, tzinfo=dt.UTC)),
+        _row(resolved_at=dt.datetime.now(dt.UTC) - dt.timedelta(minutes=10)),
     ])
     with client:
         response = client.get('/api/sos/downlink', headers={'X-Api-Key': 'correct-key'})
     event = response.json()['events'][0]
-    assert event['resolved_at'].startswith('2026-09-21T03:50')
+    assert event['resolved_at'] is not None
     assert event['delivery_state'] == 'acknowledged'
     # The window is passed to SQL as a parameter, not baked into the query text.
-    assert pool.fetch_args == (sos_api.DOWNLINK_RESOLVED_WINDOW_HOURS,)
+    assert pool.fetch_args == (sos_api.OPEN_WINDOW, sos_api.RESOLVED_WINDOW)
 
 
 def test_only_the_newest_incident_per_vessel_is_returned(monkeypatch):
