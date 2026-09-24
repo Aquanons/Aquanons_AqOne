@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
@@ -12,10 +12,14 @@ from app.api.contacts import is_valid_gateway_key, require_gateway_key
 from app.audit import record_audit_event
 from app.auth import get_optional_vessel_device, require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
+from app.geo import SHORE_STATIONS, distance_km
 from app.incidents.delivery import delivery_state
 from app.incidents.downlink import OPEN_WINDOW, RESOLVED_WINDOW, select_downlink
 from app.incidents.lifecycle import ResolutionCode, can_reopen, fisher_reply_reopens, resolution_code_from
+from app.incidents.plausibility import PlausibilityContext
+from app.incidents.plausibility import flags as plausibility_flags
 from app.incidents.text import truncate_utf8
+from app.incidents.triage import flood_status, triage_key
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -243,7 +247,10 @@ def _version_conflict(row: Any) -> JSONResponse:
 
 
 @protected_router.get('/active')
-async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
+async def active_sos(
+    limit: int = Query(default=200, ge=1, le=1000),
+    _: dict = Depends(require_user),
+) -> dict[str, object]:
     """Every unresolved SOS event, newest first. Dispatcher view.
 
     Includes acknowledged-but-unresolved incidents, not just brand-new ones -
@@ -269,16 +276,74 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
                    e.resolution_code, e.version, e.reopened_at,
-                   e.is_synthetic,
+                   e.is_synthetic, e.alt_latitude, e.alt_longitude,
+                   COUNT(*) OVER (PARTITION BY e.vessel_id) AS open_calls_for_vessel,
+                   EXISTS (SELECT 1 FROM vessel_trips t WHERE t.vessel_id = e.vessel_id) AS has_trip_history,
+                   c.observed_at AS last_contact_at,
+                   c.latitude AS last_contact_latitude, c.longitude AS last_contact_longitude,
                    v.skipper_name, v.license_type, v.license_number, v.phone
             FROM sos_events e
             LEFT JOIN vessels v ON v.id = e.vessel_id
+            LEFT JOIN LATERAL (
+              SELECT bc.observed_at, bc.latitude, bc.longitude
+              FROM buoy_contacts bc
+              WHERE bc.vessel_id = e.vessel_id
+                AND bc.source = 'live' AND bc.is_synthetic IS FALSE
+                AND bc.observed_at >= NOW() - INTERVAL '1 hour'
+              ORDER BY bc.observed_at DESC
+              LIMIT 1
+            ) c ON TRUE
             WHERE e.resolved_at IS NULL
-            ORDER BY e.created_at DESC
             '''
         )
 
-    return {'events': [_event_json(row) for row in rows]}
+    now = datetime.now(UTC)
+    events = [_enrich(row, now) for row in rows]
+    flood = flood_status(events, now)
+    events.sort(key=triage_key)
+    for event in events:
+        event.pop('has_trip_history', None)
+        event.pop('corroborated', None)
+    return {'events': events[:limit], 'total': len(events), 'flood': flood}
+
+
+def _enrich(row: Any, now: datetime) -> dict[str, object]:
+    event = _event_json(row)
+    has_trip_history = bool(row.get('has_trip_history', False))
+    open_calls = row.get('open_calls_for_vessel', 1)
+    vessel_verified = row['trust_tier'] in {'phone_verified', 'confirmed_by_responder'}
+    event['created_at'] = row['created_at']
+    pressed_at = datetime.fromtimestamp(row['client_ts'], UTC) if row['client_ts'] is not None else None
+    event['pressed_at'] = pressed_at.isoformat() if pressed_at else None
+    event['is_late'] = bool(
+        pressed_at is not None
+        and (row['created_at'] - pressed_at).total_seconds() > 30 * 60
+    )
+    event['open_calls_for_vessel'] = open_calls
+    event['alt_latitude'] = row.get('alt_latitude')
+    event['alt_longitude'] = row.get('alt_longitude')
+    event['delivery_path'] = 'pod' if row['delivered_via_buoy'] else 'direct'
+    event['vessel_verified'] = vessel_verified
+    event['has_trip_history'] = has_trip_history
+    event['corroborated'] = bool(row['delivered_via_buoy'] or vessel_verified or has_trip_history)
+    if row['latitude'] is not None and row['longitude'] is not None:
+        station = min(
+            SHORE_STATIONS,
+            key=lambda item: distance_km(row['latitude'], row['longitude'], item['lat'], item['lon']),
+        )
+    else:
+        station = SHORE_STATIONS[0]
+    context = PlausibilityContext(
+        gateway_latitude=station['lat'],
+        gateway_longitude=station['lon'],
+        contact_at=row.get('last_contact_at'),
+        contact_latitude=row.get('last_contact_latitude'),
+        contact_longitude=row.get('last_contact_longitude'),
+        open_calls_for_vessel=open_calls,
+        now=now,
+    )
+    event['flags'] = plausibility_flags(event, context)
+    return event
 
 
 @protected_router.get('/recent')

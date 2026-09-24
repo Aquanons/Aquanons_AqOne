@@ -24,6 +24,8 @@ from typing import Any
 
 import numpy as np
 
+from app.geo import distance_km as _distance_km
+
 CENTER_LAT = 11.6892
 CENTER_LON = 122.3667
 MANILA_TZ = timezone(timedelta(hours=8))
@@ -166,19 +168,6 @@ def _ensure_tz(ts: datetime) -> datetime:
     if ts.tzinfo is None:
         return ts.replace(tzinfo=MANILA_TZ)
     return ts.astimezone(MANILA_TZ)
-
-
-def _km_per_deg_lon(lat: float) -> float:
-    return 111.320 * math.cos(math.radians(lat))
-
-
-def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    lat1_r = math.radians(lat1)
-    lat2_r = math.radians(lat2)
-    dlat = lat2_r - lat1_r
-    dlon = math.radians(lon2 - lon1)
-    h = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
-    return 6371.0 * 2 * math.asin(min(1.0, math.sqrt(h)))
 
 
 def _mean_std(values: list[float]) -> dict[str, float]:

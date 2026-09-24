@@ -53,3 +53,17 @@ Row counts and IDs only; never data, URLs or credentials.
 - B3 policy plus downlink regression tests: 15 passed; B3 PostgreSQL/API tests: 3 passed.
 - `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; fresh PostgreSQL probes applied migration 034.
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. Failures remain the Phase 6 deferred hotspot cohort and shared LoRa key probes.
+## Phase B4 - Dispatcher triage, flags and late calls
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_triage.py tests/test_plausibility.py`: collection failed because `app.incidents.triage` and `app.incidents.plausibility` do not exist.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/test_edge_active_pg.py --tb=short`: 5 failed. Failures covered missing totals/flood metadata, no limit support, no late-call metadata, no open-call count, and no delivery path.### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 476 passed, 31 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 502 passed, 5 skipped, 1 xfailed.
+- B4 focused pure policy, plausibility, geography and trip-profile checks: 21 passed, 1 xfailed; B4 PostgreSQL/API tests: 5 passed.
+- `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed.
+- Timing note: `/api/sos/active` against 10,000 unresolved rows returned 200 rows with `total=10000` in 267.7 ms on local PostgreSQL 18 (TestClient request round trip).
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. The same Phase 6 deferred hotspot cohort and shared LoRa key probes remain.

@@ -175,7 +175,7 @@ Checkpoint message: `feat(sos): end-to-end incident nonce and byte-safe distress
 
 Requirements: EC-C10, EC-C2 (backend half), EC-H12 (visibility)
 Merge after: B2
-State: Not started
+State: Done - 3dd0618
 
 ### Tasks
 
@@ -221,7 +221,7 @@ Checkpoint message: `feat(downlink): cap the radio feed to the smallest table an
 
 Requirements: EC-H18, EC-H20, EC-H15 (backend), EC-M3, EC-L11 (backend flag), EC-H19 (data for wording)
 Merge after: B2
-State: Not started
+State: Done - implementation checkpoint pending
 
 ### Tasks
 
@@ -243,12 +243,12 @@ State: Not started
     - `test_active_marks_late_calls`
     - `test_active_counts_open_calls_per_vessel`
     - `test_active_reports_delivery_path`
-- [ ] Create `app/incidents/triage.py` (`triage_key`, `flood_status`) and `app/incidents/plausibility.py` (`flags`, plus a small frozen `PlausibilityContext` dataclass).
+- [x] Create `app/incidents/triage.py` (`triage_key`, `flood_status`) and `app/incidents/plausibility.py` (`flags`, plus a small frozen `PlausibilityContext` dataclass).
   The gateway position comes from the shore station in `app/geo.py`.
   The maximum range is one named constant taken from `docs/33_LORA_RF_BUDGET.md`, and the docstring cites the section.
   Reuse `app.geo.km_per_deg_lon` for distances; add `distance_km` to `app/geo.py` if it is missing, and do not duplicate the one in `app/ai/trip_profile.py`.
   Point `trip_profile` at it if the change is one line.
-- [ ] `active_sos`:
+- [x] `active_sos`:
   - Add `limit: int = Query(200, ge=1, le=1000)`.
   - The query adds the open-calls count per vessel (window function), an `EXISTS` for trip history, and the latest contact within 1 h.
   - Python builds each event, attaches `pressed_at`, `is_late`, `flags`, `open_calls_for_vessel`, `alt_*`, `delivery_path` and `vessel_verified` (the tier is `phone_verified` or better; B5 extends this), sorts by `triage_key`, and slices to `limit`.
