@@ -210,6 +210,7 @@
             return '<span class="' + badge.cssClass + '"' + title + '>' + badge.text + '</span>';
           })()}${escapeHtml(a.desc)}</div>
           ${(a.owner || a.phone) ? `<div class="alert-sender"><span>Sender: ${escapeHtml(a.owner || 'Unnamed vessel')}${a.phone ? ' &middot; ' + escapeHtml(a.phone) : ''}</span></div>` : ''}
+          ${(typeof ns.registrationBadgeHtml === 'function') ? `<div class="alert-reg">${ns.registrationBadgeHtml(a.drawerData && a.drawerData.licenseType)}</div>` : ''}
           <div class="alert-meta">${a.time} &middot; ${
             a.lat == null || a.lng == null
               ? '<span class="alert-nofix">no GPS fix</span>'

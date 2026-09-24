@@ -18,6 +18,61 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   };
 
+  // ===== RESOLVED INCIDENTS =====
+  function resolvedRowHtml(ev) {
+    var name = ev.skipper_name || ev.boat || ev.vessel_id || 'Unidentified vessel';
+    var sender = (ev.skipper_name || ev.phone)
+      ? '<div class="incident-feed-sender"><span>Sender: ' + escapeHtml(ev.skipper_name || 'Unnamed vessel') +
+        (ev.phone ? ' \u00b7 ' + escapeHtml(ev.phone) : '') + '</span></div>'
+      : '';
+    var reply = ev.fisher_reply;
+    var reportHtml = reply === 1
+      ? '<div class="alert-fisher-report alert-fisher-danger">Fisher reports: STILL IN DANGER</div>'
+      : (reply === 2
+        ? '<div class="alert-fisher-report alert-fisher-safe">Fisher reports: SAFE NOW</div>'
+        : '');
+    var regHtml = (typeof ns.registrationBadgeHtml === 'function')
+      ? '<div class="incident-feed-reg">' + ns.registrationBadgeHtml(ev.license_type) + '</div>'
+      : '';
+    var when = ev.resolved_at || ev.created_at || '';
+    return '<div class="incident-feed-row incident-feed-resolved">' +
+      '<div class="incident-feed-info">' +
+        '<div class="incident-feed-desc">' + escapeHtml(name) +
+          (ev.note ? ' — “' + escapeHtml(ev.note) + '”' : '') + '</div>' +
+        sender +
+        reportHtml +
+        regHtml +
+        '<div class="incident-feed-meta">Resolved ' + escapeHtml(when) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderResolvedFeed(events) {
+    var el = document.getElementById('resolved-feed-list');
+    if (!el) return;
+    var list = Array.isArray(events) ? events : [];
+    if (list.length === 0) {
+      el.innerHTML = '<p class="panel-stub-text">No resolved incidents yet</p>';
+      return;
+    }
+    el.innerHTML = list.map(resolvedRowHtml).join('');
+  }
+
+  function loadResolvedSos() {
+    if (typeof ns.authFetch !== 'function') return Promise.resolve();
+    return ns.authFetch('/api/sos/recent')
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        renderResolvedFeed(data && data.events);
+      })
+      .catch(function (err) {
+        console.warn('[AqOne] Resolved SOS poll failed:', err.message);
+      });
+  }
+
   // ===== INCIDENT FEED =====
   function renderIncidentFeed() {
     var el = document.getElementById('incident-feed-list');
@@ -38,6 +93,9 @@
         : (reply === 2
           ? '<div class="alert-fisher-report alert-fisher-safe">Fisher reports: SAFE NOW</div>'
           : '');
+      var regHtml = (typeof ns.registrationBadgeHtml === 'function')
+        ? '<div class="incident-feed-reg">' + ns.registrationBadgeHtml(a.drawerData && a.drawerData.licenseType) + '</div>'
+        : '';
       return '<div class="incident-feed-row' + (a.isLive ? ' incident-feed-live' : '') +
         '" data-idx="' + i + '">' +
         alertIcon(a.type) +
@@ -48,6 +106,7 @@
               (a.phone ? ' \u00b7 ' + escapeHtml(a.phone) : '') + '</span></div>'
             : '') +
           reportHtml +
+          regHtml +
           '<div class="incident-feed-meta">' + escapeHtml(a.time) + '</div>' +
         '</div>' +
       '</div>';
@@ -69,6 +128,10 @@
     });
   }
   renderIncidentFeed();
+  loadResolvedSos();
+  if (typeof setInterval === 'function') {
+    setInterval(loadResolvedSos, 10000);
+  }
 
 
   // ===== BUOY HEALTH MONITOR =====
@@ -293,6 +356,8 @@
   });
 
   ns.renderIncidentFeed = renderIncidentFeed;
+  ns.renderResolvedFeed = renderResolvedFeed;
+  ns.loadResolvedSos = loadResolvedSos;
   ns.updateStats = updateStats;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

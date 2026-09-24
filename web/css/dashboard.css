@@ -1320,6 +1320,41 @@ body {
   color: #2ecc71;
 }
 
+.reg-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.reg-badge-registered {
+  background: rgba(46, 204, 113, 0.18);
+  color: #2ecc71;
+}
+
+.reg-badge-unregistered {
+  background: rgba(241, 196, 15, 0.18);
+  color: #f1c40f;
+}
+
+.alert-reg {
+  margin-top: 3px;
+}
+
+.incident-feed-reg {
+  margin-top: 2px;
+}
+
+.sos-reg-row {
+  padding: 8px 16px 0;
+}
+
+.sos-reg-row:empty {
+  display: none;
+}
+
 .alert-status {
   flex-shrink: 0;
   padding: 2px 7px;
@@ -2985,6 +3020,7 @@ body {
 .sos-drawer-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -3016,7 +3052,8 @@ body {
   font-weight: 600;
   text-align: right;
   color: var(--text);
-  word-break: break-word;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sos-owner-value {
@@ -4807,6 +4844,8 @@ h3.buoy-drawer-title {
 }
 .incident-feed-row:last-child { border-bottom: none; }
 .incident-feed-row:hover { background: rgba(56,189,248,0.05); }
+.incident-feed-resolved { cursor: default; opacity: 0.85; }
+.incident-feed-resolved:hover { background: none; }
 .incident-feed-info { flex: 1; min-width: 0; }
 .incident-feed-desc {
   font-size: 11px;

@@ -117,6 +117,19 @@
     return { text: 'DEMO', cssClass: 'alert-demo-badge' };
   }
 
+  function registrationBadge(licenseType) {
+    var registered = typeof licenseType === 'string' && licenseType !== '' && licenseType !== 'none';
+    return registered
+      ? { text: 'Registered Boat', cssClass: 'reg-badge-registered', registered: true }
+      : { text: 'Unregistered Boat', cssClass: 'reg-badge-unregistered', registered: false };
+  }
+
+  function registrationBadgeHtml(licenseType) {
+    var badge = registrationBadge(licenseType);
+    var detail = badge.registered ? ' · ' + escapeHtml(String(licenseType).toUpperCase()) : '';
+    return '<span class="reg-badge ' + badge.cssClass + '">' + badge.text + detail + '</span>';
+  }
+
   /**
    * Live countdown text for an acknowledged SOS's ETA, honest about an
    * expired one. See docs/13_RESPONDER_LOOP.md: a countdown that reaches
@@ -488,6 +501,8 @@
     classifyFreshness: classifyFreshness,
     freshnessLabel: freshnessLabel,
     alertBadge: alertBadge,
+    registrationBadge: registrationBadge,
+    registrationBadgeHtml: registrationBadgeHtml,
     formatEta: formatEta,
     responderStatusHtml: responderStatusHtml,
     caseTypeBadge: caseTypeBadge,
