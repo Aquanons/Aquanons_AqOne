@@ -102,6 +102,18 @@ void main() {
       final stoodDown = _record().copyWith(state: DeliveryState.acknowledged);
       // fisherReply is responder data - written by saveFisherReply, never via
       // copyWith - so construct the scenario the store creates it as.
+      final unsynced = SosRecord(
+        localId: stoodDown.localId,
+        vesselId: stoodDown.vesselId,
+        boat: stoodDown.boat,
+        clientTs: stoodDown.clientTs,
+        state: DeliveryState.acknowledged,
+        fisherReply: 2,
+        fisherReplySynced: false,
+      );
+      expect(unsynced.isResolved, isFalse);
+      expect(unsynced.isStoodDown, isFalse);
+
       final replier = SosRecord(
         localId: stoodDown.localId,
         vesselId: stoodDown.vesselId,
@@ -109,6 +121,7 @@ void main() {
         clientTs: stoodDown.clientTs,
         state: DeliveryState.acknowledged,
         fisherReply: 2,
+        fisherReplySynced: true,
       );
       expect(replier.isResolved, isTrue);
       expect(replier.isStoodDown, isTrue);

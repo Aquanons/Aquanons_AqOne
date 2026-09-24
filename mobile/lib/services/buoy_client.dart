@@ -210,10 +210,11 @@ class BuoyClient {
       // `events` key is a shape this client does not understand.
       throw const BuoyInvalidResponse('buoy sent an unreadable reply');
     }
+    final serverTime = decoded['server_time'] as String?;
     try {
       return events
           .whereType<Map<String, dynamic>>()
-          .map(RemoteSos.fromJson)
+          .map((row) => RemoteSos.fromJson(row, envelopeServerTime: serverTime))
           .toList(growable: false);
     } catch (_) {
       throw const BuoyInvalidResponse('buoy sent an unreadable reply');

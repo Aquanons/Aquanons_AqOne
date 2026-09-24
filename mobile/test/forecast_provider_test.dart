@@ -169,9 +169,77 @@ void main() {
 
       expect(fallback.called, isTrue);
     });
+
+    test('coarsens outgoing coordinates to 1 decimal place', () async {
+      final List<Uri> requestedUris = <Uri>[];
+      final backend = BackendClient(
+        client: MockClient((request) async {
+          requestedUris.add(request.url);
+          return http.Response(
+            jsonEncode(<String, Object?>{
+              'source': 'backend',
+              'generated_at': '2026-08-16T04:00:00Z',
+              'days': <Object?>[
+                <String, Object?>{'date': '2026-08-16', 'weather_code': 95},
+              ],
+              'hours': <Object?>[
+                <String, Object?>{
+                  'time': '2026-08-16T04:00:00Z',
+                  'weather_code': 95,
+                  'wind_kph': 25.0,
+                  'wave_m': 1.8,
+                },
+              ],
+            }),
+            200,
+          );
+        }),
+      );
+      final provider = AqOneForecastProvider(
+        backend: backend,
+        fallback: _FakeProvider(null),
+      );
+
+      await provider.outlook(lat: 11.6050, lon: 122.3125, days: 7);
+
+      expect(requestedUris, isNotEmpty);
+      for (final uri in requestedUris) {
+        expect(uri.queryParameters['lat'], '11.6');
+        expect(uri.queryParameters['lon'], '122.3');
+      }
+    });
   });
 
   group('OpenMeteoForecastProvider', () {
+    test('coarsens outgoing coordinates to 1 decimal place', () async {
+      final List<Uri> requestedUris = <Uri>[];
+      final client = MockClient((request) async {
+        requestedUris.add(request.url);
+        return http.Response(
+          jsonEncode(<String, Object?>{
+            'hourly': <String, Object?>{
+              'time': <String>['2026-08-16T04:00'],
+              'wave_height': <double>[1.2],
+            },
+            'daily': <String, Object?>{
+              'time': <String>['2026-08-16'],
+              'weather_code': <int>[1],
+            },
+          }),
+          200,
+        );
+      });
+
+      final provider = OpenMeteoForecastProvider(client: client);
+      await provider.outlook(lat: 11.6050, lon: 122.3125, days: 1);
+
+      expect(requestedUris, isNotEmpty);
+      for (final uri in requestedUris) {
+        expect(uri.queryParameters['latitude'], '11.6');
+        expect(uri.queryParameters['longitude'], '122.3');
+      }
+    });
+
     test('fetches atmospheric and marine hourly forecasts', () async {
       final client = MockClient((request) async {
         if (request.url.host.contains('marine')) {

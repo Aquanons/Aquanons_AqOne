@@ -150,22 +150,25 @@ class ForecastOutlook {
         marineSampleLon: marineSampleLon ?? this.marineSampleLon,
       );
 
+  static double? _round1(double? val) =>
+      val == null ? null : double.parse(val.toStringAsFixed(1));
+
   Map<String, Object?> toCacheJson() => <String, Object?>{
         'version': 2,
         'fetched_at': fetchedAt.toIso8601String(),
         'generated_at': generatedAt?.toIso8601String(),
-        'latitude': latitude,
-        'longitude': longitude,
-        'requested_latitude': requestedLatitude,
-        'requested_longitude': requestedLongitude,
+        'latitude': _round1(latitude),
+        'longitude': _round1(longitude),
+        'requested_latitude': _round1(requestedLatitude),
+        'requested_longitude': _round1(requestedLongitude),
         'issue_time': issueTime?.toIso8601String(),
         'timezone': timezone,
         'timezone_abbreviation': timezoneAbbreviation,
         'utc_offset_seconds': utcOffsetSeconds,
         'source': source,
         'units': units,
-        'marine_sample_lat': marineSampleLat,
-        'marine_sample_lon': marineSampleLon,
+        'marine_sample_lat': _round1(marineSampleLat),
+        'marine_sample_lon': _round1(marineSampleLon),
         'days': days.map((d) => d.toCacheJson()).toList(growable: false),
         'hours': hours.map((h) => h.toCacheJson()).toList(growable: false),
       };

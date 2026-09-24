@@ -195,8 +195,8 @@ void main() {
     await outbox.insert(record);
     await outbox.advance(record.localId, DeliveryState.delivered);
 
-    final etaAt = DateTime.now()
-        .toUtc()
+    final serverNow = DateTime.now().toUtc();
+    final etaAt = serverNow
         .add(const Duration(minutes: 20))
         .toIso8601String();
 
@@ -209,7 +209,7 @@ void main() {
           return http.StreamedResponse(
             Stream<List<int>>.value(utf8.encode(jsonEncode(<String, Object?>{
               'vessel_id': 'fisher-7f3a',
-              'server_time': '2026-09-15T00:00:00Z',
+              'server_time': serverNow.toIso8601String(),
               'event': <String, Object?>{
                 'id': 7,
                 'local_id': 'local-ack',
@@ -244,7 +244,8 @@ void main() {
 
     final updated = await outbox.byLocalId(record.localId);
     expect(updated!.state, DeliveryState.acknowledged);
-    expect(updated.etaAt, etaAt);
+    expect(updated.etaAt, isNotNull);
+    expect(updated.etaOverdue, isFalse);
     expect(updated.responderStatus, 2);
     expect(updated.responderNote, 'On the way');
     // The fisher's reply needs the backend id, which was previously only ever

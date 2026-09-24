@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:aqone/l10n/app_localizations.dart';
@@ -860,10 +860,12 @@ class _VenturePageState extends State<VenturePage> {
     final state = record.state;
     final resolvedByMDRRMO = record.resolvedAt != null;
     final standDown = !resolvedByMDRRMO && record.isStoodDown;
+    final standDownPending =
+        !resolvedByMDRRMO && record.fisherReply == 2 && !record.fisherReplySynced;
     final t = AppLocalizations.of(context);
     final color = resolvedByMDRRMO
         ? _success
-        : standDown
+        : (standDown || standDownPending)
             ? const Color(0xFF64748B)
             : switch (state) {
                 DeliveryState.saved => const Color(0xFFD97706),
@@ -874,16 +876,20 @@ class _VenturePageState extends State<VenturePage> {
     final title = resolvedByMDRRMO
         ? t.resolvedTitle
         : standDown
-            ? 'Stood down'
-            : state.title(t);
+            ? t.standDownTitle
+            : standDownPending
+                ? t.standDownPendingTitle
+                : state.title(t);
     final description = resolvedByMDRRMO
         ? t.resolvedDescription
         : standDown
-            ? 'Marked as a false alarm - the MDRRMO has been told to disregard.'
-            : state.description(t);
+            ? t.standDownDescription
+            : standDownPending
+                ? t.standDownPendingDescription
+                : state.description(t);
     final icon = resolvedByMDRRMO
         ? Icons.task_alt_rounded
-        : standDown
+        : (standDown || standDownPending)
             ? Icons.undo_rounded
             : switch (state) {
                 DeliveryState.saved => Icons.hourglass_top_rounded,

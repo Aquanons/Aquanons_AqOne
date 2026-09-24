@@ -624,6 +624,7 @@ reading this backend has ever seen — never a fabricated calm baseline.
   "status_reason": "only 0 of 3 required buoys have fresh (<= 10min old), gap-free, in-range readings",
   "level": "unknown",
   "return_now": false,
+  "onset_at": null,
   "detections": [],
   "threshold": null,
   "triggered_buoys": [],
@@ -640,6 +641,7 @@ reading this backend has ever seen — never a fabricated calm baseline.
 | `data_age_seconds` | `generated_at - observed_at`, or `null` if `observed_at` is `null`. |
 | `status_reason` | Why `level` is `"unknown"` (or why the model didn't run). `null` whenever `level` is `clear`/`watch`/`return_now` — a successful evaluation needs no explanation. |
 | `level` / `return_now` | See above. `return_now` is redundant with `level == "return_now"`, kept for a client-side cross-check. |
+| `onset_at` | ISO 8601 timestamp of the squall onset anchor derived from the propagation estimate. Populated when `level` is `"watch"` or `"return_now"` and propagation timing is resolved; `null` otherwise. |
 | `detections`, `threshold`, `triggered_buoys`, `lead_minutes` | Only populated once quality passes; empty/`null` otherwise. |
 
 `calibration: "synthetic"` is carried on every response while the model is

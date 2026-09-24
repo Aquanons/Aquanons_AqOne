@@ -170,6 +170,7 @@ class OutboxStore {
     int? responderStatus,
     String? responderNote,
     String? resolvedAt,
+    bool? fisherReplySynced,
   }) async {
     final db = await _db.database;
     final existing = await db.query(
@@ -180,6 +181,7 @@ class OutboxStore {
         'responder_status',
         'responder_note',
         'resolved_at',
+        'fisher_reply_synced',
       ],
       where: 'local_id = ?',
       whereArgs: <Object?>[localId],
@@ -190,6 +192,7 @@ class OutboxStore {
     }
     final row = existing.first;
 
+    final shouldMarkSynced = (resolvedAt != null || fisherReplySynced == true);
     final next = <String, Object?>{
       if (remoteId != null && row['remote_id'] != remoteId) 'remote_id': remoteId,
       if (etaAt != null && row['eta_at'] != etaAt) 'eta_at': etaAt,
@@ -199,6 +202,8 @@ class OutboxStore {
         'responder_note': responderNote,
       if (resolvedAt != null && row['resolved_at'] != resolvedAt)
         'resolved_at': resolvedAt,
+      if (shouldMarkSynced && ((row['fisher_reply_synced'] as num?)?.toInt() ?? 0) != 1)
+        'fisher_reply_synced': 1,
     };
     if (next.isEmpty) {
       return false;
@@ -230,11 +235,29 @@ class OutboxStore {
 
   /// Record the fisher's own reply locally, so the button reflects reality even
   /// if the network call to the backend fails.
-  Future<void> saveFisherReply(String localId, int reply) async {
+  Future<void> saveFisherReply(
+    String localId,
+    int reply, {
+    bool synced = false,
+  }) async {
     final db = await _db.database;
     await db.update(
       'outbox',
-      <String, Object?>{'fisher_reply': reply},
+      <String, Object?>{
+        'fisher_reply': reply,
+        'fisher_reply_synced': synced ? 1 : 0,
+      },
+      where: 'local_id = ?',
+      whereArgs: <Object?>[localId],
+    );
+  }
+
+  /// Mark the fisher's reply as confirmed delivered by the backend.
+  Future<void> markFisherReplySynced(String localId) async {
+    final db = await _db.database;
+    await db.update(
+      'outbox',
+      <String, Object?>{'fisher_reply_synced': 1},
       where: 'local_id = ?',
       whereArgs: <Object?>[localId],
     );

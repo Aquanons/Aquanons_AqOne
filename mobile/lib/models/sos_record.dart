@@ -30,6 +30,7 @@ class SosRecord {
     this.responderStatus,
     this.responderNote,
     this.fisherReply,
+    this.fisherReplySynced = false,
     this.resolvedAt,
   });
 
@@ -77,6 +78,9 @@ class SosRecord {
   /// 1 STILL_IN_DANGER, 2 SAFE_NOW.
   final int? fisherReply;
 
+  /// Whether the fisher's reply has been successfully confirmed by the backend.
+  final bool fisherReplySynced;
+
   /// When the MDRRMO closed this incident out (ISO string). Null until a
   /// responder resolves it on the dashboard; reconcile() saves it once the
   /// backend read-back reports it.
@@ -104,8 +108,8 @@ class SosRecord {
   /// The fisher stood this SOS down themselves (reply 2 = "safe now"),
   /// raised either through the responder-acknowledgement flow or the
   /// post-dispatch "slide to stand down" control. The dashboard treats both
-  /// the same way - resolved, off the active queue - so the app does too.
-  bool get isStoodDown => fisherReply == 2;
+  /// the same way - resolved, off the active queue - once the backend has it.
+  bool get isStoodDown => fisherReply == 2 && fisherReplySynced;
 
   /// The MDRRMO resolved this incident on the dashboard, or the fisher stood
   /// it down themselves. Either way rescue is over and the ETA no longer
@@ -132,6 +136,13 @@ class SosRecord {
     int? deliveredAt,
     int? acknowledgedAt,
     String? ackedBy,
+    String? remoteId,
+    String? etaAt,
+    int? responderStatus,
+    String? responderNote,
+    int? fisherReply,
+    bool? fisherReplySynced,
+    String? resolvedAt,
   }) {
     return SosRecord(
       localId: localId,
@@ -155,16 +166,17 @@ class SosRecord {
       deliveredAt: deliveredAt ?? this.deliveredAt,
       acknowledgedAt: acknowledgedAt ?? this.acknowledgedAt,
       ackedBy: ackedBy ?? this.ackedBy,
-      // Carried through unchanged. copyWith feeds save(), and dropping these
-      // would blank a live ETA in memory every time the delivery state moved.
-      // toRow() deliberately does not write them, so saveResponder stays the
-      // single writer of responder data.
-      remoteId: remoteId,
-      etaAt: etaAt,
-      responderStatus: responderStatus,
-      responderNote: responderNote,
-      fisherReply: fisherReply,
-      resolvedAt: resolvedAt,
+      // Carried through unchanged if not overridden. copyWith feeds save(),
+      // and dropping these would blank a live ETA in memory every time the
+      // delivery state moved. toRow() deliberately does not write them, so
+      // saveResponder stays the single writer of responder data.
+      remoteId: remoteId ?? this.remoteId,
+      etaAt: etaAt ?? this.etaAt,
+      responderStatus: responderStatus ?? this.responderStatus,
+      responderNote: responderNote ?? this.responderNote,
+      fisherReply: fisherReply ?? this.fisherReply,
+      fisherReplySynced: fisherReplySynced ?? this.fisherReplySynced,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
     );
   }
 
@@ -219,6 +231,8 @@ class SosRecord {
         responderStatus: (row['responder_status'] as num?)?.toInt(),
         responderNote: row['responder_note'] as String?,
         fisherReply: (row['fisher_reply'] as num?)?.toInt(),
+        fisherReplySynced:
+            ((row['fisher_reply_synced'] as num?)?.toInt() ?? 0) != 0,
         resolvedAt: row['resolved_at'] as String?,
       );
 

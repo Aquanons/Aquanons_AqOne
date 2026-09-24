@@ -462,3 +462,144 @@ Executed on migrated local Postgres database:
    Added operator user seeding in `probe_db` fixture so authenticated routes have user 1 on migrated test databases.
 2. `backend/tests/security_probes/test_probe_auth.py`: Updated `_stub_training` harness to inspect caller role and supply matching operator user for `users` queries so train endpoint can reach role check.
 
+## Phase 4: Handset tells the truth
+
+### Environment
+
+- Date: 2026-09-24T08:25:00+08:00
+- Branch: `fix/security-audit-remediation`
+- Requirements: SEC-20, SEC-21, SEC-22, SEC-23, SEC-24, SEC-25
+- Contract changes:
+  - `docs/05_PUBLIC_API.md`: Documented `onset_at` ISO 8601 UTC timestamp in squall status response when level is `watch` or `return_now`.
+
+### Verification Gates
+
+#### 1. Backend Default Gate
+
+Commands executed from `backend/`:
+```powershell
+python -m ruff check app tests
+python -m pytest -q -p no:cacheprovider
+```
+
+Result:
+- Ruff: All checks passed (0 errors).
+- Pytest default suite: 410 passed, 5 skipped, 1 xfailed.
+- Status: PASSED.
+
+#### 2. Web Gate
+
+Command executed from repository root:
+```powershell
+node --test web/test/*.test.js
+```
+
+Result:
+- Node test runner: 149 passed, 0 failed.
+- Status: PASSED.
+
+#### 3. Mobile Gate
+
+Commands executed from `mobile/`:
+```powershell
+flutter analyze
+flutter test
+flutter test test_security_probes
+```
+
+Result:
+- Flutter analyze: No issues found (0 warnings, 0 errors).
+- Flutter test default suite: 265 passed, 0 failed.
+- Mobile security probes: 6 passed, 0 failed.
+- Status: PASSED.
+- Note on probe count: The plan references 7 Dart probes; the repository holds 6 probe tests across `sos_probes_test.dart` (4), `squall_probes_test.dart` (1), and `flutter_reaudit_probe_test.dart` (1).
+  All 6 tests passed.
+
+#### 4. Probe Gate (PostgreSQL 18 on Port 55432)
+
+Command executed from `backend/`:
+```powershell
+$dataDir = "$env:TEMP\aqone_probe_pg_data"
+if (!(Test-Path $dataDir)) { & 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $dataDir -U postgres -A trust -E UTF8 }
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir -o '-p 55432' -l "$env:TEMP\aqone_probe_pg.log" start
+Start-Sleep -Seconds 2
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+python -m pytest tests/security_probes -p no:cacheprovider -s --junitxml=../docs/security-audit/probe-runs/phase-4/backend-probes.xml
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL -ErrorAction SilentlyContinue
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir stop
+```
+
+Result:
+- Total probe items: 43.
+- Passed: 30 (+1 net passed from Phase 3: `test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy`).
+- Failed: 13 (open findings for Phase 5 firmware and Phase 6 release APK, plus 2 deferred hotspot probes).
+- Errors: 0.
+- Status: PASSED.
+
+### Probe Status Changes (Phase 4)
+
+1. `tests/security_probes/test_probe_sos.py::test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy`: PASSED [SEC-21 backend half]
+2. `mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved] a stand-down the backend rejected (503) is not shown as resolved`: PASSED [SEC-20]
+3. `mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved] a stand-down never sent (no backend id yet) is not shown as resolved`: PASSED [SEC-20]
+4. `mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.standdown-intent-treated-resolved:control] an accepted stand-down is resolved`: PASSED [SEC-20 Control]
+5. `mobile/test_security_probes/sos_probes_test.dart::[mobile.sos.buoy-only-reply-unroutable] handset half: the reply to a buoy-only SOS is delivered`: PASSED [SEC-21 mobile half]
+6. `mobile/test_security_probes/sos_probes_test.dart::[mobile.eta.server-clock-discarded] rescue ETA is measured against server time, not the phone clock`: PASSED [SEC-22]
+7. `mobile/test_security_probes/squall_probes_test.dart::[mobile.squall.ack-survives-missed-clear] a squall six hours later on the same buoys alarms again after a missed clear`: PASSED [SEC-23]
+
+#### Regression Check: Phases 1, 2, and 3 Probes Stay Green
+
+- All Phase 1 probes (SEC-01 through SEC-05) remain PASSED.
+- All Phase 2 probes (SEC-06 through SEC-11) remain PASSED.
+- All Phase 3 probes (SEC-12 through SEC-19) remain PASSED.
+
+### Trace Tasks Re-Evaluation (PROBES.md Section 4)
+
+#### T1 - mobile.location.undisclosed-weather-coordinate-egress (SEC-24)
+
+1. Does `HomePage` read the device position during initialisation, without the fisher tapping anything?
+   Yes (`mobile/lib/ui/home_page.dart:181`).
+2. Are those coordinates placed in a request to the AqOne backend forecast route, to `api.open-meteo.com`, or both?
+   Yes, but coordinates are now coarsened to 1 decimal place (~11 km) before egress in `mobile/lib/services/forecast_provider.dart:55-56, 172-173`.
+3. Are the requested coordinates persisted, for example under the `forecast_record_v2` SharedPreferences key?
+   Yes, and stored coordinates are now rounded to 1 decimal place in `mobile/lib/models/forecast_outlook.dart:153-171`.
+4. What does the in-app location or privacy text say location is used for?
+   `mobile/lib/ui/info_page.dart:141-147` (`InfoCopy.privacy`): "Precise position is only sent as part of an SOS you deliberately send. Weather forecasts use your approximate location (about 11 km). The online map fetches map tiles for the area you are viewing from OpenStreetMap."
+   Verdict: REMEDIATED. Coordinates sent and stored for forecasts are coarse (~11 km) and location use is explicitly disclosed.
+
+#### T2 - mobile.map.undisclosed-location-derived-tile-egress (SEC-25)
+
+1. Does the Venture map centre its camera on the device fix?
+   Yes (`mobile/lib/ui/venture_page.dart:118-124`).
+2. When the offline MBTiles asset is missing, does tile loading fall back to `tile.openstreetmap.org`?
+   Yes (`mobile/lib/services/mbtiles_provider.dart:82`).
+3. Is the MBTiles asset both declared in `mobile/pubspec.yaml` and present on disk?
+   Asset is declared in `mobile/pubspec.yaml:70` and missing from disk.
+4. What does the in-app location or privacy text say location is used for?
+   `mobile/lib/ui/info_page.dart:141-147` (`InfoCopy.privacy`): "The online map fetches map tiles for the area you are viewing from OpenStreetMap."
+   Verdict: REMEDIATED. Online tile loading from OpenStreetMap is explicitly disclosed in privacy copy.
+
+### Implementation Details and Scope Notes
+
+1. Stand-down persistence (SEC-20): `AppDatabase` schema bumped to version 14 with `fisher_reply_synced INTEGER NOT NULL DEFAULT 0` column.
+   `SosRecord.isStoodDown` requires both `fisherReply == 2` and `fisherReplySynced == true`.
+   While unsynced, UI shows pending stand-down banner (`standDownPendingTitle`, `standDownPendingDescription`, `responderReplyPendingSafeNow`).
+2. Buoy-only SOS replies (SEC-21): `SosService._sendReply` re-posts direct SOS when `!_backend.hasVesselCredential` prior to posting reply.
+   Backend idempotent `COALESCE` populates `local_id` so subsequent reply route matches without requiring device credential.
+3. Server-relative ETA (SEC-22): `RemoteSos` parses `server_time` from backend and buoy envelopes.
+   `SosService._applyRemote` computes device ETA adjusted for server clock skew (`deviceNow + (serverEta - serverNow)`).
+4. Squall identity (SEC-23): Backend `GET /api/public/squall` exposes `onset_at` ISO timestamp for `watch` and `return_now` levels.
+   `SquallWatch.identity` incorporates `onsetAt`, or falls back to a 3-hour UTC bucket floored `observedAt` to re-alarm if a clear was missed.
+5. Privacy Copy (SEC-24, SEC-25): `InfoCopy` in `mobile/lib/ui/info_page.dart` is English-only today; per plan, moving it to ARB is out of scope.
+
+### Probe Harness Fixes Logged
+
+1. `backend/tests/security_probes/test_probe_sos.py`: Authorized change for SEC-21: directly re-posted SOS with `local_id` before unauthenticated reply to exercise backend `COALESCE` ingest logic while keeping `fisher_reply == 2` assertion.
+2. `mobile/test_security_probes/sos_probes_test.dart`: Authorized change for SEC-21: mock backend records `local_id` on `POST /api/sos` and verifies it on `/api/sos/reply/{local_id}` while keeping `expect(ok, isTrue)`.
+   Added `import 'dart:convert';` and `request is http.Request` guard for body reading.
+3. `mobile/test/widget_test.dart`: Extended with tests verifying that pending stand-down does not show still-in-danger warning, while synced stand-down does.
+4. `mobile/test/forecast_provider_test.dart`: Added unit tests verifying outgoing query parameters for `AqOneForecastProvider` and `OpenMeteoForecastProvider` use 1-decimal-place coordinates.
+5. `mobile/test/sos_record_test.dart`: Updated stand-down test to assert `isStoodDown` requires `fisherReplySynced: true` and is false when `fisherReplySynced: false`.
+6. `mobile/test/sos_service_test.dart`: Updated ack read-back test to align mock `server_time` with `eta_at` under SEC-22 server time adjustment.
+

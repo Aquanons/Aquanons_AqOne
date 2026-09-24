@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:aqone/data/app_database.dart';
 import 'package:aqone/data/outbox_store.dart';
 import 'package:aqone/models/delivery_state.dart';
@@ -89,6 +91,7 @@ void main() {
     final record = _record('buoy-only-local', DeliveryState.relayed, seq: 42);
     await outbox.insert(record);
     final posted = <String>[];
+    final recordedLocalIds = <String>{};
 
     // Mirrors the backend as test_probe_sos.py observes it on real Postgres:
     // /api/sos/reply/{local_id} cannot match a buoy-only row (it never got
@@ -96,10 +99,28 @@ void main() {
     final backend = backendAnswering((request) async {
       final path = request.url.path;
       if (path == '/healthz') return jsonResponse(200, {'status': 'ok'});
+      if (path == '/api/sos' && request.method == 'POST') {
+        if (request is http.Request) {
+          try {
+            final body = jsonDecode(request.body) as Map<String, dynamic>;
+            final lid = body['local_id'] as String?;
+            if (lid != null) recordedLocalIds.add(lid);
+          } catch (_) {}
+        }
+        return jsonResponse(200, {'ok': true});
+      }
       if (path.startsWith('/api/sos/ack/')) return jsonResponse(404, {});
       if (request.method == 'POST' && path.contains('/reply')) {
         posted.add(path);
-        return jsonResponse(path.startsWith('/api/sos/reply/') ? 404 : 401, {});
+        if (path.startsWith('/api/sos/reply/')) {
+          final replyLocalId =
+              Uri.decodeComponent(path.substring('/api/sos/reply/'.length));
+          if (recordedLocalIds.contains(replyLocalId)) {
+            return jsonResponse(200, {'ok': true});
+          }
+          return jsonResponse(404, {});
+        }
+        return jsonResponse(401, {});
       }
       return jsonResponse(404, {});
     });

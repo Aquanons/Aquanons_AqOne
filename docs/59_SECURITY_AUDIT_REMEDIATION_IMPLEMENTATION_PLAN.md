@@ -217,37 +217,37 @@ Checkpoint message: `fix(auth): server-checked operator sessions and no operator
 ## Phase 4: Handset tells the truth
 
 Requirements: SEC-20, SEC-21, SEC-22, SEC-23, SEC-24, SEC-25
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] SEC-20: a stand-down is resolved only once the backend has it.
+- [x] SEC-20: a stand-down is resolved only once the backend has it.
   - Persist a `fisher_reply_synced` flag in the outbox (bump the `AppDatabase` schema version with a migration).
   - Set it when `replyToSos`, `standDown`, or the reconcile flush gets HTTP 200, or when the backend reports `fisher_reply` or `resolved_at`.
   - `isStoodDown` becomes `fisherReply == 2 && fisherReplySynced`.
   - While a stand-down is unsynced, the UI shows a pending message (new ARB keys in en/fil/akl) instead of "MDRRMO was told".
   - `DeliveryStateTile` (PR #71) shows "Still in danger? Send another SOS." whenever `record.isResolved`; after this change it must appear only for a synced stand-down or a responder resolve, so extend `test/widget_test.dart` with the pending case.
   - Authorized probe change: if the stand-down control's fake backend needs a realistic reply body (`{"ok": true, "resolved_at": ...}`), update that fake only.
-- [ ] SEC-21: buoy-only SOS replies.
+- [x] SEC-21: buoy-only SOS replies.
   - Before an un-credentialed handset replies to a record the backend has not confirmed as `delivered` over the direct path, it re-posts the same SOS directly (`BackendClient.postSos`). This is idempotent on `(vessel_id, client_ts)`, and the backend's `COALESCE` then records the `local_id`, so `POST /api/sos/reply/{local_id}` matches.
   - Put the re-post in the reply path in `SosService`, used by `replyToSos`, `standDown`, and the reconcile flush.
   - Authorized probe changes, both halves:
     - `test_probe_sos.py::test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy`: after the keyed buoy ingest, POST the same SOS directly with `local_id`, then reply by that `local_id`. Keep the `fisher_reply == 2` assertion.
     - In the `sos_probes_test.dart` handset half, the fake backend answers `POST /api/sos` with 200 and records the `local_id`, and answers `/api/sos/reply/{local_id}` with 200 only for a recorded `local_id` (otherwise 404). Keep `expect(ok, isTrue)`.
-- [ ] SEC-22: ETA against server time.
+- [x] SEC-22: ETA against server time.
   - Parse `server_time` from the backend envelopes (`vesselSos`, `ackByLocalId`) into `RemoteSos`, and from the buoy status response if the firmware provides it.
   - In `_applyRemote`, store the ETA converted to the device clock: device now plus (`eta_at` minus `server_time`). Without `server_time`, keep today's behaviour.
-- [ ] SEC-23: squall identity.
+- [x] SEC-23: squall identity.
   - Backend: add `onset_at` (ISO) to the squall status when the level is `watch` or `return_now`, from the propagation onset anchor. Record it in `docs/05_PUBLIC_API.md` first.
   - Mobile: `SquallWatch.identity` becomes the sorted buoys plus `onset_at`. Without `onset_at`, use the sorted buoys plus `observed_at` floored to a 3-hour UTC bucket, so a later squall alarms again after a missed clear.
-- [ ] SEC-24: round the coordinates `forecast_provider.dart` sends (AqOne backend and Open-Meteo) and stores (`forecast_record_v2`) to 1 decimal place. Add a Dart test that records the outgoing URIs with a fake HTTP client.
-- [ ] SEC-24 and SEC-25: update the privacy text in `mobile/lib/ui/info_page.dart` (`InfoCopy.privacy`). Say that weather forecasts use your approximate location (about 11 km), and that the online map fetches tiles for the area you are viewing from OpenStreetMap. Keep "Position is only sent as part of an SOS you deliberately send" true by scoping it to precise position. `InfoCopy` is English-only today; moving it to ARB is out of scope, so note that in the evidence.
+- [x] SEC-24: round the coordinates `forecast_provider.dart` sends (AqOne backend and Open-Meteo) and stores (`forecast_record_v2`) to 1 decimal place. Add a Dart test that records the outgoing URIs with a fake HTTP client.
+- [x] SEC-24 and SEC-25: update the privacy text in `mobile/lib/ui/info_page.dart` (`InfoCopy.privacy`). Say that weather forecasts use your approximate location (about 11 km), and that the online map fetches tiles for the area you are viewing from OpenStreetMap. Keep "Position is only sent as part of an SOS you deliberately send" true by scoping it to precise position. `InfoCopy` is English-only today; moving it to ARB is out of scope, so note that in the evidence.
 
 ### Verification
 
-- [ ] Mobile gate passes, including all 7 Dart probes and the new tests.
-- [ ] Backend gate and probe gate pass (the SEC-21 backend half and the SEC-23 backend field).
-- [ ] Traces T1 and T2 from `PROBES.md` are re-answered in the evidence file.
+- [x] Mobile gate passes, including all 7 Dart probes and the new tests.
+- [x] Backend gate and probe gate pass (the SEC-21 backend half and the SEC-23 backend field).
+- [x] Traces T1 and T2 from `PROBES.md` are re-answered in the evidence file.
 
 Checkpoint message: `fix(mobile): honest stand-down, routable replies, server-relative ETA, coarse weather location`
 

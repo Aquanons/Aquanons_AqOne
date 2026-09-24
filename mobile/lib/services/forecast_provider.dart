@@ -52,21 +52,24 @@ class OpenMeteoForecastProvider implements ForecastProvider {
     String? municipality,
     int days = AqOneConfig.forecastDays,
   }) async {
-    final Object? atmoRaw = await _atmosphericRaw(lat, lon, days);
+    final coarseLat = double.parse(lat.toStringAsFixed(1));
+    final coarseLon = double.parse(lon.toStringAsFixed(1));
+
+    final Object? atmoRaw = await _atmosphericRaw(coarseLat, coarseLon, days);
     if (atmoRaw == null) {
       return null;
     }
 
-    final Object? marineRaw = await _marineRaw(lat, lon, days);
+    final Object? marineRaw = await _marineRaw(coarseLat, coarseLon, days);
 
     final parsed = ForecastOutlook.parseOpenMeteo(
       atmo: atmoRaw,
       marine: marineRaw,
       fetchedAt: DateTime.now(),
-      lat: lat,
-      lon: lon,
-      marineLat: lat,
-      marineLon: lon,
+      lat: coarseLat,
+      lon: coarseLon,
+      marineLat: coarseLat,
+      marineLon: coarseLon,
     );
     if (parsed == null) {
       return null;
@@ -166,8 +169,11 @@ class AqOneForecastProvider implements ForecastProvider {
     String? municipality,
     int days = AqOneConfig.forecastDays,
   }) async {
+    final coarseLat = double.parse(lat.toStringAsFixed(1));
+    final coarseLon = double.parse(lon.toStringAsFixed(1));
+
     final Object? decoded = await _backend.getJson(
-      '${AqOneConfig.publicForecastPath}?lat=$lat&lon=$lon&days=$days',
+      '${AqOneConfig.publicForecastPath}?lat=$coarseLat&lon=$coarseLon&days=$days',
     );
     final ForecastOutlook? parsed = decoded != null
         ? ForecastOutlook.parseBackend(decoded, fetchedAt: DateTime.now())
@@ -182,8 +188,8 @@ class AqOneForecastProvider implements ForecastProvider {
         // Backend answered without hourly intervals (older server version).
         // Fuse hourly intervals from fallback provider if available.
         final fallbackOutlook = await _fallback.outlook(
-          lat: lat,
-          lon: lon,
+          lat: coarseLat,
+          lon: coarseLon,
           municipality: municipality,
           days: days,
         );
@@ -198,8 +204,8 @@ class AqOneForecastProvider implements ForecastProvider {
     }
 
     return _fallback.outlook(
-      lat: lat,
-      lon: lon,
+      lat: coarseLat,
+      lon: coarseLon,
       municipality: municipality,
       days: days,
     );

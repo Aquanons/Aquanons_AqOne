@@ -121,6 +121,7 @@ def build_squall_status(
         'status_reason': quality.reason,
         'level': 'unknown',
         'return_now': False,
+        'onset_at': None,
         'detections': [],
         'threshold': None,
         'triggered_buoys': [],
@@ -181,10 +182,21 @@ def build_squall_status(
             if isinstance(eta, (int, float)):
                 lead_minutes = eta if lead_minutes is None else min(lead_minutes, eta)
 
+    onset_at: str | None = None
+    if level in ('watch', 'return_now'):
+        candidate_rows = triggered or detection_rows
+        for row in candidate_rows:
+            prop = row.get('propagation') or {}
+            anchor = prop.get('onset_anchor')
+            if anchor:
+                onset_at = str(anchor)
+                break
+
     return base | {
         'status_reason': status_reason,
         'level': level,
         'return_now': level == 'return_now',
+        'onset_at': onset_at,
         'detections': detection_rows,
         'threshold': threshold,
         'triggered_buoys': triggered_buoys,

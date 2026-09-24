@@ -424,3 +424,44 @@ def test_demo_squall_status_may_reach_return_now_unconditionally(monkeypatch):
 
     assert status['level'] == 'return_now'
     assert status['source'] == 'synthetic'
+
+
+def test_build_squall_status_exposes_onset_at_for_watch_and_return_now(monkeypatch):
+    now = datetime.now(UTC)
+    onset_iso = '2026-09-23T12:00:00+00:00'
+    monkeypatch.setattr(squall_api, 'load_bundle', lambda: object())
+    monkeypatch.setattr(
+        squall_api,
+        'current_detection',
+        lambda readings, buoys, model: [
+            {
+                'probability': 0.9,
+                'arrival_by_buoy': [{'buoy_id': 'B01', 'arrival_minutes': 12}],
+                'propagation': {'onset_anchor': onset_iso},
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        squall_api,
+        'event_detection_summary',
+        lambda model, detections: {
+            'threshold': 0.5,
+            'detections': detections,
+            'top_features': [],
+            'evaluation': {},
+        },
+    )
+
+    status = squall_api.build_squall_status(
+        _quality_readings(['B01', 'B02', 'B03', 'B04'], now),
+        _buoy_rows(),
+        source='synthetic',
+        allow_return_now=True,
+    )
+    assert status['level'] == 'return_now'
+    assert status['onset_at'] == onset_iso
+
+    unknown_status = squall_api.build_squall_status([], _buoy_rows(), source='live', allow_return_now=False)
+    assert unknown_status['level'] == 'unknown'
+    assert unknown_status['onset_at'] is None
+

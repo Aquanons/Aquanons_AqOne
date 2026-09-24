@@ -119,5 +119,11 @@
   "resolvedTitle": "Nalutas na ang insidente",
   "resolvedNotifBody": "Isinara na ng MDRRMO ang insidenteng ito. Kung kailangan mo pa rin ng tulong, magpadala ng bagong SOS.",
   "resolvedDescription": "Isinara na ng MDRRMO ang insidenteng ito. Hindi na kailangan ang pagliligtas.",
-  "hotspotLegendDisclaimer": "Batay sa datos ng kapaligiran. Hindi ito pangako ng huli, at hindi rin ito hudyat ng ligtas na paglabas."
+  "hotspotLegendDisclaimer": "Batay sa datos ng kapaligiran. Hindi ito pangako ng huli, at hindi rin ito hudyat ng ligtas na paglabas.",
+  "resolvedStillEndangered": "Nasa panganib pa rin? Magpadala ng isa pang SOS.",
+  "standDownTitle": "Binawi ang SOS",
+  "standDownDescription": "Minarkahan bilang maling alarma - nasabihan na ang MDRRMO na balewalain ito.",
+  "standDownPendingTitle": "Nakabinbin ang pagbawi",
+  "standDownPendingDescription": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na.",
+  "responderReplyPendingSafeNow": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na."
 }

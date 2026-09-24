@@ -108,9 +108,15 @@ def test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy(probe_db, 
         vessel_id='BUOY-ONLY-V', client_ts=1_700_000_500, source='buoy',
         buoy_id='BUOY01', src_id=65537, seq=42, local_id=None,
     )
+    direct_body = _sos(
+        vessel_id='BUOY-ONLY-V', client_ts=1_700_000_500, source='direct',
+        local_id='1755248500123-abcdef12',
+    )
     with TestClient(app, raise_server_exceptions=False) as client:
         ingest = client.post('/api/sos', json=body, headers={'X-Api-Key': GATEWAY_KEY})
         require_status(ingest, 200)
+        direct_ingest = client.post('/api/sos', json=direct_body)
+        require_status(direct_ingest, 200)
         reply = client.post('/api/sos/reply/1755248500123-abcdef12', json={'reply': 2})
 
     stored = run_db(

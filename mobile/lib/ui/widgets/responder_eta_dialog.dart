@@ -107,7 +107,9 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
 
     if (_sentReply != null) {
       final sentText = _sentReply == 2
-          ? t.responderReplySentSafeNow
+          ? (_replyQueued
+              ? t.responderReplyPendingSafeNow
+              : t.responderReplySentSafeNow)
           : t.responderReplySentStillInDanger;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1054,5 +1054,25 @@
   "seaConditionStaleLabel": "may be outdated",
   "@seaConditionStaleLabel": {
     "description": "Small chip label on the sea condition banner when data is older than the freshness threshold."
+  },
+  "standDownTitle": "Stood down",
+  "@standDownTitle": {
+    "description": "Heading on the SOS status card when the fisher stood down the incident."
+  },
+  "standDownDescription": "Marked as a false alarm - the MDRRMO has been told to disregard.",
+  "@standDownDescription": {
+    "description": "Description on the SOS status card when stand-down has been confirmed by the backend."
+  },
+  "standDownPendingTitle": "Stand-down pending",
+  "@standDownPendingTitle": {
+    "description": "Heading on the SOS status card when a stand-down request has been saved locally but not yet delivered to the backend."
+  },
+  "standDownPendingDescription": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
+  "@standDownPendingDescription": {
+    "description": "Description on the SOS status card when a stand-down is queued locally awaiting network connectivity."
+  },
+  "responderReplyPendingSafeNow": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
+  "@responderReplyPendingSafeNow": {
+    "description": "Notice shown in responder ETA dialog when the safe now reply is queued locally."
   }
 }

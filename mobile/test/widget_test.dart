@@ -50,6 +50,8 @@ SosRecord _record({
   String? ackedBy,
   String? etaAt,
   String? resolvedAt,
+  int? fisherReply,
+  bool fisherReplySynced = false,
 }) {
   return SosRecord(
     localId: 'local-1',
@@ -64,6 +66,8 @@ SosRecord _record({
     ackedBy: ackedBy,
     etaAt: etaAt,
     resolvedAt: resolvedAt,
+    fisherReply: fisherReply,
+    fisherReplySynced: fisherReplySynced,
   );
 }
 
@@ -216,6 +220,44 @@ void main() {
       expect(
         find.text('Still in danger? Send another SOS.'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets('synced stand-down shows still-in-danger warning',
+        (tester) async {
+      await tester.pumpWidget(
+        _host(
+          DeliveryStateTile(
+            record: _record(
+              fisherReply: 2,
+              fisherReplySynced: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Still in danger? Send another SOS.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('pending stand-down does not show still-in-danger warning',
+        (tester) async {
+      await tester.pumpWidget(
+        _host(
+          DeliveryStateTile(
+            record: _record(
+              fisherReply: 2,
+              fisherReplySynced: false,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Still in danger? Send another SOS.'),
+        findsNothing,
       );
     });
   });

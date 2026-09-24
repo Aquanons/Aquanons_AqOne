@@ -225,5 +225,10 @@
   "weatherConditionThunderstorm": "Uran ag Kilat",
   "weatherConditionSevereStorm": "Grabe nga Unos",
   "weatherConditionCalm": "Adlaw ag Kumuyom",
-  "seaConditionStaleLabel": "mahimong outdated na"
+  "seaConditionStaleLabel": "mahimong outdated na",
+  "standDownTitle": "Ginbawi ro SOS",
+  "standDownDescription": "Gintandaan bilang sala nga alarma - napahibaeuan eon ro MDRRMO nga indi pagsapakon.",
+  "standDownPendingTitle": "Nagahulat ro pagbawi",
+  "standDownPendingDescription": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon.",
+  "responderReplyPendingSafeNow": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon."
 }

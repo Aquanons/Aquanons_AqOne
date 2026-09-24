@@ -19,6 +19,7 @@ class RemoteSos {
     this.acknowledgedAt,
     this.ackedBy,
     this.etaAt,
+    this.serverTime,
     this.responderStatus,
     this.responderStatusLabel,
     this.responderNote,
@@ -42,13 +43,16 @@ class RemoteSos {
   /// a duration decays in transit, a timestamp does not.
   final String? etaAt;
 
+  /// The server's timestamp when this response was generated (ISO string).
+  final String? serverTime;
+
   final int? responderStatus;
   final String? responderStatusLabel;
   final String? responderNote;
   final int? fisherReply;
   final String? resolvedAt;
 
-  static RemoteSos fromJson(Map<String, dynamic> json) {
+  static RemoteSos fromJson(Map<String, dynamic> json, {String? envelopeServerTime}) {
     final status = json['status'] as String?;
     final declared = DeliveryState.fromWire(json['delivery_state'] as String?);
     final resolved = status == 'acknowledged'
@@ -62,6 +66,7 @@ class RemoteSos {
       acknowledgedAt: json['acknowledged_at'] as String?,
       ackedBy: json['acked_by'] as String?,
       etaAt: json['eta_at'] as String?,
+      serverTime: (json['server_time'] as String?) ?? envelopeServerTime,
       responderStatus: (json['responder_status'] as num?)?.toInt(),
       responderStatusLabel: json['responder_status_label'] as String?,
       responderNote: json['responder_note'] as String?,
@@ -378,13 +383,14 @@ class BackendClient {
     if (decoded is! Map<String, dynamic>) {
       return const <RemoteSos>[];
     }
+    final serverTime = decoded['server_time'] as String?;
     final rows = decoded['events'];
     if (rows is! List) {
       return const <RemoteSos>[];
     }
     return rows
         .whereType<Map<String, dynamic>>()
-        .map(RemoteSos.fromJson)
+        .map((row) => RemoteSos.fromJson(row, envelopeServerTime: serverTime))
         .toList(growable: false);
   }
 
@@ -412,11 +418,13 @@ class BackendClient {
         return null;
       }
       final decoded = jsonDecode(response.body);
+      final serverTime =
+          decoded is Map<String, dynamic> ? decoded['server_time'] as String? : null;
       final event = decoded is Map<String, dynamic> ? decoded['event'] : null;
       if (event is! Map<String, dynamic>) {
         return null;
       }
-      return RemoteSos.fromJson(event);
+      return RemoteSos.fromJson(event, envelopeServerTime: serverTime);
     } catch (_) {
       return null;
     }

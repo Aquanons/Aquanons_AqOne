@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="43" time="14.209" timestamp="2026-09-24T08:22:29.565621+08:00" hostname="Lens-Nitro"><testcase classname="tests.security_probes.test_probe_anomaly" name="test_contact_without_coordinates_does_not_abort_fleet_evaluation" time="0.001"><properties><property name="finding" value="backend.contacts.optional-position-crash" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation" time="0.002"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation" time="0.003"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_failed_evaluation_does_not_commit_score_deactivation" time="1.645"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_one_ordinary_live_trip_evaluates_on_real_postgres" time="0.896"><properties><property name="finding" value="new.backend.anomaly.jsonb-parameter-encoding" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_measure_whole_fleet_evaluation_cost" time="2.085"><properties><property name="finding" value="backend.ai.anomaly.authenticated-whole-fleet-recompute:measure" /><property name="measure" value="{&quot;contacts&quot;: 10000, &quot;vessels&quot;: 200, &quot;scored_trips&quot;: 200, &quot;elapsed_seconds&quot;: 0.763}" /></properties></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_unknown_email_pays_the_same_bcrypt_cost_as_a_wrong_password" time="0.018"><properties><property name="finding" value="backend.auth.login-timing-enumeration" /></properties></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_token_for_an_account_that_no_longer_exists_is_rejected" time="0.011"><properties><property name="finding" value="backend.operator-jwt.no-server-revocation" /></properties></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_non_admin_operator_cannot_replace_the_live_squall_model[mdrrmo]" time="0.103"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement" /></properties></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_non_admin_operator_cannot_replace_the_live_squall_model[lgu]" time="0.009"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement" /></properties></testcase><testcase classname="tests.security_probes.test_probe_auth" name="test_squall_control_admin_reaches_the_model_write" time="0.012"><properties><property name="finding" value="backend.ai.squall.flag-authorizes-live-model-replacement:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_catch" name="test_one_vessel_cannot_rewrite_another_vessels_catch_log" time="1.131"><properties><property name="finding" value="backend.catch.global-idempotency-cross-vessel-write" /></properties></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_request_text_cannot_mark_a_current_reading_qualified" time="0.011"><properties><property name="finding" value="backend.current-ingest.unbound-calibration-claim" /></properties></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_contact_ingest_rejects_a_day_ahead_timestamp" time="0.001"><properties><property name="finding" value="backend.contacts.future-timestamp-anomaly-suppression" /></properties></testcase><testcase classname="tests.security_probes.test_probe_ingest_trust" name="test_contact_control_present_timestamp_is_accepted" time="0.001"><properties><property name="finding" value="backend.contacts.future-timestamp-anomaly-suppression:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_public_sea_condition_does_not_expose_operator_account" time="0.009"><properties><property name="finding" value="backend.public-sea-condition.operator-identity-disclosure" /></properties></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[3]" time="0.002"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 3 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 3
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 3 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:49: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[4]" time="0.001"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 4 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 4
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 4 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:49: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_control_five_reporters_publish" time="0.001"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[UPLINK_SSID]" time="0.004"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: UPLINK_SSID in the tracked shore sketch is a concrete 20-character value, not a placeholder&#10;assert False">name = 'UPLINK_SSID'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+        # A plain bool, so pytest's assertion rewriting has no value to print.
+        is_placeholder = PLACEHOLDER.search(value) is not None
+        length = len(value)
+        del value
+&gt;       assert is_placeholder, (
+            f'{name} in the tracked shore sketch is a concrete {length}-character value, not a placeholder'
+        )
+E       AssertionError: UPLINK_SSID in the tracked shore sketch is a concrete 20-character value, not a placeholder
+E       assert False
+
+tests\security_probes\test_probe_repo_static.py:47: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[UPLINK_PASS]" time="0.002"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: UPLINK_PASS in the tracked shore sketch is a concrete 8-character value, not a placeholder&#10;assert False">name = 'UPLINK_PASS'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+        # A plain bool, so pytest's assertion rewriting has no value to print.
+        is_placeholder = PLACEHOLDER.search(value) is not None
+        length = len(value)
+        del value
+&gt;       assert is_placeholder, (
+            f'{name} in the tracked shore sketch is a concrete {length}-character value, not a placeholder'
+        )
+E       AssertionError: UPLINK_PASS in the tracked shore sketch is a concrete 8-character value, not a placeholder
+E       assert False
+
+tests\security_probes\test_probe_repo_static.py:47: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_sketch_holds_no_concrete_credential[GATEWAY_API_KEY]" time="0.002"><properties><property name="finding" value="firmware.shore.committed-uplink-credential" /></properties><failure message="AssertionError: GATEWAY_API_KEY in the tracked shore sketch is a concrete 12-character value, not a placeholder&#10;assert False">name = 'GATEWAY_API_KEY'
+
+    @pytest.mark.finding('firmware.shore.committed-uplink-credential')
+    @pytest.mark.parametrize('name', ['UPLINK_SSID', 'UPLINK_PASS', 'GATEWAY_API_KEY'])
+    def test_shore_sketch_holds_no_concrete_credential(name):
+        value = _string_constant(SHORE, name)
+        if value is None:
+            return  # moved out of the sketch (build flag / secrets header)
+        # A plain bool, so pytest's assertion rewriting has no value to print.
+        is_placeholder = PLACEHOLDER.search(value) is not None
+        length = len(value)
+        del value
+&gt;       assert is_placeholder, (
+            f'{name} in the tracked shore sketch is a concrete {length}-character value, not a placeholder'
+        )
+E       AssertionError: GATEWAY_API_KEY in the tracked shore sketch is a concrete 12-character value, not a placeholder
+E       assert False
+
+tests\security_probes\test_probe_repo_static.py:47: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_key_is_not_the_repository_default" time="0.004"><properties><property name="finding" value="firmware.loam.shared-default-key" /></properties><failure message="AssertionError: LOAM_KEY is still the published default in AqOneLoam.h&#10;assert 'aqone-dev-key-change-me' != 'aqone-dev-key-change-me'">@pytest.mark.finding('firmware.loam.shared-default-key')
+    def test_loam_key_is_not_the_repository_default():
+        value = _string_constant(LOAM_BUOY, 'LOAM_KEY')
+&gt;       assert value != 'aqone-dev-key-change-me', 'LOAM_KEY is still the published default in AqOneLoam.h'
+E       AssertionError: LOAM_KEY is still the published default in AqOneLoam.h
+E       assert 'aqone-dev-key-change-me' != 'aqone-dev-key-change-me'
+
+tests\security_probes\test_probe_repo_static.py:55: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_signature_key_is_selected_per_source_id" time="0.001"><properties><property name="finding" value="firmware.loam.shared-default-key" /></properties><failure message="AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)&#10;assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)&#10; +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x00000284F6DF0FB0&gt;)">@pytest.mark.finding('firmware.loam.shared-default-key')
+    def test_loam_signature_key_is_selected_per_source_id():
+        """One global key means any holder can sign as any SRC_ID."""
+        hmac_calls = re.findall(r'mbedtls_md_hmac_starts\([^;]*;', _code(LOAM_BUOY))
+&gt;       assert hmac_calls and all('LOAM_KEY' not in call for call in hmac_calls), (
+            f'every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY ({len(hmac_calls)} call sites)'
+        )
+E       AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)
+E       assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)
+E        +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x00000284F6DF0FB0&gt;)
+
+tests\security_probes\test_probe_repo_static.py:62: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_control_headers_are_byte_identical" time="0.003"><properties><property name="finding" value="firmware.loam.shared-default-key:control" /></properties><failure message="AssertionError: assert b'// AqOneLoa..._WHITE);\n}\n' == b'  // AqOneL..._WHITE);\n}\n'&#10;  &#10;  At index 0 diff: b'/' != b' '&#10;  Use -v to get more diff">@pytest.mark.finding('firmware.loam.shared-default-key:control')
+    def test_loam_control_headers_are_byte_identical():
+&gt;       assert LOAM_BUOY.read_bytes() == LOAM_SHORE.read_bytes()
+E       AssertionError: assert b'// AqOneLoa..._WHITE);\n}\n' == b'  // AqOneL..._WHITE);\n}\n'
+E         
+E         At index 0 diff: b'/' != b' '
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_repo_static.py:69: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_shore_verifies_the_backend_certificate" time="0.004"><properties><property name="finding" value="firmware.shore.tls-peer-verification-disabled" /></properties><failure message="AssertionError: the shore sketch calls WiFiClientSecure::setInsecure()&#10;assert 'setInsecure()' not in '\n\n\n\n\n\...= true;\n}\n'&#10;  &#10;  'setInsecure()' is contained here:&#10;    &#10;      client.setInsecure();&#10;      return https.begin(client, url);&#10;    }&#10;    ...&#10;  &#10;  ...Full output truncated (791 lines hidden), use '-vv' to show">@pytest.mark.finding('firmware.shore.tls-peer-verification-disabled')
+    def test_shore_verifies_the_backend_certificate():
+        code = _code(SHORE)
+&gt;       assert 'setInsecure()' not in code, 'the shore sketch calls WiFiClientSecure::setInsecure()'
+E       AssertionError: the shore sketch calls WiFiClientSecure::setInsecure()
+E       assert 'setInsecure()' not in '\n\n\n\n\n\...= true;\n}\n'
+E         
+E         'setInsecure()' is contained here:
+E           
+E             client.setInsecure();
+E             return https.begin(client, url);
+E           }
+E           ...
+E         
+E         ...Full output truncated (791 lines hidden), use '-vv' to show
+
+tests\security_probes\test_probe_repo_static.py:75: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_buoy_warning_cache_orders_updates_by_revision" time="0.003"><properties><property name="finding" value="firmware.warning.missing-revision-tombstone" /></properties><failure message="AssertionError: the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, so a replayed older frame replaces a newer one&#10;assert None&#10; +  where None = &lt;function search at 0x00000284C055FBA0&gt;('\\b(rev|revision|version|ver)\\b', 'case T_WARN: {\n      if (!parsed) break;\n      int wid = p[&quot;id&quot;] | 0;\n      if (!wid) break;\n\n      uint32_t exp... id=%d prio=%s\\n&quot;, wid, cachedWarnings[slot].priority);\n      meshRelay(raw, total, f);\n      break;\n    }\n\n    ', re.IGNORECASE)&#10; +    where &lt;function search at 0x00000284C055FBA0&gt; = re.search&#10; +    and   re.IGNORECASE = re.I">@pytest.mark.finding('firmware.warning.missing-revision-tombstone')
+    def test_buoy_warning_cache_orders_updates_by_revision():
+        block = _case_block(_code(BUOY), 'T_WARN')
+&gt;       assert re.search(r'\b(rev|revision|version|ver)\b', block, re.I), (
+            'the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, '
+            'so a replayed older frame replaces a newer one'
+        )
+E       AssertionError: the buoy T_WARN handler overwrites a cached warning by id with no revision comparison, so a replayed older frame replaces a newer one
+E       assert None
+E        +  where None = &lt;function search at 0x00000284C055FBA0&gt;('\\b(rev|revision|version|ver)\\b', 'case T_WARN: {\n      if (!parsed) break;\n      int wid = p["id"] | 0;\n      if (!wid) break;\n\n      uint32_t exp... id=%d prio=%s\\n", wid, cachedWarnings[slot].priority);\n      meshRelay(raw, total, f);\n      break;\n    }\n\n    ', re.IGNORECASE)
+E        +    where &lt;function search at 0x00000284C055FBA0&gt; = re.search
+E        +    and   re.IGNORECASE = re.I
+
+tests\security_probes\test_probe_repo_static.py:87: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_tx_ring_keeps_capacity_for_distress_frames" time="0.001"><properties><property name="finding" value="firmware.buoy.chat-starves-sos-tx-ring" /></properties><failure message="AssertionError: txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with no reserved capacity (runtime starvation still needs a bench test)&#10;assert None">@pytest.mark.finding('firmware.buoy.chat-starves-sos-tx-ring')
+    def test_tx_ring_keeps_capacity_for_distress_frames():
+        loam = _code(LOAM_BUOY)
+        enqueue = loam[loam.index('bool txEnqueue('):]
+        enqueue = enqueue[: enqueue.index('\n}') + 2]
+        guarded = re.search(r'reserve|priority|T_SOS|T_CHAT|chatInFlight|CHAT_MAX', enqueue, re.I)
+&gt;       assert guarded, (
+            'txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with '
+            'no reserved capacity (runtime starvation still needs a bench test)'
+        )
+E       AssertionError: txEnqueue takes the first free slot for any frame type; chat and SOS share the ring with no reserved capacity (runtime starvation still needs a bench test)
+E       assert None
+
+tests\security_probes\test_probe_repo_static.py:99: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_release_build_does_not_fall_back_to_debug_signing" time="0.002"><properties><property name="finding" value="mobile.release.debug-signing-fallback" /></properties><failure message="AssertionError: the release buildType falls back to the debug signing config when key.properties is absent&#10;assert not &lt;re.Match object; span=(3726, 3759), match='signingConfigs.getByName(&quot;debug&quot;)'&gt;">@pytest.mark.finding('mobile.release.debug-signing-fallback')
+    def test_release_build_does_not_fall_back_to_debug_signing():
+        gradle = GRADLE.read_text('utf-8')
+        fallback = re.search(r'signingConfigs\.getByName\("debug"\)', gradle)
+&gt;       assert not fallback, 'the release buildType falls back to the debug signing config when key.properties is absent'
+E       AssertionError: the release buildType falls back to the debug signing config when key.properties is absent
+E       assert not &lt;re.Match object; span=(3726, 3759), match='signingConfigs.getByName("debug")'&gt;
+
+tests\security_probes\test_probe_repo_static.py:109: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_tracked_release_apk_is_not_debug_signed" time="1.361"><properties><property name="finding" value="mobile.release.debug-signing-fallback" /></properties><failure message="AssertionError: mobile/releases/aqone-release.apk carries an &quot;Android Debug&quot; signing certificate&#10;assert b'Android Debug' not in b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\xb7\xbc\xf8\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8b\x01\x8b\x01\xcff\x00\x00\xcc\x85\xfc\x03\x00\x00'&#10; +  where b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\xb7\xbc\xf8\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8b\x01\x8b\x01\xcff\x00\x00\xcc\x85\xfc\x03\x00\x00' = read_bytes()&#10; +    where read_bytes = WindowsPath('C:/Users/User/Desktop/PersonalProjects/00-HACKATHONS-COMPETITIONS/00-HACKATHONS/00-2026-FIRST-YEAR/2026-Aquanons/AIHackathon2026_Aquanons_AqOne/mobile/releases/aqone-release.apk').read_bytes">@pytest.mark.finding('mobile.release.debug-signing-fallback')
+    def test_tracked_release_apk_is_not_debug_signed():
+        """Heuristic: the Android debug certificate's subject is 'CN=Android Debug'.
+        Confirm with apksigner verify --print-certs if this fails."""
+        if not TRACKED_APK.exists():
+            return
+&gt;       assert b'Android Debug' not in TRACKED_APK.read_bytes(), (
+            'mobile/releases/aqone-release.apk carries an "Android Debug" signing certificate'
+        )
+E       AssertionError: mobile/releases/aqone-release.apk carries an "Android Debug" signing certificate
+E       assert b'Android Debug' not in b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\xb7\xbc\xf8\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8b\x01\x8b\x01\xcff\x00\x00\xcc\x85\xfc\x03\x00\x00'
+E        +  where b'PK\x03\x04\x00\x00\x00\x00\x08\x00!\x08!\x02\x9b\xce\xb5O3\x00\x00\x008\x00\x00\x009\x00\x00\x00META-INF/com/android...0\x00\x00\xb7\xbc\xf8\x03resources.arscPK\x05\x06\x00\x00\x00\x00\x8b\x01\x8b\x01\xcff\x00\x00\xcc\x85\xfc\x03\x00\x00' = read_bytes()
+E        +    where read_bytes = WindowsPath('C:/Users/User/Desktop/PersonalProjects/00-HACKATHONS-COMPETITIONS/00-HACKATHONS/00-2026-FIRST-YEAR/2026-Aquanons/AIHackathon2026_Aquanons_AqOne/mobile/releases/aqone-release.apk').read_bytes
+
+tests\security_probes\test_probe_repo_static.py:118: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_demo_weather_rejects_ten_thousand_coordinate_cells" time="0.007"><properties><property name="finding" value="backend.demo-weather.unbounded-coordinate-expansion" /></properties></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_public_squall_does_not_load_week_old_readings" time="1.165"><properties><property name="finding" value="backend.public-squall.unbounded-history-load" /></properties></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_mesh_chat_has_a_retention_or_admission_control" time="0.089"><properties><property name="finding" value="backend.mesh.unbounded-public-storage" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_anonymous_sos_cannot_self_assert_responder_confirmation" time="0.012"><properties><property name="finding" value="backend.sos.untrusted-provenance-claims" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key" time="0.009"><properties><property name="finding" value="backend.sos.untrusted-provenance-claims" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_genuine_sos_survives_a_burst_of_anonymous_sos" time="1.234"><properties><property name="finding" value="backend.sos.anonymous-incidents-crowd-dispatch-feed" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy" time="1.015"><properties><property name="finding" value="mobile.sos.buoy-only-reply-unroutable" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[GET-/api/v1/trips-None]" time="0.008"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[GET-/api/v1/trips/PROBE-TRIP-None]" time="0.007"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_trip_route_requires_a_bound_principal[PATCH-/api/v1/trips/PROBE-TRIP-body2]" time="0.011"><properties><property name="finding" value="backend.trips.unbound-public-access" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_warning_delivery_route_requires_an_authority[POST-/api/advisories/delivery-body0]" time="0.010"><properties><property name="finding" value="backend.warning-delivery.unbound-state-authority" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_warning_delivery_route_requires_an_authority[GET-/api/advisories/101/deliveries-None]" time="0.011"><properties><property name="finding" value="backend.warning-delivery.unbound-state-authority" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_anonymous_caller_cannot_replace_an_existing_vessel_identity" time="0.851"><properties><property name="finding" value="backend.vessel-profile.unbound-owner-write" /></properties></testcase></testsuite></testsuites>

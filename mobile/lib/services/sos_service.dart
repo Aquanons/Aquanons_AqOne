@@ -242,7 +242,7 @@ class SosService {
     if (record == null) {
       return false;
     }
-    await _outbox.saveFisherReply(localId, reply);
+    await _outbox.saveFisherReply(localId, reply, synced: false);
     _changes.add(null);
 
     final remoteId = record.remoteId;
@@ -252,16 +252,37 @@ class SosService {
       _pendingReplies[localId] = reply;
       return false;
     }
+    final ok = await _sendReply(record, reply);
+    if (!ok) {
+      _pendingReplies[localId] = reply;
+    }
+    return ok;
+  }
+
+  Future<bool> _sendReply(SosRecord record, int reply) async {
+    final remoteId = record.remoteId;
+    if (remoteId == null) {
+      return false;
+    }
+    // SEC-21: Before an un-credentialed handset replies to a record the
+    // backend has not confirmed as delivered over the direct path, re-post
+    // the same SOS directly. This is idempotent on (vessel_id, client_ts) and
+    // records the local_id on the backend so the reply route matches.
+    if (!_backend.hasVesselCredential) {
+      try {
+        await _backend.postSos(record);
+      } catch (_) {}
+    }
     final ok = await _backend.replyToSos(
       int.tryParse(remoteId) ?? -1,
       reply,
-      localId: localId,
+      localId: record.localId,
     );
     if (ok) {
-      _pendingReplies.remove(localId);
-      _syncedReplies.add(localId);
-    } else {
-      _pendingReplies[localId] = reply;
+      await _outbox.markFisherReplySynced(record.localId);
+      _pendingReplies.remove(record.localId);
+      _syncedReplies.add(record.localId);
+      _changes.add(null);
     }
     return ok;
   }
@@ -313,21 +334,24 @@ class SosService {
   /// [_applyRemote] sends it the moment reconcile learns the event id -
   /// see the fisherReply check there.
   Future<void> standDown(String localId) async {
-    await _outbox.saveFisherReply(localId, 2);
+    final record = await _outbox.byLocalId(localId);
+    if (record == null) {
+      return;
+    }
+    await _outbox.saveFisherReply(localId, 2, synced: false);
     _changes.add(null);
 
-    final record = await _outbox.byLocalId(localId);
-    final remoteId = record?.remoteId;
+    final remoteId = record.remoteId;
     if (remoteId == null) {
       // Nothing more to do now - reconcile() will flush this once the
       // event id arrives.
+      _pendingReplies[localId] = 2;
       return;
     }
-    await _backend.replyToSos(
-      int.tryParse(remoteId) ?? -1,
-      2,
-      localId: localId,
-    );
+    final ok = await _sendReply(record, 2);
+    if (!ok) {
+      _pendingReplies[localId] = 2;
+    }
   }
 
   Future<BuoyStatus?> pollBuoy() async {
@@ -469,15 +493,31 @@ class SosService {
       if (advanced != null && advanced.state != record.state) {
         changed = true;
       }
+      // SEC-22: Store the ETA converted to the device clock:
+      // device now plus (eta_at minus server_time). Without server_time, keep
+      // today's behaviour.
+      String? adjustedEtaAt = match.etaAt;
+      if (match.etaAt != null && match.serverTime != null) {
+        final serverEta = DateTime.tryParse(match.etaAt!);
+        final serverNow = DateTime.tryParse(match.serverTime!);
+        if (serverEta != null && serverNow != null) {
+          final remaining = serverEta.difference(serverNow);
+          final deviceEta = DateTime.now().toUtc().add(remaining);
+          adjustedEtaAt = deviceEta.toIso8601String();
+        }
+      }
+
       // Responder details live alongside the delivery state: the ETA and
       // status are what the fisher is actually waiting to see.
       final stored = await _outbox.saveResponder(
         record.localId,
         remoteId: match.id,
-        etaAt: match.etaAt,
+        etaAt: adjustedEtaAt,
         responderStatus: match.responderStatus,
         responderNote: match.responderNote ?? match.responderStatusLabel,
         resolvedAt: match.resolvedAt,
+        fisherReplySynced:
+            (match.resolvedAt != null || match.fisherReply != null) ? true : null,
       );
       if (stored) {
         changed = true;
@@ -490,14 +530,12 @@ class SosService {
           (!_syncedReplies.contains(record.localId) ? record.fisherReply : null);
       if (pendingReply != null && match.id.isNotEmpty) {
         try {
-          final ok = await _backend.replyToSos(
-            int.tryParse(match.id) ?? -1,
+          final ok = await _sendReply(
+            record.copyWith(remoteId: match.id),
             pendingReply,
-            localId: record.localId,
           );
           if (ok) {
-            _pendingReplies.remove(record.localId);
-            _syncedReplies.add(record.localId);
+            changed = true;
           }
         } catch (_) {}
       }

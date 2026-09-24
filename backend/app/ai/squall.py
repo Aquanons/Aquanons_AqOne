@@ -664,6 +664,11 @@ def detect_squall(
             'onset_span_minutes': feature_bundle.propagation.onset_span_minutes,
             'geometry_degenerate': feature_bundle.propagation.geometry_degenerate,
             'fit_intercept_minutes': feature_bundle.propagation.fit_intercept_minutes,
+            'onset_anchor': (
+                feature_bundle.propagation.onset_anchor.isoformat()
+                if feature_bundle.propagation.onset_anchor
+                else None
+            ),
         },
         features=feature_bundle.to_features(),
         calibration=CALIBRATION,

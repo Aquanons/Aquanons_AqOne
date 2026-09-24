@@ -49,6 +49,7 @@ class SquallWatch {
     this.leadMinutes,
     this.triggeredBuoys = const <String>[],
     this.observedAt,
+    this.onsetAt,
     this.generatedAt,
     this.dataAgeSeconds,
     this.calibration,
@@ -67,6 +68,9 @@ class SquallWatch {
   /// The newest real pressure reading the backend has ever seen, whether or
   /// not the array currently qualifies for a live nowcast.
   final DateTime? observedAt;
+
+  /// Time when propagation began across the array (ISO string).
+  final String? onsetAt;
 
   /// Server clock time this response was computed.
   final DateTime? generatedAt;
@@ -129,6 +133,7 @@ class SquallWatch {
     final lead = decoded['lead_minutes'];
     final buoys = decoded['triggered_buoys'];
     final observedAtRaw = decoded['observed_at'];
+    final onsetAtRaw = decoded['onset_at'];
     final generatedAtRaw = decoded['generated_at'];
     final dataAge = decoded['data_age_seconds'];
 
@@ -141,6 +146,7 @@ class SquallWatch {
           : const <String>[],
       observedAt:
           observedAtRaw is String ? DateTime.tryParse(observedAtRaw) : null,
+      onsetAt: onsetAtRaw is String ? onsetAtRaw : null,
       generatedAt:
           generatedAtRaw is String ? DateTime.tryParse(generatedAtRaw) : null,
       dataAgeSeconds: dataAge is num ? dataAge.toDouble() : null,
@@ -153,10 +159,22 @@ class SquallWatch {
   /// Identity for deciding whether this is the *same* squall the fisher has
   /// already acknowledged, or a new one that should alarm again.
   ///
-  /// Keyed on the affected buoys rather than the timestamp: `observed_at`
-  /// advances every time the buoys report, so keying on it would re-fire the
-  /// alarm every poll for one continuous squall.
-  String get identity => triggeredBuoys.isEmpty
-      ? 'squall'
-      : (List<String>.from(triggeredBuoys)..sort()).join(',');
+  /// Keyed on the affected buoys plus onset_at. Without onset_at, falls back
+  /// to observed_at floored to a 3-hour UTC bucket so a later squall alarms
+  /// again after a missed clear.
+  String get identity {
+    final buoysPart = triggeredBuoys.isEmpty
+        ? 'squall'
+        : (List<String>.from(triggeredBuoys)..sort()).join(',');
+    if (onsetAt != null && onsetAt!.isNotEmpty) {
+      return '$buoysPart:$onsetAt';
+    }
+    if (observedAt != null) {
+      final utc = observedAt!.toUtc();
+      final flooredHour = utc.hour - (utc.hour % 3);
+      final bucket = DateTime.utc(utc.year, utc.month, utc.day, flooredHour);
+      return '$buoysPart:${bucket.toIso8601String()}';
+    }
+    return buoysPart;
+  }
 }
