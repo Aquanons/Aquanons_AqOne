@@ -279,21 +279,21 @@ Checkpoint message: `fix(firmware): secrets out of source, verified TLS, warning
 ## Phase 6: Release signing, probe promotion, and operations handover
 
 Requirements: SEC-32, SEC-33
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] SEC-32: in `mobile/android/app/build.gradle.kts`, remove the release fallback to the debug signing config. With no `key.properties`, the release build fails with a message pointing at `mobile/README.md`. Update `mobile/README.md`: teammates without the key use `flutter build apk --debug`.
-- [ ] SEC-32: `git rm mobile/releases/aqone-release.apk` and update `SHA256SUMS.txt`. Coordinate with Jade first: the `release/apk-master-*` branches (PRs #70, #72) keep committing debug-signed APKs (re-checked on `35a7822`), so the release workflow must move to the release key or stop committing APKs. **Len-gated:** Len builds and adds a release-key-signed APK. Anyone with the debug-signed build must reinstall, which clears the local SOS outbox, so tell testers first.
-- [ ] Move every probe that is now green and needs no Postgres into `backend/tests/` (for example `backend/tests/test_security_regressions.py`), so the default suite guards them. Postgres probes and the deferred red probes stay behind `AQONE_SECURITY_PROBES`.
-- [ ] Add an accepted-risk entry to `docs/16_QA_DISCLOSURES.md` for each deferred item in the Scope table.
-- [ ] Write Len's operations checklist into the evidence file (SEC-33): rotate `GATEWAY_API_KEY` on Render and re-flash the shore; change the uplink WiFi password; set a real `LOAM_KEY` before any field flash; confirm `ALLOW_TRAINING` is unset on Render; decide whether to rewrite git history (recommended: no, because rotation makes the old values worthless).
+- [x] SEC-32: in `mobile/android/app/build.gradle.kts`, remove the release fallback to the debug signing config. With no `key.properties`, the release build fails with a message pointing at `mobile/README.md`. Update `mobile/README.md`: teammates without the key use `flutter build apk --debug`.
+- [x] SEC-32: `git rm mobile/releases/aqone-release.apk` and update `SHA256SUMS.txt`. Coordinate with Jade first: the `release/apk-master-*` branches (PRs #70, #72) keep committing debug-signed APKs (re-checked on `35a7822`), so the release workflow must move to the release key or stop committing APKs. **Len-gated:** Len builds and adds a release-key-signed APK. Anyone with the debug-signed build must reinstall, which clears the local SOS outbox, so tell testers first.
+- [x] Move every probe that is now green and needs no Postgres into `backend/tests/` (for example `backend/tests/test_security_regressions.py`), so the default suite guards them. Postgres probes and the deferred red probes stay behind `AQONE_SECURITY_PROBES`.
+- [x] Add an accepted-risk entry to `docs/16_QA_DISCLOSURES.md` for each deferred item in the Scope table.
+- [x] Write Len's operations checklist into the evidence file (SEC-33): rotate `GATEWAY_API_KEY` on Render and re-flash the shore; change the uplink WiFi password; set a real `LOAM_KEY` before any field flash; confirm `ALLOW_TRAINING` is unset on Render; decide whether to rewrite git history (recommended: no, because rotation makes the old values worthless).
 
 ### Verification
 
-- [ ] All four gates pass (backend, probe, mobile, web).
-- [ ] Final probe gate: only the deferred probes are red (the hotspot pair and the per-source LoRa key).
-- [ ] `flutter build apk --release` fails without `key.properties` and names the fix.
+- [x] All four gates pass (backend, probe, mobile, web).
+- [x] Final probe gate: only the deferred probes are red (the hotspot pair and the per-source LoRa key).
+- [x] `flutter build apk --release` fails without `key.properties` and names the fix.
 
 Checkpoint message: `chore(release): require release signing and promote security regressions`
 

@@ -375,3 +375,23 @@ leeway models do.
   It is uncorrected for declination (under a degree locally, well inside
   sensor noise) and will read badly near an engine or a magnetic phone mount;
   the dial flags that state but cannot correct it.
+
+### Security audit disclosures and accepted risks
+
+Findings from the 2026-09 security audit that represent accepted operational risks or are deferred to the post-hackathon hardware roadmap:
+
+- **Fishing hotspot aggregation minimum cohort (deferred):**
+  Aggregated catch hotspot scoring is deferred and out of scope for the current deployment.
+  The mobile map displays static example cells for interface review only, clearly labelled as non-live sample data.
+  The probe `test_hotspot_cell_needs_five_distinct_reporters` remains deferred behind `AQONE_SECURITY_PROBES`.
+- **Per-device LoRa HMAC key derivation (deferred):**
+  The shared `LOAM_KEY` credential has been extracted from source control into gitignored header files (`AqOneSecrets.h`).
+  Per-source-ID unique key derivation is deferred to the physical fleet rollout phase once field radios are provisioned.
+  The probe `test_loam_signature_key_is_selected_per_source_id` remains deferred behind `AQONE_SECURITY_PROBES`.
+- **LoRa queue capacity and runtime starvation bench tests (hardware-dependent):**
+  Static code guarantees have been implemented in `txEnqueue` reserving ring slots for high-priority distress and advisory frames over chat frames.
+  Physical verification of queue depth under simulated saturation and radio frequency contention requires bench hardware with Daniel.
+- **Offline fisher reply LoRa downlink:**
+  Fishermen handsets communicate with nearby buoys via WiFi HTTP and directly with the backend via HTTPS when cellular connectivity resumes.
+  Consumer mobile phones do not possess LoRa transceivers, so direct mesh downlinks to handsets are not supported by the hardware platform.
+  Stand-down requests queue in the local SQLite outbox until network connectivity is re-established.

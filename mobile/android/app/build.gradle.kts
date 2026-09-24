@@ -13,10 +13,8 @@ plugins {
 // android/key.properties.example for how to create it.
 //
 // Absent on a teammate's machine, or in CI without the secret, this stays
-// empty and the release build falls back to debug signing below - a build
-// that runs but is NOT shippable. That trade is deliberate: failing the
-// build here would stop anyone without the key from testing a release build
-// at all.
+// empty and release builds fail fast with instructions pointing to
+// mobile/README.md. Teammates without the key use 'flutter build apk --debug'.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) {
@@ -72,19 +70,11 @@ android {
 
     buildTypes {
         release {
-            // Real key when key.properties is present; debug key otherwise so
-            // a teammate without the keystore can still build and test a
-            // release. A debug-signed APK must never be distributed: that key
-            // is public and identical on every machine, so anyone could ship
-            // an APK Android accepts as an update to this one.
-            //
-            // Phase 6 requires checking which of these actually applied before
-            // calling a build shippable:
-            //   ./gradlew :app:signingReport
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            // Real key when key.properties is present. No debug fallback: a debug-signed
+            // APK must never be distributed (SEC-32). Teammates without key.properties
+            // must use 'flutter build apk --debug'.
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
             }
 
             // Shrink and obfuscate. Off by default in Flutter's template; on
@@ -98,6 +88,20 @@ android {
                 "proguard-rules.pro",
             )
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val isReleaseBuild = allTasks.any { task ->
+        val name = task.name.lowercase()
+        (name.contains("release") && (name.startsWith("assemble") || name.startsWith("bundle") || name.startsWith("package")))
+    }
+    if (isReleaseBuild && !hasReleaseKeystore) {
+        throw GradleException(
+            "Release builds require android/key.properties with valid release keystore credentials. " +
+            "Teammates without the release key must build with 'flutter build apk --debug'. " +
+            "See mobile/README.md for keystore instructions."
+        )
     }
 }
 

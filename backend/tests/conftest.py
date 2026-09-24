@@ -19,11 +19,12 @@ def pytest_configure(config):
         'markers',
         'real_user_session: test exercises the real user session database lookup in app.auth',
     )
+    config.addinivalue_line('markers', 'finding(id): the audit finding id this probe verifies')
 
 
 @pytest.fixture(autouse=True)
 def _stub_user_session_for_fake_pools(request, monkeypatch):
-    if 'security_probes' in str(request.fspath):
+    if 'security_probes' in str(request.fspath) or 'test_security_regressions' in str(request.fspath):
         return
     if request.node.get_closest_marker('real_user_session'):
         return

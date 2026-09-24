@@ -43,12 +43,29 @@ flutter run
 # against a laptop mock of the buoy
 flutter run --dart-define=BUOY_BASE_URL=http://192.168.1.50:8080
 
-# release build for the demo
+# build debug APK (for teammates without the release signing key)
+flutter build apk --debug
+
+# release build for the demo (requires android/key.properties; see Release signing below)
 flutter build apk --release
 
 # pitch build (Phase 1 manual SOS focus)
 flutter build apk --release --dart-define=PITCH_MODE=true
 ```
+
+## Release signing
+
+Release builds (`flutter build apk --release`) require `android/key.properties` holding the release keystore path and passwords.
+If `key.properties` is absent or incomplete, the release build fails immediately with an error.
+
+Teammates without the release key must use the debug build:
+
+```bash
+flutter build apk --debug
+```
+
+Never commit `key.properties` or keystore (`.jks`) files to the repository.
+See `android/key.properties.example` for keystore creation instructions.
 
 Overridable at build time:
 

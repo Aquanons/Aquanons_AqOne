@@ -1,1 +1,2 @@
-7e18781a09bedba3642f9c08b9486c96051586d402ff3100cc6e050b0f3f8135  aqone-release.apk
+# Tracked debug-signed aqone-release.apk removed (SEC-32).
+# Production release APKs are signed with the release keystore by Len.

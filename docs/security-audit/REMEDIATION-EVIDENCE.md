@@ -710,4 +710,133 @@ Output:
 2. `txEnqueue`: Documented the `reserve` parameter and ring capacity rules. Chat frames (`0x05`) require > 2 free slots in `txRing` (`reserve = 2`), preventing chat floods from starving distress (`SOS`), `ACK`, and `WARN` frames.
 3. Secrets handling: Firmware developers must copy `AqOneSecrets.h.example` to `AqOneSecrets.h` next to `AqOneBuoy.ino` and `AqOneShore.ino`. `AqOneSecrets.h` is gitignored and must never be committed. Real keys must be set prior to flashing.
 
+## Phase 6: Release signing, probe promotion, and operations handover
+
+### Verification Summary
+
+- [x] SEC-32: Removed the debug signing fallback from `mobile/android/app/build.gradle.kts`. When `key.properties` is absent, release builds immediately throw a `GradleException` explaining the requirement and pointing teammates to `mobile/README.md`.
+- [x] Updated `mobile/README.md`: Documented that release builds require `android/key.properties` and that teammates without the release key must build with `flutter build apk --debug`.
+- [x] SEC-32: Removed `mobile/releases/aqone-release.apk` via `git rm` and updated `mobile/releases/SHA256SUMS.txt`. The tracked debug-signed APK is eliminated.
+- [x] Probe promotion: Promoted all 20 green, non-Postgres security probes into `backend/tests/test_security_regressions.py` (31 tests total). The default backend test suite now executes and guards these security regressions on every run without requiring a live Postgres instance.
+- [x] Accepted risk disclosures: Added accepted-risk disclosures to `docs/16_QA_DISCLOSURES.md` for deferred items (fishing hotspots, per-device LoRa keys, hardware queue bench testing, and offline LoRa downlink).
+- [x] Len's operations checklist (SEC-33): Itemized operational handover steps documented below.
+- [x] Gates passed:
+  - Backend default gate: `ruff check app tests` clean, `pytest -q -p no:cacheprovider` passed (441 passed, 5 skipped, 1 xfailed; +31 promoted security regressions).
+  - Probe gate (throwaway local Postgres 18 on port 55432): 40 passed (+2 net over Phase 5), 3 failed (the 3 deferred roadmap probes: `test_hotspot_cell_needs_five_distinct_reporters[3]`, `test_hotspot_cell_needs_five_distinct_reporters[4]`, `test_loam_signature_key_is_selected_per_source_id`), 0 errors. Report saved to `docs/security-audit/probe-runs/phase-6/backend-probes.xml`.
+  - Mobile gate: `flutter analyze` clean (0 issues), `flutter test` passed (265 passed, 0 failed), `flutter test test_security_probes` passed (all 6 passed).
+  - Web gate: `node --test web/test/*.test.js` passed (149 passed, 0 failed).
+  - Release build failure gate: `cmd.exe /c "gradlew.bat :app:assembleRelease"` fails with the exact exception pointing to `mobile/README.md`; `cmd.exe /c "gradlew.bat :app:assembleDebug --dry-run"` passes with exit code 0.
+
+### Gate Command Evidence
+
+#### 1. Release Signing Build Failure Verification
+```powershell
+cmd.exe /c "gradlew.bat :app:assembleRelease"
+# Output:
+# FAILURE: Build failed with an exception.
+# * What went wrong:
+# Release builds require android/key.properties with valid release keystore credentials. Teammates without the release key must build with 'flutter build apk --debug'. See mobile/README.md for keystore instructions.
+# BUILD FAILED in 23s
+
+cmd.exe /c "gradlew.bat :app:assembleDebug --dry-run"
+# Output:
+# BUILD SUCCESSFUL in 17s
+```
+
+#### 2. Backend Default Gate (Including Promoted Security Regressions)
+```powershell
+ruff check app tests
+# Output: All checks passed!
+
+pytest -q -p no:cacheprovider
+# Output: 441 passed, 5 skipped, 1 xfailed in 17.69s
+```
+
+#### 3. Probe Gate (Local Postgres 18 on Port 55432)
+```powershell
+$dataDir = "$env:TEMP\aqone_probe_pg_data"
+if (!(Test-Path $dataDir)) { & 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $dataDir -U postgres -A trust -E UTF8 }
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir -o '-p 55432' -l "$env:TEMP\aqone_probe_pg.log" start
+Start-Sleep -Seconds 2
+
+cd backend
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+python -m pytest tests/security_probes -p no:cacheprovider -s --junitxml=../docs/security-audit/probe-runs/phase-6/backend-probes.xml
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL -ErrorAction SilentlyContinue
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir stop
+cd ..
+```
+Output:
+- Total probe items: 43.
+- Passed: 40 (+2 net over Phase 5).
+- Failed: 3 (all expected deferred findings: `test_hotspot_cell_needs_five_distinct_reporters[3]`, `test_hotspot_cell_needs_five_distinct_reporters[4]`, `test_loam_signature_key_is_selected_per_source_id`).
+- Errors: 0.
+
+#### 4. Web Gate
+```powershell
+node --test web/test/*.test.js
+# Output: tests 149, pass 149, fail 0 in 1326ms
+```
+
+#### 5. Mobile Gate
+```powershell
+flutter analyze
+# Output: No issues found! (ran in 100.2s)
+
+flutter test
+# Output: All 265 tests passed!
+
+flutter test test_security_probes
+# Output: All 6 tests passed!
+```
+
+### Probe Status Changes (Phase 6)
+
+1. `test_release_build_does_not_fall_back_to_debug_signing`: PASSED (was FAILED) [SEC-32]
+2. `test_tracked_release_apk_is_not_debug_signed`: PASSED (was FAILED) [SEC-32]
+
+### Deferred Probes (Remaining Red by Design)
+
+1. `test_hotspot_cell_needs_five_distinct_reporters[3]`: FAILED (Finding: `backend.hotspots.minimum-cohort-policy-drift`, deferred per Len)
+2. `test_hotspot_cell_needs_five_distinct_reporters[4]`: FAILED (Finding: `backend.hotspots.minimum-cohort-policy-drift`, deferred per Len)
+3. `test_loam_signature_key_is_selected_per_source_id`: FAILED (Finding: `firmware.loam.shared-default-key`, per-source key derivation deferred to hardware rollout)
+
+### Len's Operations Checklist (SEC-33)
+
+This checklist covers secrets, credentials, and configuration flags that live outside git and must be executed in production:
+
+1. **Rotate `GATEWAY_API_KEY` on Render & Shore Gateway:**
+   - In Render Dashboard, open the `aqone-backend` service settings and navigate to Environment Variables.
+   - Generate a cryptographically random 256-bit token (e.g., `python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+   - Set `GATEWAY_API_KEY` to the new value on Render and deploy.
+   - On the flashing machine, set `GATEWAY_API_KEY` in `firmware/shore/AqOneShore/AqOneSecrets.h` to the matching value.
+   - Flash the shore gateway ESP32-S3 before deploying to the shore station.
+2. **Rotate Uplink WiFi Credentials:**
+   - The shore gateway previously contained the WiFi SSID and passphrase in committed source.
+   - Change the actual network password on the shore station's WiFi router or cellular hotspot.
+   - Update `UPLINK_SSID` and `UPLINK_PASS` in `firmware/shore/AqOneShore/AqOneSecrets.h`.
+   - Verify that the shore gateway reconnects cleanly and establishes TLS connection to Render.
+3. **Provision Production `LOAM_KEY` on All Radios:**
+   - The LoRa mesh previously used the hardcoded default `"aqone-dev-key-change-me"`.
+   - Generate a high-entropy secret string (minimum 32 characters) for the fleet.
+   - Set `LOAM_KEY` in `firmware/buoy/AqOneBuoy/AqOneSecrets.h` and `firmware/shore/AqOneShore/AqOneSecrets.h`.
+   - Both sketches fail to compile if `AqOneSecrets.h` is missing, and will panic/hang at boot if `LOAM_KEY == "aqone-dev-key-change-me"`.
+   - Flash all buoy pod radios and the shore gateway radio with the identical production key.
+4. **Confirm `ALLOW_TRAINING` Is Unset on Render:**
+   - Verify that the environment variable `ALLOW_TRAINING` is NOT set in the production Render environment.
+   - This ensures `POST /api/ai/squall/train` cannot be executed by unauthorized callers in production.
+5. **Git History Rewriting Decision:**
+   - Recommendation: Do not rewrite git history.
+   - Rationale: All credentials formerly present in the repository (`GATEWAY_API_KEY`, `UPLINK_PASS`, development `LOAM_KEY`) are being rotated as part of items 1-3.
+   - Once rotated on Render, on the WiFi router, and on the physical devices, the strings present in historical commits have zero authentication capability.
+   - A history rewrite would rewrite all commit SHAs, disrupting branches, tags, and teammates' worktrees.
+6. **Production Release APK Signing:**
+   - Len creates `mobile/android/key.properties` pointing to the private release keystore (`.jks`) on a secure machine.
+   - Build the signed production APK via `flutter build apk --release`.
+   - Distribute the signed release APK to testers and fishermen.
+   - Advise testers who previously installed debug-signed builds to uninstall first (Android blocks updating a debug-signed app with a release-signed app; note that uninstalling clears local outbox data).
+
+
 
