@@ -82,3 +82,20 @@ Row counts and IDs only; never data, URLs or credentials.
 - Focused B5 policy/API checks: 73 passed; identity/profile PostgreSQL checks: 13 passed.
 - `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; PostgreSQL probes applied migration 035.
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+
+## Phase B6 - Scheduler, SMS escalation, ops status and operator refresh
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_escalation.py tests/test_notify.py`: collection failed because `app.incidents.escalation` and `app.notify` do not exist.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/test_edge_scheduler_pg.py`: collection failed because `app.scheduler` does not exist.
+- With the same PostgreSQL probe URL, the two operator refresh cases failed: both returned HTTP 405 because `POST /api/token/refresh` is not registered.
+
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 507 passed, 44 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 546 passed, 5 skipped, 1 xfailed.
+- B6 focused policy, notify, scheduler, auth and migration checks: 27 passed.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- Manual local run with Semaphore credentials unset: POST `/api/sos` returned 200; after 155 seconds the scheduler set `escalated_at`, wrote audit outcome `not_configured`, and `/api/ops/status` showed `sms_configured=false` with the `sos-escalation` last run. The isolated PostgreSQL database was dropped after verification.

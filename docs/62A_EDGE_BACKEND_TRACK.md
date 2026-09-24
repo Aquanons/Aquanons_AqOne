@@ -342,7 +342,7 @@ Checkpoint message: `feat(identity): official-only MDRRMO chat, device-bound pro
 
 Requirements: EC-C6 (backend), EC-H6 (schedule), EC-C5 (expiry data), EC-M18
 Merge after: B3
-State: Not started
+State: Done - implementation checkpoint pending
 
 ### Tasks
 
@@ -355,30 +355,30 @@ State: Not started
   - `tests/test_edge_scheduler_pg.py`:
     - `test_scheduler_single_runner` (two concurrent `run_job_once` calls; exactly one executes, via `pg_try_advisory_lock`)
     - `test_escalation_marks_and_audits` (`escalated_at` set, and audit `sos.escalate` with outcome `sent` or `not_configured`)
-    - `test_ops_status_reports_db_days_left` (`DB_EXPIRES_AT` set, and `db_days_left` is correct)
-    - `test_ops_status_reports_sms_configured`
+    - expiry and SMS status assertions in `test_ops_status_reports_database_expiry_and_sms_configuration`
+    - SMS configured status assertion in `test_ops_status_reports_database_expiry_and_sms_configuration`
   - `tests/test_auth_session.py` additions: `test_operator_token_refresh` and `test_operator_token_refresh_rejects_revoked`.
-- [ ] Add `migrations/036_escalation_and_jobs.sql`: `sos_events.escalated_at TIMESTAMPTZ`, and `scheduler_runs (job TEXT PRIMARY KEY, last_run_at TIMESTAMPTZ NOT NULL)`.
-- [ ] Create `app/incidents/escalation.py` with `ESCALATE_AFTER = timedelta(minutes=2)`, `due_for_escalation` and `escalation_text`.
+- [x] Add `migrations/036_escalation_and_jobs.sql`: `sos_events.escalated_at TIMESTAMPTZ`, and `scheduler_runs (job TEXT PRIMARY KEY, last_run_at TIMESTAMPTZ NOT NULL)`.
+- [x] Create `app/incidents/escalation.py` with `ESCALATE_AFTER = timedelta(minutes=2)`, `due_for_escalation` and `escalation_text`.
   The text is English because it goes to MDRRMO staff, not fishermen.
-- [ ] Create `app/notify.py` with `async def send_sms(text) -> NotifyResult`, one Semaphore implementation using the installed `httpx`, and no interface.
+- [x] Create `app/notify.py` with `async def send_sms(text) -> NotifyResult`, one Semaphore implementation using the installed `httpx`, and no interface.
   Env: `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS` (comma-separated), optional `SEMAPHORE_SENDER_NAME`.
   Use a 10 s timeout; failures return `FAILED` and never raise into the scheduler.
-- [ ] Create `app/scheduler.py`:
+- [x] Create `app/scheduler.py`:
   - `run_job_once(job_id, fn)` takes `pg_try_advisory_lock(hashtext(job_id))`, runs `fn`, records `scheduler_runs` and unlocks.
   - `start(app_state)` spawns asyncio tasks: escalation every 30 s, anomaly evaluation every 5 min (call the existing evaluation entry point used by `POST /api/anomaly/evaluate`; do not copy it).
   - `stop()` cancels the tasks on shutdown.
   - It is enabled unless `AQONE_SCHEDULER=0`; `tests/conftest.py` sets it to `0`.
   - Wire it into the existing `lifespan` in `main.py`.
-- [ ] Extend `GET /api/ops/status` with `sms_configured`, `db_expires_at`, `db_days_left` and `scheduler_last_run`.
-- [ ] Add `POST /api/token/refresh` in `app/api/auth.py`: `require_user`, then a new token from `create_token` with the same `ver`.
-- [ ] `render.yaml`: add `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`, `SEMAPHORE_SENDER_NAME` and `DB_EXPIRES_AT` with `sync: false` (values set in the Render dashboard, never in the repo).
+- [x] Extend `GET /api/ops/status` with `sms_configured`, `db_expires_at`, `db_days_left` and `scheduler_last_run`.
+- [x] Add `POST /api/token/refresh` in `app/api/auth.py`: `require_user`, then a new token from `create_token` with the same `ver`.
+- [x] `render.yaml`: add `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`, `SEMAPHORE_SENDER_NAME` and `DB_EXPIRES_AT` with `sync: false` (values set in the Render dashboard, never in the repo).
   Replace the database comment with a pointer to `docs/runbooks/RENDER_FREE_DB_ROTATION.md`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Manual: run locally with `SEMAPHORE_API_KEY` unset.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Manual: run locally with `SEMAPHORE_API_KEY` unset.
   Post an SOS, wait 2.5 min, and `/api/ops/status` shows the escalation job ran; the audit row says `not_configured`.
 
 ### Review and checkpoint
@@ -387,6 +387,15 @@ As in B1.
 Checkpoint message: `feat(ops): scheduled SMS escalation for unanswered SOS and operations status`
 
 ---
+
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 507 passed, 44 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 546 passed, 5 skipped, 1 xfailed.
+- B6 focused policy, notify, scheduler, auth and migration checks: 27 passed.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- Manual local run with Semaphore credentials unset: POST `/api/sos` returned 200; after 155 seconds the scheduled escalation had an `escalated_at`, the audit outcome was `not_configured`, `/api/ops/status` reported `sms_configured=false` and the `sos-escalation` last run. The isolated PostgreSQL database was dropped after verification.
 
 ## Phase B7: Honest anomaly detection and drift clock
 

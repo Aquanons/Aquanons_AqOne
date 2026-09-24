@@ -42,10 +42,17 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     await startup_db()
-    yield
-    await shutdown_db()
+    from app import scheduler
+
+    if os.environ.get('AQONE_SCHEDULER') != '0':
+        await scheduler.start(app.state)
+    try:
+        yield
+    finally:
+        await scheduler.stop()
+        await shutdown_db()
 
 
 app = FastAPI(lifespan=lifespan)

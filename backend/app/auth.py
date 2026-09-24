@@ -145,6 +145,7 @@ async def verify_user_session(user_id: int | str, claims: dict[str, Any]) -> dic
         'email': row['email'],
         'full_name': row.get('full_name', ''),
         'role': row['role'],
+        'token_version': row['token_version'],
     }
 
 
