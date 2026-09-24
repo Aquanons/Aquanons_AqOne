@@ -221,7 +221,7 @@ Checkpoint message: `feat(downlink): cap the radio feed to the smallest table an
 
 Requirements: EC-H18, EC-H20, EC-H15 (backend), EC-M3, EC-L11 (backend flag), EC-H19 (data for wording)
 Merge after: B2
-State: Done - implementation checkpoint pending
+State: Done - 4167f3d
 
 ### Tasks
 
