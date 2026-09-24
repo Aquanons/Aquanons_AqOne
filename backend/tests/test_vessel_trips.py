@@ -34,13 +34,14 @@ class _FakeTripsConn:
                 'expected_checkin_interval_minutes': args[4],
                 'status': args[5],
                 'welfare_status': args[6],
-                'reported_at': args[7],
-                'synced_at': args[8],
-                'reporter_id': args[9],
-                'reporter_type': args[10],
-                'vessel_type': args[11],
-                'vessel_length_m': args[12],
-                'vessel_draft_m': args[13],
+                'welfare_updated_at': args[7],
+                'reported_at': args[8],
+                'synced_at': args[9],
+                'reporter_id': args[10],
+                'reporter_type': args[11],
+                'vessel_type': args[12],
+                'vessel_length_m': args[13],
+                'vessel_draft_m': args[14],
                 'amendments': [],
                 'created_at': datetime.now(UTC),
                 'updated_at': datetime.now(UTC),
@@ -61,6 +62,7 @@ class _FakeTripsConn:
                 row['status'] = args[1]
             if args[2] is not None:
                 row['welfare_status'] = args[2]
+                row['welfare_updated_at'] = args[6]
             if args[3] is not None:
                 row['expected_return_at'] = args[3]
             if args[4] is not None:

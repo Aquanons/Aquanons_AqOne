@@ -74,6 +74,8 @@ def _serialise_trip(row: asyncpg.Record) -> dict[str, Any]:
         'expected_checkin_interval_minutes': row['expected_checkin_interval_minutes'],
         'status': row['status'],
         'welfare_status': row['welfare_status'],
+        'welfare_updated_at': row.get('welfare_updated_at').isoformat()
+        if row.get('welfare_updated_at') else None,
         'reported_at': row['reported_at'].isoformat() if row['reported_at'] else None,
         'synced_at': row['synced_at'].isoformat(),
         'reporter_id': row['reporter_id'],
@@ -154,10 +156,11 @@ async def create_or_register_trip(
             INSERT INTO vessel_trips (
               trip_id, vessel_id, departure_at, expected_return_at,
               expected_checkin_interval_minutes, status, welfare_status,
-              reported_at, synced_at, reporter_id, reporter_type,
+              welfare_updated_at, reported_at, synced_at, reporter_id, reporter_type,
               vessel_type, vessel_length_m, vessel_draft_m
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+                    $9, $10, $11, $12, $13, $14, $15)
             ON CONFLICT (trip_id) DO NOTHING
             RETURNING *
             """,
@@ -168,6 +171,7 @@ async def create_or_register_trip(
             payload.expected_checkin_interval_minutes,
             payload.status,
             payload.welfare_status,
+            now if payload.welfare_status != 'unknown' else None,
             reported_at,
             now,
             payload.reporter_id,
@@ -241,6 +245,7 @@ async def update_trip(
             UPDATE vessel_trips
                SET status = COALESCE($2, status),
                    welfare_status = COALESCE($3, welfare_status),
+                   welfare_updated_at = CASE WHEN $3 IS NOT NULL THEN $7 ELSE welfare_updated_at END,
                    expected_return_at = COALESCE($4, expected_return_at),
                    expected_checkin_interval_minutes = COALESCE($5, expected_checkin_interval_minutes),
                    reported_at = COALESCE($6, reported_at),

@@ -401,7 +401,7 @@ Checkpoint message: `feat(ops): scheduled SMS escalation for unanswered SOS and 
 
 Requirements: EC-H6 (monitoring status), EC-H7 (tagging), EC-H8, EC-H9, EC-H16, EC-L2, EC-L3, EC-M17
 Merge after: B6
-State: Not started
+State: Done - implementation checkpoint pending
 
 ### Tasks
 
@@ -417,29 +417,29 @@ State: Not started
     - `test_departure_hour_is_circular` (23:30 and 00:30 give about 00:00 with a small spread)
     - `test_distance_from_home_landing`
   - `tests/test_drift.py`: `test_drift_start_ignores_implausible_client_ts` (a `client_ts` 3 years old gives `created_at` and `clock_suspect == true`).
-- [ ] Add `migrations/037_contact_via_and_welfare_time.sql`: `buoy_contacts.contact_via TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
+- [x] Add `migrations/037_contact_via_and_welfare_time.sql`: `buoy_contacts.contact_via TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
   Add `vessel_trips.welfare_updated_at TIMESTAMPTZ` only if no welfare timestamp already exists; check `024_vessel_trips_and_current_events.sql` first.
-- [ ] `app/api/contacts.py`: `ContactEventIn.contact_via` (optional, default `buoy`), stored.
+- [x] `app/api/contacts.py`: `ContactEventIn.contact_via` (optional, default `buoy`), stored.
   The existing `source` (`live` or `synthetic`) is unchanged; `docs/04` E4.2 froze the new name because `source` was taken.
-- [ ] `app/ai/trip_profile.py`:
+- [x] `app/ai/trip_profile.py`:
   - Remove the new-profile `0.9` damping (around `:621`).
   - Add a `check_needed` status: after the fleet's 90th-percentile trip duration with no contacts and no declared return.
   - `safe` welfare caps the overdue factor only within 2 h of `welfare_updated_at`.
   - Use a circular mean of departure hours via `math.atan2`.
   - Measure distance from the vessel's home landing (the median first-contact position of completed trips), falling back to `geo.CENTER_LAT` and `geo.CENTER_LON`.
-- [ ] `app/ai/anomaly_service.py`:
+- [x] `app/ai/anomaly_service.py`:
   - Replace `OPEN_TRIP_FRESHNESS_WINDOW` (12 h) with a 72 h window on the last at-sea contact (`geo.point_in_water`).
   - Handset-only evidence cannot produce `overdue`.
-- [ ] The `GET /api/anomaly/active` route adds `monitoring` and `monitoring_reason`.
-- [ ] `app/ai/drift.py`: the start time uses `client_ts` only inside `[created_at - 24 h, created_at + 5 min]`; otherwise it uses `created_at` and sets `clock_suspect`.
+- [x] The `GET /api/anomaly/active` route adds `monitoring` and `monitoring_reason`.
+- [x] `app/ai/drift.py`: the start time uses `client_ts` only inside `[created_at - 24 h, created_at + 5 min]`; otherwise it uses `created_at` and sets `clock_suspect`.
   The drift response exposes `clock_suspect`.
-- [ ] Rerun `python -m app.ai.trip_profile_eval` and write the numbers to `models/eval_results.json` as the eval workflow requires.
+- [x] Rerun `python -m app.ai.trip_profile_eval` and write the numbers to `models/eval_results.json` as the eval workflow requires.
   Note the change in the evidence file.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Eval numbers recorded before and after, and not presented as field accuracy (docs/16 rule).
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Eval numbers recorded before and after, and not presented as field accuracy (docs/16 rule).
 
 ### Review and checkpoint
 
@@ -447,6 +447,15 @@ As in B1.
 Checkpoint message: `fix(ai): honest monitoring status, silence ages up, and fairer trip priors`
 
 ---
+
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 518 passed, 46 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 559 passed, 5 skipped, 1 xfailed.
+- B7 focused profile, anomaly source, drift, contact and welfare checks: 37 passed, including 5 migration checks.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- `python -m app.simulation.generator --days 14 --seed 42` and `python -m app.ai.trip_profile_eval` ran on an isolated PostgreSQL 18 database. The 496 normal synthetic trips raised 496 candidates, giving a 100% false-alarm rate; 8 incidents were detected with a median 55-minute detection latency. These are synthetic evaluation results, not field accuracy. The previous `false_alarm_rate` was retracted/null; the generated values are in `backend/app/ai/models/eval_results.json`.
 
 ## Phase B8: Radio signing service (runs only when Track F reaches F4)
 

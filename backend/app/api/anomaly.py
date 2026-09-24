@@ -27,6 +27,10 @@ def _score_response(row: Any, *, now: datetime) -> dict[str, object]:
     data['source'] = 'synthetic' if is_synthetic else 'live'
     data['evaluated_at'] = data['observed_at']
     data['data_age_seconds'] = max(0.0, (now - data['last_contact_at']).total_seconds())
+    data['monitoring'] = 'active' if data['data_age_seconds'] < 30 * 60 else 'unavailable'
+    data['monitoring_reason'] = (
+        None if data['monitoring'] == 'active' else 'No vessel contact in the last 30 minutes.'
+    )
     return data
 
 

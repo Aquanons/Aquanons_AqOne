@@ -19,11 +19,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from itertools import pairwise
-from statistics import mean
+from statistics import mean, median
 from typing import Any
 
 import numpy as np
 
+from app import geo
 from app.geo import distance_km as _distance_km
 
 CENTER_LAT = 11.6892
@@ -76,6 +77,8 @@ class VesselProfile:
     typical_max_distance_km: dict[str, float]
     rebuilt_at: str
     source: str = 'synthetic'
+    home_landing_latitude: float = geo.CENTER_LAT
+    home_landing_longitude: float = geo.CENTER_LON
 
     @property
     def is_synthetic(self) -> bool:
@@ -94,6 +97,8 @@ class VesselProfile:
             'typical_max_distance_km': self.typical_max_distance_km,
             'rebuilt_at': self.rebuilt_at,
             'source': self.source,
+            'home_landing_latitude': self.home_landing_latitude,
+            'home_landing_longitude': self.home_landing_longitude,
         }
 
     def for_vessel(self, vessel_id: str, low_confidence: bool) -> VesselProfile:
@@ -109,6 +114,8 @@ class VesselProfile:
             typical_max_distance_km=self.typical_max_distance_km,
             rebuilt_at=self.rebuilt_at,
             source=self.source,
+            home_landing_latitude=self.home_landing_latitude,
+            home_landing_longitude=self.home_landing_longitude,
         )
 
 
@@ -278,6 +285,8 @@ def _build_profile(vessel_id: str, trips: list[TripSample], built_at: datetime, 
             typical_trip_duration_minutes={'mean': 0.0, 'std': 0.0, 'p10': 0.0, 'p90': 0.0},
             typical_max_distance_km={'mean': 0.0, 'std': 0.0, 'p10': 0.0, 'p90': 0.0},
             rebuilt_at=built_at.isoformat(),
+            home_landing_latitude=geo.CENTER_LAT,
+            home_landing_longitude=geo.CENTER_LON,
         )
 
     departure_hours = [
@@ -291,8 +300,11 @@ def _build_profile(vessel_id: str, trips: list[TripSample], built_at: datetime, 
         for trip in trips
         if len(trip.contacts) >= 2
     ]
+    home_points = [trip.contacts[0] for trip in trips if trip.contacts]
+    home_lat = median([point.latitude for point in home_points]) if home_points else geo.CENTER_LAT
+    home_lon = median([point.longitude for point in home_points]) if home_points else geo.CENTER_LON
     max_distances = [
-        max(_distance_km(CENTER_LAT, CENTER_LON, c.latitude, c.longitude) for c in trip.contacts)
+        max(_distance_km(home_lat, home_lon, c.latitude, c.longitude) for c in trip.contacts)
         for trip in trips
         if trip.contacts
     ]
@@ -309,17 +321,23 @@ def _build_profile(vessel_id: str, trips: list[TripSample], built_at: datetime, 
     ]
     if not departure_hours:
         departure_hours = [0.0]
+    angles = [hour * math.tau / 24 for hour in departure_hours]
+    mean_angle = math.atan2(mean(math.sin(angle) for angle in angles), mean(math.cos(angle) for angle in angles))
+    typical_departure_hour = (mean_angle % math.tau) * 24 / math.tau
+    hour_offsets = [((hour - typical_departure_hour + 12) % 24) - 12 for hour in departure_hours]
     return VesselProfile(
         vessel_id=vessel_id,
         trip_count=len(trips),
         low_confidence=low_confidence,
-        typical_departure_hour=float(mean(departure_hours)),
-        departure_hour_std=float(np.std(np.asarray(departure_hours), ddof=0)),
+        typical_departure_hour=float(typical_departure_hour),
+        departure_hour_std=float(np.sqrt(np.mean(np.square(hour_offsets)))),
         typical_sequence=typical_sequence,
         interval_stats=interval_stats,
         typical_trip_duration_minutes=_mean_std(trip_durations),
         typical_max_distance_km=_mean_std(max_distances),
         rebuilt_at=built_at.isoformat(),
+        home_landing_latitude=float(home_lat),
+        home_landing_longitude=float(home_lon),
     )
 
 
@@ -468,8 +486,19 @@ def score_trip(
             overdue_minutes = max(0.0, (as_of - exp_ret_tz).total_seconds() / 60.0)
             if overdue_minutes > 0:
                 ret_factor = 1.0 - math.exp(-overdue_minutes / 30.0)
-                score_val = max(0.55, min(1.0, ret_factor))
-                status = 'alert' if score_val >= ANOMALY_CONFIG['thresholds']['alert'] else 'overdue'
+                welfare_at = trip_state.get('welfare_updated_at')
+                if isinstance(welfare_at, str):
+                    welfare_at = datetime.fromisoformat(welfare_at)
+                if (
+                    trip_state.get('welfare_status') == 'safe'
+                    and isinstance(welfare_at, datetime)
+                    and timedelta(0) <= as_of - _ensure_tz(welfare_at) <= timedelta(hours=2)
+                ):
+                    ret_factor = min(ret_factor, 0.15)
+                elif trip_state.get('welfare_status') == 'distress':
+                    ret_factor = 1.0
+                score_val = min(1.0, ret_factor)
+                status = score_to_status(score_val)
                 time_str = exp_ret_tz.strftime("%H:%M")
                 explanation = f'Overdue past expected return deadline ({time_str}) with zero contacts observed.'
                 factor = _score_factor(score_val, 1.0, explanation, 'overdue')
@@ -485,6 +514,19 @@ def score_trip(
                     as_of,
                     last_contact_tz,
                     profile,
+                )
+        if not exp_ret:
+            expected_duration = trip_state.get(
+                'fleet_p90_trip_duration_minutes', profile.typical_trip_duration_minutes['p90']
+            )
+            trip_start = dep_tz or rep_tz
+            if expected_duration > 0 and trip_start and as_of - trip_start > timedelta(minutes=expected_duration):
+                explanation = 'Trip duration exceeded the fleet 90th-percentile without return contact.'
+                factor = _score_factor(1.0, 1.0, explanation, 'check_needed')
+                expected = ExpectedContact(None, trip_start, as_of, as_of, 0)
+                return AnomalyScore(
+                    profile.vessel_id, effective_trip_id, ANOMALY_CONFIG['thresholds']['watch'],
+                    'check_needed', [factor], expected, True, as_of, last_contact_tz, profile,
                 )
         expected = ExpectedContact(None, as_of, as_of, as_of, 0)
         factor = _score_factor(0.0, 1.0, 'No contacts observed yet.', 'empty')
@@ -530,7 +572,15 @@ def score_trip(
                 overdue_explanation = 'Within expected return window.'
 
         welfare = trip_state.get('welfare_status')
-        if welfare == 'safe':
+        welfare_at = trip_state.get('welfare_updated_at')
+        if isinstance(welfare_at, str):
+            welfare_at = datetime.fromisoformat(welfare_at)
+        recent_safe = (
+            welfare == 'safe'
+            and isinstance(welfare_at, datetime)
+            and timedelta(0) <= as_of - _ensure_tz(welfare_at) <= timedelta(hours=2)
+        )
+        if recent_safe:
             overdue_factor = min(overdue_factor, 0.15)
             overdue_explanation += ' (Vessel self-reported safe).'
         elif welfare == 'distress':
@@ -538,7 +588,10 @@ def score_trip(
             overdue_explanation = 'Vessel or responder reported distress.'
 
     sequence_factor = _sequence_deviation(profile, route)
-    current_distance = max(_distance_km(CENTER_LAT, CENTER_LON, c.latitude, c.longitude) for c in contacts)
+    current_distance = max(
+        _distance_km(profile.home_landing_latitude, profile.home_landing_longitude, c.latitude, c.longitude)
+        for c in contacts
+    )
     typical_distance = profile.typical_max_distance_km['mean'] or current_distance or 1.0
     distance_factor = max(
         0.0,
@@ -606,8 +659,6 @@ def score_trip(
         ),
     ]
     score = min(1.0, sum(item.contribution for item in factors))
-    if profile.low_confidence:
-        score = min(1.0, score * 0.9)
     status = score_to_status(score)
     return AnomalyScore(
         vessel_id=profile.vessel_id,

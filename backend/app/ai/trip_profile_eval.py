@@ -8,15 +8,21 @@ from datetime import timedelta
 
 import asyncpg
 
+from app.ai.anomaly_service import OPEN_TRIP_FRESHNESS_WINDOW
 from app.ai.eval_store import write_section
-from app.ai.trip_profile import AnomalyScore, ContactPoint, build_profiles_from_contacts, score_trip
+from app.ai.trip_profile import (
+    AnomalyScore,
+    ContactPoint,
+    build_profiles_from_contacts,
+    score_trip,
+)
 
 # How far forward of a trip's last contact to sweep when checking whether it
 # is ever misclassified as overdue. Matches
 # app.ai.anomaly_service.OPEN_TRIP_FRESHNESS_WINDOW - the live pipeline never
 # scores a trip past that age (it is excluded as stale first), so sweeping
 # further here would measure a scenario production never actually reaches.
-SWEEP_HORIZON_MINUTES = 12 * 60
+SWEEP_HORIZON_MINUTES = int(OPEN_TRIP_FRESHNESS_WINDOW.total_seconds() / 60)
 SWEEP_STEP_MINUTES = 5
 
 

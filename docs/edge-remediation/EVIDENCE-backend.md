@@ -99,3 +99,19 @@ Row counts and IDs only; never data, URLs or credentials.
 - B6 focused policy, notify, scheduler, auth and migration checks: 27 passed.
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
 - Manual local run with Semaphore credentials unset: POST `/api/sos` returned 200; after 155 seconds the scheduler set `escalated_at`, wrote audit outcome `not_configured`, and `/api/ops/status` showed `sms_configured=false` with the `sos-escalation` last run. The isolated PostgreSQL database was dropped after verification.
+
+## Phase B7 - Honest anomaly detection and drift clock
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_anomaly_source.py tests/test_trip_profile.py tests/test_drift.py --tb=short`: 11 failed, 19 passed. Failures cover missing 72-hour silent-vessel eligibility, handset-only overdue suppression, unavailable monitoring metadata, contact_via validation, cold-start damping, check-needed status, welfare timestamp expiry, circular departure hour, home landing distance, and implausible client clock handling.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/test_edge_welfare_pg.py --tb=short`: 2 failed because `contact_via` and `welfare_updated_at` are absent.
+
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 518 passed, 46 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 559 passed, 5 skipped, 1 xfailed.
+- B7 focused profile, anomaly source, drift, contact and welfare checks: 37 passed, including 5 migration checks.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- The required evaluation ran with `python -m app.simulation.generator --days 14 --seed 42` followed by `python -m app.ai.trip_profile_eval` on an isolated PostgreSQL 18 database. It evaluated 496 normal synthetic trips, raised 496 candidates, and measured a 100% false-alarm rate; it detected 8 incidents at a 55-minute median latency. These are simulation-only results, not field accuracy. The prior false-alarm value was retracted/null; the generated result is in `backend/app/ai/models/eval_results.json`. The isolated database was dropped after evaluation.
