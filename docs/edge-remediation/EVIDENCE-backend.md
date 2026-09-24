@@ -3,3 +3,21 @@
 Plan: `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`; track file listed in its header table.
 Each phase appends a dated section: red and green test runs, gate results, and any device or bench record.
 Row counts and IDs only; never data, URLs or credentials.
+
+## Phase B1 - Incident lifecycle
+
+### Red run
+
+- `AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@localhost:55432/postgres python -m pytest -q -p no:cacheprovider tests/test_incident_lifecycle.py tests/test_incidents_is_pure.py tests/test_edge_lifecycle_pg.py`: collection failed because `app.incidents` does not exist.
+- `AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@localhost:55432/postgres python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py`: 7 failed, 1 passed. Failing tests: `test_resolve_without_reason_stores_unspecified`, `test_resolve_with_reason_code_is_returned_in_vessel_feed`, `test_reopen_restores_active_and_downlink_and_audits`, `test_reopen_of_open_incident_is_no_change`, `test_ack_with_stale_version_conflicts`, `test_transport_merge_does_not_bump_version`, `test_still_in_danger_reopens_within_two_hours`.
+
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 465 passed, 5 skipped, 1 xfailed.
+- `AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@localhost:55432/postgres python -m pytest -q -p no:cacheprovider tests/`: 465 passed, 5 skipped, 1 xfailed.
+- `python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py tests/test_incident_lifecycle.py tests/test_incidents_is_pure.py tests/test_responder_loop.py`: 29 passed.
+- `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; migration 032 applied by fresh probe databases.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors.
+- The three failures match Phase 6 deferred probes: two minimum hotspot cohort probes and the firmware shared LoRa key probe.
+- Diff review: `backend/app/api/sos.py` is two lines shorter than its starting version, and incident policy modules contain no forbidden framework/database imports.

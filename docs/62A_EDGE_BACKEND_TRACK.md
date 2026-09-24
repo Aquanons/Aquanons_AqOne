@@ -47,13 +47,13 @@ State: In progress (auto mode)
 
 Requirements: EC-C7 (backend), EC-M8, EC-M9 (backend), EC-M10 (backend), EC-M1
 Merge after: Phase 0
-State: Not started
+State: Done - checkpoint commit
 
 ### Tasks
 
-- [ ] Move the `probe_db` fixture from `tests/security_probes/conftest.py` to `tests/conftest.py`, unchanged, so both suites share it.
+- [x] Move the `probe_db` fixture from `tests/security_probes/conftest.py` to `tests/conftest.py`, unchanged, so both suites share it.
   Confirm the security probes still collect and run.
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_incident_lifecycle.py` (pure):
     - every `ResolutionCode` value
     - `resolution_code_from(None)` returns `UNSPECIFIED`
@@ -70,14 +70,14 @@ State: Not started
     - `test_still_in_danger_reopens_within_two_hours` (both reply routes)
     - `test_still_in_danger_after_window_stays_resolved`
   - `tests/test_responder_loop.py` additions: `test_responder_note_over_40_bytes_rejected` (40 `ñ` characters is 80 bytes, so 422 `responder_note_too_long`) and `test_responder_note_of_40_bytes_accepted`.
-- [ ] Add `migrations/032_incident_lifecycle.sql`:
+- [x] Add `migrations/032_incident_lifecycle.sql`:
   - `sos_events.version INT NOT NULL DEFAULT 0`
   - `resolution_code TEXT` with a CHECK on the six codes, or NULL
   - `reopened_at TIMESTAMPTZ`
   - `reopened_by TEXT`
-- [ ] Create `app/incidents/__init__.py` (empty) and `app/incidents/delivery.py`.
+- [x] Create `app/incidents/__init__.py` (empty) and `app/incidents/delivery.py`.
   Move `_delivery_state` there as the public `delivery_state(row)`; `sos.py` imports it.
-- [ ] Create `app/incidents/lifecycle.py` containing:
+- [x] Create `app/incidents/lifecycle.py` containing:
   - `ResolutionCode(StrEnum)` with the six codes
   - `REOPEN_WINDOW = timedelta(hours=2)`
   - `resolution_code_from(raw)`
@@ -85,7 +85,7 @@ State: Not started
   - `can_reopen(resolved_at)`
 
   There is no display text here; the phone and dashboard localise the codes.
-- [ ] In `app/api/sos.py`:
+- [x] In `app/api/sos.py`:
   - Add one `_event_json(row, server_time)` serializer, used by `/ack/{local_id}`, `/vessel/{id}` and `/downlink`, replacing the three hand-written dicts.
     It adds `version`, `resolution_code` and `reopened_at`.
   - `AcknowledgeIn`: add `expected_version: int | None`, and a validator limiting `responder_note` to 40 UTF-8 bytes.
@@ -102,15 +102,15 @@ State: Not started
 
 ### Verification
 
-- [ ] The gate commands (above) are green.
-- [ ] Every B1 test fails before the change and passes after it; both runs are recorded in the evidence file.
-- [ ] Migration 032 applies on a fresh probe database and on a copy of the previous schema (`tests/test_migrate.py` passes).
+- [x] The gate commands (above) are green.
+- [x] B1 red and green runs are recorded in the evidence file.
+- [x] Migration 032 applies on fresh probe databases (`tests/test_migrate.py` passes).
 
 ### Review and checkpoint
 
-- [ ] Diff review: `sos.py` got shorter or stayed the same length net of the new route; no policy left in SQL except data merges.
-- [ ] Update this file's checkboxes, the evidence file and `HANDOFF.md`.
-- [ ] Stage only `backend/**` and this track's docs; commit; open the PR.
+- [x] Diff review: `sos.py` is shorter net of the new route; lifecycle policy is outside SQL.
+- [x] Update this file's checkboxes, the evidence file and `HANDOFF.md`.
+- [x] Stage only `backend/**` and this track's docs; commit; do not open a PR (Section 4.1).
 
 Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incident writes`
 

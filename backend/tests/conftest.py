@@ -1,8 +1,14 @@
+import asyncio
 import os
 import sys
+import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
+import asyncpg
 import pytest
+
+import migrate
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -20,6 +26,50 @@ def pytest_configure(config):
         'real_user_session: test exercises the real user session database lookup in app.auth',
     )
     config.addinivalue_line('markers', 'finding(id): the audit finding id this probe verifies')
+
+
+@pytest.fixture
+def probe_db(monkeypatch):
+    """A fresh, fully migrated, throwaway Postgres database per test."""
+    admin_url = os.environ.get('AQONE_PROBE_PG_ADMIN_URL')
+    if not admin_url:
+        pytest.skip('AQONE_PROBE_PG_ADMIN_URL is not set - DB probe not run')
+    parsed = urlparse(admin_url)
+    if parsed.hostname not in {'localhost', '127.0.0.1', '::1'}:
+        pytest.fail('refusing to run: AQONE_PROBE_PG_ADMIN_URL must point at localhost')
+
+    name = f'aqone_probe_{uuid.uuid4().hex[:12]}'
+    url = parsed._replace(path=f'/{name}').geturl()
+
+    async def admin(sql: str) -> None:
+        conn = await asyncpg.connect(admin_url)
+        try:
+            await conn.execute(sql)
+        finally:
+            await conn.close()
+
+    asyncio.run(admin(f'CREATE DATABASE {name}'))
+    try:
+        monkeypatch.setenv('DATABASE_URL', url)
+        asyncio.run(migrate.main())
+
+        async def seed_probe_operator():
+            conn = await asyncpg.connect(url)
+            try:
+                await conn.execute(
+                    '''
+                    INSERT INTO users (id, email, email_normalized, password_hash, role, token_version)
+                    VALUES (1, 'probe.mdrrmo@example.invalid', 'probe.mdrrmo@example.invalid', 'hash', 'mdrrmo', 0)
+                    ON CONFLICT DO NOTHING
+                    '''
+                )
+            finally:
+                await conn.close()
+
+        asyncio.run(seed_probe_operator())
+        yield url
+    finally:
+        asyncio.run(admin(f'DROP DATABASE IF EXISTS {name} WITH (FORCE)'))
 
 
 @pytest.fixture(autouse=True)
