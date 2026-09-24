@@ -43,6 +43,42 @@
       .replace(/'/g, '&#39;');
   }
 
+  function formatLatLon(latitude, longitude) {
+    if (typeof latitude !== 'number' || !isFinite(latitude) || typeof longitude !== 'number' || !isFinite(longitude)) {
+      return 'unknown position';
+    }
+    return Math.abs(latitude).toFixed(4) + '° ' + (latitude < 0 ? 'S' : 'N') + ', ' +
+      Math.abs(longitude).toFixed(4) + '° ' + (longitude < 0 ? 'W' : 'E');
+  }
+
+  function utf8ByteLength(value) {
+    return new TextEncoder().encode(String(value)).length;
+  }
+
+  function lateLabel(pressedAt, now) {
+    var elapsedHours = Math.max(0, Math.floor(((now == null ? Date.now() : now) - Date.parse(pressedAt)) / 3600000));
+    if (!isFinite(elapsedHours)) return 'LATE - pressed time unknown';
+    var days = Math.floor(elapsedHours / 24);
+    var hours = elapsedHours % 24;
+    return 'LATE - pressed ' + (days ? days + ' d ' : '') + hours + ' h ago';
+  }
+
+  function flagLabel(flag) {
+    return ({
+      position_on_land: 'Position on land',
+      position_beyond_radio_range: 'Beyond radio range',
+      position_jump: 'Position jumped over 20 km',
+      many_calls_same_vessel: 'Several calls from this vessel',
+      position_conflict: 'Conflicting positions'
+    })[flag] || String(flag || '');
+  }
+
+  function deliveryLabel(event) {
+    if (event && event.delivery_path === 'pod') return 'Relayed by pod ' + (event.pod_id || event.buoy_id || 'unknown') + ' - sender not verified';
+    if (event && event.delivery_path === 'direct') return 'Direct internet';
+    return 'Delivery path unknown';
+  }
+
   /**
    * Classifies how trustworthy the live feed's "LIVE" claim currently is,
    * based only on when a poll last actually succeeded - never on whether a
@@ -498,6 +534,11 @@
 
   return {
     escapeHtml: escapeHtml,
+    formatLatLon: formatLatLon,
+    utf8ByteLength: utf8ByteLength,
+    lateLabel: lateLabel,
+    flagLabel: flagLabel,
+    deliveryLabel: deliveryLabel,
     classifyFreshness: classifyFreshness,
     freshnessLabel: freshnessLabel,
     alertBadge: alertBadge,

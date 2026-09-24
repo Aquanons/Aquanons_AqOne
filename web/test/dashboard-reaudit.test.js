@@ -617,7 +617,8 @@ test('R2: SOS Distress Provenance, Actionability & Confidence Suppression', asyn
     ns.liveAlerts.length = 0;
     ns.liveAlerts.push({
       type: 'sos',
-      desc: 'SOS — Real Vessel',
+      desc: 'SOS - NW-001',
+      subtitle: '"Sea Star"',
       time: '1 minute ago',
       lat: 11.7,
       lng: 122.4,
@@ -632,14 +633,23 @@ test('R2: SOS Distress Provenance, Actionability & Confidence Suppression', asyn
       drawerData: { fisherReply: 2, licenseType: 'boatr' }
     });
     ns.renderAlerts();
+    const dangerTitleHtml = document.getElementById('alert-list').innerHTML;
+    assert.ok(dangerTitleHtml.includes('SOS - NW-001'));
+    assert.ok(dangerTitleHtml.includes('&quot;Sea Star&quot;'));
+    assert.ok(!dangerTitleHtml.includes('SOS - Sea Star'));
     const safeHtml = document.getElementById('alert-list').innerHTML;
     assert.ok(safeHtml.includes('SAFE NOW'), 'Fisher SAFE NOW report renders on the row');
-    assert.ok(safeHtml.includes('Registered Boat'), 'Registered pill renders on the row');
-    assert.ok(safeHtml.includes('BOATR'), 'Registration type named on the row');
+    assert.ok(safeHtml.includes('not yet verified'), 'unverified vessel uses neutral text');
+    assert.ok(!safeHtml.includes('Registered Boat'));
+    assert.ok(!safeHtml.includes('BOATR'));
 
     ns.liveAlerts[0].fisherReply = 1;
     ns.liveAlerts[0].drawerData.fisherReply = 1;
     ns.renderAlerts();
+    const titleHtml = document.getElementById('alert-list').innerHTML;
+    assert.ok(titleHtml.includes('SOS - NW-001'));
+    assert.ok(titleHtml.includes('&quot;Sea Star&quot;'));
+    assert.ok(!titleHtml.includes('SOS - Sea Star'));
     const dangerHtml = document.getElementById('alert-list').innerHTML;
     assert.ok(dangerHtml.includes('STILL IN DANGER'), 'Fisher STILL IN DANGER report renders on the row');
     ns.liveAlerts.length = 0;

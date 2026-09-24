@@ -8,6 +8,8 @@
   var createMarkerIcon = ns.createMarkerIcon;
   var createOverdueIcon = ns.createOverdueIcon;
   var makePopup = ns.makePopup || function () { return ''; };
+  var formatLatLon = ns.formatLatLon || function () { return 'unknown position'; };
+  var flagLabel = ns.flagLabel || function (flag) { return String(flag || ''); };
 
   // ===== VESSEL DATA (phone–buoy contact events) =====
   const vessels = [
@@ -209,13 +211,18 @@
             }
             return '<span class="' + badge.cssClass + '"' + title + '>' + badge.text + '</span>';
           })()}${escapeHtml(a.desc)}</div>
+          ${a.subtitle ? `<div class="alert-subtitle">${escapeHtml(a.subtitle)}</div>` : ''}
           ${(a.owner || a.phone) ? `<div class="alert-sender"><span>Sender: ${escapeHtml(a.owner || 'Unnamed vessel')}${a.phone ? ' &middot; ' + escapeHtml(a.phone) : ''}</span></div>` : ''}
-          ${(typeof ns.registrationBadgeHtml === 'function') ? `<div class="alert-reg">${ns.registrationBadgeHtml(a.drawerData && a.drawerData.licenseType)}</div>` : ''}
-          <div class="alert-meta">${a.time} &middot; ${
+          ${a.type === 'sos' ? `<div class="alert-trust">${a.drawerData && a.drawerData.vesselVerified ? '<span class="trust-verified">Verified by MDRRMO</span>' : '<span class="trust-neutral">not yet verified</span>'}${a.drawerData && a.drawerData.phoneSetBy === 'anonymous' ? ' <span class="trust-neutral">(unverified number)</span>' : ''}</div>` : (typeof ns.registrationBadgeHtml === 'function' ? `<div class="alert-reg">${ns.registrationBadgeHtml(a.drawerData && a.drawerData.licenseType)}</div>` : '')}
+          <div class="alert-meta">${escapeHtml(a.time)} &middot; ${
             a.lat == null || a.lng == null
               ? '<span class="alert-nofix">no GPS fix</span>'
-              : a.lat + '&deg; N, ' + a.lng + '&deg; E'
+              : escapeHtml(formatLatLon(a.lat, a.lng))
           }${a.etaAt ? ' &middot; <span data-eta-at="' + escapeHtml(a.etaAt) + '"></span>' : ''}</div>
+          ${a.lateLabel ? `<span class="alert-flag">${escapeHtml(a.lateLabel)}</span>` : ''}
+          ${(a.flags || []).map(function (flag) { return `<span class="alert-flag">${escapeHtml(flagLabel(flag))}</span>`; }).join('')}
+          ${a.openCallsForVessel > 1 ? `<span class="alert-flag">${a.openCallsForVessel} calls from this vessel</span>` : ''}
+          ${a.delivery ? `<div class="alert-delivery">${escapeHtml(a.delivery)}</div>` : ''}
           ${fisherReportRow(a)}
           ${alertConfidenceRow(a)}
         </div>

@@ -8,7 +8,7 @@ Owns: `web/**`.
 Approved: with the master plan, Revision 1, 2026-09-24.
 Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-web.md`.
-State: In progress (auto mode)
+State: W1-W4 code and automated tests complete; browser checks pending (auto mode)
 
 ## Rules for this track
 
@@ -41,7 +41,7 @@ State: In progress (auto mode)
 
 Requirements: EC-C6 (dashboard), EC-L9, EC-L11 (formatting)
 Merge after: Phase 0 (no backend dependency)
-State: Not started
+State: Automated tests complete; browser check pending
 
 ### Tasks
 
@@ -84,7 +84,7 @@ Checkpoint message: `fix(dashboard): ring for waiting SOS on load and show hones
 
 Requirements: EC-C7, EC-H4, EC-M8, EC-M1, EC-M9 (dispatcher visibility)
 Merge after: W1 and B1
-State: Not started
+State: Automated tests complete; browser check pending; phase red-run record not captured
 
 ### Tasks
 
@@ -132,7 +132,7 @@ Checkpoint message: `feat(dashboard): reasoned resolve with undo, honest ETA, an
 
 Requirements: EC-H18, EC-H20, EC-H15 (dashboard), EC-M3, EC-H19 (wording)
 Merge after: W2, B2 and B4
-State: Not started
+State: Automated tests complete; browser check pending; phase red-run record not captured
 
 ### Tasks
 
@@ -172,7 +172,7 @@ Checkpoint message: `feat(dashboard): triage-ordered SOS list with flags, late b
 
 Requirements: EC-H10 (dashboard), EC-M6 (dashboard), EC-M18, EC-H12 (visibility), EC-C5 (banner), EC-H6 (dashboard), EC-M17 (dashboard)
 Merge after: W3, B3, B5, B6 and B7
-State: Not started
+State: Automated tests complete; browser check pending; phase red-run record not captured
 
 ### Tasks
 

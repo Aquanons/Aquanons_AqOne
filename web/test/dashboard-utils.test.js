@@ -13,6 +13,11 @@ const assert = require('node:assert/strict');
 
 const {
   escapeHtml,
+  formatLatLon,
+  utf8ByteLength,
+  lateLabel,
+  flagLabel,
+  deliveryLabel,
   classifyFreshness,
   freshnessLabel,
   alertBadge,
@@ -619,4 +624,22 @@ test('auditTimelineHtml', async (t) => {
     assert.ok(html.includes('Acknowledged SOS'));
     assert.ok(html.includes('Resolved SOS'));
   });
+});
+
+
+test('formatLatLon', () => {
+  assert.equal(formatLatLon(11.7, 122.4), '11.7000° N, 122.4000° E');
+  assert.equal(formatLatLon(-11.7, -122.4), '11.7000° S, 122.4000° W');
+  assert.equal(formatLatLon(null, null), 'unknown position');
+});
+
+test('utf8ByteLength counts encoded bytes', () => {
+  assert.equal(utf8ByteLength('ñ'), 2);
+});
+
+test('SOS display labels stay neutral and follow the event fields', () => {
+  const now = Date.parse('2026-09-24T12:00:00Z');
+  assert.equal(lateLabel('2026-09-21T08:00:00Z', now), 'LATE - pressed 3 d 4 h ago');
+  assert.equal(flagLabel('position_on_land'), 'Position on land');
+  assert.equal(deliveryLabel({ delivery_path: 'pod', pod_id: 'P-4' }), 'Relayed by pod P-4 - sender not verified');
 });

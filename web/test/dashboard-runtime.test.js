@@ -607,7 +607,8 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
       'sos-buoy': createStubElement('span', 'sos-buoy'),
       'sos-coverage': createStubElement('span', 'sos-coverage'),
       'sos-boat': createStubElement('span', 'sos-boat'),
-      'sos-registration': createStubElement('span', 'sos-registration'),
+      'sos-vessel-verification': createStubElement('span', 'sos-vessel-verification'),
+      'sos-shore-contact': createStubElement('span', 'sos-shore-contact'),
       'sos-contact': createStubElement('span', 'sos-contact'),
       'sos-responder-block': createStubElement('div', 'sos-responder-block')
     };
@@ -619,6 +620,7 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
 
     assert.equal(typeof ns.openIncidentDrawer, 'function');
     ns.openIncidentDrawer({
+      alertType: 'sos',
       id: 'SOS-TEST',
       vesselName: 'Bangka One',
       confidence: 85,
@@ -627,7 +629,10 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
       skipperName: 'Juan Dela Cruz',
       boat: 'Bangka One',
       license: 'boatr NWB-2026-08412',
-      phone: '+639171234567'
+      phone: '+639171234567',
+      vesselVerified: true,
+      shoreContactName: 'Ana',
+      shoreContactPhone: '09'
     });
 
     assert.equal(confValue.textContent, '85%');
@@ -636,14 +641,15 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
     assert.equal(confFill.style.background, '#e74c3c');
     assert.equal(elements['sos-owner'].textContent, 'Juan Dela Cruz', 'owner row shows the skipper, not the boat');
     assert.equal(elements['sos-boat'].textContent, 'Bangka One');
-    assert.equal(elements['sos-registration'].textContent, 'boatr NWB-2026-08412');
+    assert.equal(elements['sos-vessel-verification'].textContent, 'Verified by MDRRMO');
     assert.equal(elements['sos-contact'].textContent, '+639171234567');
+    assert.equal(elements['sos-shore-contact'].textContent, 'Ana - 09');
 
     // Without any identity data every row still renders an honest placeholder.
     ns.openIncidentDrawer({ alertType: 'sos', id: 'BLANK-TEST', headerText: 'BLANK' });
     assert.equal(elements['sos-owner'].textContent, 'Unknown');
     assert.equal(elements['sos-boat'].textContent, '—');
-    assert.equal(elements['sos-registration'].textContent, 'Not declared');
+    assert.equal(elements['sos-vessel-verification'].textContent, 'not yet verified');
     assert.equal(elements['sos-contact'].textContent, 'Not provided');
   });
 
@@ -1152,7 +1158,7 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
     assert.equal(realAlert.drawerData.skipperName, 'Juan Dela Cruz');
     assert.equal(realAlert.drawerData.owner, 'Juan Dela Cruz', 'owner must be the skipper once a profile is on file');
     assert.equal(realAlert.drawerData.boat, 'Elena Real');
-    assert.equal(realAlert.drawerData.license, 'boatr NWB-2026-08412');
+    assert.equal(realAlert.drawerData.license, undefined, 'license text must not be turned into a trust display');
     assert.equal(realAlert.drawerData.phone, '+639171234567');
 
     // Synthetic event: is_synthetic === true
@@ -1171,7 +1177,7 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
     assert.equal(demoAlert.drawerData.skipperName, null);
     assert.equal(demoAlert.drawerData.owner, null, 'owner stays null without a profile instead of impersonating the boat');
     assert.equal(demoAlert.drawerData.boat, 'Scripted Demo Boat');
-    assert.equal(demoAlert.drawerData.license, null, 'no license claim is shown when none is on file');
+    assert.equal(demoAlert.drawerData.license, undefined, 'license is not part of the dashboard trust display');
     assert.equal(demoAlert.drawerData.phone, null);
 
     // Missing provenance: is_synthetic undefined
@@ -1635,6 +1641,8 @@ test('Phase 4 - Incident actions, audit reads, and keyboard stabilization', asyn
     ns.openAckModal();
     assert.equal(ackOverlay.hidden, false);
     assert.equal(ackVessel.textContent, 'Bangka Alpha');
+    ackEta.value = '25';
+    ackNote.value = 'On our way';
 
     // Attempt background switch to Case B while modal is open
     ns.openIncidentDrawer({

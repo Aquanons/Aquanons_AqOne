@@ -13,6 +13,44 @@
   var gain = null;
   var timer = null;
   var running = false;
+  var audioReady = false;
+  var banner = document.getElementById('alarm-sound-banner');
+  var titleTimer = null;
+  var titleEventKey = null;
+  var originalTitle = document.title;
+
+  function updateBanner() {
+    audioReady = !!(ctx && ctx.state === 'running');
+    if (banner) {
+      banner.hidden = audioReady;
+      banner.textContent = audioReady ? '' : 'Alarm sound is OFF - click to enable';
+    }
+  }
+
+  function flashTitle(event) {
+    if (!event || event.acknowledged_at != null || event.status === 'acknowledged') return;
+    var eventKey = event.id || event.vessel_id || 'unknown';
+    if (titleTimer && titleEventKey === eventKey) return;
+    if (!titleTimer) originalTitle = document.title || originalTitle;
+    if (titleTimer) clearInterval(titleTimer);
+    titleEventKey = eventKey;
+    var sosTitle = 'SOS - ' + (event.vessel_id || 'Unknown vessel');
+    var visible = false;
+    document.title = sosTitle;
+    titleTimer = setInterval(function () {
+      visible = !visible;
+      document.title = visible ? sosTitle : originalTitle;
+    }, 1000);
+  }
+
+  function notify(event) {
+    if (!event) return;
+    flashTitle(event);
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    var vessel = event.vessel_id || 'Unknown vessel';
+    var boat = event.boat ? '"' + event.boat + '"' : '';
+    try { new Notification('SOS - ' + vessel, { body: boat }); } catch (e) {}
+  }
 
   var LOW_HZ = 700;
   var HIGH_HZ = 950;
@@ -82,11 +120,29 @@
     prime();
     if (!ctx) return;
     if (ctx.state === 'suspended' && ctx.resume) {
-      try { ctx.resume(); } catch (e) {}
+      try {
+        var resumed = ctx.resume();
+        if (resumed && resumed.then) resumed.then(function () {
+          updateBanner();
+          if (running) buildOscillator();
+        }, updateBanner);
+      } catch (e) {}
     }
+    updateBanner();
     if (running && ctx.state === 'running') {
       buildOscillator();
     }
+  }
+
+  if (banner) {
+    banner.textContent = 'Alarm sound is OFF - click to enable';
+    banner.hidden = false;
+    banner.addEventListener('click', function () {
+      unlock();
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default' && Notification.requestPermission) {
+        Notification.requestPermission();
+      }
+    });
   }
 
   if (window && window.addEventListener) {
@@ -137,6 +193,14 @@
   function sync(events) {
     if (!hasUnacknowledgedSos(events)) {
       stop();
+      if (titleTimer) clearInterval(titleTimer);
+      titleTimer = null;
+      titleEventKey = null;
+      document.title = originalTitle;
+    } else {
+      start();
+      var waiting = events.find(function (event) { return event && event.acknowledged_at == null && event.status !== 'acknowledged'; });
+      if (waiting) flashTitle(waiting);
     }
   }
 
@@ -146,6 +210,7 @@
     stop: stop,
     sync: sync,
     prime: prime,
+    notify: notify,
     isRunning: function () { return running; }
   };
 })(window.AqOneDashboard = window.AqOneDashboard || {});
