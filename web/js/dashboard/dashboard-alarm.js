@@ -131,9 +131,9 @@
   }
 
   // Stops the siren once the live feed holds no unacknowledged call. It never
-  // starts on its own: starting is driven by a freshly-seen SOS id in
-  // dashboard-live-sos.js, so events that were already on screen when the
-  // dashboard opened do not get a klaxon.
+  // starts on its own: starting is driven by a freshly-seen SOS id, or once
+  // per tab session for calls already waiting when the dashboard opened
+  // (dashboard-live-sos.js), so a plain reload does not re-ring.
   function sync(events) {
     if (!hasUnacknowledgedSos(events)) {
       stop();

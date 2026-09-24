@@ -32,6 +32,10 @@
   if (ackOverlay) {
     ackOverlay.hidden = true;
   }
+  const resolveOverlay     = document.getElementById('resolve-modal-overlay');
+  if (resolveOverlay) {
+    resolveOverlay.hidden = true;
+  }
 
   let sosTimerInterval  = null;
   let sosAlertStartTime = null;
@@ -42,9 +46,13 @@
     return !!(ackOverlay && ackOverlay.hidden === false);
   }
 
+  function isResolveModalOpen() {
+    return !!(resolveOverlay && resolveOverlay.hidden === false);
+  }
+
   function openIncidentDrawer(data, marker) {
-    if (isAckModalOpen()) {
-      // Prevent background case switching while acknowledgment modal is open
+    if (isAckModalOpen() || isResolveModalOpen()) {
+      // Prevent background case switching while a modal is open
       return;
     }
     currentDrawerData   = data;
@@ -172,6 +180,7 @@
       // Event left the authoritative active list (e.g. resolved in another session)
       closeSOSDrawer();
       if (isAckModalOpen()) closeAckModal();
+      if (isResolveModalOpen()) closeResolveModal();
       showToast('Incident closed', 'This distress call has been resolved or closed.', false);
       return;
     }
@@ -389,6 +398,53 @@
     });
   }
 
+  // ===== RESOLVE WITH CONFIRMATION =====
+  //
+  // Resolve used to fire on one click straight from the drawer. The row list
+  // redraws every poll and new calls push rows down, so a hurried click could
+  // close the wrong call with no way back - this modal makes it two deliberate
+  // clicks, and a mistaken resolve can be undone from Resolved Incidents.
+  const resolveVesselEl = document.getElementById('resolve-modal-vessel');
+  const resolveReasonEl = document.getElementById('resolve-reason');
+  const resolveConfirmBtn = document.getElementById('resolve-btn-confirm');
+
+  let resolveTriggerEl = null;
+  let resolveTargetData = null;
+
+  function closeResolveModal() {
+    if (resolveOverlay) resolveOverlay.hidden = true;
+    resolveTargetData = null;
+    if (resolveReasonEl) resolveReasonEl.value = '';
+    if (resolveTriggerEl && typeof resolveTriggerEl.focus === 'function') {
+      try { resolveTriggerEl.focus(); } catch (e) {}
+      resolveTriggerEl = null;
+    }
+  }
+
+  function openResolveModal() {
+    if (!resolveOverlay) return;
+    resolveTriggerEl = document.activeElement;
+    resolveTargetData = currentDrawerData ? Object.assign({}, currentDrawerData) : null;
+    const label = resolveTargetData
+      ? (resolveTargetData.desc || resolveTargetData.vesselId || 'Distress call')
+      : 'Distress call';
+    if (resolveVesselEl) resolveVesselEl.textContent = label;
+    resolveOverlay.hidden = false;
+    if (resolveReasonEl) {
+      resolveReasonEl.focus();
+    }
+  }
+
+  ['resolve-modal-close', 'resolve-btn-cancel'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', closeResolveModal);
+  });
+  if (resolveOverlay) {
+    resolveOverlay.addEventListener('click', function (event) {
+      if (event.target === resolveOverlay) closeResolveModal();
+    });
+  }
+
   // Live countdown on acknowledged incidents, driven by the pure formatEta()
   // in web/js/dashboard-utils.js. Never renders a negative number: once the
   // promised time passes it says the rescue is delayed, because a countdown
@@ -425,40 +481,67 @@
       return;
     }
 
-    // Waits for the server to confirm resolution before touching the map or
-    // the drawer - removing the marker optimistically and then failing left
-    // a resolved-looking incident that the backend still considered active.
-    sosBtnResolve.disabled = true;
-    authFetch('/api/sos/' + encodeURIComponent(eventId) + '/resolve', {
-      method: 'POST'
-    })
-      .then(function (res) {
-        if (!res.ok) {
-          var httpErr = new Error('HTTP ' + res.status);
-          httpErr.status = res.status;
-          throw httpErr;
-        }
-        // Only close drawer if it is STILL showing the resolved event
-        if (currentDrawerData && currentDrawerData.sosEventId === eventId) {
-          closeSOSDrawer();
-        }
-        // The event has actually left storage server-side now, so let the
-        // next active-feed refresh remove its marker/row rather than
-        // guessing which one to remove client-side.
-        return loadActiveSos();
-      })
-      .catch(function (err) {
-        console.warn('[AqOne] Resolve not delivered:', err.message);
-        if (err.status === 403) {
-          showToast('Not permitted', "You don't have permission to resolve this incident.", true);
-        } else {
-          showToast('Not delivered', 'The incident is still active until this succeeds.', true);
-        }
-      })
-      .finally(function () {
-        sosBtnResolve.disabled = false;
-      });
+    openResolveModal();
   });
+
+  if (resolveConfirmBtn) {
+    resolveConfirmBtn.addEventListener('click', function () {
+      const reason = (resolveReasonEl && resolveReasonEl.value.trim()) || null;
+      const target = resolveTargetData || currentDrawerData;
+      const eventId = target && target.sosEventId;
+      if (!eventId) {
+        closeResolveModal();
+        return;
+      }
+
+      // Waits for the server to confirm resolution before touching the map or
+      // the drawer - removing the marker optimistically and then failing left
+      // a resolved-looking incident that the backend still considered active.
+      resolveConfirmBtn.disabled = true;
+
+      authFetch('/api/sos/' + encodeURIComponent(eventId) + '/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason })
+      })
+        .then(function (res) {
+          if (!res.ok) {
+            var httpErr = new Error('HTTP ' + res.status);
+            httpErr.status = res.status;
+            throw httpErr;
+          }
+          return res.json();
+        })
+        .then(function () {
+          closeResolveModal();
+          // Only close drawer if it is STILL showing the resolved event
+          if (currentDrawerData && currentDrawerData.sosEventId === eventId) {
+            closeSOSDrawer();
+          }
+          // The event has actually left storage server-side now, so let the
+          // next active-feed refresh remove its marker/row rather than
+          // guessing which one to remove client-side.
+          var refreshed = loadActiveSos();
+          if (typeof ns.loadResolvedSos === 'function') {
+            return Promise.resolve(refreshed).then(function () {
+              return ns.loadResolvedSos();
+            });
+          }
+          return refreshed;
+        })
+        .catch(function (err) {
+          console.warn('[AqOne] Resolve not delivered:', err.message);
+          if (err.status === 403) {
+            showToast('Not permitted', "You don't have permission to resolve this incident.", true);
+          } else {
+            showToast('Not delivered', 'The incident is still active until this succeeds.', true);
+          }
+        })
+        .finally(function () {
+          resolveConfirmBtn.disabled = false;
+        });
+    });
+  }
 
   if (sosBtnBroadcast) {
     sosBtnBroadcast.disabled = true;
@@ -495,6 +578,9 @@
   ns.ackOverlay = ackOverlay;
   ns.closeAckModal = closeAckModal;
   ns.openAckModal = openAckModal;
+  ns.resolveOverlay = resolveOverlay;
+  ns.closeResolveModal = closeResolveModal;
+  ns.openResolveModal = openResolveModal;
   ns.refreshOpenDrawer = refreshOpenDrawer;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
 

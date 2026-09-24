@@ -102,9 +102,27 @@ class SosService {
           break;
         }
       }
+      await _retryDirectForRelayed();
     } finally {
       _relayRunning = false;
       _changes.add(null);
+    }
+  }
+
+  Future<void> _retryDirectForRelayed() async {
+    final relayed = await _outbox.awaitingDirectRetry();
+    for (final record in relayed) {
+      bool delivered = false;
+      try {
+        delivered = await _backend.postSos(record);
+      } catch (_) {
+        delivered = false;
+      }
+      if (!delivered) {
+        break;
+      }
+      await _outbox.advance(record.localId, DeliveryState.delivered);
+      unawaited(_refreshVesselProfile());
     }
   }
 

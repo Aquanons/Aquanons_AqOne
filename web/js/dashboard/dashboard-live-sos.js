@@ -243,9 +243,28 @@
         Array.prototype.push.apply(liveAlerts, mapped);
 
         const events = data.events;
-        // Announce genuinely new calls, but never on the first load - a
-        // dispatcher opening the dashboard should not be hit with a klaxon for
-        // events they already handled before the page refreshed.
+        // Announce genuinely new calls, but never toast on the first load -
+        // a dispatcher opening the dashboard should not be hit with a toast
+        // storm for events already on screen. The klaxon is different: a
+        // crash, update restart, sleeping laptop or shift change means nobody
+        // heard anything, so unacknowledged calls ring once per tab session.
+        // A plain reload keeps the session and stays silent.
+        var announcedSession = false;
+        try {
+          announcedSession = !!(window.sessionStorage &&
+            window.sessionStorage.getItem('aqoneSOSAnnounced') === '1');
+        } catch (e) {}
+        if (liveSosFirstLoad && !announcedSession) {
+          if (ns.sosAlarm && ns.hasUnacknowledgedSos &&
+              ns.hasUnacknowledgedSos(events)) {
+            ns.sosAlarm.start();
+          }
+          try {
+            if (window.sessionStorage) {
+              window.sessionStorage.setItem('aqoneSOSAnnounced', '1');
+            }
+          } catch (e) {}
+        }
         if (!liveSosFirstLoad) {
           // The klaxon mirrors the toast gating: it rings only for calls that
           // arrive while the dashboard is open, never on the first load for

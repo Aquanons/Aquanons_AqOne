@@ -606,6 +606,43 @@ async def resolve_sos(
     }
 
 
+@protected_router.post('/{event_id}/reopen')
+async def reopen_sos(
+    event_id: int,
+    user: dict = require_responder_roles,
+) -> dict[str, object]:
+    pool = get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        prior = await conn.fetchrow(
+            'SELECT resolved_at FROM sos_events WHERE id = $1', event_id,
+        )
+        if prior is None:
+            raise HTTPException(status_code=404, detail='no such SOS event')
+        if prior['resolved_at'] is None:
+            raise HTTPException(status_code=409, detail='SOS event is not resolved')
+        row = await conn.fetchrow(
+            '''
+            UPDATE sos_events
+               SET resolved_at = NULL,
+                   resolved_by = NULL,
+                   resolved_reason = NULL
+             WHERE id = $1
+            RETURNING id, resolved_at, is_synthetic
+            ''',
+            event_id,
+        )
+        await record_audit_event(
+            conn,
+            actor=user,
+            action='sos.reopen',
+            resource_type='sos_event',
+            resource_id=row['id'],
+            outcome='updated',
+            is_demo=row['is_synthetic'],
+        )
+    return {'ok': True, 'id': row['id'], 'resolved_at': None}
+
+
 @router.get('/vessel/{vessel_id}')
 async def vessel_sos(
     vessel_id: str,

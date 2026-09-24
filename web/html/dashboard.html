@@ -929,6 +929,30 @@
         </div>
       </div>
     </div>
+
+    <div class="ack-modal-overlay" id="resolve-modal-overlay" hidden>
+      <div class="ack-modal" role="dialog" aria-modal="true" aria-labelledby="resolve-modal-title">
+        <div class="ack-modal-header">
+          <span id="resolve-modal-title">Resolve distress call</span>
+          <button type="button" class="ack-modal-close" id="resolve-modal-close" aria-label="Close resolve modal">&times;</button>
+        </div>
+        <div class="ack-modal-body">
+          <p class="ack-modal-vessel" id="resolve-modal-vessel">&mdash;</p>
+          <p class="ack-hint">
+            Resolving closes this call. A mistaken resolve can be undone
+            from the Resolved Incidents panel.
+          </p>
+
+          <label class="ack-label" for="resolve-reason">Reason (optional)</label>
+          <input class="ack-input" id="resolve-reason" type="text" maxlength="280"
+                  placeholder="e.g. Rescued by nearby boat" />
+        </div>
+        <div class="ack-modal-actions">
+          <button type="button" class="sos-btn ack-btn-cancel" id="resolve-btn-cancel">Cancel</button>
+          <button type="button" class="sos-btn sos-btn-resolve" id="resolve-btn-confirm">Resolve incident</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Case Activity: the authorized timeline for one SOS/anomaly/drift case
