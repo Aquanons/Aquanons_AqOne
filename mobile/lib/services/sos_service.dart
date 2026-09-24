@@ -39,7 +39,6 @@ class SosService {
   bool _reconcileRunning = false;
   final Set<String> _closedIncidents = <String>{};
   final Map<String, int> _pendingReplies = <String, int>{};
-  final Set<String> _syncedReplies = <String>{};
 
   void start() {
     _relayTimer ??= Timer.periodic(
@@ -59,7 +58,6 @@ class SosService {
     _reconcileTimer = null;
     _closedIncidents.clear();
     _pendingReplies.clear();
-    _syncedReplies.clear();
     _changes.close();
   }
 
@@ -281,7 +279,6 @@ class SosService {
     if (ok) {
       await _outbox.markFisherReplySynced(record.localId);
       _pendingReplies.remove(record.localId);
-      _syncedReplies.add(record.localId);
       _changes.add(null);
     }
     return ok;
@@ -495,7 +492,9 @@ class SosService {
       }
       // SEC-22: Store the ETA converted to the device clock:
       // device now plus (eta_at minus server_time). Without server_time, keep
-      // today's behaviour.
+      // today's behaviour. If an ETA has already been stored and differs from
+      // the converted time by less than 30 seconds, keep the stored value so
+      // ticks with the same answer write nothing and emit no change.
       String? adjustedEtaAt = match.etaAt;
       if (match.etaAt != null && match.serverTime != null) {
         final serverEta = DateTime.tryParse(match.etaAt!);
@@ -503,9 +502,22 @@ class SosService {
         if (serverEta != null && serverNow != null) {
           final remaining = serverEta.difference(serverNow);
           final deviceEta = DateTime.now().toUtc().add(remaining);
-          adjustedEtaAt = deviceEta.toIso8601String();
+          if (record.etaAt != null) {
+            final storedEta = DateTime.tryParse(record.etaAt!);
+            if (storedEta != null &&
+                (deviceEta.difference(storedEta).inMilliseconds.abs() < 30000)) {
+              adjustedEtaAt = record.etaAt;
+            } else {
+              adjustedEtaAt = deviceEta.toIso8601String();
+            }
+          } else {
+            adjustedEtaAt = deviceEta.toIso8601String();
+          }
         }
       }
+
+      final shouldMarkSynced = match.resolvedAt != null ||
+          (record.fisherReply != null && match.fisherReply == record.fisherReply);
 
       // Responder details live alongside the delivery state: the ETA and
       // status are what the fisher is actually waiting to see.
@@ -516,8 +528,7 @@ class SosService {
         responderStatus: match.responderStatus,
         responderNote: match.responderNote ?? match.responderStatusLabel,
         resolvedAt: match.resolvedAt,
-        fisherReplySynced:
-            (match.resolvedAt != null || match.fisherReply != null) ? true : null,
+        fisherReplySynced: shouldMarkSynced ? true : null,
       );
       if (stored) {
         changed = true;
@@ -526,8 +537,9 @@ class SosService {
       // Any fisher reply saved locally before the backend had assigned this SOS
       // an event id - or while the vessel credential was absent/revoked, or if a
       // previous attempt failed - can be flushed once reconcile knows the backend id.
+      final isReplySynced = shouldMarkSynced || record.fisherReplySynced;
       final pendingReply = _pendingReplies[record.localId] ??
-          (!_syncedReplies.contains(record.localId) ? record.fisherReply : null);
+          (!isReplySynced ? record.fisherReply : null);
       if (pendingReply != null && match.id.isNotEmpty) {
         try {
           final ok = await _sendReply(

@@ -182,15 +182,14 @@ def build_squall_status(
             if isinstance(eta, (int, float)):
                 lead_minutes = eta if lead_minutes is None else min(lead_minutes, eta)
 
-    onset_at: str | None = None
-    if level in ('watch', 'return_now'):
-        candidate_rows = triggered or detection_rows
-        for row in candidate_rows:
-            prop = row.get('propagation') or {}
-            anchor = prop.get('onset_anchor')
-            if anchor:
-                onset_at = str(anchor)
-                break
+    onset_at = next(
+        (
+            row['propagation']['onset_anchor']
+            for row in (triggered or detection_rows)
+            if (row.get('propagation') or {}).get('onset_anchor')
+        ),
+        None,
+    ) if level in ('watch', 'return_now') else None
 
     return base | {
         'status_reason': status_reason,

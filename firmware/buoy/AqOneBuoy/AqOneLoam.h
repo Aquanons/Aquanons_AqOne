@@ -87,15 +87,22 @@ static const float    LORA_TCXO_V    = 1.8;    // Heltec V3
 #error "Missing AqOneSecrets.h - copy AqOneSecrets.h.example to AqOneSecrets.h and set credentials"
 #endif
 
-#if defined(__GNUC__) || defined(__clang__)
-__attribute__((unused))
-#endif
-static inline void _loam_key_security_check() {
-  if (strcmp(LOAM_KEY, "aqone-dev-key-change-me") == 0) {
-    extern void ERROR_LOAM_KEY_EQUALS_OLD_DEFAULT();
-    ERROR_LOAM_KEY_EQUALS_OLD_DEFAULT();
-  }
+static constexpr size_t _loam_strlen(const char* s, size_t i = 0) {
+  return s[i] == '\0' ? i : _loam_strlen(s, i + 1);
 }
+
+static constexpr bool _loam_streq(const char* a, const char* b, size_t i = 0) {
+  return (a[i] == '\0' && b[i] == '\0') ? true :
+         (a[i] != b[i]) ? false :
+         _loam_streq(a, b, i + 1);
+}
+
+static_assert(_loam_strlen(LOAM_KEY) >= 16,
+              "LOAM_KEY in AqOneSecrets.h must be at least 16 characters - set a random key before flashing");
+static_assert(!_loam_streq(LOAM_KEY, "aqone-dev-key-change-me"),
+              "LOAM_KEY in AqOneSecrets.h cannot use the old default key - set a random key before flashing");
+static_assert(!_loam_streq(LOAM_KEY, "CHANGE_ME_TO_A_SECURE_RANDOM_KEY"),
+              "LOAM_KEY in AqOneSecrets.h cannot use the example placeholder - set a random key before flashing");
 
 // Hop budget. 4 lets an edge buoy reach the shore through three relays, which
 // is more than the 3-node build has. HOPS > 15 is dropped regardless.
@@ -424,7 +431,8 @@ void meshSeqCheckpoint() {
   prefs.end();
 }
 
-bool txEnqueue(const uint8_t* bytes, size_t len, uint32_t delayMs = 0, size_t reserve = 0) {
+bool txEnqueue(const uint8_t* bytes, size_t len, uint32_t delayMs = 0) {
+  size_t reserve = (len > 0 && bytes[0] == T_CHAT) ? 2 : 0;
   int freeSlots = 0;
   for (int i = 0; i < TX_MAX; i++) {
     if (!txRing[i].used) freeSlots++;
@@ -463,12 +471,11 @@ bool meshSend(uint8_t type, uint8_t flags, const char* payload, size_t len,
   // Remember our own frames so an echo relayed back by a neighbour is dropped
   // instead of being processed as new traffic.
   seenRemember(NODE_ID, seq, type);
-  size_t reserve = (type == T_CHAT) ? 2 : 0;
-  return txEnqueue(buf, total, delayMs, reserve);
+  return txEnqueue(buf, total, delayMs);
 }
 
 // Re-transmit someone else's frame with the hop bytes advanced. The signature
-// is NOT recomputed: relays do not re-sign, which is calibrated so the hop bytes
+// is NOT recomputed: relays do not re-sign, which is exactly why the hop bytes
 // are excluded from the signed region.
 void meshRelay(const uint8_t* raw, size_t total, const LoamFrame& f) {
   if (f.ttl == 0) return;
@@ -480,8 +487,7 @@ void meshRelay(const uint8_t* raw, size_t total, const LoamFrame& f) {
 
   // Random backoff. Without it, two relays that heard the same frame answer in
   // the same millisecond and cancel each other at every listener.
-  size_t reserve = (f.type == T_CHAT) ? 2 : 0;
-  txEnqueue(buf, total, 200 + random(400), reserve);
+  txEnqueue(buf, total, 200 + random(400));
 }
 
 bool radioSetup() {

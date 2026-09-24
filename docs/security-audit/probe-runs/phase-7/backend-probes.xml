@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="12" time="35.028" timestamp="2026-09-24T11:52:58.970363+08:00" hostname="Lens-Nitro"><testcase classname="tests.security_probes.test_probe_anomaly" name="test_failed_evaluation_does_not_commit_score_deactivation" time="3.368"><properties><property name="finding" value="backend.ai.anomaly.zero-contact-poison-run" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_one_ordinary_live_trip_evaluates_on_real_postgres" time="2.437"><properties><property name="finding" value="new.backend.anomaly.jsonb-parameter-encoding" /></properties></testcase><testcase classname="tests.security_probes.test_probe_anomaly" name="test_measure_whole_fleet_evaluation_cost" time="5.473"><properties><property name="finding" value="backend.ai.anomaly.authenticated-whole-fleet-recompute:measure" /><property name="measure" value="{&quot;contacts&quot;: 10000, &quot;vessels&quot;: 200, &quot;scored_trips&quot;: 200, &quot;elapsed_seconds&quot;: 1.629}" /></properties></testcase><testcase classname="tests.security_probes.test_probe_catch" name="test_one_vessel_cannot_rewrite_another_vessels_catch_log" time="2.918"><properties><property name="finding" value="backend.catch.global-idempotency-cross-vessel-write" /></properties></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[3]" time="0.003"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 3 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 3
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 3 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:22: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_cell_needs_five_distinct_reporters[4]" time="0.003"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift" /></properties><failure message="AssertionError: a cell built from only 4 vessels is published to anonymous clients&#10;assert [{'center_lat...e': 1.0, ...}] == []&#10;  &#10;  Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}&#10;  Use -v to get more diff">reporters = 4
+
+    @pytest.mark.finding('backend.hotspots.minimum-cohort-policy-drift')
+    @pytest.mark.parametrize('reporters', [3, 4])
+    def test_hotspot_cell_needs_five_distinct_reporters(reporters):
+        """docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md sets k &gt;= 5."""
+        cells = aggregate_hotspots(_catch_rows(reporters))
+&gt;       assert cells == [], f'a cell built from only {reporters} vessels is published to anonymous clients'
+E       AssertionError: a cell built from only 4 vessels is published to anonymous clients
+E       assert [{'center_lat...e': 1.0, ...}] == []
+E         
+E         Left contains one more item: {'center_lat': 11.67, 'center_lon': 122.45, 'cell_size_degrees': 0.02, 'score': 1.0, ...}
+E         Use -v to get more diff
+
+tests\security_probes\test_probe_public_disclosure.py:22: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_public_disclosure" name="test_hotspot_control_five_reporters_publish" time="0.002"><properties><property name="finding" value="backend.hotspots.minimum-cohort-policy-drift:control" /></properties></testcase><testcase classname="tests.security_probes.test_probe_repo_static" name="test_loam_signature_key_is_selected_per_source_id" time="0.005"><properties><property name="finding" value="firmware.loam.shared-default-key" /></properties><failure message="AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)&#10;assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)&#10; +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x00000255B0E3CFB0&gt;)">@pytest.mark.finding('firmware.loam.shared-default-key')
+    def test_loam_signature_key_is_selected_per_source_id():
+        """One global key means any holder can sign as any SRC_ID."""
+        hmac_calls = re.findall(r'mbedtls_md_hmac_starts\([^;]*;', _code(LOAM_BUOY))
+&gt;       assert hmac_calls and all('LOAM_KEY' not in call for call in hmac_calls), (
+            f'every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY ({len(hmac_calls)} call sites)'
+        )
+E       AssertionError: every HMAC in AqOneLoam.h is keyed with the single global LOAM_KEY (1 call sites)
+E       assert (['mbedtls_md_hmac_starts(&amp;ctx, (const unsigned char*)LOAM_KEY, strlen(LOAM_KEY));'] and False)
+E        +  where False = all(&lt;generator object test_loam_signature_key_is_selected_per_source_id.&lt;locals&gt;.&lt;genexpr&gt; at 0x00000255B0E3CFB0&gt;)
+
+tests\security_probes\test_probe_repo_static.py:29: AssertionError</failure></testcase><testcase classname="tests.security_probes.test_probe_resource_bounds" name="test_public_squall_does_not_load_week_old_readings" time="3.051"><properties><property name="finding" value="backend.public-squall.unbounded-history-load" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_genuine_sos_survives_a_burst_of_anonymous_sos" time="3.258"><properties><property name="finding" value="backend.sos.anonymous-incidents-crowd-dispatch-feed" /></properties></testcase><testcase classname="tests.security_probes.test_probe_sos" name="test_handset_reply_reaches_an_sos_that_arrived_only_over_the_buoy" time="2.531"><properties><property name="finding" value="mobile.sos.buoy-only-reply-unroutable" /></properties></testcase><testcase classname="tests.security_probes.test_probe_unauth_routes" name="test_anonymous_caller_cannot_replace_an_existing_vessel_identity" time="2.543"><properties><property name="finding" value="backend.vessel-profile.unbound-owner-write" /></properties></testcase></testsuite></testsuites>

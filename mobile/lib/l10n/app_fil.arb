@@ -124,6 +124,5 @@
   "standDownTitle": "Binawi ang SOS",
   "standDownDescription": "Minarkahan bilang maling alarma - nasabihan na ang MDRRMO na balewalain ito.",
   "standDownPendingTitle": "Nakabinbin ang pagbawi",
-  "standDownPendingDescription": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na.",
-  "responderReplyPendingSafeNow": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na."
+  "standDownPendingDescription": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na."
 }

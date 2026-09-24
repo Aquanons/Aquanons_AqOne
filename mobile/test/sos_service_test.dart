@@ -390,4 +390,131 @@ void main() {
     expect(profileBodies, hasLength(1));
     expect(profileBodies.single, contains('Jade N. Salvador'));
   });
+
+  // The ack read-back for [localId], as GET /api/sos/ack/{local_id} returns it.
+  http.StreamedResponse ackEnvelope(
+    String localId, {
+    required String serverTime,
+    String? etaAt,
+    int? fisherReply,
+  }) {
+    return http.StreamedResponse(
+      Stream<List<int>>.value(utf8.encode(jsonEncode(<String, Object?>{
+        'vessel_id': 'fisher-7f3a',
+        'server_time': serverTime,
+        'event': <String, Object?>{
+          'id': 7,
+          'local_id': localId,
+          'seq': null,
+          'client_ts': 1755248500,
+          'delivery_state': 'acknowledged',
+          'acknowledged_at': '2026-09-15T00:05:00Z',
+          'acked_by': 'ranger@example.com',
+          'eta_at': etaAt,
+          'responder_status': 2,
+          'responder_status_label': 'Rescue boat on the way',
+          'responder_note': 'On the way',
+          'fisher_reply': fisherReply,
+          'resolved_at': null,
+        },
+      }))),
+      200,
+    );
+  }
+
+  BuoyClient noBuoy() => BuoyClient(
+        baseUrl: 'http://192.168.4.1',
+        client: MockClient((request) async {
+          throw const FormatException('no buoy in range');
+        }),
+      );
+
+  test(
+      'SEC-20 review: a failed stand-down stays pending when the backend '
+      'only has the earlier "still in danger" reply', () async {
+    final record = _record('local-reply-mismatch');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.acknowledged);
+    await outbox.saveResponder(record.localId, remoteId: '7');
+    await outbox.saveFisherReply(record.localId, 1, synced: true);
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') {
+          return _direct(200);
+        }
+        if (request.url.path == '/api/sos/ack/local-reply-mismatch') {
+          return ackEnvelope(
+            'local-reply-mismatch',
+            serverTime: DateTime.now().toUtc().toIso8601String(),
+            fisherReply: 1,
+          );
+        }
+        // The stand-down itself (and its SEC-21 re-post) never gets through.
+        return _direct(503);
+      }),
+    );
+
+    final service = buildService(buoy: noBuoy(), backend: backend);
+    await service.standDown(record.localId);
+    await service.reconcile();
+
+    final updated = await outbox.byLocalId(record.localId);
+    expect(updated!.fisherReply, 2);
+    expect(
+      updated.fisherReplySynced,
+      isFalse,
+      reason: 'the backend still reports reply 1, so the stand-down (reply 2) '
+          'has not reached it',
+    );
+    expect(updated.isStoodDown, isFalse);
+  });
+
+  test(
+      'SEC-22 review: an unchanged ETA is not rewritten on every reconcile '
+      'tick', () async {
+    final record = _record('local-eta-stable');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.delivered);
+
+    final serverNow = DateTime.now().toUtc();
+    final etaAt = serverNow.add(const Duration(minutes: 20)).toIso8601String();
+
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') {
+          return _direct(200);
+        }
+        if (request.url.path == '/api/sos/ack/local-eta-stable') {
+          return ackEnvelope(
+            'local-eta-stable',
+            serverTime: serverNow.toIso8601String(),
+            etaAt: etaAt,
+          );
+        }
+        throw Exception('unexpected ${request.url.path}');
+      }),
+    );
+
+    final service = buildService(buoy: noBuoy(), backend: backend);
+    await service.reconcile();
+    final first = await outbox.byLocalId(record.localId);
+
+    var changes = 0;
+    final sub = service.changes.listen((_) => changes++);
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    await service.reconcile();
+    await Future<void>.delayed(Duration.zero);
+    await sub.cancel();
+    final second = await outbox.byLocalId(record.localId);
+
+    expect(first!.etaAt, isNotNull);
+    expect(
+      second!.etaAt,
+      first.etaAt,
+      reason: 'the backend answered with the same eta_at, so the stored '
+          'device-clock ETA must not move',
+    );
+    expect(changes, 0, reason: 'an identical answer is not a change');
+  });
 }

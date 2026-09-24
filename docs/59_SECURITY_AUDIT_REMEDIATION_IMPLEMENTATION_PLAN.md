@@ -1,15 +1,16 @@
 # Implementation Plan: Security audit remediation
 
 Created: 2026-09-23T13:00:00+08:00
-Updated: 2026-09-23T13:15:27+08:00
-Revision: 2
+Updated: 2026-09-24T10:45:00+08:00
+Revision: 3
 Status: Approved
 **Execution mode:** hard-stop
 Feature spec and revision: `docs/security-audit/validation-results.json` run `20260923T1233` (verdicts re-checked by Claude against the raw JUnit/JSONL), `docs/security-audit/PROBES.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
-Len's chat approval: Revision 2 approved by Len in chat, 2026-09-23T13:15:27+08:00
+Len's chat approval: Revision 2 approved by Len in chat, 2026-09-23T13:15:27+08:00; Revision 3 (Phase 7) approved by Len in chat, 2026-09-24T10:37:00+08:00
 Target branch: `fix/security-audit-remediation`, created from `master` at `35a7822`
 Revision 2: rebased on `35a7822` (PR #71 resolved-card warning line, PR #72 rebuilt APK); verification assets were written against `ef6cc7d` and still behave the same (backend untouched, mobile 259 passed, Dart probes 1 passed / 5 failed as before).
+Revision 3: adds Phase 7 after Claude's review of Phases 4-6 found three blockers (shore TLS roots, dead LOAM_KEY guard, SEC-20 reply matching). Len chose a compile-time LOAM_KEY guard and an offline CA-chain test.
 Implementer: Antigravity (Gemini). Reviewer: Claude Code.
 
 ## Scope
@@ -296,6 +297,67 @@ State: Completed
 - [x] `flutter build apk --release` fails without `key.properties` and names the fix.
 
 Checkpoint message: `chore(release): require release signing and promote security regressions`
+
+## Phase 7: Review fixes
+
+Requirements: SEC-20, SEC-22, SEC-27, SEC-28 (review blockers from Claude, 2026-09-24)
+State: Completed
+
+Acceptance tests written by Claude, red before this phase and green after it:
+
+| Test | Blocker | Red reason today |
+|---|---|---|
+| `backend/tests/test_firmware_security.py::test_shore_ca_bundle_trusts_the_recorded_backend_chain` | TLS roots | No embedded root signs any certificate of the live Render chain (leaf <- WE1 <- GTS Root R4 <- GlobalSign Root CA) |
+| `backend/tests/test_firmware_security.py::test_loam_key_guard_rejects_every_committed_placeholder_at_compile_time` | LOAM_KEY guard | The examples declare `static const char*`, and no `static_assert` rejects any known key |
+| `mobile/test/sos_service_test.dart` "SEC-20 review: a failed stand-down stays pending ..." | SEC-20 | Reconcile marks reply 2 as synced because the backend reports reply 1 |
+| `mobile/test/sos_service_test.dart` "SEC-22 review: an unchanged ETA is not rewritten ..." | SEC-22 | The ETA is re-anchored to `DateTime.now()` on every tick, so it is stored again and a change is emitted |
+
+These four tests are acceptance tests under rule 3: do not edit their assertions.
+`fixtures/tls/aqone-backend-chain.pem` is the public Render chain captured on 2026-09-24; do not regenerate it in this phase.
+`cryptography==50.0.0` is added to `backend/requirements-dev.txt` for the chain test.
+It is test-only; the Dockerfile installs `requirements.txt` only.
+Claude checked both firmware fixes against these tests on scratch copies: adding GTS Root R4 (or GlobalSign Root CA) turns the chain test green, and the guard shape below turns the LOAM_KEY test green.
+
+### Tasks
+
+- [x] TLS roots (`firmware/shore/AqOneShore/AqOneShore.ino` `BACKEND_CA_CERTS`):
+  - Add GTS Root R4 (primary, expires 2036-06-22) and GlobalSign Root CA (cross-sign backup, expires 2028-01-28). Keep GTS Root R1 (Google's RSA chain) and ISRG Root X1. Remove GlobalSign ECC Root CA - R4, which is not in the served chain.
+  - Take each PEM from a trusted source (the Git for Windows bundle `/mingw64/etc/ssl/certs/ca-bundle.crt`, or pki.goog), and record each SHA-256 fingerprint in the evidence file.
+  - Fix the root list and rotation text in `firmware/README.md` and in the comment above `BACKEND_CA_CERTS`.
+  - Cross-check: `openssl verify -no-CApath -no-CAstore -CAfile <extracted bundle> -untrusted <WE1 + GTS Root R4 from the fixture> <leaf from the fixture>` prints `OK`.
+- [x] LOAM_KEY guard (compile time, both `AqOneLoam.h` copies byte-identical):
+  - Delete `_loam_key_security_check()` and its `ERROR_LOAM_KEY_EQUALS_OLD_DEFAULT` trick.
+  - After the `AqOneSecrets.h` include, add C++11-compatible `constexpr` string-compare and string-length helpers and three `static_assert`s: the key is at least 16 characters; it is not `"aqone-dev-key-change-me"`; it is not `"CHANGE_ME_TO_A_SECURE_RANDOM_KEY"`. Each comparison is written as `LOAM_KEY, "<literal>"`, and each message tells the flasher to set a random key in `AqOneSecrets.h`.
+  - Claude compiled this shape with the local `xtensa-esp32s3-elf-g++` under `-std=gnu++11` and `-std=gnu++17`: each placeholder fails with its own message, and a 24-character key builds with no warning.
+  - Both `AqOneSecrets.h.example` files declare `static constexpr char LOAM_KEY[] = "CHANGE_ME_TO_A_SECURE_RANDOM_KEY";`. The only other use is `strlen(LOAM_KEY)` in the HMAC, which an array satisfies.
+  - `firmware/README.md`: say that the example does not build until `LOAM_KEY` is replaced, and that existing local `AqOneSecrets.h` files must switch from `const char*` to `constexpr char[]`. Tell Daniel in the evidence.
+  - In the Phase 6 section of `REMEDIATION-EVIDENCE.md`, strike the false "will panic/hang at boot" line and note the correction; do not delete it.
+- [x] SEC-20 reply matching (`mobile/lib/services/sos_service.dart` `_applyRemote`):
+  - Mark `fisherReplySynced` only when `match.resolvedAt != null`, or when `match.fisherReply` equals the record's local `fisherReply`.
+  - The persisted flag replaces the in-memory `_syncedReplies` set. Resend when `fisherReply != null` and it is not synced (use the value after this tick's `saveResponder`), then delete `_syncedReplies` with its `clear()` and `add()` calls.
+- [x] SEC-22 ETA stability (`_applyRemote`): keep the stored `etaAt` when the newly converted device-clock ETA differs from it by less than 30 seconds, so an unchanged answer writes nothing and emits no change.
+- [x] Restore lost comments:
+  - `AqOneLoam.h` `meshRelay` (both copies): "which is calibrated so" goes back to "which is exactly why".
+  - `AqOneShore.ino` and `firmware/README.md`: restore the rationale that the gateway key unlocks only `/api/sos/downlink`, never `/api/sos/active` (position, note, owner identity), and that SOS still flows up without a key. Take the wording from `git show 9a07b2a:firmware/shore/AqOneShore/AqOneShore.ino` and adjust it for the key now living in `AqOneSecrets.h`.
+- [x] Ponytail cuts:
+  - Delete the 25 probes in `backend/tests/security_probes/` that Phase 6 copied into `backend/tests/test_security_regressions.py` (the plan said move). The Postgres probes and the three deferred red probes stay. Drop any `security_probes` helper left unused.
+  - Replace `responderReplyPendingSafeNow` with the identical `standDownPendingDescription` in the three ARB files and `responder_eta_dialog.dart`.
+  - `SosRecord.copyWith`: remove the six Phase 4 parameters nobody passes (keep `remoteId`), and keep the comment's original meaning.
+  - Round to 1 decimal once per provider entry with one private helper in `forecast_provider.dart`. Drop `ForecastOutlook._round1` if `mobile/test/forecast_provider_test.dart` still passes without it.
+  - `app/api/squall.py` `onset_at`: one `next(...)` expression, and no `str()` on a value that is already a string.
+  - `txEnqueue` works out the chat reserve from the frame type itself; `meshSend` and `meshRelay` stop repeating `(type == T_CHAT) ? 2 : 0`.
+
+### Verification
+
+- [x] The four acceptance tests above pass.
+- [x] Backend, mobile (including `flutter test test_security_probes`) and web gates pass.
+- [x] Probe gate on Postgres: only the deferred probes are red (the hotspot pair and the per-source LoRa key).
+- [x] The `diff` of the two `AqOneLoam.h` copies prints nothing.
+- [x] PlatformIO, both environments, with scratch secrets that are never committed: (a) with `AqOneSecrets.h` copied unchanged from the example, the build fails on the placeholder `static_assert`; (b) with a random 32-character `LOAM_KEY`, both build with no warnings. Record both outputs.
+- [x] `git status` shows no `AqOneSecrets.h`.
+- [ ] Hardware check for Daniel (not a Gemini gate, but required before merge): flash the shore, confirm HTTPS to Render succeeds after NTP sync, then send one SOS and one warning over the bench mesh.
+
+Checkpoint message: `fix(security): trusted Render roots, compile-time LOAM_KEY guard, honest reply sync`
 
 ## Recovery
 

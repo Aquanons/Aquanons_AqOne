@@ -822,7 +822,7 @@ This checklist covers secrets, credentials, and configuration flags that live ou
    - The LoRa mesh previously used the hardcoded default `"aqone-dev-key-change-me"`.
    - Generate a high-entropy secret string (minimum 32 characters) for the fleet.
    - Set `LOAM_KEY` in `firmware/buoy/AqOneBuoy/AqOneSecrets.h` and `firmware/shore/AqOneShore/AqOneSecrets.h`.
-   - Both sketches fail to compile if `AqOneSecrets.h` is missing, and will panic/hang at boot if `LOAM_KEY == "aqone-dev-key-change-me"`.
+   - Both sketches fail to compile if `AqOneSecrets.h` is missing. ~~and will panic/hang at boot if `LOAM_KEY == "aqone-dev-key-change-me"`~~ *(Correction: Phase 5 runtime check was uncalled dead code; Phase 7 replaced it with compile-time `static_assert` guards requiring length >= 16 and rejecting placeholders at build time).*
    - Flash all buoy pod radios and the shore gateway radio with the identical production key.
 4. **Confirm `ALLOW_TRAINING` Is Unset on Render:**
    - Verify that the environment variable `ALLOW_TRAINING` is NOT set in the production Render environment.
@@ -837,6 +837,93 @@ This checklist covers secrets, credentials, and configuration flags that live ou
    - Build the signed production APK via `flutter build apk --release`.
    - Distribute the signed release APK to testers and fishermen.
    - Advise testers who previously installed debug-signed builds to uninstall first (Android blocks updating a debug-signed app with a release-signed app; note that uninstalling clears local outbox data).
+
+## Phase 7: Review fixes
+
+Requirements: SEC-20, SEC-22, SEC-27, SEC-28 (addressing Claude's review findings)
+Date: 2026-09-24
+Branch: `fix/security-audit-remediation`
+
+### 1. Verified TLS Root CA Bundle (SEC-28)
+- Live Render endpoint `aqone-backend.onrender.com` serves a certificate chain:
+  `leaf (aqone-backend.onrender.com) <- WE1 <- GTS Root R4 <- GlobalSign Root CA`
+- Extracted root CAs directly from Git for Windows trusted bundle (`C:\Program Files\Git\mingw64\etc\ssl\certs\ca-bundle.crt`):
+  1. **GTS Root R4** (Primary root, ECDSA P-384, exp 2036-06-22):
+     SHA-256: `349dfa4058c5e263123b398ae795573c4e1313c83fe68f93556cd5e8031b3c7d`
+  2. **GlobalSign Root CA** (Cross-sign root, RSA 2048, exp 2028-01-28):
+     SHA-256: `ebd41040e4bb3ec742c9e381d31ef2a41a48b6685c96e7cef3c1df6cd4331c99`
+  3. **GTS Root R1** (Google RSA chain backup, exp 2036-06-22):
+     SHA-256: `d947432abde7b7fa90fc2e6b59101b1280e0e1c7e4e40fa3c6887fff57a7f4cf`
+  4. **ISRG Root X1** (Let's Encrypt backup, exp 2035-06-04):
+     SHA-256: `96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6`
+- Removed `GlobalSign ECC Root CA - R4` which is not in Render's served chain.
+- Cross-check offline verification against `fixtures/tls/aqone-backend-chain.pem`:
+  `openssl verify -no-CApath -no-CAstore -CAfile roots.pem -untrusted fixture_untrusted.pem fixture_leaf.pem` -> `OK`.
+- Acceptance test: `backend/tests/test_firmware_security.py::test_shore_ca_bundle_trusts_the_recorded_backend_chain` -> **PASSED**.
+
+### 2. Compile-Time `LOAM_KEY` Guard (SEC-27)
+- Replaced dead runtime check `_loam_key_security_check()` in `AqOneLoam.h` with C++11 `constexpr` string equality and length helpers (`_loam_strlen`, `_loam_streq`).
+- Added three compile-time `static_assert`s:
+  1. Key length >= 16 characters (`LOAM_KEY must be at least 16 characters`).
+  2. Rejection of repository default `"aqone-dev-key-change-me"`.
+  3. Rejection of example placeholder `"CHANGE_ME_TO_A_SECURE_RANDOM_KEY"`.
+- Updated both `AqOneSecrets.h.example` files to declare:
+  `static constexpr char LOAM_KEY[] = "CHANGE_ME_TO_A_SECURE_RANDOM_KEY";`
+- Synchronized `AqOneLoam.h` between buoy and shore (`git diff --no-index` prints 0 diff).
+- Acceptance test: `backend/tests/test_firmware_security.py::test_loam_key_guard_rejects_every_committed_placeholder_at_compile_time` -> **PASSED**.
+
+### 3. Mobile Reply Sync & ETA Stability (SEC-20 & SEC-22)
+- In `mobile/lib/services/sos_service.dart` (`_applyRemote`):
+  - Fixed SEC-20: Reconcile marks `fisherReplySynced = true` only when `match.resolvedAt != null` or `match.fisherReply == record.fisherReply`. A failed stand-down (reply 2) remains pending even if backend reports older reply 1.
+  - Removed `_syncedReplies` in-memory set and associated calls.
+  - Fixed SEC-22: Added ETA stability guard keeping stored `etaAt` if device-adjusted ETA differs by < 30 seconds, preventing rewrite and unnecessary change notification on every reconcile tick.
+- Acceptance tests:
+  - `mobile/test/sos_service_test.dart` "SEC-20 review: a failed stand-down stays pending when the backend only has the earlier 'still in danger' reply" -> **PASSED**.
+  - `mobile/test/sos_service_test.dart` "SEC-22 review: an unchanged ETA is not rewritten on every reconcile tick" -> **PASSED**.
+
+### 4. Restored Security Rationale & Lost Comments
+- In `firmware/shore/AqOneShore/AqOneShore.ino` and `firmware/README.md`:
+  - Restored security rationale: `GATEWAY_API_KEY` grants write access strictly to `/api/sos/downlink`, never `/api/sos/active` (operator incident overview, triage, responder identity). An unauthenticated shore still successfully uploads raw SOS telemetry over `/api/sos`.
+  - Documented the `constexpr char[]` requirement for local `AqOneSecrets.h` files.
+- In `firmware/buoy/AqOneBuoy/AqOneLoam.h` and `firmware/shore/AqOneShore/AqOneLoam.h` (`meshRelay`):
+  - Restored exact original wording: "which is exactly why the hop bytes are excluded".
+
+### 5. Ponytail Code Simplifications
+- Deduplicated ARB translation keys: Replaced duplicate `responderReplyPendingSafeNow` with `standDownPendingDescription` across `app_en.arb`, `app_fil.arb`, `app_akl.arb`, and `responder_eta_dialog.dart`.
+- Removed 6 unused Phase 4 parameters from `SosRecord.copyWith` (`etaAt`, `responderStatus`, `responderNote`, `fisherReply`, `fisherReplySynced`, `resolvedAt`) while retaining `remoteId`.
+- Consolidated coordinate coarsening with top-level `_round1` in `mobile/lib/services/forecast_provider.dart` and removed redundant `ForecastOutlook._round1`.
+- Simplified `onset_at` extraction in `backend/app/api/squall.py` using a single `next(...)` generator expression without unnecessary `str()` coercion.
+- Deduplicated chat capacity check in `txEnqueue` by deriving reserve from frame type directly.
+- Removed 25 non-Postgres probes previously duplicated in `backend/tests/security_probes/`. Cleaned up deleted files `test_probe_auth.py` and `test_probe_ingest_trust.py`. All 25 are solely and permanently guarded by `backend/tests/test_security_regressions.py` in the default test suite.
+
+### 6. PlatformIO Build Gate Verification
+- Compiled with PlatformIO Core 6.2.0:
+  - **Test A (Unchanged example secrets):**
+    - Buoy: FAILED with `AqOneLoam.h:104:15: error: static assertion failed: LOAM_KEY in AqOneSecrets.h cannot use the example placeholder - set a random key before flashing`.
+    - Shore: FAILED with `AqOneLoam.h:104:15: error: static assertion failed: LOAM_KEY in AqOneSecrets.h cannot use the example placeholder - set a random key before flashing`.
+  - **Test B (Random 32-character key):**
+    - Buoy: SUCCESS in 77.61s with 0 warnings (RAM: 18.3%, Flash: 26.0%).
+    - Shore: SUCCESS in 68.39s with 0 warnings (RAM: 15.6%, Flash: 29.8%).
+  - **Cleanup:** Both scratch `AqOneSecrets.h` files were deleted immediately; `git status` confirmed clean working tree with 0 secrets staged or tracked.
+
+### 7. Full Gate Verification Run Results
+1. **Backend Default Suite:**
+   - `ruff check app tests` -> Clean (All checks passed!).
+   - `pytest -q -p no:cacheprovider` -> **444 passed, 5 skipped, 1 xfailed** in 16.69s (including 3/3 in `test_firmware_security.py` and 25/25 in `test_security_regressions.py`).
+2. **Mobile Suite:**
+   - `flutter analyze` -> Clean (No issues found!).
+   - `flutter test` -> **267 passed, 0 failed** (including 10/10 in `sos_service_test.dart`).
+   - `flutter test test_security_probes` -> **6 passed, 0 failed**.
+3. **Web Suite:**
+   - `node --test web/test/*.test.js` -> **149 passed, 0 failed**.
+4. **PostgreSQL Security Probe Gate (Local Postgres 18 on port 55432):**
+   - `python -m pytest tests/security_probes -p no:cacheprovider -s --junitxml=../docs/security-audit/probe-runs/phase-7/backend-probes.xml`
+   - Results: **9 passed, 3 failed** (the exact 3 deferred roadmap findings: `test_hotspot_cell_needs_five_distinct_reporters[3]`, `test_hotspot_cell_needs_five_distinct_reporters[4]`, and `test_loam_signature_key_is_selected_per_source_id`), 0 errors.
+
+### 8. Notice for Daniel (Hardware & Bench Check)
+- Local `AqOneSecrets.h` definitions for `LOAM_KEY` must be updated from `static const char* LOAM_KEY = "..."` to `static constexpr char LOAM_KEY[] = "..."`.
+- Before merging to master: Flash shore gateway, verify NTP sync followed by HTTPS connection to Render using embedded GTS Root R4 / GlobalSign Root CA bundle, and transmit one SOS and one warning frame over the bench LoRa mesh.
+
 
 
 

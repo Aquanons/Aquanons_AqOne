@@ -229,6 +229,5 @@
   "standDownTitle": "Ginbawi ro SOS",
   "standDownDescription": "Gintandaan bilang sala nga alarma - napahibaeuan eon ro MDRRMO nga indi pagsapakon.",
   "standDownPendingTitle": "Nagahulat ro pagbawi",
-  "standDownPendingDescription": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon.",
-  "responderReplyPendingSafeNow": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon."
+  "standDownPendingDescription": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon."
 }

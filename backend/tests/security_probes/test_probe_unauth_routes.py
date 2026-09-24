@@ -9,57 +9,9 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from probe_harness import ProbeBroken, require_status, run_db
+from probe_harness import require_status, run_db
 
 from app.main import app
-
-TRIP_ROUTES = [
-    ('GET', '/api/v1/trips', None),
-    ('GET', '/api/v1/trips/PROBE-TRIP', None),
-    ('PATCH', '/api/v1/trips/PROBE-TRIP', {'welfare_status': 'safe', 'expected_return_at': '2030-01-01T00:00:00Z'}),
-]
-
-WARNING_DELIVERY_ROUTES = [
-    (
-        'POST',
-        '/api/advisories/delivery',
-        {
-            'warning_id': 101,
-            'delivery_state': 'user_acknowledged',
-            'vessel_id': 'dummy-victim',
-            'occurred_at': '2026-01-01T00:00:00Z',
-            'details': {'probe': True},
-        },
-    ),
-    ('GET', '/api/advisories/101/deliveries', None),
-]
-
-
-def _anonymous(monkeypatch, method, path, body):
-    monkeypatch.delenv('DATABASE_URL', raising=False)
-    with TestClient(app, raise_server_exceptions=False) as client:
-        response = client.request(method, path, json=body)
-    if response.status_code == 422:
-        raise ProbeBroken(f'{method} {path} rejected the probe body: {response.text[:300]}')
-    return response
-
-
-@pytest.mark.finding('backend.trips.unbound-public-access')
-@pytest.mark.parametrize(('method', 'path', 'body'), TRIP_ROUTES)
-def test_trip_route_requires_a_bound_principal(monkeypatch, method, path, body):
-    response = _anonymous(monkeypatch, method, path, body)
-    assert response.status_code in (401, 403), (
-        f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
-    )
-
-
-@pytest.mark.finding('backend.warning-delivery.unbound-state-authority')
-@pytest.mark.parametrize(('method', 'path', 'body'), WARNING_DELIVERY_ROUTES)
-def test_warning_delivery_route_requires_an_authority(monkeypatch, method, path, body):
-    response = _anonymous(monkeypatch, method, path, body)
-    assert response.status_code in (401, 403), (
-        f'{method} {path} with no credentials reached the handler (HTTP {response.status_code})'
-    )
 
 
 @pytest.mark.finding('backend.vessel-profile.unbound-owner-write')

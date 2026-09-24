@@ -108,7 +108,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
     if (_sentReply != null) {
       final sentText = _sentReply == 2
           ? (_replyQueued
-              ? t.responderReplyPendingSafeNow
+              ? t.standDownPendingDescription
               : t.responderReplySentSafeNow)
           : t.responderReplySentStillInDanger;
       return Column(

@@ -64,11 +64,32 @@
 
 // ===== CONFIGURE ME ========================================================
 
-// Uplink credentials (UPLINK_SSID, UPLINK_PASS) and backend ingest credential
-// (GATEWAY_API_KEY) are loaded from gitignored AqOneSecrets.h included via
-// AqOneLoam.h above. See AqOneSecrets.h.example.
+// Uplink credentials (UPLINK_SSID, UPLINK_PASS), backend ingest credential
+// (GATEWAY_API_KEY), and shared HMAC key (LOAM_KEY) are loaded from gitignored
+// AqOneSecrets.h included via AqOneLoam.h above. See AqOneSecrets.h.example.
 
 static const char* BACKEND_HOST = "https://aqone-backend.onrender.com";
+
+// Responder acknowledgements and ETAs come from GET /api/sos/downlink, the
+// gateway-only view of the responder's answer. It is guarded by the same
+// X-Api-Key / GATEWAY_API_KEY credential the contact, pressure and current
+// ingest routes already use, so this board needs no human's account.
+//
+// It deliberately is NOT GET /api/sos/active. That one is behind require_user
+// (a dispatcher login) and carries position, the fisher's own distress note,
+// boat name, trust tier and the vessel owner's name, licence and phone. A key
+// in firmware on a mast must not unlock any of that. /downlink returns only
+// what this board is about to broadcast in clear anyway.
+//
+// GET /api/sos/vessel/{id} is NOT usable here either: it is behind
+// require_vessel_device and derives ownership from the handset's own paired
+// credential, which a gateway does not have and cannot obtain.
+//
+// GATEWAY_API_KEY is loaded from AqOneSecrets.h and matches the backend
+// environment. With it empty or unmatched, SOS still flows UP and chat still
+// flows both ways - but the dispatcher's ETA cannot come back down, the OLED
+// shows "no key", and pollAcks() says so on serial every 45 s rather than
+// failing silently.
 
 // ===========================================================================
 
@@ -114,21 +135,44 @@ void setupWiFi() {
 bool online() { return uplinkUp && WiFi.status() == WL_CONNECTED; }
 
 // Trusted Root CA certificates for aqone-backend.onrender.com
-// 1. GlobalSign ECC Root CA - R4 (Expires: 2038-01-19) - Primary for Google Trust Services WE1
-// 2. GTS Root R1 (Expires: 2036-06-22) - Google Trust Services Root R1
-// 3. ISRG Root X1 (Expires: 2035-06-04) - Let's Encrypt Root
+// 1. GTS Root R4 (Expires: 2036-06-22) - Primary for Google Trust Services WE1 (Render)
+// 2. GlobalSign Root CA (Expires: 2028-01-28) - Cross-sign backup for GTS Root R4
+// 3. GTS Root R1 (Expires: 2036-06-22) - Google Trust Services RSA root backup
+// 4. ISRG Root X1 (Expires: 2035-06-04) - Let's Encrypt Root backup
 static const char BACKEND_CA_CERTS[] PROGMEM =
 "-----BEGIN CERTIFICATE-----\n"
-"MIIB3DCCAYOgAwIBAgINAgPlfvU/k/2lCSGypjAKBggqhkjOPQQDAjBQMSQwIgYD\n"
-"VQQLExtHbG9iYWxTaWduIEVDQyBSb290IENBIC0gUjQxEzARBgNVBAoTCkdsb2Jh\n"
-"bFNpZ24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMTIxMTEzMDAwMDAwWhcNMzgw\n"
-"MTE5MDMxNDA3WjBQMSQwIgYDVQQLExtHbG9iYWxTaWduIEVDQyBSb290IENBIC0g\n"
-"UjQxEzARBgNVBAoTCkdsb2JhbFNpZ24xEzARBgNVBAMTCkdsb2JhbFNpZ24wWTAT\n"
-"BgcqhkjOPQIBBggqhkjOPQMBBwNCAAS4xnnTj2wlDp8uORkcA6SumuU5BwkWymOx\n"
-"uYb4ilfBV85C+nOh92VC/x7BALJucw7/xyHlGKSq2XE/qNS5zowdo0IwQDAOBgNV\n"
-"HQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUVLB7rUW44kB/\n"
-"+wpu+74zyTyjhNUwCgYIKoZIzj0EAwIDRwAwRAIgIk90crlgr/HmnKAWBVBfw147\n"
-"bmF0774BxL4YSFlhgjICICadVGNA3jdgUM/I2O2dgq43mLyjj0xMqTQrbO/7lZsm\n"
+"MIICCTCCAY6gAwIBAgINAgPlwGjvYxqccpBQUjAKBggqhkjOPQQDAzBHMQswCQYD\n"
+"VQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEUMBIG\n"
+"A1UEAxMLR1RTIFJvb3QgUjQwHhcNMTYwNjIyMDAwMDAwWhcNMzYwNjIyMDAwMDAw\n"
+"WjBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2Vz\n"
+"IExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjQwdjAQBgcqhkjOPQIBBgUrgQQAIgNi\n"
+"AATzdHOnaItgrkO4NcWBMHtLSZ37wWHO5t5GvWvVYRg1rkDdc/eJkTBa6zzuhXyi\n"
+"QHY7qca4R9gq55KRanPpsXI5nymfopjTX15YhmUPoYRlBtHci8nHc8iMai/lxKvR\n"
+"HYqjQjBAMA4GA1UdDwEB/wQEAwIBhjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQW\n"
+"BBSATNbrdP9JNqPV2Py1PsVq8JQdjDAKBggqhkjOPQQDAwNpADBmAjEA6ED/g94D\n"
+"9J+uHXqnLrmvT/aDHQ4thQEd0dlq7A/Cr8deVl5c1RxYIigL9zC2L7F8AjEA8GE8\n"
+"p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n"
+"-----END CERTIFICATE-----\n"
+"-----BEGIN CERTIFICATE-----\n"
+"MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG\n"
+"A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv\n"
+"b3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw05ODA5MDExMjAw\n"
+"MDBaFw0yODAxMjgxMjAwMDBaMFcxCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9i\n"
+"YWxTaWduIG52LXNhMRAwDgYDVQQLEwdSb290IENBMRswGQYDVQQDExJHbG9iYWxT\n"
+"aWduIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDaDuaZ\n"
+"jc6j40+Kfvvxi4Mla+pIH/EqsLmVEQS98GPR4mdmzxzdzxtIK+6NiY6arymAZavp\n"
+"xy0Sy6scTHAHoT0KMM0VjU/43dSMUBUc71DuxC73/OlS8pF94G3VNTCOXkNz8kHp\n"
+"1Wrjsok6Vjk4bwY8iGlbKk3Fp1S4bInMm/k8yuX9ifUSPJJ4ltbcdG6TRGHRjcdG\n"
+"snUOhugZitVtbNV4FpWi6cgKOOvyJBNPc1STE4U6G7weNLWLBYy5d4ux2x8gkasJ\n"
+"U26Qzns3dLlwR5EiUWMWea6xrkEmCMgZK9FGqkjWZCrXgzT/LCrBbBlDSgeF59N8\n"
+"9iFo7+ryUp9/k5DPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8E\n"
+"BTADAQH/MB0GA1UdDgQWBBRge2YaRQ2XyolQL30EzTSo//z9SzANBgkqhkiG9w0B\n"
+"AQUFAAOCAQEA1nPnfE920I2/7LqivjTFKDK1fPxsnCwrvQmeU79rXqoRSLblCKOz\n"
+"yj1hTdNGCbM+w6DjY1Ub8rrvrTnhQ7k4o+YviiY776BQVvnGCv04zcQLcFGUl5gE\n"
+"38NflNUVyRRBnMRddWQVDf9VMOyGj/8N7yy5Y0b2qvzfvGn9LhJIZJrglfCm7ymP\n"
+"AbEVtQwdpf5pLGkkeB6zpxxxYu7KyJesF12KwvhHhm4qxFYxldBniYUr+WymXUad\n"
+"DKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveCX4XSQRjbgbME\n"
+"HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==\n"
 "-----END CERTIFICATE-----\n"
 "-----BEGIN CERTIFICATE-----\n"
 "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQsw\n"

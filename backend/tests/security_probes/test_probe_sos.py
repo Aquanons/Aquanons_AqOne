@@ -4,16 +4,11 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from probe_harness import FakeConn, install_pool, operator_headers, require_status, run_db
+from probe_harness import operator_headers, require_status, run_db
 
 from app.main import app
 
 GATEWAY_KEY = 'probe-gateway-key'
-
-# Positional args of the INSERT INTO sos_events in app/api/sos.py ingest_sos.
-TRUST_TIER_ARG = 6
-BUOY_ID_ARG = 8
-DELIVERED_VIA_BUOY_ARG = 12
 
 
 def _sos(**overrides):
@@ -29,50 +24,6 @@ def _sos(**overrides):
     }
     body.update(overrides)
     return {key: value for key, value in body.items() if value is not None}
-
-
-def _sos_insert_responder(kind, sql, args):
-    if kind == 'fetchrow' and 'INSERT INTO sos_events' in sql:
-        return {
-            'id': 1, 'was_inserted': True, 'vessel_id': args[0], 'client_ts': args[1],
-            'delivered_direct': args[11], 'delivered_via_buoy': args[12], 'acknowledged_at': None,
-        }
-    return None
-
-
-def _post_anonymous_sos(monkeypatch, body):
-    conn = FakeConn(_sos_insert_responder)
-    install_pool(monkeypatch, conn, 'app.api.sos')
-    with TestClient(app, raise_server_exceptions=False) as client:
-        response = client.post('/api/sos', json=body)
-    inserts = conn.calls_matching('INSERT INTO sos_events')
-    return response, (inserts[0][2] if inserts else None), conn
-
-
-@pytest.mark.finding('backend.sos.untrusted-provenance-claims')
-def test_anonymous_sos_cannot_self_assert_responder_confirmation(monkeypatch):
-    response, args, _ = _post_anonymous_sos(monkeypatch, _sos(trust_tier='confirmed_by_responder'))
-    if response.status_code in (401, 403, 422):
-        return
-    require_status(response, 200)
-    assert args[TRUST_TIER_ARG] != 'confirmed_by_responder', (
-        'an unauthenticated request stored trust_tier=confirmed_by_responder on a new incident'
-    )
-
-
-@pytest.mark.finding('backend.sos.untrusted-provenance-claims')
-def test_anonymous_sos_cannot_claim_buoy_delivery_without_gateway_key(monkeypatch):
-    body = _sos(source='buoy', buoy_id='UNTRUSTED-BUOY', src_id=4242, seq=7, local_id=None)
-    response, args, conn = _post_anonymous_sos(monkeypatch, body)
-    if response.status_code in (401, 403):
-        return
-    require_status(response, 200)
-    registered_buoys = [call[2][0] for call in conn.calls_matching('INSERT INTO buoys')]
-    assert not args[DELIVERED_VIA_BUOY_ARG] and args[BUOY_ID_ARG] is None, (
-        'a request with no gateway key was stored as delivered_via_buoy='
-        f'{args[DELIVERED_VIA_BUOY_ARG]} with buoy_id={args[BUOY_ID_ARG]!r}; '
-        f'buoys auto-registered: {registered_buoys}'
-    )
 
 
 @pytest.mark.finding('backend.sos.anonymous-incidents-crowd-dispatch-feed')

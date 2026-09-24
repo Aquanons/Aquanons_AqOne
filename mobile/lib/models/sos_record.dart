@@ -137,12 +137,6 @@ class SosRecord {
     int? acknowledgedAt,
     String? ackedBy,
     String? remoteId,
-    String? etaAt,
-    int? responderStatus,
-    String? responderNote,
-    int? fisherReply,
-    bool? fisherReplySynced,
-    String? resolvedAt,
   }) {
     return SosRecord(
       localId: localId,
@@ -166,17 +160,17 @@ class SosRecord {
       deliveredAt: deliveredAt ?? this.deliveredAt,
       acknowledgedAt: acknowledgedAt ?? this.acknowledgedAt,
       ackedBy: ackedBy ?? this.ackedBy,
-      // Carried through unchanged if not overridden. copyWith feeds save(),
-      // and dropping these would blank a live ETA in memory every time the
-      // delivery state moved. toRow() deliberately does not write them, so
-      // saveResponder stays the single writer of responder data.
       remoteId: remoteId ?? this.remoteId,
-      etaAt: etaAt ?? this.etaAt,
-      responderStatus: responderStatus ?? this.responderStatus,
-      responderNote: responderNote ?? this.responderNote,
-      fisherReply: fisherReply ?? this.fisherReply,
-      fisherReplySynced: fisherReplySynced ?? this.fisherReplySynced,
-      resolvedAt: resolvedAt ?? this.resolvedAt,
+      // Carried through unchanged. copyWith feeds save(), and dropping these
+      // would blank a live ETA in memory every time the delivery state moved.
+      // toRow() deliberately does not write them, so saveResponder stays the
+      // single writer of responder data.
+      etaAt: etaAt,
+      responderStatus: responderStatus,
+      responderNote: responderNote,
+      fisherReply: fisherReply,
+      fisherReplySynced: fisherReplySynced,
+      resolvedAt: resolvedAt,
     );
   }
 

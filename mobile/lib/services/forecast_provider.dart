@@ -32,6 +32,8 @@ abstract class ForecastProvider {
   });
 }
 
+double _round1(double v) => double.parse(v.toStringAsFixed(1));
+
 /// Open-Meteo: atmospheric forecast plus a second call to the marine model
 /// for wave height.
 ///
@@ -52,8 +54,8 @@ class OpenMeteoForecastProvider implements ForecastProvider {
     String? municipality,
     int days = AqOneConfig.forecastDays,
   }) async {
-    final coarseLat = double.parse(lat.toStringAsFixed(1));
-    final coarseLon = double.parse(lon.toStringAsFixed(1));
+    final coarseLat = _round1(lat);
+    final coarseLon = _round1(lon);
 
     final Object? atmoRaw = await _atmosphericRaw(coarseLat, coarseLon, days);
     if (atmoRaw == null) {
@@ -169,8 +171,8 @@ class AqOneForecastProvider implements ForecastProvider {
     String? municipality,
     int days = AqOneConfig.forecastDays,
   }) async {
-    final coarseLat = double.parse(lat.toStringAsFixed(1));
-    final coarseLon = double.parse(lon.toStringAsFixed(1));
+    final coarseLat = _round1(lat);
+    final coarseLon = _round1(lon);
 
     final Object? decoded = await _backend.getJson(
       '${AqOneConfig.publicForecastPath}?lat=$coarseLat&lon=$coarseLon&days=$days',

@@ -1070,9 +1070,5 @@
   "standDownPendingDescription": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
   "@standDownPendingDescription": {
     "description": "Description on the SOS status card when a stand-down is queued locally awaiting network connectivity."
-  },
-  "responderReplyPendingSafeNow": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
-  "@responderReplyPendingSafeNow": {
-    "description": "Notice shown in responder ETA dialog when the safe now reply is queued locally."
   }
 }

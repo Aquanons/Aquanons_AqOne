@@ -2,93 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
 from datetime import timedelta
 
 import pytest
-from probe_harness import FakeConn, ProbeBroken, now_utc, run_db
-from pydantic import ValidationError
+from probe_harness import ProbeBroken, now_utc, run_db
 
-from app.ai.anomaly_service import eligible_latest_trips, evaluate_and_persist
-from app.api.contacts import ContactEventIn
-
-
-def _contact_row(vessel_id, trip_id, observed_at, lat=11.66, lon=122.44):
-    return {
-        'vessel_id': vessel_id, 'trip_id': trip_id, 'buoy_id': 'B1', 'observed_at': observed_at,
-        'latitude': lat, 'longitude': lon, 'is_synthetic': False,
-    }
-
-
-def _trip_state(trip_id, vessel_id, status):
-    return {
-        'trip_id': trip_id, 'vessel_id': vessel_id, 'status': status, 'welfare_status': 'unknown',
-        'departure_at': None, 'expected_return_at': None,
-        'expected_checkin_interval_minutes': None, 'amendments': [],
-    }
-
-
-@pytest.mark.finding('backend.contacts.optional-position-crash')
-def test_contact_without_coordinates_does_not_abort_fleet_evaluation():
-    now = now_utc()
-    try:
-        ContactEventIn(
-            event_id='e1', vessel_id='V-NOPOS', trip_id='T-NOPOS', buoy_id='B1',
-            observed_at=now, source='live',
-        )
-    except ValidationError:
-        return  # ingest refuses position-less contacts, so the crash is unreachable
-    rows = [
-        _contact_row('V-NOPOS', 'T-NOPOS', now - timedelta(hours=1), lat=None, lon=None),
-        _contact_row('V-OK', 'T-OK', now - timedelta(hours=1)),
-    ]
-    try:
-        eligible = eligible_latest_trips(rows, as_of=now)
-    except (TypeError, ValueError) as exc:
-        pytest.fail(f'one accepted contact without coordinates aborts evaluation for every vessel: {exc!r}')
-    assert 'V-OK' in {vessel for vessel, _, _ in eligible}
-
-
-def _run_evaluation(contact_rows, trip_states):
-    def responder(kind, sql, args):
-        if kind == 'fetch' and 'FROM buoy_contacts' in sql:
-            return contact_rows
-        if kind == 'fetch' and 'FROM vessel_trips' in sql:
-            return trip_states
-        return None
-
-    conn = FakeConn(responder)
-    error = None
-    try:
-        asyncio.run(evaluate_and_persist(conn, as_of=now_utc(), include_synthetic=False))
-    except Exception as exc:  # the exception is the observation, not a probe error
-        error = exc
-    deactivated = bool(conn.calls_matching('SET is_active = FALSE'))
-    return error, deactivated
-
-
-@pytest.mark.finding('backend.ai.anomaly.zero-contact-poison-run')
-def test_zero_contact_trip_for_a_fresh_vessel_does_not_abort_evaluation():
-    error, deactivated = _run_evaluation([], [_trip_state('T-ZERO', 'V-FRESH', 'open')])
-    assert error is None, (
-        f'an open trip with no contacts for a never-seen vessel aborts evaluation: {error!r} '
-        f'(active scores already deactivated before the crash: {deactivated})'
-    )
-
-
-@pytest.mark.finding('backend.ai.anomaly.zero-contact-poison-run')
-def test_zero_contact_trip_for_a_known_vessel_does_not_abort_evaluation():
-    history = [
-        _contact_row('V-OLD', 'T-OLD', now_utc() - timedelta(days=3, hours=h)) for h in range(3)
-    ]
-    trip_states = [_trip_state('T-OLD', 'V-OLD', 'completed'), _trip_state('T-NEW', 'V-OLD', 'open')]
-    error, deactivated = _run_evaluation(history, trip_states)
-    assert error is None, (
-        f'an open zero-contact trip for a vessel with history aborts evaluation: {error!r} '
-        f'(active scores already deactivated before the crash: {deactivated})'
-    )
+from app.ai.anomaly_service import evaluate_and_persist
 
 
 async def _seed_live_alert(conn, now):

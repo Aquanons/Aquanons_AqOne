@@ -78,18 +78,27 @@ LORA_CR        = 5
 LORA_SYNC_WORD = 0x34
 ```
 
-**Credentials and secrets — in gitignored `AqOneSecrets.h`:**
+**Credentials and secrets - in gitignored `AqOneSecrets.h`:**
 
-Secrets are moved out of sketch sources. Each sketch directory contains an `AqOneSecrets.h.example` template:
+Secrets are moved out of sketch sources.
+Each sketch directory contains an `AqOneSecrets.h.example` template:
 - `firmware/buoy/AqOneBuoy/AqOneSecrets.h.example`: copy to `AqOneSecrets.h` and configure `LOAM_KEY`.
 - `firmware/shore/AqOneShore/AqOneSecrets.h.example`: copy to `AqOneSecrets.h` and configure `UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY`, and `LOAM_KEY`.
 
-`AqOneLoam.h` includes `"AqOneSecrets.h"` directly and asserts at compile time that the header is present and that `LOAM_KEY` is not left as the insecure default. **Never commit `AqOneSecrets.h`.**
+`AqOneLoam.h` includes `"AqOneSecrets.h"` directly and checks at compile time that the header is present, that `LOAM_KEY` is at least 16 characters, and that neither the old default key nor the example placeholder is used.
+The example does not build until `LOAM_KEY` is replaced with a real random secret.
+Existing local `AqOneSecrets.h` files must declare `static constexpr char LOAM_KEY[] = "...";` (switching from `const char*` to `constexpr char[]`) to satisfy the compile-time assertions.
+**Never commit `AqOneSecrets.h`.**
 
-**Field sketch:** `AP_SSID` is `Aquan` on **every** boat pod — only the node
-name differs. A shared SSID lets the phone use any participating pod without a
-new app configuration. Stationary sensor-only nodes do not need to expose the
-phone API unless that is explicitly added later.
+**Gateway authorization rationale:**
+`GATEWAY_API_KEY` in `AqOneSecrets.h` matches `GATEWAY_API_KEY` in the backend environment.
+It unlocks only `/api/sos/downlink` (the gateway-only view of responder acknowledgements and ETAs to broadcast over LoRa).
+It deliberately does not unlock `/api/sos/active`, which is operator-only and contains sensitive position, fisher notes, and vessel owner identities.
+If `GATEWAY_API_KEY` is missing or invalid, SOS still flows up to the backend and chat flows both ways, but dispatcher ETAs will not downlink.
+
+**Field sketch:** `AP_SSID` is `Aquan` on **every** boat pod - only the node name differs.
+A shared SSID lets the phone use any participating pod without a new app configuration.
+Stationary sensor-only nodes do not need to expose the phone API unless that is explicitly added later.
 
 **Shore only:** `BACKEND_HOST` (`https://aqone-backend.onrender.com`), plus `UPLINK_SSID`, `UPLINK_PASS`, and `GATEWAY_API_KEY` configured in `AqOneSecrets.h`.
 
@@ -404,14 +413,17 @@ low-node-to-low-node against a 10.1 km
 horizon at 1.5 m antenna height, and explicitly warns that free-space numbers
 are ~5× too optimistic. Do not quote a range until step 8 is done.
 
-**The HMAC key is shared and checked into git.** Until `LOAM_KEY` is changed,
-anyone with this repo can inject a distress call into your mesh. Per-device keys
-by `SRC_ID` are what the spec calls for in production.
+**The HMAC key is shared across nodes.**
+`LOAM_KEY` is stored in gitignored `AqOneSecrets.h` and guarded at compile time, but all nodes in a given mesh still share the same key.
+Per-device keys by `SRC_ID` remain on the roadmap for full fleet rollout.
 
-**TLS certificates are not verified** on the shore gateway.
-`client.setInsecure()` skips validation — there is no cert store on the board and
-no way to rotate one on a mast. Acceptable for a prototype; a production gateway
-pins a CA. Say so if asked rather than letting it be discovered.
+**TLS certificates are verified via embedded root CAs.**
+The shore gateway uses `client.setCACert(BACKEND_CA_CERTS)` containing trusted root certificates:
+1. `GTS Root R4` (Expires: 2036-06-22) - Primary root for Google Trust Services WE1 (Render)
+2. `GlobalSign Root CA` (Expires: 2028-01-28) - Cross-sign backup for GTS Root R4
+3. `GTS Root R1` (Expires: 2036-06-22) - Google Trust Services RSA root backup
+4. `ISRG Root X1` (Expires: 2035-06-04) - Let's Encrypt Root backup
+Rotate `BACKEND_CA_CERTS` in `AqOneShore.ino` before the GlobalSign Root CA expires in 2028 or whenever the backend deployment changes certificate authority chains.
 
 **Transmitting is half-duplex and slow.** A full frame at SF10 is roughly a
 second of airtime, during which the node hears nothing. The TX ring, the random

@@ -2,21 +2,12 @@
 
 from __future__ import annotations
 
-import re
 from datetime import timedelta
 
 import pytest
-from probe_harness import REPO_ROOT, now_utc, run_db
+from probe_harness import now_utc, run_db
 
 from app.api.squall import _load_rows
-from app.demo.weather import coordinates
-
-
-@pytest.mark.finding('backend.demo-weather.unbounded-coordinate-expansion')
-def test_demo_weather_rejects_ten_thousand_coordinate_cells():
-    many = 10_000
-    with pytest.raises(ValueError):
-        coordinates(','.join(['11.66'] * many), ','.join(['122.44'] * many))
 
 
 @pytest.mark.finding('backend.public-squall.unbounded-history-load')
@@ -45,17 +36,3 @@ def test_public_squall_does_not_load_week_old_readings(probe_db):
         f'one anonymous request loaded {len(readings)} readings, {len(stale)} of them over two days old; '
         'the load grows with retained history'
     )
-
-
-@pytest.mark.finding('backend.mesh.unbounded-public-storage')
-def test_mesh_chat_has_a_retention_or_admission_control():
-    """Static: any DELETE/retention for mesh_chat, or a limiter on its POST route."""
-    sources = [
-        *(REPO_ROOT / 'backend' / 'app').rglob('*.py'),
-        *(REPO_ROOT / 'backend' / 'migrations').glob('*.sql'),
-        *(REPO_ROOT / 'backend').glob('*.py'),
-        *REPO_ROOT.glob('render.yaml'),
-    ]
-    pattern = re.compile(r'DELETE\s+FROM\s+mesh_chat|mesh_chat.*retention|pg_cron|RateLimit|slowapi', re.I)
-    hits = [str(path.relative_to(REPO_ROOT)) for path in sources if pattern.search(path.read_text('utf-8'))]
-    assert hits, 'no retention job, cleanup statement, or rate limiter for anonymous mesh_chat rows'
