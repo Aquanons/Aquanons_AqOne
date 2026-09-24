@@ -954,6 +954,103 @@ Reviewer: Claude Code. Implementer: Gemini.
 
 ### Still open
 
-- `firmware/platformio.ini` sets `src_dir` inside `[env:*]`, which PlatformIO ignores, so a plain `pio run` builds nothing; builds need `PLATFORMIO_SRC_DIR`.
 - Bench check (Daniel): flash the shore and a buoy, confirm HTTPS to Render after NTP sync, send one SOS and one warning. Required before any field flash.
 - Release-key-signed APK (Len) and the `release/apk-master-*` workflow (Jade); until then no APK is published in the repo.
+
+## Phase 8: Post-merge follow-ups
+
+### Environment
+
+- Date: 2026-09-24T21:30:00+08:00
+- Branch: `fix/post-merge-followups`
+- Requirements: SEC-18 contract repair, firmware build tooling
+- Acceptance test: `backend/tests/security_probes/test_probe_resource_bounds.py::test_public_squall_still_reports_the_last_real_reading_when_all_are_stale`
+
+### 1. Squall `observed_at` Contract Repair (SEC-18)
+
+- Problem: When all barometric readings were older than the SEC-18 24-hour window, `/api/public/squall` returned `observed_at: null`, which `docs/05_PUBLIC_API.md` specifies is reserved for "there has never been any reading at all".
+- Solution:
+  - Added `_latest_observed_at(conn, *, live: bool, buoy_id: str | None = None)` in `backend/app/api/squall.py` executing `SELECT max(observed_at) FROM barometric_readings WHERE is_synthetic = $1` (and `AND buoy_id = $2` when `buoy_id` is supplied).
+  - EXPLAIN query plan verified on migrated PostgreSQL 18 probe database:
+    - Without buoy_id:
+      ```text
+      Aggregate  (cost=22.50..22.51 rows=1 width=8) (actual time=0.118..0.119 rows=1.00 loops=1)
+        Buffers: shared hit=10
+        ->  Seq Scan on barometric_readings  (cost=0.00..20.00 rows=1000 width=8) (actual time=0.006..0.063 rows=1000.00 loops=1)
+              Filter: (NOT is_synthetic)
+              Buffers: shared hit=10
+      ```
+    - With buoy_id:
+      ```text
+      Result  (cost=0.40..0.41 rows=1 width=8) (actual time=0.009..0.009 rows=1.00 loops=1)
+        Buffers: shared hit=3
+        InitPlan 1
+          ->  Limit  (cost=0.28..0.40 rows=1 width=8) (actual time=0.007..0.007 rows=1.00 loops=1)
+                Buffers: shared hit=3
+                ->  Index Scan Backward using idx_barometric_readings_buoy_time on barometric_readings  (cost=0.28..64.55 rows=500 width=8) (actual time=0.006..0.006 rows=1.00 loops=1)
+                      Index Cond: (buoy_id = 'B1'::text)
+                      Filter: (NOT is_synthetic)
+                      Buffers: shared hit=3
+      ```
+  - Extended `build_squall_status` with `fallback_observed_at: datetime | None = None`. It sets `observed_at` and `data_age_seconds` only when windowed readings yield none; windowed readings are never loaded for detection.
+  - Wired into all three live squall endpoints:
+    - `public_squall` (`backend/app/api/public.py`): queries `_latest_observed_at` when windowed readings are empty and passes `fallback_observed_at`.
+    - `/current` (`backend/app/api/squall.py`): queries `_latest_observed_at` when windowed readings are empty and passes `fallback_observed_at`.
+    - `/buoy/{buoy_id}` (`backend/app/api/squall.py`): queries buoy-scoped `_latest_observed_at` when windowed readings are empty, and bounds telemetry fetching to a 2-hour window ending at `fallback_at`.
+    - Demo and training routes left untouched.
+  - Added unit test `test_build_squall_status_uses_fallback_observed_at_when_readings_empty` in `backend/tests/test_squall.py`.
+  - Added `fetchval` support for `max(observed_at)` in `_FakeSquallPool`.
+  - Acceptance test `test_public_squall_still_reports_the_last_real_reading_when_all_are_stale` -> **PASSED**.
+  - Historical bounding test `test_public_squall_does_not_load_week_old_readings` -> **PASSED**.
+
+### 2. Firmware Build Tooling (`firmware/platformio.ini`)
+
+- Problem: `src_dir` inside `[env:*]` is ignored by PlatformIO core, requiring manual `$env:PLATFORMIO_SRC_DIR` workarounds and breaking plain `pio run`.
+- Solution:
+  - Updated `firmware/platformio.ini`:
+    - Replaced `src_dir` in `[env:buoy]` and `[env:shore]` with `custom_src_dir`.
+    - Added `extra_scripts = pre:select_src_dir.py` under `[env]`.
+  - Created `firmware/select_src_dir.py`:
+    ```python
+    import os
+    Import("env")
+    custom_src_dir = env.GetProjectOption("custom_src_dir")
+    env.Replace(PROJECT_SRC_DIR=os.path.join(env.subst("$PROJECT_DIR"), custom_src_dir))
+    ```
+  - Updated build and flash documentation in `firmware/README.md` and `CLAUDE.md`. Removed obsolete `PLATFORMIO_SRC_DIR` requirement and corrected non-existent `esp32s3` environment in `CLAUDE.md`.
+
+### 3. PlatformIO Build Gate Verification
+
+- Tested with PlatformIO Core 6.2.0:
+  - **Test A (Unchanged example secrets):**
+    - Ran plain `pio run -d firmware`.
+    - Both `buoy` and `shore` failed on the expected static assert:
+      `AqOneLoam.h:104:15: error: static assertion failed: LOAM_KEY in AqOneSecrets.h cannot use the example placeholder - set a random key before flashing`.
+  - **Test B (Random 32-character key):**
+    - Ran plain `pio run -d firmware` with no `PLATFORMIO_SRC_DIR`.
+    - Both environments compiled with SUCCESS and 0 AqOne warnings:
+      - `buoy`: SUCCESS in 02:52.
+      - `shore`: SUCCESS in 02:07 (RAM: 15.6% [51,048 / 327,680 bytes], Flash: 29.8% [994,837 / 3,342,336 bytes]).
+  - **Cleanup:**
+    - Scratch `AqOneSecrets.h` files deleted immediately.
+    - `git status` verified clean with no `AqOneSecrets.h` staged or tracked.
+    - `git diff --no-index firmware/buoy/AqOneBuoy/AqOneLoam.h firmware/shore/AqOneShore/AqOneLoam.h` confirmed 0 bytes diff.
+
+### 4. Full Gate Verification Run Results
+
+1. **Backend Default Suite:**
+   - `ruff check app tests` -> Clean (All checks passed!).
+   - `pytest -q -p no:cacheprovider` -> **448 passed, 5 skipped, 1 xfailed** in 62.18s (including all unit tests and security regressions).
+2. **PostgreSQL Security Probe Gate (Local Postgres 18 on port 55432):**
+   - `$env:AQONE_SECURITY_PROBES = '1'; pytest tests/security_probes`
+   - Results: **11 passed, 3 failed** (the exact 3 deferred roadmap findings: `test_hotspot_cell_needs_five_distinct_reporters[3]`, `test_hotspot_cell_needs_five_distinct_reporters[4]`, and `test_loam_signature_key_is_selected_per_source_id`), 0 errors.
+   - Both resource bound probes passed:
+     - `test_public_squall_does_not_load_week_old_readings`: PASSED
+     - `test_public_squall_still_reports_the_last_real_reading_when_all_are_stale`: PASSED
+3. **Mobile Suite:**
+   - `flutter analyze` -> Clean (No issues found!).
+   - `flutter test` -> **267 passed, 0 failed**.
+   - `flutter test test_security_probes` -> **6 passed, 0 failed**.
+4. **Web Suite:**
+   - `node --test web/test/*.test.js` -> **154 passed, 0 failed**.
+

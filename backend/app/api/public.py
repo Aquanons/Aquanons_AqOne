@@ -25,7 +25,12 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 
 from app.api.sea_condition import _buoy_telemetry
-from app.api.squall import _load_rows, _return_now_enabled, build_squall_status
+from app.api.squall import (
+    _latest_observed_at,
+    _load_rows,
+    _return_now_enabled,
+    build_squall_status,
+)
 from app.db import get_pool
 from app.geo import SHORE_STATIONS
 
@@ -458,7 +463,14 @@ async def public_squall() -> dict[str, object]:
     pool = get_pool()
     async with pool.acquire() as conn:
         readings, _, buoy_rows = await _load_rows(conn, live=True)
-    status = build_squall_status(readings, buoy_rows, source='live', allow_return_now=_return_now_enabled())
+        fallback_at = await _latest_observed_at(conn, live=True) if not readings else None
+    status = build_squall_status(
+        readings,
+        buoy_rows,
+        source='live',
+        allow_return_now=_return_now_enabled(),
+        fallback_observed_at=fallback_at,
+    )
     status['signal_type'] = 'pressure_pattern_research'
     status['is_calibrated'] = False
     return status

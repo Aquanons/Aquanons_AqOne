@@ -1,16 +1,17 @@
 # Implementation Plan: Security audit remediation
 
 Created: 2026-09-23T13:00:00+08:00
-Updated: 2026-09-24T10:45:00+08:00
-Revision: 3
+Updated: 2026-09-24T13:05:00+08:00
+Revision: 4
 Status: Approved
 **Execution mode:** hard-stop
 Feature spec and revision: `docs/security-audit/validation-results.json` run `20260923T1233` (verdicts re-checked by Claude against the raw JUnit/JSONL), `docs/security-audit/PROBES.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
-Len's chat approval: Revision 2 approved by Len in chat, 2026-09-23T13:15:27+08:00; Revision 3 (Phase 7) approved by Len in chat, 2026-09-24T10:37:00+08:00
+Len's chat approval: Revision 2 approved by Len in chat, 2026-09-23T13:15:27+08:00; Revision 3 (Phase 7) approved by Len in chat, 2026-09-24T10:37:00+08:00; Revision 4 (Phase 8) requested by Len in chat ("create a prompt for gemini to execute the handoff"), 2026-09-24T13:00:00+08:00
 Target branch: `fix/security-audit-remediation`, created from `master` at `35a7822`
 Revision 2: rebased on `35a7822` (PR #71 resolved-card warning line, PR #72 rebuilt APK); verification assets were written against `ef6cc7d` and still behave the same (backend untouched, mobile 259 passed, Dart probes 1 passed / 5 failed as before).
 Revision 3: adds Phase 7 after Claude's review of Phases 4-6 found three blockers (shore TLS roots, dead LOAM_KEY guard, SEC-20 reply matching). Len chose a compile-time LOAM_KEY guard and an offline CA-chain test.
+Revision 4: adds Phase 8, the Gemini-executable follow-ups left after the merge to master (squall `observed_at` contract, PlatformIO build config). Hardware checks, the release APK and credential rotation stay with Daniel, Len and Jade.
 Implementer: Antigravity (Gemini). Reviewer: Claude Code.
 
 ## Scope
@@ -358,6 +359,44 @@ Claude checked both firmware fixes against these tests on scratch copies: adding
 - [ ] Hardware check for Daniel (not a Gemini gate, but required before merge): flash the shore, confirm HTTPS to Render succeeds after NTP sync, then send one SOS and one warning over the bench mesh.
 
 Checkpoint message: `fix(security): trusted Render roots, compile-time LOAM_KEY guard, honest reply sync`
+
+## Phase 8: Post-merge follow-ups
+
+Requirements: SEC-18 contract repair, firmware build tooling (found by Claude after the 2026-09-24 merge)
+State: Completed
+Branch: create `fix/post-merge-followups` from `master` at `a95eeae`; do not commit to `master` directly.
+
+Acceptance test written by Claude, red before this phase and green after it (do not edit its assertions):
+
+| Test | Red reason today |
+|---|---|
+| `backend/tests/security_probes/test_probe_resource_bounds.py::test_public_squall_still_reports_the_last_real_reading_when_all_are_stale` | When every reading is older than the SEC-18 24-hour window, `/api/public/squall` returns `observed_at: null`, which `docs/05_PUBLIC_API.md` reserves for "there has never been any reading at all" |
+
+The existing `test_public_squall_does_not_load_week_old_readings` must stay green: the window bounds the work, and the fix must not load old rows again.
+
+### Tasks
+
+- [x] Squall `observed_at` contract (`backend/app/api/squall.py`):
+  - Add one helper that reads `SELECT max(observed_at) FROM barometric_readings WHERE is_synthetic = $1` (the `(buoy_id, observed_at)` index already exists; check with `EXPLAIN` on the probe database and record the plan in the evidence).
+  - `build_squall_status` takes that value as an optional keyword and uses it for `observed_at` and `data_age_seconds` only when the windowed readings give none. Readings outside the window must never feed detection.
+  - Wire it into every live caller: `public_squall` (`app/api/public.py`), `current` and `buoy/{buoy_id}` (`app/api/squall.py`). The demo and training routes stay as they are.
+  - Add a default-suite unit test in `backend/tests/test_squall.py` for the `build_squall_status` fallback, in the existing style.
+- [x] Firmware build tooling (`firmware/platformio.ini`):
+  - `src_dir` inside `[env:*]` is ignored by PlatformIO, so a plain `pio run` builds nothing. Replace each env's `src_dir` with `custom_src_dir`, add `extra_scripts = pre:select_src_dir.py` under `[env]`, and add `firmware/select_src_dir.py` with `env.Replace(PROJECT_SRC_DIR=os.path.join(env.subst("$PROJECT_DIR"), env.GetProjectOption("custom_src_dir")))`.
+  - Claude verified this shape on a scratch copy: plain `pio run` built both envs with no `PLATFORMIO_SRC_DIR`, same RAM/flash as before (buoy 18.3% / 26.0%, shore 15.6% / 29.8%), and no warnings from AqOne sources.
+  - Keep the build directory path short; a deep Windows path fails on `AqOneBuoy.ino.cpp` with "No such file or directory" (MAX_PATH), which is not a code problem.
+  - Update the build commands in `firmware/README.md` and `CLAUDE.md` (Commands > Firmware): `pio run -d firmware` builds both, `pio run -d firmware -e buoy -t upload` flashes one. `CLAUDE.md` currently names a non-existent `esp32s3` env. Drop the `PLATFORMIO_SRC_DIR` workaround wherever it is documented as required.
+
+### Verification
+
+- [x] The acceptance test above passes, and the whole probe gate on Postgres has only the three deferred probes red.
+- [x] Backend default gate passes, including the new unit test.
+- [x] `pio run -d firmware` with no `PLATFORMIO_SRC_DIR`, using scratch `AqOneSecrets.h` files with a random 32-character `LOAM_KEY` (never committed, deleted after): both envs succeed with no AqOne warnings. With the example secrets unchanged it still fails on the placeholder `static_assert`.
+- [x] `git status` shows no `AqOneSecrets.h`; the two `AqOneLoam.h` copies still `diff` clean.
+- [x] Web and mobile gates pass (untouched, run as a regression check).
+
+Checkpoint message: `fix: squall reports the last real reading, plain pio run builds both sketches`
+Stop after the commit. Do not push and do not merge; Claude reviews and merges.
 
 ## Recovery
 

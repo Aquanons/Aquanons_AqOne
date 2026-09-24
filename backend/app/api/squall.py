@@ -77,6 +77,32 @@ async def _load_rows(
     return [dict(row) for row in readings], [dict(row) for row in squalls], [dict(row) for row in buoys]
 
 
+async def _latest_observed_at(conn, *, live: bool, buoy_id: str | None = None) -> datetime | None:
+    is_synthetic = not live
+    if buoy_id is not None:
+        val = await conn.fetchval(
+            '''
+            SELECT max(observed_at)
+            FROM barometric_readings
+            WHERE is_synthetic = $1 AND buoy_id = $2
+            ''',
+            is_synthetic,
+            buoy_id,
+        )
+    else:
+        val = await conn.fetchval(
+            '''
+            SELECT max(observed_at)
+            FROM barometric_readings
+            WHERE is_synthetic = $1
+            ''',
+            is_synthetic,
+        )
+    if val is not None and val.tzinfo is None:
+        return val.replace(tzinfo=UTC)
+    return val
+
+
 def _return_now_enabled() -> bool:
     """Global safety clamp (docs/39 Phase 3), not yet the full Phase 4 gate.
 
@@ -95,6 +121,7 @@ def build_squall_status(
     *,
     source: Literal['live', 'synthetic'],
     allow_return_now: bool,
+    fallback_observed_at: datetime | None = None,
 ) -> dict[str, object]:
     """The one shared response shape for the dashboard, public, and demo
     squall routes (docs/39 Phase 3 item 1).
@@ -109,13 +136,21 @@ def build_squall_status(
     history = build_history(readings)
     quality = assess_array_quality(history, buoys, now)
 
+    effective_observed_at = quality.newest_observed_at
+    if effective_observed_at is None and fallback_observed_at is not None:
+        effective_observed_at = (
+            fallback_observed_at
+            if fallback_observed_at.tzinfo is not None
+            else fallback_observed_at.replace(tzinfo=UTC)
+        )
+
     data_age_seconds = (
-        (now - quality.newest_observed_at).total_seconds() if quality.newest_observed_at is not None else None
+        (now - effective_observed_at).total_seconds() if effective_observed_at is not None else None
     )
     base: dict[str, object] = {
         'source': source,
         'calibration': CALIBRATION,
-        'observed_at': quality.newest_observed_at.isoformat() if quality.newest_observed_at else None,
+        'observed_at': effective_observed_at.isoformat() if effective_observed_at else None,
         'generated_at': now.isoformat(),
         'data_age_seconds': data_age_seconds,
         'status_reason': quality.reason,
@@ -210,7 +245,14 @@ async def current() -> dict[str, object]:
     pool = get_pool()
     async with pool.acquire() as conn:
         readings, _, buoy_rows = await _load_rows(conn, live=True)
-    return build_squall_status(readings, buoy_rows, source='live', allow_return_now=_return_now_enabled())
+        fallback_at = await _latest_observed_at(conn, live=True) if not readings else None
+    return build_squall_status(
+        readings,
+        buoy_rows,
+        source='live',
+        allow_return_now=_return_now_enabled(),
+        fallback_observed_at=fallback_at,
+    )
 
 
 @router.get('/buoy/{buoy_id}')
@@ -218,13 +260,29 @@ async def buoy(buoy_id: str) -> dict[str, object]:
     pool = get_pool()
     async with pool.acquire() as conn:
         readings, _, buoy_rows = await _load_rows(conn, live=True)
-    if not readings:
-        raise HTTPException(status_code=404, detail='no pressure readings available')
+        if not readings:
+            fallback_at = await _latest_observed_at(conn, live=True, buoy_id=buoy_id)
+            if fallback_at is None:
+                raise HTTPException(status_code=404, detail='no pressure readings available')
+            readings_rows = await conn.fetch(
+                '''
+                SELECT buoy_id, observed_at, pressure_hpa
+                FROM barometric_readings
+                WHERE is_synthetic = FALSE AND observed_at >= $1 AND observed_at <= $2
+                ORDER BY observed_at, buoy_id
+                ''',
+                fallback_at - timedelta(hours=2),
+                fallback_at,
+            )
+            readings = [dict(r) for r in readings_rows]
 
     buoys = build_buoys(buoy_rows)
     if buoy_id not in buoys:
         raise HTTPException(status_code=404, detail='buoy not found')
-    return buoy_detail(readings, buoy_id, buoys)
+    try:
+        return buoy_detail(readings, buoy_id, buoys)
+    except KeyError:
+        raise HTTPException(status_code=404, detail='no pressure readings available for buoy') from None
 
 
 @router.post('/train')
