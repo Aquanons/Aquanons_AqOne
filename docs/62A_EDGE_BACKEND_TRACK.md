@@ -47,7 +47,7 @@ State: In progress (auto mode)
 
 Requirements: EC-C7 (backend), EC-M8, EC-M9 (backend), EC-M10 (backend), EC-M1
 Merge after: Phase 0
-State: Done - checkpoint commit
+State: Done - 059b3b0
 
 ### Tasks
 
