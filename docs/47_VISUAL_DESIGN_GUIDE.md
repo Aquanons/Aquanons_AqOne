@@ -595,6 +595,38 @@ Toasts:
 - Critical overlays pulse sparingly; standard data markers should remain static.
 - Every data layer visible to a user needs a matching legend entry.
 
+### 6.8 Trust badges and plausibility tags (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track W phases W3 and W4.
+These rules override 6.6 wherever they overlap.
+
+**Trust badges are positive only (EC-H10).**
+
+- A vessel with `vessel_verified = true` shows one green-tint pill: "Verified by MDRRMO".
+- Every other vessel shows plain neutral grey text, "not yet verified", with no pill, no icon and no colour.
+- Never show a yellow, amber or red badge for trust, and never an "unregistered" or "unverified" badge.
+- Trust tier never changes card colour, sort order, alarm or any other priority signal.
+  A call from an unknown boat looks and rings exactly like one from a verified boat.
+- `license_type` text never produces a badge.
+- A phone number with `phone_set_by = anonymous` is followed by neutral grey text "(unverified number)".
+
+**Plausibility tags are advisory (EC-H20).**
+
+- Each entry in an event's `flags` (`docs/05` E5.4) renders as a small neutral tag: slate text on a slate tint, the 6.6 pill size, no icon.
+- Tags never use the danger, caution or safe colours, never pulse, and never change card colour or order.
+- Labels:
+
+  | Flag | Label |
+  | --- | --- |
+  | `position_on_land` | "Position on land" |
+  | `position_beyond_radio_range` | "Beyond radio range" |
+  | `position_jump` | "Position jumped over 20 km" |
+  | `many_calls_same_vessel` | "Several calls from this vessel" |
+  | `position_conflict` | "Conflicting positions" |
+
+- The conflicting second position is a hollow marker of the same shape as the primary, with the tooltip "conflicting position".
+- A late call shows "LATE - pressed 3 d 4 h ago" in the same neutral tag style; it is information, not a lower priority.
+
 ## 7. Iconography
 
 ### 7.1 Flutter

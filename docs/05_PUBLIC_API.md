@@ -90,6 +90,8 @@ Rules:
 
 ### `POST /api/vessel-auth/refresh`
 
+**Changing:** a 30-day grace after expiry, in "E5.3" below.
+
 Requires the current vessel-device bearer token. Returns a fresh token for the
 same device/vessel pair and the new expiry time.
 
@@ -217,6 +219,8 @@ definition of done).
 
 ### `GET /api/sos/active` — dashboard poll (what the dashboard actually uses)
 
+**Changing:** the response shape, triage order and new fields, in "E5.4" below.
+
 Operator-authenticated (bearer token, `require_user`). The dashboard polls
 this rather than the SSE feed below (`web/js/dashboard/dashboard-live-sos.js`).
 
@@ -254,6 +258,8 @@ dashboard's resolved-incidents panel would have no record of who was resolved
 or what the fisher's last report on it was.
 
 ### `POST /api/vessel-profile` - declare a vessel's owner identity
+
+**Changing:** shore contact fields, device-only writes for enrolled vessels, and `set_by`, in "E5.5" below.
 
 Unauthenticated for initial registration, for the same reason SOS ingest is (`POST /api/sos`): a
 fisherman at sea has no account to hold, and this is the same self-declared
@@ -310,6 +316,8 @@ beyond them is rejected with 422 before any DB write.
 ```
 
 ### `POST /api/sos/{id}/acknowledge` and `POST /api/sos/{id}/resolve`
+
+**Changing:** `expected_version`, the 40-byte note, `reason_code` and a new `/reopen` route, in "E5.2" below.
 
 Operator-authenticated, responder roles (`mdrrmo` / `lgu` / `admin` — see
 [Roles](#roles)). `acknowledge` accepts `eta_minutes` (converted
@@ -396,6 +404,8 @@ place of the credentialed vessel feed when it has no device credential
 
 ### `GET /api/sos/vessel/{vessel_id}`
 
+**Changing:** every unresolved incident plus the newest 20 resolved, in "E5.5" below.
+
 Returns that vessel's SOS rows, newest first. The app matches by
 `(local_id, seq)` to mark a message `acknowledged` when an MDRRMO responder
 has acked it.
@@ -405,6 +415,8 @@ vessel id; the backend queries by the verified token vessel, not by trusting
 the path as ownership.
 
 ### `POST /api/sos/{event_id}/reply`
+
+**Changing:** `STILL_IN_DANGER` within 2 h of a resolve reopens the incident, in "E5.2" below. This applies to `POST /api/sos/reply/{local_id}` too.
 
 The fisher's reply to a responder acknowledgement.
 
@@ -459,6 +471,8 @@ belongs to that token's vessel.
 
 ### `POST /api/mesh/chat`
 
+**Changing:** credential-based `origin`, reserved names and rate limits, in "E5.6" below.
+
 Relays one chat line from a handset (via the Heltec WiFi hub, or straight
 from the phone when it has internet) into the durable store the MDRRMO
 dashboard and other handsets read from. Unauthenticated — fishermen have no
@@ -489,6 +503,8 @@ must not infer cloud delivery from network reachability alone, and must keep
 the line queued for retry rather than drop it.
 
 ### `GET /api/mesh/chat?since_id=`
+
+**Changing:** reading requires a credential, in "E5.6" below.
 
 Returns ordered nearby-group messages, unauthenticated. `since_id` (default
 `0`) returns messages with `id > since_id` in ascending order — "the next N
@@ -887,6 +903,8 @@ responder role (`mdrrmo` / `lgu` / `admin` — see [Roles](#roles)).
 
 ### `GET /api/ai/anomaly/active`
 
+**Changing:** `monitoring`, `monitoring_reason` and the `check_needed` status, in "E5.7" below.
+
 Read-only. Never triggers evaluation or writes — dashboard polling cannot
 rebuild the underlying tables. Each row carries `source` (`live` \|
 `synthetic`), `evaluated_at`, and `data_age_seconds` alongside the score, so
@@ -1247,6 +1265,208 @@ Requires either:
 - A vessel device bearer token whose bound `vessel_id` matches the trip's `vessel_id`.
 Anonymous callers receive HTTP 401.
 Non-responder operators or mismatching vessel devices receive HTTP 403.
+
+## Edge-case remediation contract (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Sections 3.2 to 3.7).
+Each item is the target shape that the named phase builds against.
+Until that phase merges, the sections above describe what is deployed; after it merges, Claude folds the item into the section above during Phase I.
+Findings are the `EC-` IDs in `docs/60_EXTREME_EDGE_CASE_REPORT.md`.
+Gateway-facing parts (ingest nonce, contact device tag, downlink, gateway chat) are in `docs/04_INGEST_API.md` Sections E4.1 to E4.4.
+
+### E5.1 Event shape (Track B phases B1 and B2)
+
+Every feed that returns an SOS event adds four fields.
+That means `GET /api/sos/active`, `GET /api/sos/recent`, `GET /api/sos/vessel/{vessel_id}`, `GET /api/sos/ack/{local_id}` and the gateway's `GET /api/sos/downlink`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `nonce` | int or null | The phone's incident nonce (`docs/04` E4.1). |
+| `version` | int | Incremented on every write to the incident. |
+| `resolution_code` | string or null | One of `rescued`, `safe_confirmed`, `stood_down_by_fisher`, `duplicate`, `closed_unconfirmed`, `unspecified`. `null` while the incident is open. |
+| `reopened_at` | ISO 8601 or null | The last time the incident was reopened. |
+
+The meaning of each `resolution_code`, and what the boat is told for it, is defined once in `docs/13_RESPONDER_LOOP.md` "Resolution codes".
+The backend sends only the code; the phone turns it into localised text, and the dashboard labels it in English.
+
+### E5.2 Operator actions: versions, reasons, reopen (Track B phase B1)
+
+All three routes below are operator-authenticated, responder roles (`mdrrmo` / `lgu` / `admin`), and audited.
+
+**`POST /api/sos/{id}/acknowledge`**
+
+- Adds optional `expected_version` (int).
+- `responder_note` is at most 40 UTF-8 bytes.
+  A longer note returns 422 with `detail = "responder_note_too_long"` (EC-M1), so the gateway never has to cut it.
+- `eta_minutes` stays optional; `null` means "received, no ETA yet" (EC-H4).
+
+**`POST /api/sos/{id}/resolve`**
+
+- Body: `{"reason_code": "...", "reason": "...", "expected_version": 7}`, every field optional.
+- `reason_code` is one of the `resolution_code` values in E5.1 except `unspecified`.
+- A missing `reason_code` is stored as `unspecified`, which the boat reads as "closed without reaching you" (docs/62 Section 1.2 item 3).
+  The deployed dashboard keeps working without a change.
+- `reason` stays free text for the dispatcher record.
+
+**`POST /api/sos/{id}/reopen`** (new)
+
+- Body: `{"reason": "...", "expected_version": 7}`, both optional.
+- Clears `resolved_at` and `resolution_code`, sets `reopened_at`, and returns the incident to `/active` and the downlink.
+- Reopening an incident that is already open returns 200 with `outcome = "no_change"`.
+
+**Version conflicts (EC-M8).**
+When `expected_version` is sent and does not match, all three routes return 409:
+
+```json
+{ "detail": "version_conflict", "current": { "id": 41, "version": 8 } }
+```
+
+`current` is the full event in the E5.1 shape (shortened above).
+A request without `expected_version` keeps last-write-wins, so old clients are unaffected.
+
+**Fisher replies reopen a recent close (EC-M9).**
+`POST /api/sos/{event_id}/reply` and `POST /api/sos/reply/{local_id}` with `reply = 1` (`STILL_IN_DANGER`) on an incident resolved less than 2 hours ago reopen it, with `reopened_by = "fisher"` in the audit record.
+Older resolved incidents keep today's frozen-reply behaviour.
+
+### E5.3 Session refresh (Track B phases B5 and B6)
+
+**`POST /api/token/refresh`** (new, B6, EC-M18)
+
+- Requires a valid operator bearer token; returns a fresh token with the same claims shape as `POST /api/login`.
+- SEC-12 revocation still applies: a token whose `ver` no longer matches is refused with 401.
+
+**`POST /api/vessel-auth/refresh`** (B5, EC-M2)
+
+- Also accepts a vessel-device token up to **30 days past its expiry**, as long as the device row is not revoked.
+- A revoked device is refused whatever the token's age.
+
+### E5.4 Dispatcher feed: `GET /api/sos/active?limit=200` (Track B phase B4)
+
+The response changes to an object:
+
+```json
+{
+  "events": [],
+  "total": 214,
+  "flood": { "unknown_vessels_last_minute": 37, "active": true }
+}
+```
+
+- `events` holds the E5.1 shape plus the fields below.
+- `limit` defaults to 200.
+  `total` counts every unresolved incident, so the dashboard can show "+N more".
+- `flood.active` is `true` when more than 10 calls from unknown vessels arrived in the last minute (EC-H18).
+
+**Triage order.**
+The dashboard renders in the order received and never re-sorts.
+
+1. Unacknowledged before acknowledged.
+2. Then corroborated before uncorroborated.
+   Corroborated means gateway-delivered, `vessel_verified`, or a vessel with trip history.
+3. Then newest first.
+
+**Each event adds:**
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pressed_at` | ISO 8601 | From `client_ts`: when the fisher pressed SOS. |
+| `is_late` | bool | `created_at - client_ts` is more than 30 minutes (EC-H15). The dashboard shows "LATE - pressed 3 d 4 h ago" and uses `pressed_at` as the incident time. A late call is never dropped. |
+| `flags` | list of strings | Advisory plausibility flags (table below, EC-H20). They never block, delay or reorder a call. |
+| `open_calls_for_vessel` | int | Open incidents for the same `vessel_id` (EC-M3). |
+| `alt_latitude`, `alt_longitude` | float or null | The conflicting second position (`docs/04` E4.1). |
+| `delivery_path` | string | `direct` or `pod`. |
+| `vessel_verified` | bool | Trust tier is `phone_verified` or better. |
+| `phone_set_by` | string or null | Who set the profile phone: `device`, `anonymous` or `operator`. |
+| `shore_contact_name`, `shore_contact_phone` | string or null | From the vessel profile (E5.5). |
+
+| Flag | Raised when |
+| --- | --- |
+| `position_on_land` | The position is not at sea (`app/geo.py`). |
+| `position_beyond_radio_range` | A mesh-delivered position is further from the gateway than the modelled maximum range in `docs/33`. |
+| `position_jump` | The position is more than 20 km from the vessel's last contact within the previous hour. |
+| `many_calls_same_vessel` | `open_calls_for_vessel` is above 1. |
+| `position_conflict` | Two deliveries of the same call disagree by more than 1 km (`docs/04` E4.1). |
+
+Display labels for the flags are in `docs/47_VISUAL_DESIGN_GUIDE.md` 6.8.
+
+### E5.5 Vessel and identity (Track B phase B5; the vessel feed in B2)
+
+- **`GET /api/sos/vessel/{vessel_id}`** returns every unresolved incident plus the newest 20 resolved ones (EC-L8).
+  Today it returns 20 rows in total.
+- **`POST /api/vessels/{vessel_id}/confirm`** (new): responder roles, audited.
+  Sets the vessel's trust tier to `confirmed_by_responder` after an officer has checked it in person.
+  It is the only route that produces that tier.
+- **Vessel profile** (`POST /api/vessel-profile`) gains two optional fields (EC-M6):
+
+  | Field | Limit |
+  | --- | --- |
+  | `shore_contact_name` | at most 64 characters |
+  | `shore_contact_phone` | at most 20 characters |
+
+- **Enrolled vessels need their device for every write (EC-H21).**
+  Once a vessel has an active (non-revoked) enrolled device, every profile write, including filling a blank field, needs that device's bearer token.
+  - No token: 401.
+  - Another vessel's device token: 403.
+  - Vessels with no enrolled device keep today's rule (blank fills allowed, overwrites need the device).
+- Each profile field records who set it: `device`, `anonymous` or `operator` (surfaced as `phone_set_by` in E5.4).
+- **Trust tier (EC-H10).**
+  `license_type` text never changes the trust tier.
+  `phone_verified` comes only from a successful device enrolment; `confirmed_by_responder` only from the confirm route above.
+  How the dashboard shows the tier is in `docs/47_VISUAL_DESIGN_GUIDE.md` 6.8 (positive badge only).
+
+### E5.6 Mesh chat authority (Track B phase B5)
+
+Replaces the "Unauthenticated" rule of `POST /api/mesh/chat` and `GET /api/mesh/chat` above (EC-C9, EC-M12).
+
+**Posting** depends on the caller's credential:
+
+| Credential | Stored `origin` | Stored `sender` |
+| --- | --- | --- |
+| Operator session | `mdrrmo` | the operator account's display label |
+| Vessel device bearer | `app` | the vessel's boat name |
+| Gateway key | `mesh` | as relayed (`docs/04` E4.4) |
+| None (anonymous) | forced to `app` | as given |
+
+- Anonymous posts stay accepted, so phones that are not enrolled are never silenced (docs/62 Section 1.2 item 1).
+- **Reserved names.**
+  A `sender` matching MDRRMO, Coast Guard, PCG, PAGASA, Admin or Official is refused with 422 `detail = "sender_reserved"` unless the origin is `mdrrmo`.
+  Matching is case-insensitive, after removing every non-letter and mapping `0` to `o` and `1` to `l` (so `M.D.R.R.M.0` matches).
+- **Rate limit.**
+  Each sender plus client IP may post 6 times a minute; the seventh gets 429.
+- Only `origin = mdrrmo` lines carry the "Official" badge on phones, pods and the dashboard.
+
+**Reading** (`GET /api/mesh/chat`) requires one of: the gateway key, an operator session, or a vessel device bearer.
+Without one it returns 401.
+
+### E5.7 Operations status, anomaly and drift (Track B phases B6 and B7)
+
+**`GET /api/ops/status`** (new, B6): operator-authenticated, any operator role.
+
+```json
+{
+  "gateway_last_poll_at": "2026-09-24T10:00:00+08:00",
+  "gateway_stale": false,
+  "sms_configured": false,
+  "db_expires_at": "2026-10-15T12:00:00+08:00",
+  "db_days_left": 21,
+  "scheduler_last_run": { "escalation": "2026-09-24T10:00:30+08:00", "anomaly": "2026-09-24T09:55:00+08:00" }
+}
+```
+
+- `gateway_stale` is `true` after more than 3 missed 45 s polls, and while no poll has ever been seen.
+- `sms_configured` is `false` when the SMS provider has no credentials; escalation still runs and is audited, and the dashboard shows "SMS escalation not configured".
+- `db_expires_at` comes from the environment variable `DB_EXPIRES_AT`; both it and `db_days_left` are `null` when it is unset.
+- Each `scheduler_last_run` value is `null` until that job has run once.
+
+**Anomaly (B7, EC-H6 to EC-H9, EC-H16).**
+
+- `GET /api/ai/anomaly/active` adds `monitoring` (`active` or `unavailable`) and `monitoring_reason` (string or null).
+  `unavailable` means there is no live contact source, so the absence of a case means nothing.
+- Anomaly statuses gain `check_needed`, for a trip with no contacts at all that has passed its expected return.
+- How contacts are tagged by device is in `docs/04` E4.2.
+
+**Drift (B7, EC-M17).**
+Drift responses add `clock_suspect: bool`, `true` when the start time ignored an implausible client timestamp.
 
 ## Roles
 

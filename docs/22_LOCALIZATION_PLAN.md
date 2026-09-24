@@ -116,6 +116,43 @@ this is the migration order, biggest first:
 are SQL and log strings — **do not translate those.** The inventory
 number is a ceiling, not a target.
 
+### 5.1 New keys for the edge-case remediation (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 from the Track M phase list (`docs/62B_EDGE_MOBILE_TRACK.md`).
+Each key goes in `app_en.arb` with an `@key` description, with unreviewed drafts in `app_fil.arb` and `app_akl.arb` (Section 7).
+The English below is the intended meaning; Doreen Kay owns the final wording.
+
+| Key | Phase | English (draft) | Honesty note |
+| --- | --- | --- | --- |
+| `sosPodNotConfirmed` | M1 | "The pod has not confirmed this SOS reached shore yet. Still trying." | Must not read as delivered (`docs/06`). |
+| `sosStalePromptTitle` | M1 | "Unsent SOS from earlier" | |
+| `sosStalePromptBody` | M1 | "An SOS from {age} ago was never sent. Send it now?" | Placeholder `{age}`. It sends by itself after 60 s. |
+| `sosStalePromptSend` | M1 | "Send now" | |
+| `sosStalePromptCancel` | M1 | "Cancel it" | |
+| `onboardingBatteryWhy` | M2 | "Allow AqOne to run in the background so an SOS keeps sending when the screen is off." | |
+| `sosPendingNotificationTitle` | M2 | "SOS still sending" | Shown while a call is not yet `delivered`. |
+| `sosPendingNotificationBody` | M2 | "AqOne keeps trying until MDRRMO receives it." | |
+| `sosClosedByMdrrmo` | M4 | "Closed by MDRRMO." | `docs/13` "Resolution codes". |
+| `sosClosedUnconfirmed` | M4 | "MDRRMO closed this call without reaching you. If you still need help, press SOS again." | Also used for `unspecified` and a missing code. |
+| `sosClosedDuplicate` | M4 | "This call was merged with your other SOS." | |
+| `sosReopened` | M4 | "MDRRMO reopened your call." | Shown when `reopened_at` clears a closed card. |
+| `sosStandDownConfirmTitle` | M4 | "Call off the rescue?" | |
+| `sosStandDownConfirmBody` | M4 | "Rescue will be called off. Only do this if everyone is safe." | |
+| `sosStandDownUndo` | M4 | "Undo - I still need help" | Sends `STILL_IN_DANGER`; shown for 2 minutes. |
+| `sosNoEtaYet` | M4 | "Help is being arranged - no arrival time yet." | Replaces any default ETA (EC-H4). |
+| `enrolTitle` | M5 | "Enter the code from MDRRMO" | |
+| `enrolVerified` | M5 | "Verified by MDRRMO." | |
+| `enrolCodeInvalid` | M5 | "That code is wrong or expired. Ask MDRRMO for a new one." | |
+| `enrolNeedsInternet` | M5 | "Enrolment needs internet. Try again when you have signal." | |
+| `profileShoreContactName` | M5 | "Contact on shore" | |
+| `profileShoreContactPhone` | M5 | "Shore contact's phone" | |
+| `settingsSilentSos` | M6 | "Silent SOS" | |
+| `settingsSilentSosDescription` | M6 | "Send an SOS with no siren or sound. You can also hold the SOS button for 3 seconds." | |
+| `sosStoodDown` | M6 | "SOS stood down." | Replaces the literal at `venture_page.dart` (docs/60 L1). |
+| `sosNoneSentYet` | M6 | "No SOS sent yet." | Replaces the literal at `home_page.dart` (docs/60 L1). |
+
+M6 may add keys for any other SOS-path literal its grep finds; each follows the same rules and is listed in `docs/edge-remediation/EVIDENCE-mobile.md`.
+
 ## 6. Phases
 
 **Phase 0 — scaffold (done, this commit).** `l10n.yaml`, three ARB files

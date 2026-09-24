@@ -334,6 +334,8 @@ resolved between two polls would otherwise leave the mesh without the closure
 ever going out, and the handset would count down an ETA for a rescue that had
 already finished. Capped at 100 events, newest first.
 
+**Changing:** the cap, selection and order become those in "E4.3" below (Track B phase B3).
+
 Errors: `401` missing or wrong `X-Api-Key` - including a valid operator bearer
 token or demo key, neither of which substitutes for it.
 
@@ -389,6 +391,7 @@ However, provenance claims are strictly gated:
 - This prevents untrusted callers from forging mesh delivery states or injecting unregistered buoy rows into the database.
 - Trust tier: incoming `trust_tier` is stored as `self_declared` unless verified by a bound vessel device token (`phone_verified`).
 - The value `confirmed_by_responder` is never accepted from ingest.
+- **Changing:** the incident nonce, byte-safe truncation and position-conflict rules in "E4.1" below (Track B phase B2).
 
 
 ## Dedupe and ordering
@@ -405,6 +408,75 @@ However, provenance claims are strictly gated:
 verify api key → resolve ids → dedupe (src_ext_id, seq)
 → append event log → upsert sos_events projection → SSE push (05_PUBLIC_API.md)
 ```
+
+## Edge-case remediation contract (frozen 2026-09-24)
+
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Sections 3.1, 3.6 and 3.8).
+Each item is the target shape that the named phase builds against.
+Until that phase merges, the sections above describe what is deployed; after it merges, Claude folds the item into the section above during Phase I.
+Findings are the `EC-` IDs in `docs/60_EXTREME_EDGE_CASE_REPORT.md`.
+
+### E4.1 SOS ingest: incident nonce, safe text, position conflict (Track B phase B2)
+
+Applies to `POST /api/sos` (`SosIn`), from the handset and from the gateway.
+
+| Field | Change |
+| --- | --- |
+| `nonce` | New, optional. Integer `0..4294967295` that the phone generates once per incident. |
+| `note` | Longer than 64 UTF-8 bytes is **truncated** on a character boundary, never rejected. |
+| `boat` | Longer than 32 UTF-8 bytes is **truncated** on a character boundary, never rejected. |
+| `vessel_id` | Limits unchanged. |
+
+- **Merge key.**
+  With a `nonce`, two deliveries of the same call merge on `(vessel_id, nonce)`, whatever their `client_ts` or transport (EC-C14, EC-L13, EC-H17).
+  Without a `nonce`, the legacy key `(vessel_id, client_ts)` still applies, so old clients keep working.
+- **Position conflict.**
+  When a merge joins two deliveries that both carry a position and the positions are more than 1 km apart:
+  - the first position stays primary (`latitude`, `longitude`)
+  - the second is stored in `alt_latitude` and `alt_longitude`
+  - `position_conflict` is set to `true`
+
+  The dispatcher sees both (`docs/05` Section E5.4); nothing is silently overwritten.
+- **Response.**
+  The `POST /api/sos` response adds `nonce` (the stored value, or `null`).
+- The provenance rules in "SOS ingest provenance rules" above are unchanged.
+
+### E4.2 Contact events: how the contact was made (Track B phase B7)
+
+`POST /api/v1/contacts` gains one optional field:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `contact_via` | no | `pod`, `handset` or `buoy`; default `buoy`. Says which device produced the contact. |
+
+- The existing `source` field keeps its meaning (`live` or `synthetic`).
+  docs/62 Section 3.7 first named the new field `source`, which would have collided with it; `contact_via` is the frozen name.
+- Contacts with `contact_via = handset` alone never raise an `overdue` anomaly (EC-H7): a phone can go quiet while the boat is fine.
+
+### E4.3 SOS downlink: cap, selection, order, last-seen (Track B phase B3)
+
+Replaces the "Capped at 100 events, newest first" rule of `GET /api/sos/downlink` above.
+
+- **Cap:** at most `DOWNLINK_MAX = 12` events per response (EC-C10, EC-C2).
+- **Excluded:** every `is_synthetic` row.
+- **Selected:**
+  - open incidents (acknowledged or not) changed in the last 24 h
+  - plus incidents resolved in the last 6 h (`DOWNLINK_RESOLVED_WINDOW_HOURS`, unchanged)
+- **Order:**
+  1. acknowledged and open
+  2. unacknowledged and open
+  3. resolved
+
+  Within each group, latest change first.
+- **Event shape:** every event adds the fields in `docs/05` Section E5.1 (`nonce`, `version`, `resolution_code`, `reopened_at`).
+- **Last-seen:** every authenticated poll records the gateway's last-seen time.
+  Operators read it as `gateway_last_poll_at` in `GET /api/ops/status` (`docs/05` Section E5.7).
+
+### E4.4 Mesh chat from the gateway (Track B phase B5)
+
+- `POST /api/mesh/chat` with a valid `X-Api-Key` (`GATEWAY_API_KEY`) stores the line with `origin = "mesh"` and the `sender` as relayed.
+- `GET /api/mesh/chat` accepts the gateway key as one of its three credentials.
+- The full chat rules, including reserved names and rate limits, are in `docs/05` Section E5.6.
 
 ## Versioning
 
