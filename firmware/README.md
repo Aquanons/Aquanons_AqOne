@@ -173,26 +173,19 @@ The shore sketch has no access point and no WebSocket, so it needs no
 
 ### PlatformIO
 
-Each sketch folder is a self-contained `src/`. A minimal project per board:
+The `firmware/platformio.ini` file configures both environments (`buoy` and `shore`).
+A pre-script (`select_src_dir.py`) sets `PROJECT_SRC_DIR` dynamically from each environment's `custom_src_dir`, so plain `pio run` builds both environments with no `PLATFORMIO_SRC_DIR` environment variable needed:
 
-```ini
-[env:buoy]
-platform = espressif32
-board = heltec_wifi_lora_32_V3
-framework = arduino
-build_flags = -DWEBSOCKETS_SERVER_CLIENT_MAX=10
-lib_deps =
-  bblanchon/ArduinoJson@^7.0.0
-  links2004/WebSockets@^2.4.1
-  adafruit/Adafruit SSD1306@^2.5.9
-  adafruit/Adafruit GFX Library@^1.11.9
-  jgromes/RadioLib@^7.0.0
+```bash
+pio run -d firmware                     # Build both envs (buoy and shore)
+pio run -d firmware -e buoy             # Build buoy only
+pio run -d firmware -e shore            # Build shore only
+pio run -d firmware -e buoy -t upload   # Flash buoy to board
+pio run -d firmware -e shore -t upload  # Flash shore to board
 ```
 
-Drop `links2004/WebSockets` and the `build_flags` line for the shore env.
-
-Last verified: both sketches compile clean on 2026-09-12 — field sketch 866 KB flash /
-59 KB RAM, shore 984 KB / 51 KB. **Compiling is not the same as working on the
+Last verified: both sketches compile clean on 2026-09-24 — field sketch 866 KB flash /
+59 KB RAM (18.3% / 26.0%), shore 984 KB / 51 KB (15.6% / 29.8%). **Compiling is not the same as working on the
 water** — see "Test it in this order".
 
 ### Forward declarations in `AqOneLoam.h` — keep them

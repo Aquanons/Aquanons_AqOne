@@ -125,8 +125,8 @@ cd firmware
 # Verify the two AqOneLoam.h files are identical
 
 # Check with platformio
-platformio run -e esp32s3  # Build
-platformio run -t upload   # Flash to board
+pio run -d firmware                    # Build both envs (buoy, shore)
+pio run -d firmware -e buoy -t upload  # Flash buoy to board (or -e shore)
 ```
 
 ### Mobile

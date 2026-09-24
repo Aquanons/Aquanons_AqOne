@@ -258,6 +258,14 @@ class _FakeSquallPool:
             return list(self._buoy_rows)
         return []
 
+    async def fetchval(self, query: str, *args):
+        if 'max(observed_at)' in query:
+            wants_synthetic = args[0] if args else None
+            if wants_synthetic is not None and wants_synthetic != self._is_synthetic:
+                return None
+            return max((r['observed_at'] for r in self._readings), default=None)
+        return None
+
 
 def _mock_threshold_crossing_detection(monkeypatch, *, probability: float = 0.9) -> None:
     monkeypatch.setattr(squall_api, 'load_bundle', lambda: object())
@@ -479,3 +487,22 @@ def test_a_buoy_without_a_position_does_not_take_down_the_nowcast():
 
     assert status['level'] in {'unknown', 'clear', 'watch', 'return_now'}
     assert 'NOPOS' not in status['triggered_buoys']
+
+
+def test_build_squall_status_uses_fallback_observed_at_when_readings_empty():
+    """When all readings are outside the window, build_squall_status reports
+    unknown but preserves the last known real observation time and data age."""
+    fallback_at = datetime(2026, 8, 4, 12, 0, tzinfo=UTC)
+    status = squall_api.build_squall_status(
+        [],
+        _buoy_rows(),
+        source='live',
+        allow_return_now=False,
+        fallback_observed_at=fallback_at,
+    )
+
+    assert status['level'] == 'unknown'
+    assert status['observed_at'] == fallback_at.isoformat()
+    assert status['data_age_seconds'] is not None
+    assert status['data_age_seconds'] > 0
+
