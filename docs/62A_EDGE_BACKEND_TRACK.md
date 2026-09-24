@@ -401,7 +401,7 @@ Checkpoint message: `feat(ops): scheduled SMS escalation for unanswered SOS and 
 
 Requirements: EC-H6 (monitoring status), EC-H7 (tagging), EC-H8, EC-H9, EC-H16, EC-L2, EC-L3, EC-M17
 Merge after: B6
-State: Done - implementation checkpoint pending
+State: Done - 34eba43
 
 ### Tasks
 
