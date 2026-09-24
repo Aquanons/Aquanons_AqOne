@@ -46,11 +46,11 @@ State: In progress (auto mode)
 
 Requirements: EC-C3, EC-H15 (phone), and the silent-loss consequences of EC-C12, EC-M7 and EC-L10
 Merge after: Phase 0
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `test/delivery_policy_test.dart`, a table test of `routesDue(record, now)`:
     - `saved` gives `{pod, direct}`
     - `relayed` inside the current backoff step gives `{}`
@@ -63,39 +63,39 @@ State: Not started
     - `relayed record retries direct`: the fake buoy accepts, and the fake backend fails, then succeeds on a later tick; the record ends `delivered`.
     - `delivered record is never retried`.
     - `stale unsent record is reported, not dropped`.
-- [ ] Bump `AppDatabase` to schema v15: add `outbox.nonce INTEGER` (used in M3) and `outbox.last_attempt_at INTEGER`.
+- [x] Bump `AppDatabase` to schema v15: add `outbox.nonce INTEGER` (used in M3) and `outbox.last_attempt_at INTEGER`.
   Follow the existing migration style in `app_database.dart`.
-- [ ] Create `lib/models/delivery_policy.dart` containing:
+- [x] Create `lib/models/delivery_policy.dart` containing:
   - `enum SosRoute { pod, direct }`
   - `const directBackoff = [Duration(seconds: 20), Duration(seconds: 60), Duration(minutes: 5)]`
   - `const podDeliveryDeadline = Duration(minutes: 10)`
   - `const staleAfter = Duration(hours: 12)`
   - `Set<SosRoute> routesDue(SosRecord record, DateTime now)`
   - `bool isStale(SosRecord record, DateTime now)`
-- [ ] `OutboxStore`:
+- [x] `OutboxStore`:
   - Rename `awaitingRelay()` to `awaitingDelivery()`, returning `state IN (saved, relayed)`, oldest first.
   - Add `recordAttempt(localId, now)`.
   - Add `deleteUnsent(localId)`, which deletes only while the state is still `saved`.
   - Update every caller (grep).
-- [ ] `SosService`:
+- [x] `SosService`:
   - `retryPending()` asks `routesDue` for each record.
   - `_attemptRelay` takes the route set, so it tries only what the policy says, then records the attempt.
   - Split the reason-building block at the end of `_attemptRelay` into `_failureReason(buoyResult)`.
-- [ ] UI:
+- [x] UI:
   - `delivery_state_tile.dart` shows the `sosPodNotConfirmed` string once a `relayed` record is past the deadline.
   - On app start, `app_shell.dart` checks `isStale` and shows a dialog (`sosStalePromptTitle`, `sosStalePromptBody`, `sosStalePromptSend`, `sosStalePromptCancel`).
     It sends automatically after 60 s with no answer; Cancel calls `deleteUnsent`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
+- [x] Gate commands green, with red and green runs recorded.
 - [ ] Manual (emulator): point the buoy client at a stub that accepts and never delivers, with the backend reachable.
   The record goes `saved`, then `relayed`, then `delivered` within 60 s.
 
 ### Review and checkpoint
 
-- [ ] Diff review: policy has no plugin imports, and `SosService` got simpler.
-- [ ] Update this file, the evidence file and `HANDOFF.md`; stage only `mobile/**` and this track's docs; commit; open the PR.
+- [x] Diff review: policy has no plugin imports, and `SosService` got simpler.
+- [x] Update this file, the evidence file and `HANDOFF.md`; stage only `mobile/**` and this track's docs; commit; open the PR.
 
 Checkpoint message: `fix(mobile): keep delivering an SOS until the backend confirms it`
 

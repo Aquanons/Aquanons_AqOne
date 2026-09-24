@@ -39,12 +39,15 @@ class OutboxStore {
     return rows.isEmpty ? null : SosRecord.fromRow(rows.first);
   }
 
-  Future<List<SosRecord>> awaitingRelay() async {
+  Future<List<SosRecord>> awaitingDelivery() async {
     final db = await _db.database;
     final rows = await db.query(
       'outbox',
-      where: 'state = ?',
-      whereArgs: <Object?>[DeliveryState.saved.wire],
+      where: 'state IN (?, ?)',
+      whereArgs: <Object?>[
+        DeliveryState.saved.wire,
+        DeliveryState.relayed.wire,
+      ],
       orderBy: 'client_ts ASC',
     );
     return rows.map(SosRecord.fromRow).toList(growable: false);
@@ -261,6 +264,25 @@ class OutboxStore {
       where: 'local_id = ?',
       whereArgs: <Object?>[localId],
     );
+  }
+
+  Future<void> recordAttempt(String localId, DateTime now) async {
+    final db = await _db.database;
+    final nowSec = now.toUtc().millisecondsSinceEpoch ~/ 1000;
+    await db.rawUpdate(
+      'UPDATE outbox SET attempts = attempts + 1, last_attempt_at = ? WHERE local_id = ?',
+      <Object?>[nowSec, localId],
+    );
+  }
+
+  Future<bool> deleteUnsent(String localId) async {
+    final db = await _db.database;
+    final count = await db.delete(
+      'outbox',
+      where: 'local_id = ? AND state = ?',
+      whereArgs: <Object?>[localId, DeliveryState.saved.wire],
+    );
+    return count > 0;
   }
 
   Future<SosRecord?> recordFailure(String localId, String error) async {

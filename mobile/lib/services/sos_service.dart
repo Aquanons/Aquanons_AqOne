@@ -5,6 +5,7 @@ import '../core/config.dart';
 import '../data/identity_store.dart';
 import '../data/outbox_store.dart';
 import '../models/buoy_contact.dart';
+import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
 import 'backend_client.dart';
@@ -89,15 +90,28 @@ class SosService {
     return record;
   }
 
+  OutboxStore get outbox => _outbox;
+
+  Future<bool> deleteUnsent(String localId) => _outbox.deleteUnsent(localId);
+
   Future<void> retryPending() async {
     if (_relayRunning) {
       return;
     }
     _relayRunning = true;
     try {
-      final pending = await _outbox.awaitingRelay();
+      final now = DateTime.now();
+      final pending = await _outbox.awaitingDelivery();
       for (final record in pending) {
-        final ok = await _attemptRelay(record.localId, notify: false);
+        final routes = routesDue(record, now);
+        if (routes.isEmpty) {
+          continue;
+        }
+        final ok = await _attemptRelay(
+          record.localId,
+          routes: routes,
+          notify: false,
+        );
         if (!ok) {
           break;
         }
@@ -124,9 +138,17 @@ class SosService {
   /// which will get through. The backend de-duplicates on
   /// (vessel_id, client_ts), so two successful deliveries are still one
   /// incident on the dispatcher's screen.
-  Future<bool> _attemptRelay(String localId, {bool notify = true}) async {
+  Future<bool> _attemptRelay(
+    String localId, {
+    Set<SosRoute>? routes,
+    bool notify = true,
+  }) async {
     final record = await _outbox.byLocalId(localId);
-    if (record == null || !record.awaitsRelay) {
+    if (record == null) {
+      return true;
+    }
+    final activeRoutes = routes ?? routesDue(record, DateTime.now());
+    if (activeRoutes.isEmpty) {
       return true;
     }
 
@@ -150,10 +172,22 @@ class SosService {
       }
     }
 
-    final buoyFuture = tryBuoy();
-    final directFuture = tryDirect();
-    final buoyResult = await buoyFuture;
-    final directOk = await directFuture;
+    Object? buoyResult;
+    bool directOk = false;
+
+    if (activeRoutes.contains(SosRoute.pod) &&
+        activeRoutes.contains(SosRoute.direct)) {
+      final buoyFuture = tryBuoy();
+      final directFuture = tryDirect();
+      buoyResult = await buoyFuture;
+      directOk = await directFuture;
+    } else if (activeRoutes.contains(SosRoute.pod)) {
+      buoyResult = await tryBuoy();
+    } else if (activeRoutes.contains(SosRoute.direct)) {
+      directOk = await tryDirect();
+    }
+
+    await _outbox.recordAttempt(localId, DateTime.now());
 
     // Both outcomes are processed, not just whichever is checked first - a
     // simultaneous buoy ack and direct success must not leave the record
@@ -189,21 +223,19 @@ class SosService {
       return true;
     }
 
-    // Neither route worked. Report both reasons rather than only the buoy's.
-    //
-    // Previously this preferred the buoy's message unconditionally, so a phone
-    // with perfectly good internet and a misconfigured backend URL displayed a
-    // buoy timeout - pointing every debugging effort at the mesh while the
-    // actual fault was the internet path. Whatever is shown here is the only
-    // diagnostic a field tester gets.
-    //
-    // BuoyUnreachable specifically gets a fixed, plain-language headline -
-    // "Not connected to the buoy" - rather than surfacing which flavor of
-    // transport exception caused it. This is what shows on the SOS log's
-    // "Last attempt" line (ui/widgets/delivery_state_tile.dart) on the home
-    // page, and it is also the single most common failure at sea: no buoy
-    // in range is expected, ordinary behaviour, not something worth
-    // describing like a bug.
+    final reason = _failureReason(buoyResult);
+    await _outbox.recordFailure(localId, reason);
+    if (notify) {
+      _changes.add(null);
+    }
+    return false;
+  }
+
+  String _failureReason(Object? buoyResult) {
+    final directReason = _backend.lastDirectError ?? 'internet path failed';
+    if (buoyResult == null) {
+      return directReason;
+    }
     final buoyReason = buoyResult is BuoyRejected
         ? buoyResult.reason
         : buoyResult is BuoyUnreachable
@@ -211,13 +243,7 @@ class SosService {
             : buoyResult is BuoyInvalidResponse
                 ? buoyResult.reason
                 : 'no buoy in range';
-    final directReason = _backend.lastDirectError ?? 'internet path failed';
-    final reason = '$buoyReason · $directReason';
-    await _outbox.recordFailure(localId, reason);
-    if (notify) {
-      _changes.add(null);
-    }
-    return false;
+    return '$buoyReason · $directReason';
   }
 
   Future<void> _refreshVesselProfile() async {

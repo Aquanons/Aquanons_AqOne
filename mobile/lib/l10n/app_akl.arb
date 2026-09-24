@@ -229,5 +229,10 @@
   "standDownTitle": "Ginbawi ro SOS",
   "standDownDescription": "Gintandaan bilang sala nga alarma - napahibaeuan eon ro MDRRMO nga indi pagsapakon.",
   "standDownPendingTitle": "Nagahulat ro pagbawi",
-  "standDownPendingDescription": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon."
+  "standDownPendingDescription": "Ginpangayo ro pagbawi. Waeay pa mapadaea sa MDRRMO - awtomatikong igapadaea kon may koneksyon eon.",
+  "sosPodNotConfirmed": "Owa pa nakumpirma it pod kon nakaabot eon sa baybayon ro SOS ngara. Ginasulayan pa gihapon.",
+  "sosStalePromptTitle": "Owa napadaea nga SOS kaina",
+  "sosStalePromptBody": "Rong sangka SOS halin {age} ro nagtaliwan hay owa napadaea. Ipaadaea eon bala subong?",
+  "sosStalePromptSend": "Ipadaea subong",
+  "sosStalePromptCancel": "Kanselahon"
 }

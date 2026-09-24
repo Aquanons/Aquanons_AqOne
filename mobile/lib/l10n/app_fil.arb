@@ -124,5 +124,10 @@
   "standDownTitle": "Binawi ang SOS",
   "standDownDescription": "Minarkahan bilang maling alarma - nasabihan na ang MDRRMO na balewalain ito.",
   "standDownPendingTitle": "Nakabinbin ang pagbawi",
-  "standDownPendingDescription": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na."
+  "standDownPendingDescription": "Hiniling ang pagbawi. Hindi pa naipapadala sa MDRRMO - awtomatikong ipapadala kapag may koneksyon na.",
+  "sosPodNotConfirmed": "Hindi pa nakukumpirma ng pod kung nakarating na sa pampang ang SOS na ito. Sinusubukan pa rin.",
+  "sosStalePromptTitle": "Hindi naipadalang SOS kanina",
+  "sosStalePromptBody": "Ang isang SOS mula {age} na ang nakalipas ay hindi naipadala. Ipadala na ba ngayon?",
+  "sosStalePromptSend": "Ipadala ngayon",
+  "sosStalePromptCancel": "Kanselahin"
 }

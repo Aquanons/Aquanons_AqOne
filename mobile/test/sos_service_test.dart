@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:aqone/data/app_database.dart';
 import 'package:aqone/data/identity_store.dart';
 import 'package:aqone/data/outbox_store.dart';
+import 'package:aqone/models/delivery_policy.dart';
 import 'package:aqone/models/delivery_state.dart';
 import 'package:aqone/models/sos_record.dart';
 import 'package:aqone/services/backend_client.dart';
@@ -517,4 +518,111 @@ void main() {
     );
     expect(changes, 0, reason: 'an identical answer is not a change');
   });
+
+  test('relayed record retries direct until delivered', () async {
+    final record = _record('local-relay-retry');
+    await outbox.insert(record);
+
+    var buoyCalls = 0;
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((request) async {
+        buoyCalls++;
+        return http.Response(
+          jsonEncode(<String, Object?>{
+            'accepted': true,
+            'buoy_id': 'BUOY01',
+            'seq': 10,
+            'server_ts': 172963201,
+          }),
+          200,
+        );
+      }),
+    );
+
+    var backendAttempts = 0;
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/api/sos') {
+          backendAttempts++;
+          if (backendAttempts == 1) {
+            throw Exception('no internet connection');
+          }
+          return _direct(200);
+        }
+        return _direct(200);
+      }),
+    );
+
+    final service = buildService(buoy: buoy, backend: backend);
+    await service.retryPending();
+
+    var current = await outbox.byLocalId(record.localId);
+    expect(current!.state, DeliveryState.relayed);
+    expect(buoyCalls, 1);
+    expect(backendAttempts, 1);
+
+    // Advance time past the 20s direct backoff for attempt 1
+    final dbInstance = await db.database;
+    final past = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 - 25;
+    await dbInstance.rawUpdate(
+      'UPDATE outbox SET last_attempt_at = ?, relayed_at = ? WHERE local_id = ?',
+      <Object?>[past, past, record.localId],
+    );
+
+    await service.retryPending();
+
+    current = await outbox.byLocalId(record.localId);
+    expect(current!.state, DeliveryState.delivered);
+    expect(backendAttempts, 2);
+  });
+
+  test('delivered record is never retried', () async {
+    final record = _record('local-delivered');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.delivered);
+
+    var buoyCalls = 0;
+    var backendCalls = 0;
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((_) async {
+        buoyCalls++;
+        return http.Response('{}', 200);
+      }),
+    );
+    final backend = BackendClient(
+      client: _FakeBackendClient((_) async {
+        backendCalls++;
+        return _direct(200);
+      }),
+    );
+
+    final service = buildService(buoy: buoy, backend: backend);
+    await service.retryPending();
+
+    expect(buoyCalls, 0);
+    expect(backendCalls, 0);
+  });
+
+  test('stale unsent record is reported, not dropped', () async {
+    final staleRecord = SosRecord(
+      localId: 'stale-1',
+      vesselId: 'fisher-7f3a',
+      boat: 'BG-123',
+      clientTs:
+          DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 - (13 * 3600),
+      state: DeliveryState.saved,
+    );
+    await outbox.insert(staleRecord);
+
+    final service = buildService(
+      buoy: noBuoy(),
+      backend: BackendClient(client: _FakeBackendClient((_) => _direct(200))),
+    );
+    final history = await service.history();
+    expect(history.any((r) => r.localId == 'stale-1'), isTrue);
+    expect(isStale(staleRecord, DateTime.now()), isTrue);
+  });
 }
+

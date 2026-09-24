@@ -52,6 +52,7 @@ SosRecord _record({
   String? resolvedAt,
   int? fisherReply,
   bool fisherReplySynced = false,
+  int? relayedAt,
 }) {
   return SosRecord(
     localId: 'local-1',
@@ -68,6 +69,7 @@ SosRecord _record({
     resolvedAt: resolvedAt,
     fisherReply: fisherReply,
     fisherReplySynced: fisherReplySynced,
+    relayedAt: relayedAt,
   );
 }
 
@@ -258,6 +260,29 @@ void main() {
       expect(
         find.text('Still in danger? Send another SOS.'),
         findsNothing,
+      );
+    });
+
+    testWidgets(
+        'relayed record past 10 min deadline shows sosPodNotConfirmed',
+        (tester) async {
+      final nowSec = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+      await tester.pumpWidget(
+        _host(
+          DeliveryStateTile(
+            record: _record(
+              state: DeliveryState.relayed,
+              relayedAt: nowSec - 601,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'The pod has not confirmed this SOS reached shore yet. Still trying.',
+        ),
+        findsOneWidget,
       );
     });
   });

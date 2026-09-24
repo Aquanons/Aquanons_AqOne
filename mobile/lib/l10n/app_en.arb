@@ -1070,5 +1070,31 @@
   "standDownPendingDescription": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
   "@standDownPendingDescription": {
     "description": "Description on the SOS status card when a stand-down is queued locally awaiting network connectivity."
+  },
+  "sosPodNotConfirmed": "The pod has not confirmed this SOS reached shore yet. Still trying.",
+  "@sosPodNotConfirmed": {
+    "description": "Shown on delivery state tile when a relayed SOS has not reached shore within 10 minutes."
+  },
+  "sosStalePromptTitle": "Unsent SOS from earlier",
+  "@sosStalePromptTitle": {
+    "description": "Title of prompt for an unsent SOS that is older than 12 hours."
+  },
+  "sosStalePromptBody": "An SOS from {age} ago was never sent. Send it now?",
+  "@sosStalePromptBody": {
+    "description": "Body of prompt for an unsent SOS older than 12 hours with age placeholder.",
+    "placeholders": {
+      "age": {
+        "type": "String",
+        "example": "14 hours"
+      }
+    }
+  },
+  "sosStalePromptSend": "Send now",
+  "@sosStalePromptSend": {
+    "description": "Action button to send stale SOS."
+  },
+  "sosStalePromptCancel": "Cancel it",
+  "@sosStalePromptCancel": {
+    "description": "Action button to cancel and delete stale unsent SOS."
   }
 }
