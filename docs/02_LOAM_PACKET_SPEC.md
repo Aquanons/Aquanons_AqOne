@@ -167,7 +167,7 @@ bytes are better spent on `sq`.
 |---|---|---|
 | `v` | yes | `1` |
 | `id` | yes | Integer advisory/warning identifier. |
-| `rev` | no | Revision number (default `1`). Newer revision replaces older; older revision cannot resurrect a cancelled warning. |
+| `rev` | no | Revision timestamp epoch seconds (UTC), derived from advisory `updated_at` (default 0). Newer revision replaces older; a frame whose `rev` is not newer is ignored by receiving buoys and cannot resurrect a cancelled warning. |
 | `src` | yes | Origin authority, e.g. `"MDRRMO"`, `"LGU"`, or `"AqOne Research"`. |
 | `pr` | yes | Priority level: `"Emergency"`, `"Warning"`, `"Information"`, `"Community"`. |
 | `area` | yes | Geographic applicability, e.g. `"All"`, `"New Washington"`. |
@@ -184,6 +184,9 @@ Warning broadcasts (`0x07`), chat (`0x05`), and routine beacons (`0x03`) are
 strictly subordinate: queued warning frames yield immediately if an SOS frame
 is received or pending transmission. Warning retries/rebroadcasts are rate-limited
 and must never saturate the radio channel.
+The transmit ring buffer reserves capacity for distress traffic via the `reserve` parameter in `txEnqueue`.
+`CHAT` frames require more than 2 free ring slots.
+Distress (`SOS`), `ACK`, and `WARN` frames may use any free slot so they are never starved by routine chat traffic.
 
 ## Signature scheme
 

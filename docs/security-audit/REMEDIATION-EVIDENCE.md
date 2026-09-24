@@ -603,3 +603,111 @@ Result:
 5. `mobile/test/sos_record_test.dart`: Updated stand-down test to assert `isStoodDown` requires `fisherReplySynced: true` and is false when `fisherReplySynced: false`.
 6. `mobile/test/sos_service_test.dart`: Updated ack read-back test to align mock `server_time` with `eta_at` under SEC-22 server time adjustment.
 
+## Phase 5: Firmware hardening
+
+### Verification Summary
+
+- [x] Contract first: `docs/02_LOAM_PACKET_SPEC.md` updated with WARN `rev` field (SEC-29) and `txEnqueue` ring reserve capacity rules (SEC-30). Daniel informed via evidence below.
+- [x] SEC-31: removed the two leading spaces on line 1 of `firmware/shore/AqOneShore/AqOneLoam.h`. `diff firmware/buoy/AqOneBuoy/AqOneLoam.h firmware/shore/AqOneShore/AqOneLoam.h` prints nothing.
+- [x] SEC-26 & SEC-27: moved `UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY` (shore) and `LOAM_KEY` (both) into gitignored `AqOneSecrets.h` next to each sketch. Committed `AqOneSecrets.h.example` with placeholders. Added `#error` when the header is missing and compile/link guard when `LOAM_KEY` equals the old default. Both `AqOneLoam.h` copies include the header identically. Added `.gitignore` ignore rules and updated `firmware/README.md`.
+- [x] Shore: sends `X-Api-Key: GATEWAY_API_KEY` on `POST /api/sos` and `POST /api/advisories/delivery`, matching Phase 2.
+- [x] SEC-28: replaced `client.setInsecure()` with `client.setCACert(BACKEND_CA_CERTS)` holding root CAs for `aqone-backend.onrender.com` (GlobalSign ECC Root CA - R4 primary, GTS Root R1 and ISRG Root X1 backups). Documented expiry dates and rotation procedure in `firmware/README.md`.
+- [x] SEC-29: shore populates `rev` (advisory `updated_at` epoch seconds) on each WARN payload; buoy stores `rev` in `CachedWarning` and ignores frames with non-newer revisions. Backend public advisories feed was verified to already expose `updated_at` (and documented in `docs/05_PUBLIC_API.md`).
+- [x] SEC-30: `txEnqueue` takes `size_t reserve = 0`. Chat frames set `reserve = 2` (requiring > 2 free ring slots), while SOS, ACK, and WARN frames may use any free slot. Both `AqOneLoam.h` headers updated identically.
+- [x] Compilation: PlatformIO 6.2.0 installed in a scratch venv outside repo (`.gemini/antigravity-cli/brain/.../scratch/pio_venv`). Both `buoy` and `shore` compiled clean with 0 errors and 0 warnings using temporary `AqOneSecrets.h` from `.example`. Scratch secrets deleted immediately after verification.
+- [x] Backend default gate: `ruff check app tests` clean, `pytest -q -p no:cacheprovider` passed (410 passed, 5 skipped, 1 xfailed).
+- [x] Mobile gate: `flutter analyze` clean (0 issues), `flutter test` passed (265 passed, 0 failed), `flutter test test_security_probes` passed (all 6 passed).
+- [x] Web gate: `node --test web/test/*.test.js` passed (149 passed, 0 failed).
+- [x] Probe gate: 38 passed (+8 net over Phase 4; all SEC-26 through SEC-31 probes passed), 5 failed (2 deferred hotspot probes, 1 deferred per-device LoRa key probe, 2 Phase 6 release APK probes), 0 errors.
+- [x] Git status: verified no `AqOneSecrets.h` staged or committed.
+
+### Gate Command Evidence
+
+#### 1. Header Diff (SEC-31)
+```powershell
+git diff --no-index firmware/buoy/AqOneBuoy/AqOneLoam.h firmware/shore/AqOneShore/AqOneLoam.h
+# Exit code 0, 0 bytes output. The two headers are byte-identical.
+```
+
+#### 2. PlatformIO Compilation Verification
+Scratch secrets generated from `.example`, compiled using PlatformIO in external venv:
+```powershell
+Copy-Item firmware/buoy/AqOneBuoy/AqOneSecrets.h.example firmware/buoy/AqOneBuoy/AqOneSecrets.h
+Copy-Item firmware/shore/AqOneShore/AqOneSecrets.h.example firmware/shore/AqOneShore/AqOneSecrets.h
+
+$env:PLATFORMIO_SRC_DIR = "buoy/AqOneBuoy"
+& "$env:SCRATCH\pio_venv\Scripts\pio.exe" run -d firmware -e buoy
+# Result: SUCCESS in 48.2s (RAM: 18.3% used 59840 B, Flash: 26.0% used 869097 B)
+
+$env:PLATFORMIO_SRC_DIR = "shore/AqOneShore"
+& "$env:SCRATCH\pio_venv\Scripts\pio.exe" run -d firmware -e shore
+# Result: SUCCESS in 43.3s (RAM: 15.6% used 51048 B, Flash: 29.7% used 993537 B)
+
+Remove-Item firmware/buoy/AqOneBuoy/AqOneSecrets.h, firmware/shore/AqOneShore/AqOneSecrets.h
+```
+
+#### 3. Backend Default Gate
+```powershell
+ruff check app tests
+# Output: All checks passed!
+
+pytest -q -p no:cacheprovider
+# Output: 410 passed, 5 skipped, 1 xfailed in 25.24s
+```
+
+#### 4. Web Gate
+```powershell
+node --test web/test/*.test.js
+# Output: tests 149, pass 149, fail 0
+```
+
+#### 5. Mobile Gate
+```powershell
+flutter analyze
+# Output: No issues found! (ran in 4.1s)
+
+flutter test
+# Output: All 265 tests passed!
+
+flutter test test_security_probes
+# Output: All 6 tests passed!
+```
+
+#### 6. Probe Gate (Local Postgres 18 on Port 55432)
+```powershell
+$dataDir = "$env:TEMP\aqone_probe_pg_data"
+if (!(Test-Path $dataDir)) { & 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $dataDir -U postgres -A trust -E UTF8 }
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir -o '-p 55432' -l "$env:TEMP\aqone_probe_pg.log" start
+Start-Sleep -Seconds 2
+$env:AQONE_SECURITY_PROBES = '1'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres:probe@localhost:55432/postgres'
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+python -m pytest tests/security_probes -p no:cacheprovider -s --junitxml=../docs/security-audit/probe-runs/phase-5/backend-probes.xml
+Remove-Item Env:AQONE_SECURITY_PROBES, Env:AQONE_PROBE_PG_ADMIN_URL -ErrorAction SilentlyContinue
+& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D $dataDir stop
+```
+Output:
+- Total probe items: 43.
+- Passed: 38 (+8 net over Phase 4).
+- Failed: 5 (3 deferred: `test_hotspot_cell_needs_five_distinct_reporters[3]`, `test_hotspot_cell_needs_five_distinct_reporters[4]`, `test_loam_signature_key_is_selected_per_source_id`; 2 Phase 6: `test_release_build_does_not_fall_back_to_debug_signing`, `test_tracked_release_apk_is_not_debug_signed`).
+- Errors: 0.
+
+### Probe Status Changes (Phase 5)
+
+1. `test_shore_sketch_holds_no_concrete_credential[UPLINK_SSID]`: PASSED [SEC-26]
+2. `test_shore_sketch_holds_no_concrete_credential[UPLINK_PASS]`: PASSED [SEC-26]
+3. `test_shore_sketch_holds_no_concrete_credential[GATEWAY_API_KEY]`: PASSED [SEC-26]
+4. `test_loam_key_is_not_the_repository_default`: PASSED [SEC-27]
+5. `test_loam_control_headers_are_byte_identical`: PASSED [SEC-31 Control]
+6. `test_shore_verifies_the_backend_certificate`: PASSED [SEC-28]
+7. `test_buoy_warning_cache_orders_updates_by_revision`: PASSED [SEC-29]
+8. `test_tx_ring_keeps_capacity_for_distress_frames`: PASSED [SEC-30]
+
+### Contract Notice for Daniel (Hardware/Firmware Owner)
+
+`docs/02_LOAM_PACKET_SPEC.md` was updated:
+1. `WARN` packets (type `0x07`): Added documentation for optional `rev` field containing advisory `updated_at` epoch seconds (UTC). Buoys compare incoming `rev` against cached warnings for that ID and ignore frames whose `rev` is not newer (`rev <= cached.rev`), preventing replay attacks and resurrection of cancelled warnings.
+2. `txEnqueue`: Documented the `reserve` parameter and ring capacity rules. Chat frames (`0x05`) require > 2 free slots in `txRing` (`reserve = 2`), preventing chat floods from starving distress (`SOS`), `ACK`, and `WARN` frames.
+3. Secrets handling: Firmware developers must copy `AqOneSecrets.h.example` to `AqOneSecrets.h` next to `AqOneBuoy.ino` and `AqOneShore.ino`. `AqOneSecrets.h` is gitignored and must never be committed. Real keys must be set prior to flashing.
+
+

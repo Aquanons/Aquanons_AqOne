@@ -368,6 +368,7 @@ struct CachedWarning {
   char     description[81];
   uint32_t publishDate;
   uint32_t expirationDate;
+  uint32_t rev;
   bool     used;
 };
 
@@ -963,6 +964,8 @@ void onMeshFrame(const uint8_t* raw, size_t total, const LoamFrame& f) {
       int wid = p["id"] | 0;
       if (!wid) break;
 
+      uint32_t rev = p["rev"] | 0;
+
       uint32_t expAt = p["exp"] | 0;
       if (clockValid() && expAt > 0 && (uint32_t)time(nullptr) > expAt) {
         Serial.printf("[warn] dropped expired warning id=%d\n", wid);
@@ -972,11 +975,18 @@ void onMeshFrame(const uint8_t* raw, size_t total, const LoamFrame& f) {
       int slot = -1;
       for (int i = 0; i < MAX_CACHED_WARNINGS; i++) {
         if (cachedWarnings[i].used && cachedWarnings[i].id == wid) {
+          if (cachedWarnings[i].rev > 0 && rev <= cachedWarnings[i].rev) {
+            Serial.printf("[warn] ignored older or equal rev=%u for warning id=%d (cached rev=%u)\n",
+                          (unsigned)rev, wid, (unsigned)cachedWarnings[i].rev);
+            slot = -2;
+            break;
+          }
           slot = i;
           break;
         }
         if (!cachedWarnings[i].used && slot < 0) slot = i;
       }
+      if (slot == -2) break;
       if (slot < 0) slot = 0;
 
       cachedWarnings[slot].id = wid;
@@ -992,6 +1002,7 @@ void onMeshFrame(const uint8_t* raw, size_t total, const LoamFrame& f) {
       cachedWarnings[slot].description[sizeof(cachedWarnings[slot].description) - 1] = 0;
       cachedWarnings[slot].publishDate = p["iss"] | 0;
       cachedWarnings[slot].expirationDate = expAt;
+      cachedWarnings[slot].rev = rev;
       cachedWarnings[slot].used = true;
 
       JsonDocument ev;

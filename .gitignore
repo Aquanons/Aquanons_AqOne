@@ -64,6 +64,8 @@ firmware/buoy/.pio/
 .pio/
 .vscode/.browse.c_cpp.db*
 CMakeLists.txt.user
+firmware/**/AqOneSecrets.h
+!firmware/**/AqOneSecrets.h.example
 
 # Architecture build & staging
 .artifacts_build/

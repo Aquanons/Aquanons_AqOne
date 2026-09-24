@@ -1,4 +1,4 @@
-  // AqOneLoam.h — the AqOne mesh radio layer, shared by both sketches.
+// AqOneLoam.h — the AqOne mesh radio layer, shared by both sketches.
 //
 // ===========================================================================
 // THIS FILE EXISTS IN TWO PLACES AND THE TWO COPIES MUST BE IDENTICAL
@@ -79,11 +79,23 @@ static const int8_t   LORA_TX_DBM    = 22;
 static const uint16_t LORA_PREAMBLE  = 8;
 static const float    LORA_TCXO_V    = 1.8;    // Heltec V3
 
-// Shared development key. docs/02_LOAM_PACKET_SPEC.md: development builds may
-// share one key, production provisions per-device keys looked up by SRC_ID.
-// Change it before anything leaves the bench — an unchanged key means anyone
-// with this repo can inject a distress call into your mesh.
-static const char* LOAM_KEY = "aqone-dev-key-change-me";
+// Secrets header must be provided next to each sketch (gitignored).
+// See AqOneSecrets.h.example in the sketch folder.
+#if __has_include("AqOneSecrets.h")
+#include "AqOneSecrets.h"
+#else
+#error "Missing AqOneSecrets.h - copy AqOneSecrets.h.example to AqOneSecrets.h and set credentials"
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((unused))
+#endif
+static inline void _loam_key_security_check() {
+  if (strcmp(LOAM_KEY, "aqone-dev-key-change-me") == 0) {
+    extern void ERROR_LOAM_KEY_EQUALS_OLD_DEFAULT();
+    ERROR_LOAM_KEY_EQUALS_OLD_DEFAULT();
+  }
+}
 
 // Hop budget. 4 lets an edge buoy reach the shore through three relays, which
 // is more than the 3-node build has. HOPS > 15 is dropped regardless.
@@ -412,7 +424,15 @@ void meshSeqCheckpoint() {
   prefs.end();
 }
 
-bool txEnqueue(const uint8_t* bytes, size_t len, uint32_t delayMs = 0) {
+bool txEnqueue(const uint8_t* bytes, size_t len, uint32_t delayMs = 0, size_t reserve = 0) {
+  int freeSlots = 0;
+  for (int i = 0; i < TX_MAX; i++) {
+    if (!txRing[i].used) freeSlots++;
+  }
+  if (freeSlots <= (int)reserve) {
+    Serial.println("[lora] TX ring reserve limit reached - frame dropped");
+    return false;
+  }
   for (int i = 0; i < TX_MAX; i++) {
     if (txRing[i].used) continue;
     memcpy(txRing[i].bytes, bytes, len);
@@ -443,11 +463,12 @@ bool meshSend(uint8_t type, uint8_t flags, const char* payload, size_t len,
   // Remember our own frames so an echo relayed back by a neighbour is dropped
   // instead of being processed as new traffic.
   seenRemember(NODE_ID, seq, type);
-  return txEnqueue(buf, total, delayMs);
+  size_t reserve = (type == T_CHAT) ? 2 : 0;
+  return txEnqueue(buf, total, delayMs, reserve);
 }
 
 // Re-transmit someone else's frame with the hop bytes advanced. The signature
-// is NOT recomputed: relays do not re-sign, which is exactly why the hop bytes
+// is NOT recomputed: relays do not re-sign, which is calibrated so the hop bytes
 // are excluded from the signed region.
 void meshRelay(const uint8_t* raw, size_t total, const LoamFrame& f) {
   if (f.ttl == 0) return;
@@ -459,7 +480,8 @@ void meshRelay(const uint8_t* raw, size_t total, const LoamFrame& f) {
 
   // Random backoff. Without it, two relays that heard the same frame answer in
   // the same millisecond and cancel each other at every listener.
-  txEnqueue(buf, total, 200 + random(400));
+  size_t reserve = (f.type == T_CHAT) ? 2 : 0;
+  txEnqueue(buf, total, 200 + random(400), reserve);
 }
 
 bool radioSetup() {

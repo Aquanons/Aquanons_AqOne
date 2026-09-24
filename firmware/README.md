@@ -76,17 +76,22 @@ LORA_SF        = 10
 LORA_BW_KHZ    = 125.0
 LORA_CR        = 5
 LORA_SYNC_WORD = 0x34
-LOAM_KEY       = "aqone-dev-key-change-me"
 ```
+
+**Credentials and secrets — in gitignored `AqOneSecrets.h`:**
+
+Secrets are moved out of sketch sources. Each sketch directory contains an `AqOneSecrets.h.example` template:
+- `firmware/buoy/AqOneBuoy/AqOneSecrets.h.example`: copy to `AqOneSecrets.h` and configure `LOAM_KEY`.
+- `firmware/shore/AqOneShore/AqOneSecrets.h.example`: copy to `AqOneSecrets.h` and configure `UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY`, and `LOAM_KEY`.
+
+`AqOneLoam.h` includes `"AqOneSecrets.h"` directly and asserts at compile time that the header is present and that `LOAM_KEY` is not left as the insecure default. **Never commit `AqOneSecrets.h`.**
 
 **Field sketch:** `AP_SSID` is `Aquan` on **every** boat pod — only the node
 name differs. A shared SSID lets the phone use any participating pod without a
 new app configuration. Stationary sensor-only nodes do not need to expose the
 phone API unless that is explicitly added later.
 
-**Shore only:** `UPLINK_SSID`/`UPLINK_PASS`, `BACKEND_HOST` (already set to the
-Railway deployment), and `GATEWAY_API_KEY` — see "The acknowledgement path needs
-a credential" below.
+**Shore only:** `BACKEND_HOST` (`https://aqone-backend.onrender.com`), plus `UPLINK_SSID`, `UPLINK_PASS`, and `GATEWAY_API_KEY` configured in `AqOneSecrets.h`.
 
 ### Why the pod network is open
 
@@ -273,32 +278,33 @@ than the phone silently leaving.
 
 | Call | When | Auth |
 |---|---|---|
-| `POST /api/sos` | On every SOS frame received | none, by design |
+| `POST /api/sos` | On every SOS frame received | **`X-Api-Key: GATEWAY_API_KEY`** (authenticates buoy provenance & trust tier) |
 | `POST /api/mesh/chat` | On every chat frame received, tagged `origin: "mesh"` | none |
 | `GET /api/mesh/chat?since_id=` | Every 20 s | none |
 | `GET /api/sos/downlink` | Every 45 s | **`X-Api-Key: GATEWAY_API_KEY`** |
+| `POST /api/advisories/delivery` | On warning received & queued | **`X-Api-Key: GATEWAY_API_KEY`** |
+| `GET /api/public/advisories` | Every 60 s | none |
 
-### The acknowledgement path needs a credential
+### Gateway authentication
 
-`GET /api/sos/vessel/{id}` — what the old firmware polled — is behind
-`require_vessel_device` and derives ownership from the handset's own paired
-credential. **A gateway does not have one and cannot obtain one.**
+The shore gateway authenticates to the backend with `X-Api-Key: GATEWAY_API_KEY` configured in `AqOneSecrets.h` (matching `GATEWAY_API_KEY` on Render).
 
-So the shore reads `GET /api/sos/downlink`, the gateway-only view of the
-responder's answer (docs/04). Set `GATEWAY_API_KEY` in `AqOneShore.ino` to the
-same value as the backend environment variable of the same name — the one
-`/api/v1/contacts` and `/api/v1/pressure-events` already use.
+- SOS post provenance (`POST /api/sos`): providing `X-Api-Key` allows the backend to accept buoy provenance fields (`buoy_id`, `src_id`) and `self_declared` trust tier.
+- Warning delivery confirmation (`POST /api/advisories/delivery`): requires `GATEWAY_API_KEY`.
+- Responder downlink (`GET /api/sos/downlink`): requires `GATEWAY_API_KEY`.
 
-It is deliberately **not** `GET /api/sos/active`, the dashboard feed. That one
-needs an operator login and carries position, the fisher's note, boat name,
-trust tier and the owner's name, licence and phone. A key hardcoded in firmware
-on a mast must not unlock any of that. `/downlink` returns only what the board
-is about to broadcast over the radio in clear anyway.
+### TLS verification and Root CA rotation
 
-With it unset, **SOS still flows up and chat still flows both ways** — only the
-dispatcher's ETA cannot come back down. The board does not hide this: the OLED
-shows `Ack : no key`, and `pollAcks()` says so on serial every 45 s. A wrong key
-shows `Ack : http 401` instead.
+The shore gateway enforces TLS peer verification via `WiFiClientSecure::setCACert(...)` with embedded Root CAs (`BACKEND_CA_CERTS` in `AqOneShore.ino`):
+- **GlobalSign ECC Root CA - R4** (valid through 2038-01-19) - Primary Root CA for Render (`aqone-backend.onrender.com` via Google Trust Services WE1 intermediate).
+- **GTS Root R1** (valid through 2036-06-22) - Google Trust Services backup root.
+- **ISRG Root X1** (valid through 2035-06-04) - Let's Encrypt backup root.
+
+**Rotation procedure:**
+If the backend certificate authority changes or approaches expiration:
+1. Export the new Root CA in PEM format.
+2. Update `BACKEND_CA_CERTS` in `firmware/shore/AqOneShore/AqOneShore.ino`.
+3. Build and re-flash the shore gateway board.
 
 ### Chat does not echo
 

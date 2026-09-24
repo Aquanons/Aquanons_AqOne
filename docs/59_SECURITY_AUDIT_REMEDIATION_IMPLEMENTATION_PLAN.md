@@ -254,24 +254,24 @@ Checkpoint message: `fix(mobile): honest stand-down, routable replies, server-re
 ## Phase 5: Firmware hardening
 
 Requirements: SEC-26, SEC-27, SEC-28, SEC-29, SEC-30, SEC-31
-State: Approved, not started
+State: Completed
 
 ### Tasks
 
-- [ ] Contract first: `docs/02_LOAM_PACKET_SPEC.md` gets the WARN `rev` field (SEC-29). Tell Daniel in the evidence file.
-- [ ] SEC-31: remove the two leading spaces on line 1 of `firmware/shore/AqOneShore/AqOneLoam.h`; the `diff` of the two copies must print nothing.
-- [ ] SEC-26 and SEC-27: move `UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY` (shore) and `LOAM_KEY` (both) into a gitignored `AqOneSecrets.h` next to each sketch. Commit an `AqOneSecrets.h.example` with placeholders. Add `#error` when the header is missing or `LOAM_KEY` equals the old default. The shared `AqOneLoam.h` includes the secrets header, so both copies stay byte-identical. Add the ignore rules to `.gitignore` and update `firmware/README.md`.
-- [ ] Shore: send `X-Api-Key: GATEWAY_API_KEY` on the SOS post (`AqOneShore.ino` around line 179) and the warning-delivery post (around line 612), matching Phase 2.
-- [ ] SEC-28: replace `client.setInsecure()` with `client.setCACert(...)` holding the root CAs for the backend host (look up what `aqone-backend.onrender.com` currently chains to; include both the current root and one backup). Document the expiry and rotation in `firmware/README.md`.
-- [ ] SEC-29: the shore adds `rev` (the advisory's `updated_at` as epoch seconds from the backend feed) to each WARN payload. The buoy keeps `rev` per cached warning and ignores a frame whose `rev` is not newer. Check the backend advisory feed the shore reads exposes `updated_at`; if not, add it there and to `docs/05`.
-- [ ] SEC-30: `txEnqueue` takes a `reserve` count: chat frames need more than 2 free slots, and distress, ACK and WARN frames may use any slot. Update both `AqOneLoam.h` copies identically.
+- [x] Contract first: `docs/02_LOAM_PACKET_SPEC.md` gets the WARN `rev` field (SEC-29). Tell Daniel in the evidence file.
+- [x] SEC-31: remove the two leading spaces on line 1 of `firmware/shore/AqOneShore/AqOneLoam.h`; the `diff` of the two copies must print nothing.
+- [x] SEC-26 and SEC-27: move `UPLINK_SSID`, `UPLINK_PASS`, `GATEWAY_API_KEY` (shore) and `LOAM_KEY` (both) into a gitignored `AqOneSecrets.h` next to each sketch. Commit an `AqOneSecrets.h.example` with placeholders. Add `#error` when the header is missing or `LOAM_KEY` equals the old default. The shared `AqOneLoam.h` includes the secrets header, so both copies stay byte-identical. Add the ignore rules to `.gitignore` and update `firmware/README.md`.
+- [x] Shore: send `X-Api-Key: GATEWAY_API_KEY` on the SOS post (`AqOneShore.ino` around line 179) and the warning-delivery post (around line 612), matching Phase 2.
+- [x] SEC-28: replace `client.setInsecure()` with `client.setCACert(...)` holding the root CAs for the backend host (look up what `aqone-backend.onrender.com` currently chains to; include both the current root and one backup). Document the expiry and rotation in `firmware/README.md`.
+- [x] SEC-29: the shore adds `rev` (the advisory's `updated_at` as epoch seconds from the backend feed) to each WARN payload. The buoy keeps `rev` per cached warning and ignores a frame whose `rev` is not newer. Check the backend advisory feed the shore reads exposes `updated_at`; if not, add it there and to `docs/05`.
+- [x] SEC-30: `txEnqueue` takes a `reserve` count: chat frames need more than 2 free slots, and distress, ACK and WARN frames may use any slot. Update both `AqOneLoam.h` copies identically.
 
 ### Verification
 
-- [ ] `diff firmware/buoy/AqOneBuoy/AqOneLoam.h firmware/shore/AqOneShore/AqOneLoam.h` prints nothing.
-- [ ] Compile both environments with no warnings, using example secrets copied to `AqOneSecrets.h` in a scratch step (never committed): create a venv outside the repo, run `python -m pip install platformio`, then `pio run -d firmware`. If PlatformIO cannot be installed or build the boards, record that exactly and stop for Len; do not skip the gate.
-- [ ] Probe gate: SEC-26 to SEC-31 probes pass. `test_loam_signature_key_is_selected_per_source_id` stays red (deferred).
-- [ ] `git status` shows no `AqOneSecrets.h` staged.
+- [x] `diff firmware/buoy/AqOneBuoy/AqOneLoam.h firmware/shore/AqOneShore/AqOneLoam.h` prints nothing.
+- [x] Compile both environments with no warnings, using example secrets copied to `AqOneSecrets.h` in a scratch step (never committed): create a venv outside the repo, run `python -m pip install platformio`, then `pio run -d firmware`. If PlatformIO cannot be installed or build the boards, record that exactly and stop for Len; do not skip the gate.
+- [x] Probe gate: SEC-26 to SEC-31 probes pass. `test_loam_signature_key_is_selected_per_source_id` stays red (deferred).
+- [x] `git status` shows no `AqOneSecrets.h` staged.
 - [ ] Hardware check for Daniel (not a Gemini gate): flash both boards, send one SOS and one warning over the bench mesh, and confirm TLS to the backend.
 
 Checkpoint message: `fix(firmware): secrets out of source, verified TLS, warning revisions, SOS-first transmit ring`
