@@ -242,6 +242,10 @@ def build_history(rows: list[dict[str, Any]]) -> dict[str, list[PressureReading]
 def build_buoys(rows: list[dict[str, Any]]) -> dict[str, BuoyMeta]:
     buoys: dict[str, BuoyMeta] = {}
     for row in rows:
+        # A buoy registered without a position cannot place a front; skip it
+        # rather than let one incomplete row take down the whole nowcast.
+        if row.get('lat') is None or row.get('lon') is None:
+            continue
         buoys[str(row['id'])] = BuoyMeta(
             buoy_id=str(row['id']),
             lat=float(row['lat']),

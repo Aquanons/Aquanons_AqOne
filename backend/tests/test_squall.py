@@ -465,3 +465,17 @@ def test_build_squall_status_exposes_onset_at_for_watch_and_return_now(monkeypat
     assert unknown_status['level'] == 'unknown'
     assert unknown_status['onset_at'] is None
 
+
+
+def test_a_buoy_without_a_position_does_not_take_down_the_nowcast():
+    """Old SOS ingest auto-registered buoys with no lat/lon; production then
+    answered GET /api/public/squall with a 500 (float(None) in build_buoys)."""
+    now = datetime.now(UTC)
+    rows = [*_buoy_rows(), {'id': 'NOPOS', 'lat': None, 'lon': None, 'contact_radius_m': None}]
+    readings = _quality_readings(['B01', 'B02', 'B03', 'B04', 'NOPOS'], now)
+
+    assert 'NOPOS' not in build_buoys(rows)
+    status = squall_api.build_squall_status(readings, rows, source='live', allow_return_now=False)
+
+    assert status['level'] in {'unknown', 'clear', 'watch', 'return_now'}
+    assert 'NOPOS' not in status['triggered_buoys']
