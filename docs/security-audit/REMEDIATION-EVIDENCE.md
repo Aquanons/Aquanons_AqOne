@@ -927,3 +927,33 @@ Branch: `fix/security-audit-remediation`
 
 
 
+
+## Claude review of Phase 7 and merge (2026-09-24)
+
+Reviewer: Claude Code. Implementer: Gemini.
+
+### Found and fixed during review
+
+- `txEnqueue` read `bytes[0]` (MAGIC, `0xA5`) to detect chat frames, so the chat reserve never applied and chat could fill the TX ring again (SEC-30 regression).
+  The static probe still passed because it only searches for the word `reserve`.
+  Fixed to `bytes[2]` (TYPE, docs/02) in both `AqOneLoam.h` copies, with `test_tx_ring_chat_reserve_reads_the_type_byte_the_encoder_writes`, which fails on the Phase 7 code and passes on the fix (`32308a0`).
+- Merging `origin/master` (PRs #73-#75) re-added a debug-signed `aqone-release.apk` from PR #74; the SEC-32 deletion was kept (`cc7b08f`).
+- The merge left an unused `timestamp_columns` tuple in `active_sos` (ruff F841); removed.
+
+### Verified by Claude on the merged tree
+
+- Backend: `ruff check .` clean; `pytest` 446 passed, 5 skipped, 1 xfailed; `test_firmware_security.py` 4 of 4 passed.
+- Probe gate on Postgres 18 (container `aqone-probe-pg`): 9 passed, 3 failed, and the 3 are exactly the deferred probes (`test_hotspot_cell_needs_five_distinct_reporters[3]`, `[4]`, `test_loam_signature_key_is_selected_per_source_id`).
+- Mobile: `flutter analyze` clean; `flutter test` 267 passed; `flutter test test_security_probes` 6 of 6 passed; both Phase 7 review tests pass.
+- Web: 154 passed; `node --check` clean on `web/js` and `web/test`.
+- `diff` of the two `AqOneLoam.h` copies prints nothing.
+- The four embedded roots match the Git for Windows trust store by SHA-256.
+  `openssl verify` of the live `aqone-backend.onrender.com` chain against the embedded bundle alone prints `OK`.
+- PlatformIO 6 (`PLATFORMIO_SRC_DIR` set per sketch): with the example secrets unchanged, both sketches fail on `static assertion failed: LOAM_KEY in AqOneSecrets.h cannot use the example placeholder`; with a random 32-character key, both build (buoy RAM 18.3% / flash 26.0%, shore RAM 15.6% / flash 29.8%) with no warnings from AqOne sources.
+  Scratch `AqOneSecrets.h` files were deleted afterwards.
+
+### Still open
+
+- `firmware/platformio.ini` sets `src_dir` inside `[env:*]`, which PlatformIO ignores, so a plain `pio run` builds nothing; builds need `PLATFORMIO_SRC_DIR`.
+- Bench check (Daniel): flash the shore and a buoy, confirm HTTPS to Render after NTP sync, send one SOS and one warning. Required before any field flash.
+- Release-key-signed APK (Len) and the `release/apk-master-*` workflow (Jade); until then no APK is published in the repo.
