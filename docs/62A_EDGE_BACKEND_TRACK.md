@@ -120,11 +120,11 @@ Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incide
 
 Requirements: EC-C14, EC-L13, EC-L8, EC-C8 (backend), EC-H17 (backend)
 Merge after: B1
-State: Not started
+State: Done - implementation checkpoint pending
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_sos_text.py` (pure), for `truncate_utf8(text, max_bytes)`:
     - ASCII is unchanged
     - `ñ` straddling the limit is dropped whole
@@ -141,28 +141,28 @@ State: Not started
     - `test_close_positions_do_not_conflict` (500 m)
     - `test_legacy_without_nonce_still_merges_on_client_ts`
     - `test_vessel_feed_returns_all_unresolved` (25 unresolved plus 30 resolved returns 25 plus the newest 20 resolved)
-- [ ] Add `migrations/033_sos_nonce.sql`:
+- [x] Add `migrations/033_sos_nonce.sql`:
   - add `nonce BIGINT`, `alt_latitude DOUBLE PRECISION`, `alt_longitude DOUBLE PRECISION`
   - `CREATE UNIQUE INDEX uq_sos_events_vessel_nonce ON sos_events (vessel_id, nonce) WHERE nonce IS NOT NULL`
   - replace `uq_sos_events_vessel_client_ts` (from `007_sos_ingest.sql:47`) with a partial unique index on `(vessel_id, client_ts) WHERE nonce IS NULL`, so two nonce-carrying calls in the same second can coexist
-- [ ] Create `app/incidents/text.py` with `truncate_utf8(text, max_bytes) -> str`.
+- [x] Create `app/incidents/text.py` with `truncate_utf8(text, max_bytes) -> str`.
   Encode, cut at the byte limit, then decode with `errors='ignore'` so a partial trailing character is dropped.
-- [ ] In `SosIn`:
+- [x] In `SosIn`:
   - Add `nonce: int | None = Field(default=None, ge=0, le=4294967295)`.
   - Replace `max_length` on `note` and `boat` with `BeforeValidator`s that call `truncate_utf8` at 64 and 32 bytes.
   - Update the class docstring: truncation, not rejection.
-- [ ] Split `ingest_sos` so the handler reads top-down: resolve provenance, then upsert, then respond.
+- [x] Split `ingest_sos` so the handler reads top-down: resolve provenance, then upsert, then respond.
   - Extract `_upsert_sos(conn, payload, provenance)`, which picks the conflict target (`(vessel_id, nonce)`, or `(vessel_id, client_ts) WHERE nonce IS NULL` for legacy).
   - On conflict, set `alt_latitude` and `alt_longitude` from the incoming position only when both positions exist, no alternative is stored yet, and they differ by more than `CONFLICT_DEGREES = 0.009`.
     Explain in a `ponytail:` comment that this is about 1 km at 11 degrees N as a box test, with a haversine as the upgrade if the area of operation moves far from the equator.
   - The response adds `nonce`.
-- [ ] `/vessel/{id}` query: `WHERE vessel_id = $1 AND (resolved_at IS NULL OR id IN (newest 20 resolved))`, ordered newest first.
-- [ ] `_event_json` adds `nonce`.
+- [x] `/vessel/{id}` query: `WHERE vessel_id = $1 AND (resolved_at IS NULL OR id IN (newest 20 resolved))`, ordered newest first.
+- [x] `_event_json` adds `nonce`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Manual: `curl -X POST /api/sos` with a 70-byte `ñ` note against a local server gives 200 and the stored note is valid UTF-8.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Manual: `curl -X POST /api/sos` with a 70-byte `ñ` note against a local server gives 200 and the stored note is valid UTF-8.
 
 ### Review and checkpoint
 

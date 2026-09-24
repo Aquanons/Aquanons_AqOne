@@ -21,3 +21,21 @@ Row counts and IDs only; never data, URLs or credentials.
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors.
 - The three failures match Phase 6 deferred probes: two minimum hotspot cohort probes and the firmware shared LoRa key probe.
 - Diff review: `backend/app/api/sos.py` is two lines shorter than its starting version, and incident policy modules contain no forbidden framework/database imports.
+
+## Phase B2 - Incident nonce and safe text
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_sos_text.py`: collection failed because `app.incidents.text` does not exist.
+- `AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@localhost:55432/postgres python -m pytest -q -p no:cacheprovider tests/test_sos_ingest.py::test_sos_note_truncated_on_char_boundary tests/test_sos_ingest.py::test_sos_boat_truncated_to_32_bytes`: 2 failed because stored note and boat strings exceed their UTF-8 byte caps.
+- `AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@localhost:55432/postgres python -m pytest -q -p no:cacheprovider tests/test_edge_nonce_pg.py`: 5 failed, 2 passed. Failing tests: `test_prepared_rows_cannot_capture_nonce_sos`, `test_same_second_different_nonce_two_rows`, `test_same_nonce_merges_across_transports`, `test_position_conflict_stores_alt_position`, `test_close_positions_do_not_conflict`.
+
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 461 passed, 23 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 479 passed, 5 skipped, 1 xfailed.
+- Focused text and nonce integration checks: 14 passed.
+- `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; the fresh manual database applied migrations through 033.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. Failures are unchanged Phase 6 deferred probes: two hotspot cohort probes and the firmware shared LoRa key probe.
+- Manual local `curl` POST with a 70-byte UTF-8 note returned HTTP 200; PostgreSQL stored 64 bytes across 32 valid UTF-8 characters.

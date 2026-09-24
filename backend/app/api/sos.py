@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
 from app.api.contacts import is_valid_gateway_key, require_gateway_key
 from app.audit import record_audit_event
@@ -13,6 +14,7 @@ from app.auth import get_optional_vessel_device, require_responder_roles, requir
 from app.db import get_pool
 from app.incidents.delivery import delivery_state
 from app.incidents.lifecycle import ResolutionCode, can_reopen, fisher_reply_reopens, resolution_code_from
+from app.incidents.text import truncate_utf8
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -34,6 +36,22 @@ RESPONDER_STATUS_LABELS: dict[int, str] = {
 
 REPLY_STILL_IN_DANGER = 1
 REPLY_SAFE_NOW = 2
+
+CONFLICT_DEGREES = 0.009
+
+
+@dataclass(frozen=True)
+class SosProvenance:
+    trust_tier: str
+    buoy_id: str | None
+    src_id: int | None
+    seq: int | None
+    delivered_direct: bool
+    delivered_via_buoy: bool
+
+
+def _truncate_text(value: Any, max_bytes: int) -> Any:
+    return truncate_utf8(value, max_bytes) if isinstance(value, str) else value
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -70,29 +88,20 @@ VALID_TRUST_TIERS = {'self_declared', 'phone_verified', 'confirmed_by_responder'
 class SosIn(BaseModel):
     """An SOS as delivered by either transport.
 
-    `client_ts` is mandatory: with `vessel_id` it forms the de-duplication key
-    that lets the direct and buoy routes deliver the same emergency without
-    creating two incidents.
+    `client_ts` is the legacy de-duplication key; newer handsets add a nonce.
 
-    This endpoint is deliberately unauthenticated (see the router comment
-    below), so it is also the only untrusted-input boundary in this file.
-    Length limits mirror the caps already enforced on the handset
-    (`mobile/lib/core/config.dart`: maxVesselIdLength/maxBoatLength = 32,
-    maxNoteLength = 64) and on the buoy firmware, which truncates into fixed
-    C buffers of the same sizes (`firmware/buoy/AqOneBuoy/AqOneBuoy.ino`
-    `SosItem`: `vesselId[33]`, `boat[32]`, `note[64]`). A real client can
-    never exceed these; something that does is not a distress call this
-    endpoint needs to accept as-is. Rejecting it with 422 does not drop a
-    real SOS - it is Pydantic validation ahead of any DB write, so nothing
-    is silently discarded, and a caller within these limits is unaffected.
+    Note and boat are truncated to their byte-safe transport caps.
+    `nonce` distinguishes modern incidents while `client_ts` remains the
+    legacy merge key.
     """
 
     vessel_id: str = Field(min_length=1, max_length=32)
     client_ts: int = Field(description='Origin epoch seconds, from the handset')
-    boat: str = Field(default='', max_length=32)
+    boat: Annotated[str, BeforeValidator(lambda value: _truncate_text(value, 32))] = ''
     lat: float | None = Field(default=None, ge=-90, le=90)
     lon: float | None = Field(default=None, ge=-180, le=180)
-    note: str | None = Field(default=None, max_length=64)
+    note: Annotated[str | None, BeforeValidator(lambda value: _truncate_text(value, 64))] = None
+    nonce: int | None = Field(default=None, ge=0, le=4_294_967_295)
     trust_tier: str = 'self_declared'
 
     # Direct path only - the LoRa frame has no room for a UUID. Generous cap:
@@ -133,9 +142,6 @@ async def ingest_sos(
     Always returns the same event id, so a client retrying - or both transports
     succeeding - is safe.
     """
-    # SEC-06: Store trust_tier='self_declared' unless the request carries a valid
-    # vessel device bearer for the same vessel_id; then allow phone_verified.
-    # Never accept confirmed_by_responder from ingest.
     trust_tier = 'self_declared'
     if (
         vessel_device is not None
@@ -144,90 +150,16 @@ async def ingest_sos(
     ):
         trust_tier = 'phone_verified'
 
-    # SEC-06: Accept source='buoy', buoy_id, src_id, seq only with a valid X-Api-Key.
-    # Without it, store the SOS as a direct delivery and drop the buoy fields,
-    # so no buoy row is auto-registered.
     has_valid_gateway = is_valid_gateway_key(api_key)
-
     if has_valid_gateway and payload.source == 'buoy':
-        buoy_id = payload.buoy_id
-        src_id = payload.src_id
-        seq = payload.seq
-        delivered_direct = False
-        delivered_via_buoy = True
+        provenance = SosProvenance(
+            trust_tier, payload.buoy_id, payload.src_id, payload.seq, False, True,
+        )
     else:
-        buoy_id = None
-        src_id = None
-        seq = None
-        delivered_direct = True
-        delivered_via_buoy = False
-
+        provenance = SosProvenance(trust_tier, None, None, None, True, False)
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
-        # The vessel may be unknown: a handset can raise an SOS before it
-        # has ever been seen by the backend. Refusing on a missing foreign
-        # key would drop a distress call.
-        await conn.execute(
-            '''
-                INSERT INTO vessels (id, boat_name)
-                VALUES ($1, $2)
-                ON CONFLICT (id) DO NOTHING
-                ''',
-            payload.vessel_id,
-            payload.boat or payload.vessel_id,
-        )
-
-        # Same reasoning for the relaying buoy. sos_events.buoy_id is a foreign
-        # key into buoys, and a gateway reports whatever id its board was
-        # flashed with - often one no one has registered. Without this, the
-        # insert fails, the gateway never acks, and the SOS never lands.
-        if buoy_id:
-            await conn.execute(
-                '''
-                    INSERT INTO buoys (id, label)
-                    VALUES ($1, $1)
-                    ON CONFLICT (id) DO NOTHING
-                    ''',
-                buoy_id,
-            )
-
-        row = await conn.fetchrow(
-            '''
-                INSERT INTO sos_events (
-                  vessel_id, client_ts, boat, latitude, longitude, note,
-                  trust_tier, local_id, buoy_id, src_id, seq,
-                  delivered_direct, delivered_via_buoy
-                )
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-                ON CONFLICT (vessel_id, client_ts) DO UPDATE SET
-                  -- COALESCE keeps whatever we already knew and fills the gaps
-                  -- from this delivery. Neither route can erase the other's data.
-                  latitude   = COALESCE(sos_events.latitude,  EXCLUDED.latitude),
-                  longitude  = COALESCE(sos_events.longitude, EXCLUDED.longitude),
-                  note       = COALESCE(NULLIF(sos_events.note, ''), EXCLUDED.note),
-                  local_id   = COALESCE(sos_events.local_id,  EXCLUDED.local_id),
-                  buoy_id    = COALESCE(sos_events.buoy_id,   EXCLUDED.buoy_id),
-                  src_id     = COALESCE(sos_events.src_id,    EXCLUDED.src_id),
-                  seq        = COALESCE(sos_events.seq,       EXCLUDED.seq),
-                  boat       = COALESCE(NULLIF(sos_events.boat, ''), EXCLUDED.boat),
-                  delivered_direct   = sos_events.delivered_direct   OR EXCLUDED.delivered_direct,
-                  delivered_via_buoy = sos_events.delivered_via_buoy OR EXCLUDED.delivered_via_buoy
-                RETURNING *, (xmax = 0) AS was_inserted
-                ''',
-            payload.vessel_id,
-            payload.client_ts,
-            payload.boat,
-            payload.lat,
-            payload.lon,
-            payload.note,
-            trust_tier,
-            payload.local_id,
-            buoy_id,
-            src_id,
-            seq,
-            delivered_direct,
-            delivered_via_buoy,
-        )
+        row = await _upsert_sos(conn, payload, provenance)
 
     return {
         'id': row['id'],
@@ -237,6 +169,7 @@ async def ingest_sos(
         'duplicate': not bool(row['was_inserted']),
         'vessel_id': row['vessel_id'],
         'client_ts': row['client_ts'],
+        'nonce': row['nonce'],
         'delivered_direct': row['delivered_direct'],
         'delivered_via_buoy': row['delivered_via_buoy'],
         'acknowledged_at': row['acknowledged_at'].isoformat() if row['acknowledged_at'] else None,
@@ -268,7 +201,7 @@ async def ack_by_local_id(local_id: str) -> dict[str, object]:
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             '''
-            SELECT id, vessel_id, local_id, seq, client_ts, acknowledged_at,
+            SELECT id, vessel_id, local_id, seq, client_ts, nonce, acknowledged_at,
                    acked_by, eta_at, responder_status, responder_note,
                    fisher_reply, fisher_replied_at, resolved_at,
                    resolution_code, version, reopened_at,
@@ -295,6 +228,7 @@ def _event_json(row: Any, server_time: datetime | None = None) -> dict[str, obje
             data[col] = value.isoformat()
     data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
     data['delivery_state'] = delivery_state(row)
+    data.setdefault('nonce', None)
     if server_time is not None:
         data['server_time'] = server_time.isoformat()
     return data
@@ -329,7 +263,7 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
             '''
             SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
                    e.trust_tier,
-                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.client_ts, e.nonce, e.delivered_direct, e.delivered_via_buoy,
                    e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
@@ -361,7 +295,7 @@ async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
             '''
             SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
                    e.trust_tier,
-                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.client_ts, e.nonce, e.delivered_direct, e.delivered_via_buoy,
                    e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
@@ -401,7 +335,7 @@ async def sos_downlink() -> dict[str, object]:
         rows = await conn.fetch(
             '''
             SELECT DISTINCT ON (e.vessel_id)
-                   e.id, e.vessel_id, e.seq, e.created_at, e.fisher_replied_at,
+                   e.id, e.vessel_id, e.seq, e.nonce, e.created_at, e.fisher_replied_at,
                    e.delivered_direct, e.delivered_via_buoy,
                    e.acknowledged_at, e.acked_by, e.eta_at,
                    e.responder_status, e.responder_note, e.resolved_at,
@@ -499,6 +433,70 @@ async def acknowledge(
         'responder_note': row['responder_note'],
         'version': row['version'],
     }
+
+
+async def _upsert_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> Any:
+    await conn.execute(
+        '''
+        INSERT INTO vessels (id, boat_name) VALUES ($1, $2)
+        ON CONFLICT (id) DO NOTHING
+        ''',
+        payload.vessel_id,
+        payload.boat or payload.vessel_id,
+    )
+    if provenance.buoy_id:
+        await conn.execute(
+            'INSERT INTO buoys (id, label) VALUES ($1, $1) ON CONFLICT (id) DO NOTHING',
+            provenance.buoy_id,
+        )
+
+    conflict = (
+        'ON CONFLICT (vessel_id, nonce) WHERE nonce IS NOT NULL'
+        if payload.nonce is not None
+        else 'ON CONFLICT (vessel_id, client_ts) WHERE nonce IS NULL'
+    )
+    # ponytail: this box is about 1 km at 11 degrees N; use haversine if operations move far from the equator.
+    row = await conn.fetchrow(
+        f'''
+        INSERT INTO sos_events (
+          vessel_id, client_ts, nonce, boat, latitude, longitude, note,
+          trust_tier, local_id, buoy_id, src_id, seq,
+          delivered_direct, delivered_via_buoy
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        {conflict} DO UPDATE SET
+          latitude = COALESCE(sos_events.latitude, EXCLUDED.latitude),
+          longitude = COALESCE(sos_events.longitude, EXCLUDED.longitude),
+          alt_latitude = CASE
+            WHEN sos_events.alt_latitude IS NULL
+             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
+             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
+             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
+               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})
+            THEN EXCLUDED.latitude ELSE sos_events.alt_latitude END,
+          alt_longitude = CASE
+            WHEN sos_events.alt_latitude IS NULL
+             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
+             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
+             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
+               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})
+            THEN EXCLUDED.longitude ELSE sos_events.alt_longitude END,
+          note = COALESCE(NULLIF(sos_events.note, ''), EXCLUDED.note),
+          local_id = COALESCE(sos_events.local_id, EXCLUDED.local_id),
+          buoy_id = COALESCE(sos_events.buoy_id, EXCLUDED.buoy_id),
+          src_id = COALESCE(sos_events.src_id, EXCLUDED.src_id),
+          seq = COALESCE(sos_events.seq, EXCLUDED.seq),
+          boat = COALESCE(NULLIF(sos_events.boat, ''), EXCLUDED.boat),
+          delivered_direct = sos_events.delivered_direct OR EXCLUDED.delivered_direct,
+          delivered_via_buoy = sos_events.delivered_via_buoy OR EXCLUDED.delivered_via_buoy
+        RETURNING *, (xmax = 0) AS was_inserted
+        ''',
+        payload.vessel_id, payload.client_ts, payload.nonce, payload.boat,
+        payload.lat, payload.lon, payload.note, provenance.trust_tier,
+        payload.local_id, provenance.buoy_id, provenance.src_id, provenance.seq,
+        provenance.delivered_direct, provenance.delivered_via_buoy,
+    )
+    return row
 
 
 class ResolveIn(BaseModel):
@@ -632,7 +630,7 @@ async def vessel_sos(
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT id, vessel_id, local_id, seq, client_ts, created_at, acknowledged_at, acked_by,
+            SELECT id, vessel_id, local_id, seq, client_ts, nonce, created_at, acknowledged_at, acked_by,
                    eta_at, responder_status, responder_note,
                    fisher_reply, fisher_replied_at, resolved_at, resolution_code, version, reopened_at,
                    delivered_direct, delivered_via_buoy

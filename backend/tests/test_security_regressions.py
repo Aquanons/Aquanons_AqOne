@@ -441,9 +441,9 @@ def test_mesh_chat_has_a_retention_or_admission_control():
 # Section 7: SOS Integrity (SEC-06)
 # ---------------------------------------------------------------------------
 
-TRUST_TIER_ARG = 6
-BUOY_ID_ARG = 8
-DELIVERED_VIA_BUOY_ARG = 12
+TRUST_TIER_ARG = 7
+BUOY_ID_ARG = 9
+DELIVERED_VIA_BUOY_ARG = 13
 
 
 def _sos(**overrides):
@@ -468,8 +468,9 @@ def _sos_insert_responder(kind, sql, args):
             'was_inserted': True,
             'vessel_id': args[0],
             'client_ts': args[1],
-            'delivered_direct': args[11],
-            'delivered_via_buoy': args[12],
+            'nonce': args[2],
+            'delivered_direct': args[12],
+            'delivered_via_buoy': args[13],
             'acknowledged_at': None,
         }
     return None
