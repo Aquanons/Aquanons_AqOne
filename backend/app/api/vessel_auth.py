@@ -4,11 +4,14 @@ import random
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
 from app.audit import record_audit_event
 from app.auth import (
+    bearer_scheme,
     create_vessel_device_token,
+    decode_vessel_device_token,
     hash_password,
     require_device_admin_roles,
     require_vessel_device,
@@ -170,21 +173,35 @@ async def enroll_device(payload: EnrollIn) -> dict[str, object]:
 
 @router.post('/refresh')
 async def refresh_device_token(
-    device: dict[str, object] = Depends(require_vessel_device),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict[str, object]:
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(status_code=401, detail='device credential required')
+    claims = decode_vessel_device_token(credentials.credentials, expired_grace=timedelta(days=30))
+    if claims.get('kind') != 'vessel_device':
+        raise HTTPException(status_code=401, detail='invalid token')
+    try:
+        device_id = int(claims['device_id'])
+        vessel_id = str(claims['vessel_id'])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=401, detail='invalid token') from exc
     pool = get_pool()
     async with pool.acquire() as conn:
-        await conn.execute(
+        device = await conn.fetchrow(
             '''
             UPDATE vessel_devices
                SET last_token_issued_at = NOW()
-             WHERE id = $1
+             WHERE id = $1 AND vessel_id = $2 AND revoked_at IS NULL
+             RETURNING id, vessel_id, label
             ''',
-            device['device_id'],
+            device_id,
+            vessel_id,
         )
+    if device is None:
+        raise HTTPException(status_code=401, detail='device credential revoked')
 
     token = create_vessel_device_token(
-        int(device['device_id']),
+        int(device['id']),
         str(device['vessel_id']),
     )
     expires_at = datetime.now(UTC) + timedelta(hours=24)
@@ -192,7 +209,7 @@ async def refresh_device_token(
         'token': token,
         'expires_at': expires_at.isoformat(),
         'device': {
-            'id': device['device_id'],
+            'id': device['id'],
             'vessel_id': device['vessel_id'],
             'label': device['label'],
         },

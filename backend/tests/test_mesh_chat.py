@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from fastapi.testclient import TestClient
 
 from app.api import mesh as mesh_api
+from app.auth import create_token
 from app.main import app
 
 CHAT = '/api/mesh/chat'
@@ -59,6 +60,10 @@ class _FakeMeshPool:
     async def execute(self, query: str, *args):
         return 'OK'
 
+    async def fetchval(self, query: str, *args):
+        assert 'SELECT boat_name FROM vessels' in query
+        return 'Bangka 7'
+
     async def fetch(self, query: str, *args):
         assert 'FROM mesh_chat' in query
         if 'WHERE id > $1' in query:
@@ -70,6 +75,7 @@ class _FakeMeshPool:
 
 def _patch_pool(monkeypatch, pool: _FakeMeshPool) -> None:
     monkeypatch.setattr(mesh_api, 'get_pool', lambda: pool)
+    monkeypatch.setattr(mesh_api, '_rate_limiter', mesh_api.RateLimiter())
 
 
 def test_chat_history_is_served_by_the_api_not_the_static_mount(monkeypatch):
@@ -79,7 +85,7 @@ def test_chat_history_is_served_by_the_api_not_the_static_mount(monkeypatch):
         response = client.get(CHAT)
 
     assert 'application/json' in response.headers['content-type']
-    assert response.status_code == 503, 'no database here; 404 would mean unrouted'
+    assert response.status_code == 401, 'the chat route must reject unauthenticated reads'
 
 
 def test_chat_ingest_is_served_by_the_api_not_the_static_mount(monkeypatch):
@@ -92,19 +98,16 @@ def test_chat_ingest_is_served_by_the_api_not_the_static_mount(monkeypatch):
     assert response.status_code == 503
 
 
-def test_chat_does_not_require_a_bearer_token(monkeypatch):
-    """The hub cannot authenticate. Neither leg of the relay may demand it."""
+def test_anonymous_can_post_but_cannot_read_chat(monkeypatch):
+    """The app can post without an account; history reads need a relay credential."""
     monkeypatch.delenv('DATABASE_URL', raising=False)
 
     with TestClient(app) as client:
         get = client.get(CHAT)
         post = client.post(CHAT, json={'sender': 'Boat-1', 'text': 'hello'})
 
-    for response in (get, post):
-        assert response.status_code not in (401, 403), (
-            'mesh chat was moved behind require_user - the Heltec hub has no '
-            'token and the relay stops carrying messages'
-        )
+    assert get.status_code == 401
+    assert post.status_code == 503
 
 
 def test_validation_runs_before_the_database(monkeypatch):
@@ -162,12 +165,13 @@ def test_since_id_returns_only_newer_messages_in_ascending_order(monkeypatch):
     """A hub/handset that was offline must catch up in order, not skip a gap."""
     pool = _FakeMeshPool()
     _patch_pool(monkeypatch, pool)
+    monkeypatch.setenv('GATEWAY_API_KEY', 'mesh-gateway')
 
     with TestClient(app) as client:
         for text in ('first', 'second', 'third'):
             client.post(CHAT, json={'sender': 'Boat-1', 'text': text})
 
-        response = client.get(f'{CHAT}?since_id=1')
+        response = client.get(f'{CHAT}?since_id=1', headers={'X-Api-Key': 'mesh-gateway'})
 
     assert response.status_code == 200
     messages = response.json()['messages']
@@ -180,12 +184,81 @@ def test_get_without_since_id_returns_the_most_recent_window_oldest_first(
 ):
     pool = _FakeMeshPool()
     _patch_pool(monkeypatch, pool)
+    monkeypatch.setenv('GATEWAY_API_KEY', 'mesh-gateway')
 
     with TestClient(app) as client:
         for text in ('a', 'b', 'c'):
             client.post(CHAT, json={'sender': 'Boat-1', 'text': text})
 
-        response = client.get(f'{CHAT}?limit=2')
+        response = client.get(f'{CHAT}?limit=2', headers={'X-Api-Key': 'mesh-gateway'})
 
     messages = response.json()['messages']
     assert [m['text'] for m in messages] == ['b', 'c']
+
+
+def test_reserved_sender_refused(monkeypatch):
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    with TestClient(app) as client:
+        response = client.post(CHAT, json={'sender': 'M.D.R.R.M.O', 'text': 'official rescue'})
+    assert response.status_code == 422
+    assert response.json()['detail'] == 'sender_reserved'
+
+
+def test_anonymous_post_forced_app_origin(monkeypatch):
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    with TestClient(app) as client:
+        response = client.post(CHAT, json={'sender': 'Juan', 'text': 'help', 'origin': 'mdrrmo'})
+    assert response.status_code == 201
+    assert response.json()['origin'] == pool.rows[0]['origin'] == 'app'
+
+
+def test_operator_chat_is_official(monkeypatch):
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    token = create_token(1, 'operator@example.invalid', 'mdrrmo')
+    with TestClient(app) as client:
+        response = client.post(
+            CHAT, headers={'Authorization': f'Bearer {token}'},
+            json={'sender': 'Operator', 'text': 'rescue dispatched'},
+        )
+    assert response.status_code == 201
+    assert response.json()['origin'] == 'mdrrmo'
+
+
+def test_vessel_chat_uses_paired_boat_name(monkeypatch):
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    app.dependency_overrides[mesh_api._mesh_credential] = lambda: ('vessel', {'vessel_id': 'V001'})
+    try:
+        with TestClient(app) as client:
+            response = client.post(CHAT, json={'sender': 'Anonymous', 'text': 'hello'})
+    finally:
+        app.dependency_overrides.pop(mesh_api._mesh_credential, None)
+    assert response.status_code == 201
+    assert response.json()['origin'] == 'app'
+    assert response.json()['sender'] == pool.rows[0]['sender'] == 'Bangka 7'
+
+
+def test_chat_rate_limit_429(monkeypatch):
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    with TestClient(app) as client:
+        responses = [client.post(CHAT, json={'sender': 'Juan', 'text': str(i)}) for i in range(7)]
+    assert [response.status_code for response in responses] == [201] * 6 + [429]
+
+
+def test_chat_read_requires_credential(monkeypatch):
+    with TestClient(app) as client:
+        response = client.get(CHAT)
+    assert response.status_code == 401
+
+
+def test_gateway_can_read_chat(monkeypatch):
+    monkeypatch.setenv('GATEWAY_API_KEY', 'mesh-gateway')
+    pool = _FakeMeshPool()
+    _patch_pool(monkeypatch, pool)
+    with TestClient(app) as client:
+        response = client.get(CHAT, headers={'X-Api-Key': 'mesh-gateway'})
+    assert response.status_code == 200

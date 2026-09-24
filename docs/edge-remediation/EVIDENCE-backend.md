@@ -67,3 +67,18 @@ Row counts and IDs only; never data, URLs or credentials.
 - `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed.
 - Timing note: `/api/sos/active` against 10,000 unresolved rows returned 200 rows with `total=10000` in 267.7 ms on local PostgreSQL 18 (TestClient request round trip).
 - `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed. The same Phase 6 deferred hotspot cohort and shared LoRa key probes remain.
+## Phase B5 - Chat authority, identity and trust
+
+### Red run
+
+- `python -m pytest -q -p no:cacheprovider tests/test_chat_policy.py tests/test_trust.py`: collection failed because `app.mesh.chat_policy` and `app.incidents.trust` do not exist.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/test_edge_identity_pg.py --tb=short`: 5 failed, 3 passed. Enrolled blank fills remained anonymous, profile provenance/shore-contact columns and confirmation were absent, and a 3-day-expired token was rejected.
+- The six mesh API cases yielded 5 failed, 1 passed: reserved sender accepted, anonymous origin spoofed, operator origin ignored, seventh post accepted, and anonymous history read reached the database instead of returning 401.
+### Green run
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 501 passed, 39 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 535 passed, 5 skipped, 1 xfailed.
+- Focused B5 policy/API checks: 73 passed; identity/profile PostgreSQL checks: 13 passed.
+- `python -m pytest -q -p no:cacheprovider tests/test_migrate.py`: 5 passed; PostgreSQL probes applied migration 035.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.

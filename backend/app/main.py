@@ -33,6 +33,7 @@ from app.api.sos import router as sos_ingest_router
 from app.api.squall import router as squall_router
 from app.api.trips import router as trips_router
 from app.api.vessel_auth import router as vessel_auth_router
+from app.api.vessel_profile import confirm_router as vessel_confirmation_router
 from app.api.vessel_profile import router as vessel_profile_router
 from app.auth import require_user
 from app.db import get_pool, shutdown_db, startup_db
@@ -57,8 +58,7 @@ app = FastAPI(lifespan=lifespan)
 # (itself gated by ADMIN_SETUP_KEY) and /api/me, which authenticates itself.
 app.include_router(auth_router)
 
-# The mesh chat relay is unauthenticated - the hub and fishermen have no accounts.
-# It carries public messages only (name, text, origin) on a fixed schema the hub validates.
+# Mesh chat accepts anonymous app posts and assigns origins from credentials.
 app.include_router(mesh_router)
 
 # SOS ingest is intentionally unauthenticated - see app/api/sos.py. A handset in
@@ -71,6 +71,7 @@ app.include_router(sos_ingest_router)
 # identity as the call itself. The read side (GET /api/sos/active) stays
 # protected. See app/api/vessel_profile.py.
 app.include_router(vessel_profile_router)
+app.include_router(vessel_confirmation_router)
 
 # Catch logging now sits behind a vessel-bound device credential rather than a
 # dispatcher token. Keeping it off the blanket operator dependency here lets

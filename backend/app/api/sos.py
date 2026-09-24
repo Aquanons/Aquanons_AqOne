@@ -20,6 +20,7 @@ from app.incidents.plausibility import PlausibilityContext
 from app.incidents.plausibility import flags as plausibility_flags
 from app.incidents.text import truncate_utf8
 from app.incidents.triage import flood_status, triage_key
+from app.incidents.trust import vessel_verified
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -281,7 +282,10 @@ async def active_sos(
                    EXISTS (SELECT 1 FROM vessel_trips t WHERE t.vessel_id = e.vessel_id) AS has_trip_history,
                    c.observed_at AS last_contact_at,
                    c.latitude AS last_contact_latitude, c.longitude AS last_contact_longitude,
-                   v.skipper_name, v.license_type, v.license_number, v.phone
+                   v.skipper_name, v.license_type, v.license_number, v.phone,
+                   v.phone_set_by, v.shore_contact_name, v.shore_contact_phone, v.confirmed_at,
+                   EXISTS (SELECT 1 FROM vessel_devices d WHERE d.vessel_id = v.id
+                           AND d.revoked_at IS NULL) AS has_active_device
             FROM sos_events e
             LEFT JOIN vessels v ON v.id = e.vessel_id
             LEFT JOIN LATERAL (
@@ -311,7 +315,8 @@ def _enrich(row: Any, now: datetime) -> dict[str, object]:
     event = _event_json(row)
     has_trip_history = bool(row.get('has_trip_history', False))
     open_calls = row.get('open_calls_for_vessel', 1)
-    vessel_verified = row['trust_tier'] in {'phone_verified', 'confirmed_by_responder'}
+    verified = vessel_verified(bool(row.get('has_active_device', False)), row.get('confirmed_at'))
+    verified = verified or row['trust_tier'] in {'phone_verified', 'confirmed_by_responder'}
     event['created_at'] = row['created_at']
     pressed_at = datetime.fromtimestamp(row['client_ts'], UTC) if row['client_ts'] is not None else None
     event['pressed_at'] = pressed_at.isoformat() if pressed_at else None
@@ -323,9 +328,12 @@ def _enrich(row: Any, now: datetime) -> dict[str, object]:
     event['alt_latitude'] = row.get('alt_latitude')
     event['alt_longitude'] = row.get('alt_longitude')
     event['delivery_path'] = 'pod' if row['delivered_via_buoy'] else 'direct'
-    event['vessel_verified'] = vessel_verified
+    event['vessel_verified'] = verified
+    event['phone_set_by'] = row.get('phone_set_by')
+    event['shore_contact_name'] = row.get('shore_contact_name')
+    event['shore_contact_phone'] = row.get('shore_contact_phone')
     event['has_trip_history'] = has_trip_history
-    event['corroborated'] = bool(row['delivered_via_buoy'] or vessel_verified or has_trip_history)
+    event['corroborated'] = bool(row['delivered_via_buoy'] or verified or has_trip_history)
     if row['latitude'] is not None and row['longitude'] is not None:
         station = min(
             SHORE_STATIONS,

@@ -271,7 +271,7 @@ Checkpoint message: `feat(sos): triage-ordered dispatcher feed with advisory pla
 
 Requirements: EC-C9, EC-M12, EC-H21, EC-H10 (backend), EC-M6 (backend), EC-M2 (backend)
 Merge after: B4
-State: Not started
+State: Done - implementation checkpoint pending
 
 ### Tasks
 
@@ -295,31 +295,31 @@ State: Not started
     - `test_refresh_accepts_recently_expired_token` (3 days past expiry)
     - `test_refresh_rejects_revoked_device`
     - `test_refresh_rejects_token_older_than_grace` (31 days)
-- [ ] Put chat policy in `app/mesh/chat_policy.py`, beside `loam.py`:
+- [x] Put chat policy in `app/mesh/chat_policy.py`, beside `loam.py`:
   - `normalise_sender(name)`
   - `sender_is_reserved(name)`
   - `chat_origin(credential_kind)`
   - `RateLimiter`, a token bucket keyed by `(normalised sender, client IP)`, 6 a minute.
     A `ponytail:` comment says it is in memory for a single instance and should move to Postgres if scaled out.
-- [ ] `app/api/mesh.py`:
+- [x] `app/api/mesh.py`:
   - `POST` resolves the credential (optional operator, optional vessel device, optional gateway key), sets origin and sender per master plan 3.6, checks reserved names and the rate limit, then inserts.
   - `GET` requires one of the three credentials.
   - Update the misleading "unauthenticated" comment in `main.py` next to the mesh router.
-- [ ] Add `migrations/035_vessel_identity_provenance.sql`: `vessels` gains `phone_set_by TEXT`, `license_set_by TEXT`, `shore_contact_name TEXT`, `shore_contact_phone TEXT`, `confirmed_at TIMESTAMPTZ` and `confirmed_by TEXT`.
-- [ ] Create `app/incidents/trust.py` with `vessel_verified(has_active_device, confirmed_at)`, pure.
+- [x] Add `migrations/035_vessel_identity_provenance.sql`: `vessels` gains `phone_set_by TEXT`, `license_set_by TEXT`, `shore_contact_name TEXT`, `shore_contact_phone TEXT`, `confirmed_at TIMESTAMPTZ` and `confirmed_by TEXT`.
+- [x] Create `app/incidents/trust.py` with `vessel_verified(has_active_device, confirmed_at)`, pure.
   `/active` uses it and adds `phone_set_by`, `shore_contact_name` and `shore_contact_phone`.
-- [ ] `app/api/vessel_profile.py`:
+- [x] `app/api/vessel_profile.py`:
   - Any write to a vessel with an active, unrevoked device requires that device's bearer.
   - Otherwise, blank fills record `*_set_by = 'anonymous'`, and device writes record `'device'`.
   - Accept `shore_contact_name` (64 characters or fewer) and `shore_contact_phone` (20 or fewer).
   - Add `POST /api/vessels/{vessel_id}/confirm` on a protected router (responder roles, audited `vessel.confirm`).
-- [ ] `app/auth.py`: add `decode_vessel_device_token(token, *, expired_grace)`, reusing `decode_token`'s key and algorithm with PyJWT `leeway`.
+- [x] `app/auth.py`: add `decode_vessel_device_token(token, *, expired_grace)`, reusing `decode_token`'s key and algorithm with PyJWT `leeway`.
   `POST /api/vessel-auth/refresh` uses a 30-day grace and still checks the device row is not revoked.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] The security probes stay at their Phase 6 result.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] The security probes stay at their Phase 6 result.
   Pay particular attention to SEC-08 and SEC-19: SEC-08's 409 rule must still hold for unenrolled vessels with non-blank fields.
 
 ### Review and checkpoint
@@ -328,6 +328,15 @@ As in B1.
 Checkpoint message: `feat(identity): official-only MDRRMO chat, device-bound profiles, responder confirmation`
 
 ---
+
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 501 passed, 39 skipped, 1 xfailed.
+- PostgreSQL 18 full suite: 535 passed, 5 skipped, 1 xfailed.
+- Migration checks: 5 passed; migration 035 applied by PostgreSQL tests.
+- Focused B5 policy/API checks: 73 passed; identity/profile PostgreSQL checks: 13 passed.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
 
 ## Phase B6: Scheduler, SMS escalation, ops status, operator refresh
 
