@@ -120,7 +120,7 @@ Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incide
 
 Requirements: EC-C14, EC-L13, EC-L8, EC-C8 (backend), EC-H17 (backend)
 Merge after: B1
-State: Done - implementation checkpoint pending
+State: Done - 32a1635
 
 ### Tasks
 
