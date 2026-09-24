@@ -432,7 +432,7 @@ void meshSeqCheckpoint() {
 }
 
 bool txEnqueue(const uint8_t* bytes, size_t len, uint32_t delayMs = 0) {
-  size_t reserve = (len > 0 && bytes[0] == T_CHAT) ? 2 : 0;
+  size_t reserve = (len > 2 && bytes[2] == T_CHAT) ? 2 : 0;  // bytes[2] is TYPE (docs/02)
   int freeSlots = 0;
   for (int i = 0; i < TX_MAX; i++) {
     if (!txRing[i].used) freeSlots++;

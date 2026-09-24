@@ -103,3 +103,15 @@ def test_loam_key_guard_rejects_every_committed_placeholder_at_compile_time():
             f'{header.parent.name}/AqOneLoam.h has no static_assert that LOAM_KEY is at least '
             f'{MIN_LOAM_KEY_LENGTH} characters'
         )
+
+
+def test_tx_ring_chat_reserve_reads_the_type_byte_the_encoder_writes():
+    code = LOAM_HEADERS[0].read_text('utf-8')
+    type_offset = re.search(r'buf\[(\d+)\]\s*=\s*type;', code)
+    assert type_offset, 'loamEncode no longer writes the frame type at a fixed buf[] offset'
+    enqueue = code[code.index('bool txEnqueue('):]
+    enqueue = enqueue[: enqueue.index('\n}')]
+    assert re.search(rf'bytes\[{type_offset.group(1)}\]\s*==\s*T_CHAT', enqueue), (
+        f'txEnqueue must decide the chat reserve from bytes[{type_offset.group(1)}] (TYPE); '
+        'any other offset never matches T_CHAT, so chat can fill the ring again'
+    )
