@@ -129,5 +129,8 @@
   "sosStalePromptTitle": "Hindi naipadalang SOS kanina",
   "sosStalePromptBody": "Ang isang SOS mula {age} na ang nakalipas ay hindi naipadala. Ipadala na ba ngayon?",
   "sosStalePromptSend": "Ipadala ngayon",
-  "sosStalePromptCancel": "Kanselahin"
+  "sosStalePromptCancel": "Kanselahin",
+  "onboardingBatteryWhy": "Pahintulutan ang AqOne na gumana sa background upang patuloy na maipadala ang SOS kahit nakapatay ang screen.",
+  "sosPendingNotificationTitle": "Kasalukuyang ipinapadala ang SOS",
+  "sosPendingNotificationBody": "Patuloy na susubukan ng AqOne hanggang sa matanggap ito ng MDRRMO."
 }

@@ -105,35 +105,36 @@ Checkpoint message: `fix(mobile): keep delivering an SOS until the backend confi
 
 Requirements: EC-H2
 Merge after: M1
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Spike, time-boxed to 30 min, recorded in the evidence file.
+- [x] Spike, time-boxed to 30 min, recorded in the evidence file.
   Pin the current `flutter_foreground_task`, and confirm from its docs whether its `TaskHandler` runs in the main isolate for that version.
   - If it does, the service only keeps the process alive, and the existing `SosService` timers keep running.
   - If it does not, the handler's repeat event builds its own `OutboxStore` and `SosService` and calls `retryPending()`, and only while the UI isolate is detached.
     This keeps one writer at a time to sqflite.
   Record which case applies.
-- [ ] Write red tests: `test/foreground_policy_test.dart` for `shouldRunForeground(records)`.
+- [x] Write red tests: `test/foreground_policy_test.dart` for `shouldRunForeground(records)`.
   It is true while any record is `saved` or `relayed`, and false once all are `delivered` or later.
-- [ ] Add `flutter_foreground_task` (approved by Len) to `pubspec.yaml`.
-- [ ] Create `lib/models/foreground_policy.dart` (pure) and `lib/services/sos_foreground.dart` (the adapter).
+- [x] Add `flutter_foreground_task` (approved by Len) to `pubspec.yaml`.
+- [x] Create `lib/models/foreground_policy.dart` (pure) and `lib/services/sos_foreground.dart` (the adapter).
   The adapter starts the service when the policy says run, stops it when not, and is re-evaluated on every `SosService.changes` event.
-- [ ] `AndroidManifest.xml`: the service declaration with `foregroundServiceType="location"`, justified by the late GPS fill in M3, plus the matching `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` permissions.
+- [x] `AndroidManifest.xml`: the service declaration with `foregroundServiceType="location"`, justified by the late GPS fill in M3, plus the matching `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` permissions.
   Check the rules for Android 14 and 15 and record them.
-- [ ] Onboarding: request battery-optimisation exemption with the plugin's helper, explaining why with the `onboardingBatteryWhy` string.
-- [ ] Notification text: `sosPendingNotificationTitle` and `sosPendingNotificationBody`.
+- [x] Onboarding: request battery-optimisation exemption with the plugin's helper, explaining why with the `onboardingBatteryWhy` string.
+- [x] Notification text: `sosPendingNotificationTitle` and `sosPendingNotificationBody`.
 
 ### Verification
 
-- [ ] Gate commands green.
+- [x] Gate commands green.
 - [ ] Device test (recorded, not a CI gate): release build on the cheapest target phone, SOS pressed with pod and internet off, screen off for 30 min, then internet turned on.
   The SOS lands without opening the app.
 
 ### Review and checkpoint
 
-As in M1.
+- [x] Diff review
+- [x] Update track file, evidence file, and HANDOFF.md; stage only `mobile/**` and this track's docs; commit; push.
 Checkpoint message: `feat(mobile): foreground service keeps SOS delivery alive in the background`
 
 ---

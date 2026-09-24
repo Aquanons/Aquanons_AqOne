@@ -234,5 +234,8 @@
   "sosStalePromptTitle": "Owa napadaea nga SOS kaina",
   "sosStalePromptBody": "Rong sangka SOS halin {age} ro nagtaliwan hay owa napadaea. Ipaadaea eon bala subong?",
   "sosStalePromptSend": "Ipadaea subong",
-  "sosStalePromptCancel": "Kanselahon"
+  "sosStalePromptCancel": "Kanselahon",
+  "onboardingBatteryWhy": "Sugti ro AqOne nga mag-andar sa background agud padayon nga magpadaea ro SOS maskin patay ro screen.",
+  "sosPendingNotificationTitle": "Padayon nga ginapadaea ro SOS",
+  "sosPendingNotificationBody": "Padayon nga pagatinguhaon it AqOne hasta mabaton raya it MDRRMO."
 }

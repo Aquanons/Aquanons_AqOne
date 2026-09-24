@@ -98,6 +98,10 @@ dependencies:
   # services/eta_notifier.dart.
   flutter_local_notifications: ^19.5.0
 
+  # Foreground service to keep SOS delivery alive in the background (EC-H2).
+  flutter_foreground_task: ^11.0.3
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
