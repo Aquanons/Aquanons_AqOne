@@ -271,7 +271,7 @@ Checkpoint message: `feat(sos): triage-ordered dispatcher feed with advisory pla
 
 Requirements: EC-C9, EC-M12, EC-H21, EC-H10 (backend), EC-M6 (backend), EC-M2 (backend)
 Merge after: B4
-State: Done - implementation checkpoint pending
+State: Done - 8dbb767
 
 ### Tasks
 
