@@ -2,12 +2,13 @@
 
 Master plan: `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` (read Sections 1 to 4 first).
 Design: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md`.
-**Execution mode:** hard-stop
+**Execution mode:** auto (master plan Section 4.1: continue through phases without sign-off; never merge)
 Branch and worktree: `edge/mobile`, `../AqOne-edge-mobile`
 Owns: `mobile/**`.
 Approved: with the master plan, Revision 1, 2026-09-24.
+Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-mobile.md`.
-State: Awaiting approval
+State: In progress (auto mode)
 
 ## Rules for this track
 
@@ -45,7 +46,7 @@ State: Awaiting approval
 
 Requirements: EC-C3, EC-H15 (phone), and the silent-loss consequences of EC-C12, EC-M7 and EC-L10
 Merge after: Phase 0
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -104,7 +105,7 @@ Checkpoint message: `fix(mobile): keep delivering an SOS until the backend confi
 
 Requirements: EC-H2
 Merge after: M1
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -141,7 +142,7 @@ Checkpoint message: `feat(mobile): foreground service keeps SOS delivery alive i
 
 Requirements: EC-C14 (phone), EC-H17, EC-C8 (phone), EC-L7 (phone), EC-H1
 Merge after: M1 (the backend ignores `nonce` until B2 merges, see master plan 1.2)
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -186,7 +187,7 @@ Checkpoint message: `feat(mobile): incident nonce, byte-safe SOS text, and late 
 
 Requirements: EC-M9, EC-M10, EC-H4 (phone)
 Merge after: M3 (it works without B1, falling back to `unspecified`; full behaviour after B1)
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -226,7 +227,7 @@ Checkpoint message: `feat(mobile): confirmed stand-down with undo and honest clo
 
 Requirements: EC-H10 (phone), EC-M13, EC-M2, EC-M6 (phone)
 Merge after: M4, and B5 for token refresh grace
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -273,7 +274,7 @@ Checkpoint message: `feat(mobile): MDRRMO enrolment, SOS before setup, and recov
 
 Requirements: EC-H22 (silent part), EC-L4, EC-L1
 Merge after: M5
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 

@@ -1,13 +1,14 @@
 # Implementation Plan: Edge case remediation (master)
 
 Created: 2026-09-24T10:00:00+08:00
-Updated: 2026-09-24T11:50:00+08:00
+Updated: 2026-09-25T00:05:00+08:00
 Revision: 1
 Status: Approved
-**Execution mode:** hard-stop
+**Execution mode:** auto (tracks B, M and W; Section 4.1)
 Feature spec and revision: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (approved 2026-09-24, with Len's decisions in its header), findings in `docs/60_EXTREME_EDGE_CASE_REPORT.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`, `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`
 Len's chat approval: Revision 1 (this master plan and track files 62A to 62D) approved by Len in chat, 2026-09-24T11:45:00+08:00
+Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Target branches: `edge/contracts`, then `edge/backend`, `edge/mobile` and `edge/web` in parallel (Section 4)
 Implementers: three AI coding agents, one per track.
 Reviewer: Claude Code.
@@ -328,6 +329,54 @@ master (after security remediation merges)
 - The dashboard is served by the same Render service as the API, so merging a backend phase and its web phase back to back deploys them together.
 - Migrations belong to Track B only, numbered from `032` in phase order.
 
+### 4.1 Auto execution rules
+
+Tracks B, M and W run in `auto` mode (approved by Len, see the header).
+An agent finishes a phase, checkpoints it, and starts the next phase in its track file without waiting for anyone.
+
+**After each phase:**
+1. Gate commands green, with the red and green runs recorded in the track's evidence file.
+2. Tick the phase's boxes and set its `State:` to `Done - <commit>` in the track file; update `HANDOFF.md`.
+3. Stage only the track's own paths plus its track file and evidence file, and commit with the phase's checkpoint message.
+   No agent name or co-author line in the commit message (CLAUDE.md).
+4. `git push origin edge/<track>`, then start the next phase on the same branch.
+
+**Never:**
+- merge into `master`, push to `master`, or open or merge a PR yourself.
+  Claude reviews the phase commits and Len merges them in the order of Section 4; "Merge after:" lines limit merging only, never development.
+- touch Render, its environment variables, or the deployed database.
+- add a dependency the plan has not approved (`flutter_foreground_task` is the only new one for these tracks).
+- edit a contract doc, another track's paths, `docs/08`, `docs/16` or this plan.
+
+**Checks an agent cannot do** (device tests, a real phone, a second person) are not blockers.
+Record each one in the evidence file as `Pending - Len: <what to do>`, leave its box unticked, and continue.
+Checks an agent can do (a local server and `curl`, an emulator, a browser if one is available) are done, not deferred.
+
+**Building against unmerged backend work.**
+Mobile and web phases build against the frozen contract in `docs/03` to `docs/06` (the "Edge-case remediation contract" sections), with stubbed responses in tests.
+They do not wait for, or copy code from, `edge/backend`.
+
+**Local Postgres for backend tests.**
+Never use or guess Len's local Postgres password.
+Start a throwaway cluster outside the repository and point the probe variable at it:
+
+```powershell
+$pg = "$env:TEMP\aqone-edge-pg"
+& 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D $pg -U postgres -A trust -E UTF8
+Start-Process -WindowStyle Hidden 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -ArgumentList '-D', $pg, '-o', '"-p 55432"', '-l', "$pg.log", 'start'
+$env:AQONE_PROBE_PG_ADMIN_URL = 'postgresql://postgres@localhost:55432/postgres'
+```
+
+Stop it with `pg_ctl -D $pg stop` when the session ends.
+
+**Stop and wait for Len only when:**
+- the next phase is gated (`State: Blocked (gated)`: B8, M7), or every phase is done;
+- a gate still fails after three attempts (AGENTS.md "Recovery");
+- a contract in `docs/02` to `docs/06` looks wrong or incomplete (record the gap in `HANDOFF.md`);
+- a decision belongs to Len: spend, credentials, a new dependency, or a design change beyond docs/61 and this plan.
+
+When stopping, leave interrupted work uncommitted, set `HANDOFF.md` **Status** and **The Baton** precisely, and say why in the track's evidence file.
+
 ### Dependency map
 
 | Consumer phase | Needs merged first |
@@ -385,7 +434,7 @@ Checkpoint message: `docs(ops): free-tier Render database rotation and keep-awak
 ## 6. Phase 0: Contract freeze (Claude, before the tracks split)
 
 Requirements: all rows in Section 2 that change a contract
-State: In review - contracts written on `edge/contracts`; PR open, waiting on Len's review and merge
+State: Done - merged to `master` as `06dd18b` (PR #76), 2026-09-24
 Gate: Section 1.4.
 
 ### Tasks
@@ -412,9 +461,9 @@ Phase 0 found one gap and closed it: Section 3.7's contact `source` collided wit
 
 ### Review and checkpoint
 
-- [ ] Merge `edge/contracts` to `master`, then create the three track branches and worktrees from the new `master`:
+- [x] Merge `edge/contracts` to `master`, then create the three track branches and worktrees from the new `master`:
   `git worktree add ../AqOne-edge-backend -b edge/backend master`, and likewise for mobile and web.
-- [ ] Write an ACTIVE `HANDOFF.md` in each worktree, with the Baton set to that track's first phase.
+- [x] Write an ACTIVE `HANDOFF.md` in each worktree, with the Baton set to that track's first phase.
 
 Checkpoint message: `docs(contracts): freeze edge-case remediation contracts`
 
@@ -470,8 +519,9 @@ Give each agent its prompt only after Phase 0 has merged and its worktree exists
 > You are the backend implementer for AqOne edge-case remediation.
 > Work only in the worktree `../AqOne-edge-backend` on branch `edge/backend`.
 > Read `AGENTS.md`, `CLAUDE.md`, then `HANDOFF.md` in this worktree, then `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Sections 1 to 4, then your track file `docs/62A_EDGE_BACKEND_TRACK.md`.
-> Execute the phase named in the Baton only.
-> Execution mode is hard-stop: after the phase's verification, update your track file, `docs/edge-remediation/EVIDENCE-backend.md` and `HANDOFF.md`, commit, and stop.
+> Start with the phase named in the Baton.
+> Execution mode is auto: follow master plan Section 4.1. After each phase's verification, update your track file, `docs/edge-remediation/EVIDENCE-backend.md` and `HANDOFF.md`, commit, push `edge/backend`, and go straight on to the next phase.
+> Stop only for the conditions in Section 4.1. Never merge into or push to `master`.
 > You own `backend/**` and `render.yaml` only.
 > Never edit contract docs, `web/`, `mobile/` or `firmware/`; if a contract seems wrong, stop and record it in `HANDOFF.md`.
 > Every phase starts by writing the listed failing tests and recording the red run before any fix.
@@ -487,7 +537,7 @@ Give each agent its prompt only after Phase 0 has merged and its worktree exists
 
 > The same as above, with worktree `../AqOne-edge-web`, branch `edge/web`, track file `docs/62C_EDGE_WEB_TRACK.md`, evidence file `EVIDENCE-web.md`, and ownership of `web/**` only.
 > The dashboard renders what the backend sends; it never re-implements triage, lifecycle or trust rules.
-> Before opening a PR for a phase with a `Merge after:` line, check that those backend phases are merged.
+> Build against the frozen contracts with stubbed responses; `Merge after:` lines limit merging only, which Len does.
 
 ## Recovery
 

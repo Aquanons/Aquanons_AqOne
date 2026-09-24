@@ -2,12 +2,13 @@
 
 Master plan: `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` (read Sections 1 to 4 first).
 Design: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md`.
-**Execution mode:** hard-stop
+**Execution mode:** auto (master plan Section 4.1: continue through phases without sign-off; never merge)
 Branch and worktree: `edge/backend`, `../AqOne-edge-backend`
 Owns: `backend/**`, `render.yaml`.
 Approved: with the master plan, Revision 1, 2026-09-24.
+Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-backend.md`.
-State: Awaiting approval
+State: In progress (auto mode)
 
 ## Rules for this track
 
@@ -46,7 +47,7 @@ State: Awaiting approval
 
 Requirements: EC-C7 (backend), EC-M8, EC-M9 (backend), EC-M10 (backend), EC-M1
 Merge after: Phase 0
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -119,7 +120,7 @@ Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incide
 
 Requirements: EC-C14, EC-L13, EC-L8, EC-C8 (backend), EC-H17 (backend)
 Merge after: B1
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -174,7 +175,7 @@ Checkpoint message: `feat(sos): end-to-end incident nonce and byte-safe distress
 
 Requirements: EC-C10, EC-C2 (backend half), EC-H12 (visibility)
 Merge after: B2
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -220,7 +221,7 @@ Checkpoint message: `feat(downlink): cap the radio feed to the smallest table an
 
 Requirements: EC-H18, EC-H20, EC-H15 (backend), EC-M3, EC-L11 (backend flag), EC-H19 (data for wording)
 Merge after: B2
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -270,7 +271,7 @@ Checkpoint message: `feat(sos): triage-ordered dispatcher feed with advisory pla
 
 Requirements: EC-C9, EC-M12, EC-H21, EC-H10 (backend), EC-M6 (backend), EC-M2 (backend)
 Merge after: B4
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -332,7 +333,7 @@ Checkpoint message: `feat(identity): official-only MDRRMO chat, device-bound pro
 
 Requirements: EC-C6 (backend), EC-H6 (schedule), EC-C5 (expiry data), EC-M18
 Merge after: B3
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
@@ -382,7 +383,7 @@ Checkpoint message: `feat(ops): scheduled SMS escalation for unanswered SOS and 
 
 Requirements: EC-H6 (monitoring status), EC-H7 (tagging), EC-H8, EC-H9, EC-H16, EC-L2, EC-L3, EC-M17
 Merge after: B6
-State: Awaiting approval
+State: Not started
 
 ### Tasks
 
