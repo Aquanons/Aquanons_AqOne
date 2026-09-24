@@ -50,6 +50,17 @@ class OutboxStore {
     return rows.map(SosRecord.fromRow).toList(growable: false);
   }
 
+  Future<List<SosRecord>> awaitingDirectRetry() async {
+    final db = await _db.database;
+    final rows = await db.query(
+      'outbox',
+      where: 'state = ?',
+      whereArgs: <Object?>[DeliveryState.relayed.wire],
+      orderBy: 'client_ts ASC',
+    );
+    return rows.map(SosRecord.fromRow).toList(growable: false);
+  }
+
   Future<List<SosRecord>> awaitingReconcile({Set<String>? excludedIds}) async {
     final db = await _db.database;
     final rows = await db.query(

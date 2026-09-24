@@ -32,13 +32,13 @@ Future<http.StreamedResponse> _direct(int statusCode) async {
   );
 }
 
-SosRecord _record(String localId) {
+SosRecord _record(String localId, {DeliveryState state = DeliveryState.saved}) {
   return SosRecord(
     localId: localId,
     vesselId: 'fisher-7f3a',
     boat: 'BG-123',
     clientTs: 1755248500,
-    state: DeliveryState.saved,
+    state: state,
   );
 }
 
@@ -516,5 +516,29 @@ void main() {
           'device-clock ETA must not move',
     );
     expect(changes, 0, reason: 'an identical answer is not a change');
+  });
+
+  test('a buoy-relayed SOS is retried over direct without re-handoff', () async {
+    final record = _record('local-relayed-retry', state: DeliveryState.relayed);
+    await outbox.insert(record);
+
+    var buoyCalls = 0;
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((request) async {
+        buoyCalls++;
+        throw const FormatException('must not re-handoff');
+      }),
+    );
+    final backend = BackendClient(
+      client: _FakeBackendClient((_) => _direct(200)),
+    );
+
+    final service = buildService(buoy: buoy, backend: backend);
+    await service.retryPending();
+
+    final updated = await outbox.byLocalId(record.localId);
+    expect(updated!.state, DeliveryState.delivered);
+    expect(buoyCalls, 0);
   });
 }

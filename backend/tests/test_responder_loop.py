@@ -134,6 +134,15 @@ class _FakePool:
                 event['eta_at'] = datetime.now(UTC) + timedelta(minutes=eta_minutes)
             return event
 
+        if 'UPDATE sos_events' in query and 'SET resolved_at = NULL' in query:
+            event = self.sos_events.get(int(args[0]))
+            if event is None:
+                return None
+            event['resolved_at'] = None
+            event['resolved_by'] = None
+            event['resolved_reason'] = None
+            return event
+
         if 'UPDATE sos_events' in query and 'SET resolved_at' in query:
             event_id, resolved_by, resolved_reason = args
             event = self.sos_events.get(int(event_id))
@@ -435,4 +444,24 @@ def test_recent_lists_only_resolved_incidents_with_sender_report(monkeypatch):
     assert events[0]['skipper_name'] == 'Jade N. Salvador'
     assert events[0]['fisher_reply'] == 2
     assert events[0]['resolved_at'] is not None
+
+
+def test_reopen_returns_a_resolved_incident_to_the_active_feed(monkeypatch):
+    pool = _FakePool()
+    pool.seed(id=3, resolved_at=datetime.now(UTC))
+    _patch(monkeypatch, pool)
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        reopened = client.post('/api/sos/3/reopen', headers=_operator_headers())
+        assert reopened.status_code == 200
+        assert reopened.json()['resolved_at'] is None
+
+        missing = client.post('/api/sos/999/reopen', headers=_operator_headers())
+        assert missing.status_code == 404
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        still_active = client.post('/api/sos/3/reopen', headers=_operator_headers())
+        assert still_active.status_code == 409
+
+    assert [e['action'] for e in pool.audit_events] == ['sos.reopen']
 

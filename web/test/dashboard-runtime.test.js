@@ -284,6 +284,45 @@ test('Phase 1 - F01: Secure rendering prevents unescaped HTML injection', async 
     assert.ok(resolvedList.innerHTML.includes('Registered Boat'), 'registration pill rendered');
   });
 
+  await t.test('reopen posts to the reopen endpoint and refreshes both feeds', async () => {
+    const requested = [];
+    let activeReloaded = false;
+    const ns = {
+      ready: true,
+      OPS_CENTER: [11.7, 122.4],
+      OPS_ZOOM: 11,
+      shoreStations: [],
+      initialBuoys: [],
+      vessels: [],
+      incidents: [],
+      map: { setView() {}, on() {} },
+      openPanel() {},
+      closePanel() {},
+      allAlerts: () => [],
+      alertIcon: () => '<span class="icon"></span>',
+      escapeHtml: escapeHtml,
+      registrationBadgeHtml: () => '',
+      loadActiveSos: () => { activeReloaded = true; return Promise.resolve(); },
+      authFetch: (url) => {
+        requested.push(url);
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ events: [] }) });
+      }
+    };
+
+    const resolvedList = createStubElement('div', 'resolved-feed-list');
+    const { window, document } = createDOMContext({ 'resolved-feed-list': resolvedList }, ns);
+    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-buoy-health.js'), 'utf8');
+    const context = vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns }));
+    vm.runInContext(code, context);
+    await new Promise(r => setTimeout(r, 10));
+
+    requested.length = 0;
+    await ns.reopenIncident(7);
+
+    assert.equal(requested[0], '/api/sos/7/reopen', 'reopen hits the reopen endpoint');
+    assert.ok(activeReloaded, 'active feed refreshes after reopen');
+  });
+
   await t.test('sea condition in dashboard-emergency-advisory.js escapes reason and setByName', async () => {
     const seaCurrent = createStubElement('div', 'sea-condition-current');
     const ns = {
@@ -1485,6 +1524,80 @@ test('Phase 4 - Incident actions, audit reads, and keyboard stabilization', asyn
     assert.equal(ns.liveAlerts[0].sosEventId, 'SOS-RETAINED');
   });
 
+  await t.test('first load rings once per session for waiting unacked SOS', async () => {
+    async function firstLoad(events, store) {
+      let starts = 0;
+      const syncStatusEl = createStubElement('div', 'sync-status');
+      const syncTextEl = createStubElement('span', 'sync-text');
+      const bannerTimeEl = createStubElement('span');
+      bannerTimeEl.className = 'banner-time';
+      const statsFeedStatusEl = createStubElement('span', 'stats-feed-status');
+      const ns = {
+        ready: true,
+        liveAlerts: [],
+        escapeHtml: escapeHtml,
+        classifyFreshness: () => 'live',
+        freshnessLabel: () => 'LIVE',
+        hasUnacknowledgedSos: (rows) => rows.some((e) => !e.acknowledged_at),
+        sosAlarm: { start: () => { starts++; }, stop() {}, sync() {} },
+        authFetch: () => Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ events: events })
+        }),
+        map: { setView() {} },
+        showToast() {},
+        syncAlertIndicators() {},
+        renderIncidentFeed() {},
+        refreshOpenDrawer() {}
+      };
+
+      const { window, document } = createDOMContext({
+        'sync-status': syncStatusEl,
+        'sync-text': syncTextEl,
+        'stats-feed-status': statsFeedStatusEl
+      }, ns);
+      document.querySelector = (sel) => (sel === '.banner-time' ? bannerTimeEl : null);
+      window.sessionStorage = store;
+
+      const fakeL = {
+        layerGroup: () => ({ addTo: () => ({ addLayer: () => {}, removeLayer: () => {} }) }),
+        divIcon: () => ({}),
+        marker: () => ({ bindTooltip: () => {}, off: () => {}, on: () => {}, setLatLng: () => {} })
+      };
+
+      const liveSosCode = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-live-sos.js'), 'utf8');
+      const context = vm.createContext(Object.assign({}, window, { window, document, L: fakeL, AqOneDashboard: ns }));
+      vm.runInContext(liveSosCode, context);
+      await new Promise(r => setTimeout(r, 10));
+      return starts;
+    }
+
+    function sessionStore() {
+      const data = new Map();
+      return {
+        getItem: (k) => (data.has(k) ? data.get(k) : null),
+        setItem: (k, v) => { data.set(k, String(v)); }
+      };
+    }
+
+    function sosEvent(acknowledged) {
+      return {
+        id: 'SOS-WAITING',
+        boat: 'Waiting Boat',
+        latitude: 11.7,
+        longitude: 122.4,
+        created_at: new Date().toISOString(),
+        acknowledged_at: acknowledged ? new Date().toISOString() : null,
+        is_synthetic: false
+      };
+    }
+
+    assert.equal(await firstLoad([sosEvent(false)], sessionStore()), 1,
+      'waiting unacked SOS rings on first load of a fresh session');
+    assert.equal(await firstLoad([sosEvent(true)], sessionStore()), 0,
+      'fully acknowledged feed stays silent on first load');
+  });
+
   await t.test('refreshOpenDrawer retires drawer when incident leaves authoritative active list', () => {
     const drawer = createStubElement('div', 'sos-drawer');
     drawer.classList.add('open');
@@ -1653,6 +1766,98 @@ test('Phase 4 - Incident actions, audit reads, and keyboard stabilization', asyn
     assert.equal(requestBody.eta_minutes, 25);
     assert.equal(requestBody.responder_note, 'On our way');
     assert.equal(ackOverlay.hidden, true, 'Ack modal must close on success');
+  });
+
+  await t.test('resolve requires modal confirmation and sends the reason', async () => {
+    const drawer = createStubElement('div', 'sos-drawer');
+    drawer.classList.add('open');
+    const resolveOverlay = createStubElement('div', 'resolve-modal-overlay');
+    resolveOverlay.hidden = true;
+    const resolveVessel = createStubElement('p', 'resolve-modal-vessel');
+    const resolveReason = createStubElement('input', 'resolve-reason');
+    resolveReason.value = 'Rescued';
+    const resolveConfirmBtn = createStubElement('button', 'resolve-btn-confirm');
+    const sosBtnResolve = createStubElement('button', 'sos-btn-resolve');
+
+    let requestedUrl = '';
+    let requestOpts = null;
+    let activeReloaded = false;
+    let resolvedReloaded = false;
+    const ns = {
+      ready: true,
+      allAlerts: () => [],
+      authFetch: (url, opts) => {
+        requestedUrl = url;
+        requestOpts = opts || {};
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+      },
+      loadActiveSos: () => { activeReloaded = true; return Promise.resolve(); },
+      loadResolvedSos: () => { resolvedReloaded = true; return Promise.resolve(); },
+      showToast: () => {},
+      responderStatusHtml: () => '',
+      formatEta: () => '',
+      confidenceColor: () => '#e74c3c'
+    };
+
+    const elements = {
+      'sos-drawer': drawer,
+      'sos-drawer-header': createStubElement('div', 'sos-drawer-header'),
+      'sos-drawer-title': createStubElement('span', 'sos-drawer-title'),
+      'sos-drawer-close': createStubElement('button', 'sos-drawer-close'),
+      'sos-timer': createStubElement('span', 'sos-timer'),
+      'sos-timer-label': createStubElement('span', 'sos-timer-label'),
+      'sos-vessel-id': createStubElement('span', 'sos-vessel-id'),
+      'sos-owner': createStubElement('span', 'sos-owner'),
+      'sos-position': createStubElement('span', 'sos-position'),
+      'sos-buoy': createStubElement('span', 'sos-buoy'),
+      'sos-coverage': createStubElement('span', 'sos-coverage'),
+      'sos-stage': createStubElement('span', 'sos-stage'),
+      'sos-next-contact': createStubElement('span', 'sos-next-contact'),
+      'sos-confidence-value': createStubElement('span', 'sos-confidence-value'),
+      'sos-confidence-fill': createStubElement('span', 'sos-confidence-fill'),
+      'sos-btn-zoom': createStubElement('button', 'sos-btn-zoom'),
+      'sos-btn-acknowledge': createStubElement('button', 'sos-btn-acknowledge'),
+      'sos-btn-resolve': sosBtnResolve,
+      'sos-btn-broadcast': createStubElement('button', 'sos-btn-broadcast'),
+      'sos-btn-checkin': createStubElement('button', 'sos-btn-checkin'),
+      'sos-btn-activity': createStubElement('button', 'sos-btn-activity'),
+      'sos-broadcast-msg': createStubElement('div', 'sos-broadcast-msg'),
+      'sos-responder-block': createStubElement('div', 'sos-responder-block'),
+      'resolve-modal-overlay': resolveOverlay,
+      'resolve-modal-vessel': resolveVessel,
+      'resolve-reason': resolveReason,
+      'resolve-btn-confirm': resolveConfirmBtn,
+      'resolve-btn-cancel': createStubElement('button', 'resolve-btn-cancel'),
+      'resolve-modal-close': createStubElement('button', 'resolve-modal-close')
+    };
+
+    const { window, document } = createDOMContext(elements, ns);
+    const incidentsCode = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-incidents.js'), 'utf8');
+    const context = vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns }));
+    vm.runInContext(incidentsCode, context);
+
+    ns.openIncidentDrawer({
+      alertType: 'sos',
+      sosEventId: 'CASE-R',
+      headerText: 'Case R',
+      desc: 'Bangka Resolve',
+      vesselId: 'V-009'
+    }, null);
+
+    sosBtnResolve.click();
+    assert.equal(resolveOverlay.hidden, false, 'Resolve opens a confirmation modal, never posts directly');
+    assert.equal(requestedUrl, '', 'no request fires before confirmation');
+    assert.equal(resolveVessel.textContent, 'Bangka Resolve');
+
+    resolveConfirmBtn.click();
+    await new Promise(r => setTimeout(r, 10));
+
+    assert.equal(requestedUrl, '/api/sos/CASE-R/resolve', 'Resolve request targets the opened case');
+    assert.equal(requestOpts.method, 'POST');
+    assert.equal(JSON.parse(requestOpts.body).reason, 'Rescued', 'dispatcher reason rides along');
+    assert.equal(resolveOverlay.hidden, true, 'Resolve modal must close on success');
+    assert.ok(activeReloaded, 'active feed refreshes after resolve');
+    assert.ok(resolvedReloaded, 'resolved history refreshes after resolve');
   });
 
   await t.test('keyboard shortcuts ignore editable elements and follow Escape priority', () => {
