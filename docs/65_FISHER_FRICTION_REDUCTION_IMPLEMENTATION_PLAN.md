@@ -15,7 +15,7 @@ Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may
 Implementer: Antigravity (Gemini) from the root `HANDOFF.md`; reviewer: Claude Code.
 
 Success condition: the five jobs in spec 64 Section 1 meet their targets in the field session (Phase 0b).
-Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, awaiting approval) runs before this plan.
+Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
 Next hard stop: plan 66 reaches the point in the table below; then Phase 1 here starts and stops at its own verification.
 
 Execution mode is `hard-stop` by the default rule: the plan changes product code, amends the shared contract `docs/06`, and has more than 3 phases.
@@ -34,12 +34,11 @@ Order and timing (D2):
 | Now | Plan 66 (Critical edge cases) first. Phase 0a here runs in parallel because it is people work and touches no code. |
 | 2026-10-01 to 03 | RSTW pitch; no merges to `master` that change the demo APK |
 | After plan 66 Phase 5 | Phases 1 to 5 here, in order |
-| After Phase 5 here | Plan 66 Phase 6 (pod pairing, C12), which extends this plan's Phase 5 channel; then Phase 6 here |
+| After Phase 5 here | Phase 6 here |
 | Date set by Len, after RSTW | Phase 0b field session, on whatever build is newest |
 
-Plan 66 Phase 6 depends on this plan's Phase 5 (`docs/66` "Timing and gates"), so "plan 66 first" cannot mean all of plan 66.
-The order above runs plan 66 up to that dependency, then this plan's code phases, then the rest of plan 66.
-Len confirms or changes this split when plan 66 is approved.
+Plan 66 Phases 6 and 7 wait on hardware gates (build step 4, the charger heat test), so "plan 66 first" means up to its Phase 5; after that the two plans run side by side.
+Since plan 66 Revision 2 (D3: no pod password), plan 66 no longer depends on this plan's Phase 5.
 
 Standard mobile gate, run from `mobile/` for every code phase:
 
@@ -245,7 +244,7 @@ State: Approved (D4: in-app join)
 ### Tasks
 
 - [ ] `mobile/lib/core/config.dart`: `podSsid = 'Aquan'` (from `docs/03`), overridable with `--dart-define` like `buoyBaseUrl`.
-- [ ] `mobile/android/app/src/main/kotlin/ph/aqone/app/MainActivity.kt`: a `MethodChannel` `aqone/pod_wifi` with `connect(ssid, passphrase?)` (passphrase null for today's open pod; plan 66 Phase 6 supplies it) returning `connected`, `declined`, `notFound` or `unsupported`, and `disconnect()`.
+- [ ] `mobile/android/app/src/main/kotlin/ph/aqone/app/MainActivity.kt`: a `MethodChannel` `aqone/pod_wifi` with `connect(ssid)` (the pod stays open, plan 66 D3) returning `connected`, `declined`, `notFound` or `unsupported`, and `disconnect()`.
   Android 10+: `ConnectivityManager.requestNetwork` with a `WifiNetworkSpecifier` for the SSID, `NET_CAPABILITY_INTERNET` removed, 30 s timeout; `onAvailable` binds the process to the network, `onLost` and `disconnect()` unbind and release the request.
   Android 9 and older: `WifiManager` adds and enables an open network for the SSID.
 - [ ] `AndroidManifest.xml`: add `CHANGE_WIFI_STATE` and `CHANGE_NETWORK_STATE`.

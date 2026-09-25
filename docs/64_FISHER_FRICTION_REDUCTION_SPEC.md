@@ -9,7 +9,7 @@
 Revision: 2
 Len's chat approval, 2026-09-25T17:00:00+08:00: go with the recommendations for D2, D3, D5 and D6; the team picks the terms itself (D1); add an in-app way to join the pod Wi-Fi (D4).
 Revision 2 applies exactly those answers (Section 7) and records that the field session with fishermen and the MDRRMO waits until after the RSTW pitch, on a date Len sets.
-Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, awaiting approval) runs before this plan.
+Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
 The D2 dates below are superseded by that order; plan 65 carries the current order.
 
 ## 1. Purpose and success
@@ -122,8 +122,7 @@ At sea there is no mobile data anyway; near shore the pod route still delivers.
 The code carries a `ponytail:` note naming this ceiling and the upgrade path (send backend calls over the default network from Kotlin).
 
 The existing "join in Wi-Fi settings" hint stays as the fallback when the fisher declines the prompt or no pod is in range.
-Plan 66 Phase 6 (C12) later moves the pod to a per-pod WPA2 passphrase and an SSID of the form `Aquan-XXXX`.
-The channel therefore takes an optional passphrase from the start, so pairing extends it instead of adding a second one.
+The pod stays an open "Aquan" network: Len ruled out a pod password on 2026-09-25 (plan 66 D3), and plan 66 Phase 6 checks the pod's identity inside the SOS reply instead, so this channel takes only the SSID.
 Starting a connect attempt automatically when an SOS is saved and no pod is reachable is a possible follow-up, not part of this revision.
 
 ## 3. Findings (code reading, 2026-09-25)
