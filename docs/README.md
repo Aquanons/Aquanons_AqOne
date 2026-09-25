@@ -16,7 +16,7 @@ page for naming, status, and authoring rules.
 | Current hybrid transport decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) |
 | Aggregated architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) |
 | Honest demo status and evidence | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) |
-| Current executable pitch plan | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) |
+| Pitch plan (blocked on handset, buoy and rehearsal evidence) | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) |
 | Shared technical contracts | [`02_LOAM_PACKET_SPEC.md`](02_LOAM_PACKET_SPEC.md), [`03_PHONE_BUOY_WIFI.md`](03_PHONE_BUOY_WIFI.md), [`04_INGEST_API.md`](04_INGEST_API.md), [`05_PUBLIC_API.md`](05_PUBLIC_API.md), [`06_DELIVERY_STATES.md`](06_DELIVERY_STATES.md), [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) |
 
@@ -80,7 +80,6 @@ Do not delete historical documents. When a plan is verified complete, it may mov
 
 | Status | Document | Purpose |
 |---|---|---|
-| ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
 | ACTIVE | [`62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`](62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md) | Edge-case remediation: tracks B, M, W merged 2026-09-25; Phase I integration and gated Track F remain |
 
 Add a row here when a document becomes `ACTIVE`.

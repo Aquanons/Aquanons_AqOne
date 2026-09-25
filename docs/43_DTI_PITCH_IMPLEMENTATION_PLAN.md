@@ -1,9 +1,9 @@
 # 43 - DTI Pitch Implementation Plan
 
-**Status:** ACTIVE
+**Status:** BLOCKED (2026-09-25). Phases 1-3 are complete; Phase 4 needs handset, buoy and three-run rehearsal evidence. The backend part is now met: `https://aqone-backend.onrender.com/health/ready` returned `ok` on 2026-09-25 (`docs/08_DEMO_AND_STATUS.md`).
 **Owner:** Team Aquanons
 **Created:** 2026-09-05
-**Updated:** 2026-09-19
+**Updated:** 2026-09-25
 **Related:** [`README.md`](../README.md), [`README.md`](README.md), [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md)
 
 > **Handoff target:** Gemini 3.8

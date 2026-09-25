@@ -14,7 +14,7 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Hybrid transport architecture decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) | Active decision |
 | Aggregated architecture and data flow | [`56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`](56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md) | Active specification |
 | Demo evidence and implementation status | [`08_DEMO_AND_STATUS.md`](08_DEMO_AND_STATUS.md) | Evidence ledger |
-| Current pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Active plan |
+| Pitch handoff | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Blocked - Phase 4 needs handset, buoy and rehearsal evidence |
 | Repository structure cleanup | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Completed cleanup plan |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) | Active |
 | Cross-agent memory and handoff | [`58_MULTI_AGENT_HANDOFF_SPEC.md`](58_MULTI_AGENT_HANDOFF_SPEC.md) | Active specification |
