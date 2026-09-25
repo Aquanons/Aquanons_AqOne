@@ -14,6 +14,18 @@
   var responderStatusHtml = ns.responderStatusHtml;
   var formatEta = ns.formatEta;
   var confidenceColor = ns.confidenceColor;
+  var utf8ByteLength = ns.utf8ByteLength || function (value) {
+    var text = String(value);
+    var bytes = 0;
+    for (var i = 0; i < text.length; i++) {
+      var code = text.charCodeAt(i);
+      if (code < 0x80) bytes++;
+      else if (code < 0x800) bytes += 2;
+      else if (code >= 0xd800 && code <= 0xdbff && i + 1 < text.length && text.charCodeAt(i + 1) >= 0xdc00 && text.charCodeAt(i + 1) <= 0xdfff) { bytes += 4; i++; }
+      else bytes += 3;
+    }
+    return bytes;
+  };
 
   // ===== INCIDENT DRAWER (scored alert / escalation ladder) =====
   const sosDrawer          = document.getElementById('sos-drawer');
@@ -24,6 +36,7 @@
   const sosBtnZoom         = document.getElementById('sos-btn-zoom');
   const sosBtnAcknowledge  = document.getElementById('sos-btn-acknowledge');
   const sosBtnResolve      = document.getElementById('sos-btn-resolve');
+  const sosBtnConfirmVessel = document.getElementById('sos-btn-confirm-vessel');
   const sosBtnBroadcast    = document.getElementById('sos-btn-broadcast');
   const sosBtnCheckin      = document.getElementById('sos-btn-checkin');
   const sosBtnActivity     = document.getElementById('sos-btn-activity');
@@ -58,11 +71,6 @@
     else if (data.alertType === 'squall') sosDrawerHeader.classList.add('type-squall');
     sosDrawerTitle.textContent = data.headerText;
 
-    var regBadgeEl = document.getElementById('sos-registration-badge');
-    if (regBadgeEl && typeof ns.registrationBadgeHtml === 'function') {
-      regBadgeEl.innerHTML = ns.registrationBadgeHtml(data.licenseType);
-    }
-
     var timerLabel = document.getElementById('sos-timer-label');
     if (data.alertType === 'overdue') {
       timerLabel.textContent = 'Time Since Last Contact';
@@ -73,8 +81,7 @@
     document.getElementById('sos-vessel-id').textContent = data.vesselId;
     document.getElementById('sos-owner').textContent     = data.skipperName || data.owner || 'Unknown';
     document.getElementById('sos-boat').textContent      = data.boat || '—';
-    document.getElementById('sos-registration').textContent = data.license || 'Not declared';
-    document.getElementById('sos-contact').textContent      = data.phone || 'Not provided';
+    renderVesselIdentity(data);
     document.getElementById('sos-position').textContent  = data.position;
     document.getElementById('sos-buoy').textContent      = data.buoy;
     document.getElementById('sos-coverage').textContent  = data.coverage;
@@ -157,6 +164,18 @@
     el.innerHTML = responderStatusHtml(data);
   }
 
+  function renderVesselIdentity(data) {
+    var verificationEl = document.getElementById('sos-vessel-verification');
+    if (verificationEl) verificationEl.textContent = data.alertType !== 'sos' ? 'Not applicable' : (data.vesselVerified ? 'Verified by MDRRMO' : 'not yet verified');
+    document.getElementById('sos-contact').textContent = (data.phone || 'Not provided') + (data.phoneSetBy === 'anonymous' ? ' (unverified number)' : '');
+    var shoreContactEl = document.getElementById('sos-shore-contact');
+    if (shoreContactEl) shoreContactEl.textContent = [data.shoreContactName, data.shoreContactPhone].filter(Boolean).join(' - ') || 'Not provided';
+    if (sosBtnConfirmVessel) {
+      var role = ns.CURRENT_USER && ns.CURRENT_USER.role;
+      sosBtnConfirmVessel.hidden = data.alertType !== 'sos' || data.vesselVerified || !data.vesselId || data.vesselId === 'Unknown' || ['mdrrmo', 'lgu', 'admin'].indexOf(role) < 0;
+    }
+  }
+
   // Called after every successful /api/sos/active poll (dashboard-live-
   // sos.js) so an open drawer picks up a fisher's STILL_IN_DANGER / SAFE_NOW
   // reply, a status change, or a corrected ETA without the dispatcher having
@@ -176,6 +195,7 @@
       return;
     }
     currentDrawerData = updated.drawerData;
+    renderVesselIdentity(currentDrawerData);
     if (currentDrawerData.acknowledgedAt) {
       sosBtnAcknowledge.disabled = true;
       sosBtnAcknowledge.textContent = 'Acknowledged';
@@ -216,9 +236,29 @@
   const ackEtaEl = document.getElementById('ack-eta');
   const ackNoteEl = document.getElementById('ack-note');
   const ackConfirmBtn = document.getElementById('ack-btn-confirm');
+  const ackEtaPreviewEl = document.getElementById('ack-eta-preview');
+  const ackNoteCountEl = document.getElementById('ack-note-count');
+  const ackConflictEl = document.getElementById('ack-conflict');
 
   let ackTriggerEl = null;
   let ackTargetData = null;
+
+  function updateEtaPreview() {
+    if (!ackEtaPreviewEl) return;
+    const minutes = parseInt(ackEtaEl && ackEtaEl.value, 10);
+    ackEtaPreviewEl.textContent = Number.isFinite(minutes) && minutes > 0
+      ? 'Arrives about ' + new Date(Date.now() + minutes * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : 'No ETA yet';
+  }
+
+  function updateAckNoteCount() {
+    const bytes = utf8ByteLength(ackNoteEl && ackNoteEl.value || '');
+    if (ackNoteCountEl) {
+      ackNoteCountEl.textContent = bytes + ' / 40 bytes';
+      ackNoteCountEl.classList.toggle('is-error', bytes > 40);
+    }
+    if (ackConfirmBtn) ackConfirmBtn.disabled = bytes > 40;
+  }
 
   function closeAckModal() {
     if (ackOverlay) ackOverlay.hidden = true;
@@ -237,6 +277,17 @@
       ? (ackTargetData.desc || ackTargetData.vesselId || 'Distress call')
       : 'Distress call';
     if (ackVesselEl) ackVesselEl.textContent = label;
+    if (ackConflictEl) { ackConflictEl.hidden = true; ackConflictEl.textContent = ''; }
+    if (ackConfirmBtn) ackConfirmBtn.textContent = 'Send acknowledgement';
+    if (ackEtaEl) ackEtaEl.value = '';
+    if (ackNoteEl) ackNoteEl.value = '';
+    if (ackQuick) {
+      ackQuick.querySelectorAll('.ack-eta-chip').forEach(function (chip) {
+        chip.classList.toggle('is-selected', chip.dataset.eta === '');
+      });
+    }
+    updateEtaPreview();
+    updateAckNoteCount();
     ackOverlay.hidden = false;
     if (ackEtaEl) {
       ackEtaEl.focus();
@@ -256,6 +307,7 @@
       });
       chip.classList.add('is-selected');
       if (ackEtaEl) ackEtaEl.value = chip.dataset.eta;
+      updateEtaPreview();
     });
   }
   if (ackEtaEl) {
@@ -264,8 +316,10 @@
       ackQuick.querySelectorAll('.ack-eta-chip').forEach(function (b) {
         b.classList.toggle('is-selected', b.dataset.eta === ackEtaEl.value);
       });
+      updateEtaPreview();
     });
   }
+  if (ackNoteEl) ackNoteEl.addEventListener('input', updateAckNoteCount);
 
   // Focus containment inside acknowledgment dialog
   if (ackOverlay) {
@@ -304,11 +358,30 @@
 
   sosBtnAcknowledge.addEventListener('click', openAckModal);
 
+  if (sosBtnConfirmVessel) sosBtnConfirmVessel.addEventListener('click', function () {
+    var data = currentDrawerData;
+    if (!data || !data.vesselId || sosBtnConfirmVessel.hidden) return;
+    sosBtnConfirmVessel.disabled = true;
+    authFetch('/api/vessels/' + encodeURIComponent(data.vesselId) + '/confirm', { method: 'POST' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        showToast('Vessel confirmed', 'Responder confirmation recorded.', false);
+        return loadActiveSos();
+      })
+      .catch(function () { showToast('Confirmation not delivered', 'The vessel profile was not changed.', true); })
+      .finally(function () { sosBtnConfirmVessel.disabled = false; });
+  });
+
   if (ackConfirmBtn) {
     ackConfirmBtn.addEventListener('click', function () {
-      const etaMinutes = Math.max(1, Math.min(720, parseInt(ackEtaEl && ackEtaEl.value, 10) || 20));
+      const parsedEta = parseInt(ackEtaEl && ackEtaEl.value, 10);
+      const etaMinutes = Number.isFinite(parsedEta) && parsedEta > 0 ? Math.min(720, parsedEta) : null;
       const status = parseInt(ackStatusEl && ackStatusEl.value, 10) || 1;
       const note = (ackNoteEl && ackNoteEl.value.trim()) || null;
+      if (note && utf8ByteLength(note) > 40) {
+        updateAckNoteCount();
+        return;
+      }
       const target = ackTargetData || currentDrawerData;
       const eventId = target && target.sosEventId;
 
@@ -321,7 +394,7 @@
         sosBtnAcknowledge.disabled = true;
         sosBtnAcknowledge.textContent = 'Acknowledged';
         if (currentDrawerData && (!target || currentDrawerData.vesselId === target.vesselId)) {
-          currentDrawerData.etaAt = new Date(Date.now() + etaMinutes * 60000).toISOString();
+          currentDrawerData.etaAt = etaMinutes == null ? null : new Date(Date.now() + etaMinutes * 60000).toISOString();
           currentDrawerData.responderStatus = status;
           const row = allAlerts().find(function (a) {
             return a.vesselId === currentDrawerData.vesselId ||
@@ -351,13 +424,20 @@
         body: JSON.stringify({
           eta_minutes: etaMinutes,
           responder_status: status,
-          responder_note: note
+          responder_note: note,
+          expected_version: target.version
         })
       })
         .then(function (res) {
           if (!res.ok) {
             var httpErr = new Error('HTTP ' + res.status);
             httpErr.status = res.status;
+            if (res.status === 409) {
+              return res.json().then(function (body) {
+                httpErr.current = body.current;
+                throw httpErr;
+              });
+            }
             throw httpErr;
           }
           return res.json();
@@ -370,6 +450,18 @@
         })
         .catch(function (err) {
           console.warn('[AqOne] Acknowledgement not delivered:', err.message);
+          if (err.status === 409 && err.current) {
+            var current = err.current;
+            if (ackConflictEl) {
+              ackConflictEl.textContent = 'Answered by ' + (current.acked_by || 'another responder') + ' at ' +
+                (current.acknowledged_at || 'unknown time') + ': ' + (current.responder_status_label || current.responder_status || 'status unknown') +
+                ', ETA ' + (current.eta_at || 'none') + '. Review and confirm again.';
+              ackConflictEl.hidden = false;
+            }
+            if (ackTargetData) ackTargetData.version = current.version;
+            if (ackConfirmBtn) ackConfirmBtn.textContent = 'Confirm again';
+            return;
+          }
           // 403 is a distinct, honest reason from a network/server failure -
           // docs/41 Phase 4 "render server 403 errors clearly".
           if (err.status === 403) {
@@ -403,6 +495,96 @@
     });
   }, 1000);
 
+  const resolveOverlay = document.getElementById('resolve-modal-overlay');
+  const resolveEventEl = document.getElementById('resolve-modal-event');
+  const resolveConflictEl = document.getElementById('resolve-conflict');
+  const resolveReasonsEl = document.getElementById('resolve-reasons');
+  const resolveConfirmBtn = document.getElementById('resolve-btn-confirm');
+  let resolveTargetData = null;
+
+  function closeResolveModal() {
+    if (resolveOverlay) resolveOverlay.hidden = true;
+    resolveTargetData = null;
+  }
+
+  function openResolveModal(target) {
+    if (!resolveOverlay) return;
+    resolveTargetData = Object.assign({}, target);
+    if (resolveEventEl) resolveEventEl.textContent = [
+      'Vessel ' + (target.vesselId || 'unknown'),
+      'Boat ' + (target.boat || 'unknown'),
+      'Pressed ' + (target.pressedAt || 'unknown time')
+    ].join(' - ');
+    if (resolveConflictEl) { resolveConflictEl.hidden = true; resolveConflictEl.textContent = ''; }
+    if (resolveConfirmBtn) { resolveConfirmBtn.disabled = true; resolveConfirmBtn.textContent = 'Confirm resolution'; }
+    if (resolveReasonsEl) {
+      resolveReasonsEl.querySelectorAll('input[name="resolve-reason"]').forEach(function (input) { input.checked = false; });
+    }
+    resolveOverlay.hidden = false;
+  }
+
+  if (resolveReasonsEl) {
+    resolveReasonsEl.addEventListener('change', function (event) {
+      if (event.target && event.target.name === 'resolve-reason' && resolveConfirmBtn) resolveConfirmBtn.disabled = false;
+    });
+  }
+  ['resolve-modal-close', 'resolve-btn-cancel'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', closeResolveModal);
+  });
+  if (resolveOverlay) resolveOverlay.addEventListener('click', function (event) {
+    if (event.target === resolveOverlay) closeResolveModal();
+  });
+
+  if (resolveConfirmBtn) resolveConfirmBtn.addEventListener('click', function () {
+    var selected = resolveReasonsEl && resolveReasonsEl.querySelector('input[name="resolve-reason"]:checked');
+    var target = resolveTargetData;
+    if (!target || !selected) return;
+    resolveConfirmBtn.disabled = true;
+    authFetch('/api/sos/' + encodeURIComponent(target.sosEventId) + '/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason_code: selected.value, expected_version: target.version })
+    }).then(function (res) {
+      if (res.status === 409) return res.json().then(function (body) {
+        var current = body.current || {};
+        if (resolveConflictEl) {
+          resolveConflictEl.textContent = 'Current status: ' + (current.status || 'updated') +
+            (current.acknowledged_at ? ', answered at ' + current.acknowledged_at : '') + '. Review and confirm again.';
+          resolveConflictEl.hidden = false;
+        }
+        resolveTargetData.version = current.version;
+        resolveConfirmBtn.textContent = 'Confirm again';
+        resolveConfirmBtn.disabled = false;
+        return null;
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (result) {
+      if (!result) return;
+      var closedVersion = result.version || target.version + 1;
+      closeResolveModal();
+      if (currentDrawerData && currentDrawerData.sosEventId === target.sosEventId) closeSOSDrawer();
+      showToast('Incident resolved', 'You can reopen this call for 10 seconds.', false, {
+        label: 'Undo',
+        onClick: function () {
+          authFetch('/api/sos/' + encodeURIComponent(target.sosEventId) + '/reopen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expected_version: closedVersion })
+          }).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return loadActiveSos();
+          }).catch(function () { showToast('Reopen not delivered', 'The call may still be closed.', true); });
+        }
+      });
+      return loadActiveSos();
+    }).catch(function (err) {
+      showToast('Resolve not delivered', 'The incident is still active until this succeeds.', true);
+      if (resolveConfirmBtn) resolveConfirmBtn.disabled = false;
+    });
+  });
+
   sosBtnResolve.addEventListener('click', function () {
     const target = currentDrawerData ? Object.assign({}, currentDrawerData) : null;
     const eventId = target && target.sosEventId;
@@ -424,40 +606,7 @@
       }
       return;
     }
-
-    // Waits for the server to confirm resolution before touching the map or
-    // the drawer - removing the marker optimistically and then failing left
-    // a resolved-looking incident that the backend still considered active.
-    sosBtnResolve.disabled = true;
-    authFetch('/api/sos/' + encodeURIComponent(eventId) + '/resolve', {
-      method: 'POST'
-    })
-      .then(function (res) {
-        if (!res.ok) {
-          var httpErr = new Error('HTTP ' + res.status);
-          httpErr.status = res.status;
-          throw httpErr;
-        }
-        // Only close drawer if it is STILL showing the resolved event
-        if (currentDrawerData && currentDrawerData.sosEventId === eventId) {
-          closeSOSDrawer();
-        }
-        // The event has actually left storage server-side now, so let the
-        // next active-feed refresh remove its marker/row rather than
-        // guessing which one to remove client-side.
-        return loadActiveSos();
-      })
-      .catch(function (err) {
-        console.warn('[AqOne] Resolve not delivered:', err.message);
-        if (err.status === 403) {
-          showToast('Not permitted', "You don't have permission to resolve this incident.", true);
-        } else {
-          showToast('Not delivered', 'The incident is still active until this succeeds.', true);
-        }
-      })
-      .finally(function () {
-        sosBtnResolve.disabled = false;
-      });
+    openResolveModal(target);
   });
 
   if (sosBtnBroadcast) {
@@ -495,6 +644,8 @@
   ns.ackOverlay = ackOverlay;
   ns.closeAckModal = closeAckModal;
   ns.openAckModal = openAckModal;
+  ns.resolveOverlay = resolveOverlay;
+  ns.closeResolveModal = closeResolveModal;
   ns.refreshOpenDrawer = refreshOpenDrawer;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
 

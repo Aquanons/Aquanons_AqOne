@@ -59,12 +59,13 @@
   },
   "trip_anomaly": {
     "calibration": "synthetic",
-    "false_alarm_rate": null,
-    "generated_at": "2026-08-04T20:48:48.631632+00:00",
+    "candidates_raised": 496,
+    "eligible_normal_trips": 496,
+    "excluded_stale_or_out_of_coverage": 0,
+    "false_alarm_rate": 1.0,
+    "generated_at": "2026-09-24T16:49:25.457110+00:00",
     "incidents_detected": 8,
     "median_detection_latency_minutes": 55.0,
-    "normal_trips_evaluated": 496,
-    "retracted_field": "false_alarm_rate",
-    "retracted_reason": "Measured by a normal-trip evaluation bug (docs/30_DEMO_DECISION_01_ANOMALY.md section 1.1): every normal sample was re-scored only at its own historical contact timestamps, never past its own final contact, so status == 'alert' was structurally unreachable and 0.0 was true by construction, not by measurement. Fixed in docs/38 Phase 4 (app/ai/trip_profile_eval.py); re-run `python -m app.ai.trip_profile_eval` against a live database to replace this null with a real number. median_detection_latency_minutes and incidents_detected are unaffected - decision 30 already verified that sweep."
+    "normal_trips_evaluated": 496
   }
 }

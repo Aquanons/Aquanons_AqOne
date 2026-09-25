@@ -4,14 +4,20 @@ import '../core/tokens.dart';
 import '../data/checklist_store.dart';
 import '../l10n/app_localizations.dart';
 import '../models/checklist_item.dart';
+import '../services/location_service.dart';
 
 /// Trip gear checklist as its own page: a list, a way to add/remove rows,
 /// and nothing hidden behind a popover that a map gesture could dismiss by
 /// accident.
 class ChecklistPage extends StatefulWidget {
-  const ChecklistPage({super.key, required this.checklist});
+  const ChecklistPage({
+    super.key,
+    required this.checklist,
+    this.location,
+  });
 
   final ChecklistStore checklist;
+  final LocationService? location;
 
   @override
   State<ChecklistPage> createState() => _ChecklistPageState();
@@ -91,6 +97,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
     if (confirmed != true) {
       return;
     }
+    (widget.location ?? LocationService()).warmUp();
     await widget.checklist.resetForNewTrip();
     await _load();
     if (mounted) {

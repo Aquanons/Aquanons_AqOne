@@ -293,6 +293,7 @@ def test_delayed_return_amendment_prevents_premature_overdue_alert():
         'status': 'open',
         'expected_return_at': as_of + timedelta(hours=3),
         'welfare_status': 'safe',
+        'welfare_updated_at': as_of - timedelta(hours=1),
     }
     score_amended = score_trip(profile, contacts, as_of=as_of, trip_state=state_amended)
     assert score_amended.status == 'normal'

@@ -34,6 +34,12 @@
         e.preventDefault();
         return;
       }
+      if (ns.resolveOverlay && ns.resolveOverlay.hidden === false) {
+        if (typeof ns.closeResolveModal === 'function') ns.closeResolveModal();
+        else ns.resolveOverlay.hidden = true;
+        e.preventDefault();
+        return;
+      }
       if (ns.emergencyOverlay && ns.emergencyOverlay.classList.contains('active')) {
         ns.closeEmergencyModal();
         e.preventDefault();

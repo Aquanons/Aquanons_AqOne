@@ -1,15 +1,26 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
 from app.api.contacts import is_valid_gateway_key, require_gateway_key
 from app.audit import record_audit_event
 from app.auth import get_optional_vessel_device, require_responder_roles, require_user, require_vessel_device
 from app.db import get_pool
+from app.geo import SHORE_STATIONS, distance_km
+from app.incidents.delivery import delivery_state
+from app.incidents.downlink import OPEN_WINDOW, RESOLVED_WINDOW, select_downlink
+from app.incidents.lifecycle import ResolutionCode, fisher_reply_reopens
+from app.incidents.plausibility import PlausibilityContext
+from app.incidents.plausibility import flags as plausibility_flags
+from app.incidents.text import truncate_utf8
+from app.incidents.triage import flood_status, triage_key
+from app.incidents.trust import vessel_verified
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -32,24 +43,26 @@ RESPONDER_STATUS_LABELS: dict[int, str] = {
 REPLY_STILL_IN_DANGER = 1
 REPLY_SAFE_NOW = 2
 
+CONFLICT_DEGREES = 0.009
+
+
+@dataclass(frozen=True)
+class SosProvenance:
+    trust_tier: str
+    buoy_id: str | None
+    src_id: int | None
+    seq: int | None
+    delivered_direct: bool
+    delivered_via_buoy: bool
+
+
+def _truncate_text(value: Any, max_bytes: int) -> Any:
+    return truncate_utf8(value, max_bytes) if isinstance(value, str) else value
+
 
 def _iso(value: datetime | None) -> str | None:
     return value.isoformat() if value else None
 
-
-def _delivery_state(row: Any) -> str:
-    """Collapse the stored flags into the four states the app speaks.
-
-    Mirrors docs/06_DELIVERY_STATES.md. The handset merges this with whatever
-    it already knows, so a state can only ever move forward.
-    """
-    if row['resolved_at'] is not None:
-        return 'acknowledged'
-    if row['acknowledged_at'] is not None:
-        return 'acknowledged'
-    if row['delivered_direct'] or row['delivered_via_buoy']:
-        return 'delivered'
-    return 'relayed'
 
 # Deliberately NOT behind require_user.
 #
@@ -81,29 +94,20 @@ VALID_TRUST_TIERS = {'self_declared', 'phone_verified', 'confirmed_by_responder'
 class SosIn(BaseModel):
     """An SOS as delivered by either transport.
 
-    `client_ts` is mandatory: with `vessel_id` it forms the de-duplication key
-    that lets the direct and buoy routes deliver the same emergency without
-    creating two incidents.
+    `client_ts` is the legacy de-duplication key; newer handsets add a nonce.
 
-    This endpoint is deliberately unauthenticated (see the router comment
-    below), so it is also the only untrusted-input boundary in this file.
-    Length limits mirror the caps already enforced on the handset
-    (`mobile/lib/core/config.dart`: maxVesselIdLength/maxBoatLength = 32,
-    maxNoteLength = 64) and on the buoy firmware, which truncates into fixed
-    C buffers of the same sizes (`firmware/buoy/AqOneBuoy/AqOneBuoy.ino`
-    `SosItem`: `vesselId[33]`, `boat[32]`, `note[64]`). A real client can
-    never exceed these; something that does is not a distress call this
-    endpoint needs to accept as-is. Rejecting it with 422 does not drop a
-    real SOS - it is Pydantic validation ahead of any DB write, so nothing
-    is silently discarded, and a caller within these limits is unaffected.
+    Note and boat are truncated to their byte-safe transport caps.
+    `nonce` distinguishes modern incidents while `client_ts` remains the
+    legacy merge key.
     """
 
     vessel_id: str = Field(min_length=1, max_length=32)
     client_ts: int = Field(description='Origin epoch seconds, from the handset')
-    boat: str = Field(default='', max_length=32)
+    boat: Annotated[str, BeforeValidator(lambda value: _truncate_text(value, 32))] = ''
     lat: float | None = Field(default=None, ge=-90, le=90)
     lon: float | None = Field(default=None, ge=-180, le=180)
-    note: str | None = Field(default=None, max_length=64)
+    note: Annotated[str | None, BeforeValidator(lambda value: _truncate_text(value, 64))] = None
+    nonce: int | None = Field(default=None, ge=0, le=4_294_967_295)
     trust_tier: str = 'self_declared'
 
     # Direct path only - the LoRa frame has no room for a UUID. Generous cap:
@@ -159,86 +163,15 @@ async def ingest_sos(
     # Without it, store the SOS as a direct delivery and drop the buoy fields,
     # so no buoy row is auto-registered.
     has_valid_gateway = is_valid_gateway_key(api_key)
-
     if has_valid_gateway and payload.source == 'buoy':
-        buoy_id = payload.buoy_id
-        src_id = payload.src_id
-        seq = payload.seq
-        delivered_direct = False
-        delivered_via_buoy = True
+        provenance = SosProvenance(
+            trust_tier, payload.buoy_id, payload.src_id, payload.seq, False, True,
+        )
     else:
-        buoy_id = None
-        src_id = None
-        seq = None
-        delivered_direct = True
-        delivered_via_buoy = False
-
+        provenance = SosProvenance(trust_tier, None, None, None, True, False)
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
-        # The vessel may be unknown: a handset can raise an SOS before it
-        # has ever been seen by the backend. Refusing on a missing foreign
-        # key would drop a distress call.
-        await conn.execute(
-            '''
-                INSERT INTO vessels (id, boat_name)
-                VALUES ($1, $2)
-                ON CONFLICT (id) DO NOTHING
-                ''',
-            payload.vessel_id,
-            payload.boat or payload.vessel_id,
-        )
-
-        # Same reasoning for the relaying buoy. sos_events.buoy_id is a foreign
-        # key into buoys, and a gateway reports whatever id its board was
-        # flashed with - often one no one has registered. Without this, the
-        # insert fails, the gateway never acks, and the SOS never lands.
-        if buoy_id:
-            await conn.execute(
-                '''
-                    INSERT INTO buoys (id, label)
-                    VALUES ($1, $1)
-                    ON CONFLICT (id) DO NOTHING
-                    ''',
-                buoy_id,
-            )
-
-        row = await conn.fetchrow(
-            '''
-                INSERT INTO sos_events (
-                  vessel_id, client_ts, boat, latitude, longitude, note,
-                  trust_tier, local_id, buoy_id, src_id, seq,
-                  delivered_direct, delivered_via_buoy
-                )
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-                ON CONFLICT (vessel_id, client_ts) DO UPDATE SET
-                  -- COALESCE keeps whatever we already knew and fills the gaps
-                  -- from this delivery. Neither route can erase the other's data.
-                  latitude   = COALESCE(sos_events.latitude,  EXCLUDED.latitude),
-                  longitude  = COALESCE(sos_events.longitude, EXCLUDED.longitude),
-                  note       = COALESCE(NULLIF(sos_events.note, ''), EXCLUDED.note),
-                  local_id   = COALESCE(sos_events.local_id,  EXCLUDED.local_id),
-                  buoy_id    = COALESCE(sos_events.buoy_id,   EXCLUDED.buoy_id),
-                  src_id     = COALESCE(sos_events.src_id,    EXCLUDED.src_id),
-                  seq        = COALESCE(sos_events.seq,       EXCLUDED.seq),
-                  boat       = COALESCE(NULLIF(sos_events.boat, ''), EXCLUDED.boat),
-                  delivered_direct   = sos_events.delivered_direct   OR EXCLUDED.delivered_direct,
-                  delivered_via_buoy = sos_events.delivered_via_buoy OR EXCLUDED.delivered_via_buoy
-                RETURNING *, (xmax = 0) AS was_inserted
-                ''',
-            payload.vessel_id,
-            payload.client_ts,
-            payload.boat,
-            payload.lat,
-            payload.lon,
-            payload.note,
-            trust_tier,
-            payload.local_id,
-            buoy_id,
-            src_id,
-            seq,
-            delivered_direct,
-            delivered_via_buoy,
-        )
+        row = await _upsert_sos(conn, payload, provenance)
 
     return {
         'id': row['id'],
@@ -248,6 +181,7 @@ async def ingest_sos(
         'duplicate': not bool(row['was_inserted']),
         'vessel_id': row['vessel_id'],
         'client_ts': row['client_ts'],
+        'nonce': row['nonce'],
         'delivered_direct': row['delivered_direct'],
         'delivered_via_buoy': row['delivered_via_buoy'],
         'acknowledged_at': row['acknowledged_at'].isoformat() if row['acknowledged_at'] else None,
@@ -279,9 +213,10 @@ async def ack_by_local_id(local_id: str) -> dict[str, object]:
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             '''
-            SELECT id, vessel_id, local_id, seq, client_ts, acknowledged_at,
+            SELECT id, vessel_id, local_id, seq, client_ts, nonce, acknowledged_at,
                    acked_by, eta_at, responder_status, responder_note,
-                   fisher_reply, resolved_at,
+                   fisher_reply, fisher_replied_at, resolved_at,
+                   resolution_code, version, reopened_at,
                    delivered_direct, delivered_via_buoy
             FROM sos_events
             WHERE local_id = $1
@@ -294,37 +229,35 @@ async def ack_by_local_id(local_id: str) -> dict[str, object]:
     return {
         'vessel_id': row['vessel_id'],
         'server_time': datetime.now(UTC).isoformat(),
-        'event': {
-            'id': row['id'],
-            'local_id': row['local_id'],
-            'seq': row['seq'],
-            'client_ts': row['client_ts'],
-            'delivery_state': _delivery_state(row),
-            'acknowledged_at': _iso(row['acknowledged_at']),
-            'acked_by': row['acked_by'],
-            'eta_at': _iso(row['eta_at']),
-            'responder_status': row['responder_status'],
-            'responder_status_label': RESPONDER_STATUS_LABELS.get(row['responder_status']),
-            'responder_note': row['responder_note'],
-            'fisher_reply': row['fisher_reply'],
-            'resolved_at': _iso(row['resolved_at']),
-        },
+        'event': _event_json(row),
     }
 
 
-def _event_json(row: Any) -> dict[str, object]:
-    timestamp_columns = (
-        'created_at', 'acknowledged_at', 'eta_at', 'fisher_replied_at', 'resolved_at',
-    )
+def _event_json(row: Any, server_time: datetime | None = None) -> dict[str, object]:
     data = dict(row)
-    for col in timestamp_columns:
-        data[col] = _iso(row[col])
+    for col, value in data.items():
+        if isinstance(value, datetime):
+            data[col] = value.isoformat()
     data['responder_status_label'] = RESPONDER_STATUS_LABELS.get(row['responder_status'])
+    data['delivery_state'] = delivery_state(row)
+    data.setdefault('nonce', None)
+    if server_time is not None:
+        data['server_time'] = server_time.isoformat()
     return data
 
 
+def _version_conflict(row: Any) -> JSONResponse:
+    return JSONResponse(
+        status_code=409,
+        content={'detail': 'version_conflict', 'current': _event_json(row)},
+    )
+
+
 @protected_router.get('/active')
-async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
+async def active_sos(
+    limit: int = Query(default=200, ge=1, le=1000),
+    _: dict = Depends(require_user),
+) -> dict[str, object]:
     """Every unresolved SOS event, newest first. Dispatcher view.
 
     Includes acknowledged-but-unresolved incidents, not just brand-new ones -
@@ -345,20 +278,86 @@ async def active_sos(_: dict = Depends(require_user)) -> dict[str, object]:
             '''
             SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
                    e.trust_tier,
-                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.client_ts, e.nonce, e.delivered_direct, e.delivered_via_buoy,
                    e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
-                   e.is_synthetic,
-                   v.skipper_name, v.license_type, v.license_number, v.phone
+                   e.resolution_code, e.version, e.reopened_at,
+                   e.is_synthetic, e.alt_latitude, e.alt_longitude,
+                   COUNT(*) OVER (PARTITION BY e.vessel_id) AS open_calls_for_vessel,
+                   EXISTS (SELECT 1 FROM vessel_trips t WHERE t.vessel_id = e.vessel_id) AS has_trip_history,
+                   c.observed_at AS last_contact_at,
+                   c.latitude AS last_contact_latitude, c.longitude AS last_contact_longitude,
+                   v.skipper_name, v.license_type, v.license_number, v.phone,
+                   v.phone_set_by, v.shore_contact_name, v.shore_contact_phone, v.confirmed_at,
+                   EXISTS (SELECT 1 FROM vessel_devices d WHERE d.vessel_id = v.id
+                           AND d.revoked_at IS NULL) AS has_active_device
             FROM sos_events e
             LEFT JOIN vessels v ON v.id = e.vessel_id
+            LEFT JOIN LATERAL (
+              SELECT bc.observed_at, bc.latitude, bc.longitude
+              FROM buoy_contacts bc
+              WHERE bc.vessel_id = e.vessel_id
+                AND bc.source = 'live' AND bc.is_synthetic IS FALSE
+                AND bc.observed_at >= NOW() - INTERVAL '1 hour'
+              ORDER BY bc.observed_at DESC
+              LIMIT 1
+            ) c ON TRUE
             WHERE e.resolved_at IS NULL
-            ORDER BY e.created_at DESC
             '''
         )
 
-    return {'events': [_event_json(row) for row in rows]}
+    now = datetime.now(UTC)
+    events = [_enrich(row, now) for row in rows]
+    flood = flood_status(events, now)
+    events.sort(key=triage_key)
+    for event in events:
+        event.pop('has_trip_history', None)
+        event.pop('corroborated', None)
+    return {'events': events[:limit], 'total': len(events), 'flood': flood}
+
+
+def _enrich(row: Any, now: datetime) -> dict[str, object]:
+    event = _event_json(row)
+    has_trip_history = bool(row.get('has_trip_history', False))
+    open_calls = row.get('open_calls_for_vessel', 1)
+    verified = vessel_verified(bool(row.get('has_active_device', False)), row.get('confirmed_at'))
+    verified = verified or row['trust_tier'] in {'phone_verified', 'confirmed_by_responder'}
+    event['created_at'] = row['created_at']
+    pressed_at = datetime.fromtimestamp(row['client_ts'], UTC) if row['client_ts'] is not None else None
+    event['pressed_at'] = pressed_at.isoformat() if pressed_at else None
+    event['is_late'] = bool(
+        pressed_at is not None
+        and (row['created_at'] - pressed_at).total_seconds() > 30 * 60
+    )
+    event['open_calls_for_vessel'] = open_calls
+    event['alt_latitude'] = row.get('alt_latitude')
+    event['alt_longitude'] = row.get('alt_longitude')
+    event['delivery_path'] = 'pod' if row['delivered_via_buoy'] else 'direct'
+    event['vessel_verified'] = verified
+    event['phone_set_by'] = row.get('phone_set_by')
+    event['shore_contact_name'] = row.get('shore_contact_name')
+    event['shore_contact_phone'] = row.get('shore_contact_phone')
+    event['has_trip_history'] = has_trip_history
+    event['corroborated'] = bool(row['delivered_via_buoy'] or verified or has_trip_history)
+    if row['latitude'] is not None and row['longitude'] is not None:
+        station = min(
+            SHORE_STATIONS,
+            key=lambda item: distance_km(row['latitude'], row['longitude'], item['lat'], item['lon']),
+        )
+    else:
+        station = SHORE_STATIONS[0]
+    context = PlausibilityContext(
+        gateway_latitude=station['lat'],
+        gateway_longitude=station['lon'],
+        contact_at=row.get('last_contact_at'),
+        contact_latitude=row.get('last_contact_latitude'),
+        contact_longitude=row.get('last_contact_longitude'),
+        open_calls_for_vessel=open_calls,
+        now=now,
+    )
+    event['flags'] = plausibility_flags(event, context)
+    return event
 
 
 @protected_router.get('/recent')
@@ -376,10 +375,11 @@ async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
             '''
             SELECT e.id, e.vessel_id, e.boat, e.latitude, e.longitude, e.note,
                    e.trust_tier,
-                   e.client_ts, e.delivered_direct, e.delivered_via_buoy,
+                   e.client_ts, e.nonce, e.delivered_direct, e.delivered_via_buoy,
                    e.buoy_id, e.created_at, e.acknowledged_at, e.acked_by,
                    e.eta_at, e.responder_status, e.responder_note,
                    e.fisher_reply, e.fisher_replied_at, e.resolved_at,
+                   e.resolution_code, e.version, e.reopened_at,
                    e.is_synthetic,
                    v.skipper_name, v.license_type, v.license_number, v.phone
             FROM sos_events e
@@ -393,100 +393,80 @@ async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
     return {'events': [_event_json(row) for row in rows]}
 
 
-# How long a resolved incident keeps appearing in the downlink feed.
-#
-# /active drops an incident the moment a dispatcher resolves it, which is
-# correct for a dashboard - the case is closed and the operator should stop
-# looking at it. It is wrong for the radio: the shore gateway polls on a 45 s
-# cycle, so an incident acknowledged and then resolved between two polls would
-# leave the mesh without the closure ever going out, and the handset would
-# count down an ETA for a rescue that already finished. Holding resolved
-# incidents in this feed for a while gives the gateway room to see the final
-# state and send it down. Six hours is far longer than it needs and still
-# bounded, so the feed cannot grow without limit.
-DOWNLINK_RESOLVED_WINDOW_HOURS = 6
-
-
 @gateway_router.get('/downlink', dependencies=[Depends(require_gateway_key)])
 async def sos_downlink() -> dict[str, object]:
     """The responder's answer to each live call, for the LoRa shore gateway.
 
-    This is deliberately NOT `GATEWAY_API_KEY` access to `/active`.
-    `app/main.py` states the rule this endpoint has to satisfy - a gateway key
-    must not read dispatcher data - and `/active` is dispatcher data: it
-    carries position, the fisher's own distress note, boat name, trust tier
-    and the vessel owner's name, licence and phone number. A gateway is a
-    radio relay bolted to a mast; it has no business holding any of that, and
-    a key that ships hardcoded in firmware is the last credential that should
-    unlock it.
+    Deliberately not gateway-key access to /active: /active carries position,
+    the fisher's note and the owner's name, licence and phone, and the gateway
+    key ships in firmware on a mast. This returns only what the gateway is
+    about to broadcast to the boat in clear anyway.
 
-    So this returns only what travels back DOWN the radio anyway: the
-    acknowledgement, the ETA, the responder's status and note, and the
-    closure. Every field here is something the gateway is about to broadcast
-    to the boat in clear. Nothing is disclosed that the fisher is not already
-    being told.
+    One row per vessel, its newest call: the gateway downlink and the buoy
+    cache are keyed by vessel, so older calls used to overwrite the newer one
+    and the fisher was told about the oldest.
 
-    One row per vessel, its newest call. Unlike `/active`, which lists every
-    incident because a dispatcher needs the whole board, everything consuming
-    this feed is keyed by VESSEL and not by incident: the gateway's downlink
-    signature, and the buoy cache that answers the handset. Returning a boat's
-    older calls alongside its current one made each of them overwrite the
-    newer, and the fisher was finally told about the oldest - an expired ETA
-    carrying a seq the handset no longer held. It also multiplied radio
-    airtime by the number of calls that boat had ever made.
+    delivery_state is collapsed here so firmware never carries a second copy
+    of delivery_state() that only a reflash could correct.
 
-    `delivery_state` is collapsed here rather than left to the caller. The
-    gateway used to recompute it from `delivered_direct`/`delivered_via_buoy`,
-    which meant `_delivery_state()` had a second implementation living in
-    firmware that only a reflash could correct if the two ever drifted.
+    Resolved calls stay for RESOLVED_WINDOW so a closure between two 45 s polls
+    still goes out; select_downlink caps the feed at DOWNLINK_MAX to fit the
+    gateway and buoy tables.
     """
     pool = get_pool()
-    async with pool.acquire() as conn:
+    async with pool.acquire() as conn, conn.transaction():
         rows = await conn.fetch(
             '''
             SELECT DISTINCT ON (e.vessel_id)
-                   e.id, e.vessel_id, e.seq,
+                   e.id, e.vessel_id, e.seq, e.nonce, e.created_at, e.fisher_replied_at,
                    e.delivered_direct, e.delivered_via_buoy,
                    e.acknowledged_at, e.acked_by, e.eta_at,
-                   e.responder_status, e.responder_note, e.resolved_at
+                   e.responder_status, e.responder_note, e.resolved_at,
+                   e.resolution_code, e.version, e.reopened_at
             FROM sos_events e
-            WHERE e.resolved_at IS NULL
-               OR e.resolved_at > NOW() - make_interval(hours => $1)
+            WHERE e.is_synthetic IS FALSE
+              AND (
+                (e.resolved_at IS NULL AND GREATEST(
+                  e.created_at, COALESCE(e.acknowledged_at, e.created_at),
+                  COALESCE(e.reopened_at, e.created_at), COALESCE(e.fisher_replied_at, e.created_at)
+                ) > NOW() - $1::INTERVAL)
+                OR e.resolved_at > NOW() - $2::INTERVAL
+              )
             ORDER BY e.vessel_id, e.created_at DESC
-            LIMIT 100
             ''',
-            DOWNLINK_RESOLVED_WINDOW_HOURS,
+            OPEN_WINDOW,
+            RESOLVED_WINDOW,
         )
+        await conn.execute(
+            '''
+            INSERT INTO gateway_status (gateway_key, last_poll_at)
+            VALUES ('default', NOW())
+            ON CONFLICT (gateway_key) DO UPDATE SET last_poll_at = EXCLUDED.last_poll_at
+            '''
+        )
+        rows = select_downlink(rows, datetime.now(UTC))
+    events = [_event_json(row) for row in rows]
+    for event in events:
+        event.pop('created_at', None)
     return {
-        'events': [
-            {
-                'id': row['id'],
-                'vessel_id': row['vessel_id'],
-                'seq': row['seq'],
-                'delivery_state': _delivery_state(row),
-                'acknowledged_at': _iso(row['acknowledged_at']),
-                'acked_by': row['acked_by'],
-                'eta_at': _iso(row['eta_at']),
-                'responder_status': row['responder_status'],
-                'responder_note': row['responder_note'],
-                'resolved_at': _iso(row['resolved_at']),
-            }
-            for row in rows
-        ]
+        'events': events
     }
 
 
 class AcknowledgeIn(BaseModel):
-    """A dispatcher's answer to a distress call.
-
-    `eta_minutes` is what the dispatcher types; the server converts it to an
-    absolute `eta_at` so the clock is authoritative and not the browser's, and
-    so the handset's countdown stays correct however long delivery takes.
-    """
+    """Dispatcher response fields; ETA minutes become server-time timestamps."""
 
     eta_minutes: int | None = Field(default=None, ge=1, le=720)
     responder_status: int = Field(default=RESPONDER_RECEIVED, ge=1, le=5)
     responder_note: str | None = None
+    expected_version: int | None = Field(default=None, ge=0)
+
+    @field_validator('responder_note')
+    @classmethod
+    def _limit_responder_note_bytes(cls, value: str | None) -> str | None:
+        if value is not None and len(value.encode('utf-8')) > 40:
+            raise HTTPException(status_code=422, detail='responder_note_too_long')
+        return value
 
 
 @protected_router.post('/{event_id}/acknowledge')
@@ -505,24 +485,29 @@ async def acknowledge(
                    acked_by         = $2,
                    responder_status = $3,
                    responder_note   = COALESCE($4, responder_note),
+                   version          = version + 1,
                    -- NULL eta_minutes leaves any existing ETA untouched, so a
                    -- dispatcher can update the status without wiping the time.
                    eta_at = CASE
                               WHEN $5::INT IS NULL THEN eta_at
                               ELSE NOW() + ($5::INT * INTERVAL '1 minute')
                             END
-             WHERE id = $1
+             WHERE id = $1 AND ($6::INT IS NULL OR version = $6)
             RETURNING id, acknowledged_at, acked_by, eta_at,
-                      responder_status, responder_note, is_synthetic
+                      responder_status, responder_note, is_synthetic, version
             ''',
             event_id,
             user.get('email') or 'unknown',
             body.responder_status,
             body.responder_note,
             body.eta_minutes,
+            body.expected_version,
         )
         if row is None:
-            raise HTTPException(status_code=404, detail='no such SOS event')
+            current = await conn.fetchrow('SELECT * FROM sos_events WHERE id = $1', event_id)
+            if current is None:
+                raise HTTPException(status_code=404, detail='no such SOS event')
+            return _version_conflict(current)
         # Every call is a real event, not a retry to deduplicate: a
         # dispatcher legitimately re-calls this with a new responder_status
         # to report progress (RECEIVED -> DISPATCHED -> ...), so each one is
@@ -546,7 +531,67 @@ async def acknowledge(
         'responder_status': row['responder_status'],
         'responder_status_label': RESPONDER_STATUS_LABELS.get(row['responder_status']),
         'responder_note': row['responder_note'],
+        'version': row['version'],
     }
+
+
+async def _upsert_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> Any:
+    await conn.execute(
+        '''
+        INSERT INTO vessels (id, boat_name) VALUES ($1, $2)
+        ON CONFLICT (id) DO NOTHING
+        ''',
+        payload.vessel_id,
+        payload.boat or payload.vessel_id,
+    )
+    if provenance.buoy_id:
+        await conn.execute(
+            'INSERT INTO buoys (id, label) VALUES ($1, $1) ON CONFLICT (id) DO NOTHING',
+            provenance.buoy_id,
+        )
+
+    conflict = (
+        'ON CONFLICT (vessel_id, nonce) WHERE nonce IS NOT NULL'
+        if payload.nonce is not None
+        else 'ON CONFLICT (vessel_id, client_ts) WHERE nonce IS NULL'
+    )
+    position_conflict = f'''sos_events.alt_latitude IS NULL
+             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
+             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
+             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
+               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})'''
+    # ponytail: this box is about 1 km at 11 degrees N; use haversine if operations move far from the equator.
+    row = await conn.fetchrow(
+        f'''
+        INSERT INTO sos_events (
+          vessel_id, client_ts, nonce, boat, latitude, longitude, note,
+          trust_tier, local_id, buoy_id, src_id, seq,
+          delivered_direct, delivered_via_buoy
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        {conflict} DO UPDATE SET
+          latitude = COALESCE(sos_events.latitude, EXCLUDED.latitude),
+          longitude = COALESCE(sos_events.longitude, EXCLUDED.longitude),
+          alt_latitude = CASE WHEN {position_conflict}
+            THEN EXCLUDED.latitude ELSE sos_events.alt_latitude END,
+          alt_longitude = CASE WHEN {position_conflict}
+            THEN EXCLUDED.longitude ELSE sos_events.alt_longitude END,
+          note = COALESCE(NULLIF(sos_events.note, ''), EXCLUDED.note),
+          local_id = COALESCE(sos_events.local_id, EXCLUDED.local_id),
+          buoy_id = COALESCE(sos_events.buoy_id, EXCLUDED.buoy_id),
+          src_id = COALESCE(sos_events.src_id, EXCLUDED.src_id),
+          seq = COALESCE(sos_events.seq, EXCLUDED.seq),
+          boat = COALESCE(NULLIF(sos_events.boat, ''), EXCLUDED.boat),
+          delivered_direct = sos_events.delivered_direct OR EXCLUDED.delivered_direct,
+          delivered_via_buoy = sos_events.delivered_via_buoy OR EXCLUDED.delivered_via_buoy
+        RETURNING *, (xmax = 0) AS was_inserted
+        ''',
+        payload.vessel_id, payload.client_ts, payload.nonce, payload.boat,
+        payload.lat, payload.lon, payload.note, provenance.trust_tier,
+        payload.local_id, provenance.buoy_id, provenance.src_id, provenance.seq,
+        provenance.delivered_direct, provenance.delivered_via_buoy,
+    )
+    return row
 
 
 class ResolveIn(BaseModel):
@@ -555,6 +600,8 @@ class ResolveIn(BaseModel):
     """
 
     reason: str | None = Field(default=None, max_length=280)
+    reason_code: ResolutionCode | None = None
+    expected_version: int | None = Field(default=None, ge=0)
 
 
 @protected_router.post('/{event_id}/resolve')
@@ -567,24 +614,30 @@ async def resolve_sos(
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
         prior = await conn.fetchrow(
-            'SELECT resolved_at FROM sos_events WHERE id = $1 FOR UPDATE', event_id,
+            'SELECT * FROM sos_events WHERE id = $1 FOR UPDATE', event_id,
         )
         if prior is None:
             raise HTTPException(status_code=404, detail='no such SOS event')
         was_already_resolved = prior['resolved_at'] is not None
+        if body.expected_version is not None and body.expected_version != prior['version']:
+            return _version_conflict(prior)
 
         row = await conn.fetchrow(
             '''
             UPDATE sos_events
                SET resolved_at = COALESCE(resolved_at, NOW()),
                    resolved_by = COALESCE(resolved_by, $2),
-                   resolved_reason = COALESCE(resolved_reason, $3)
+                   resolved_reason = COALESCE(resolved_reason, $3),
+                   resolution_code = COALESCE(resolution_code, $4),
+                   version = version + 1
              WHERE id = $1
-            RETURNING id, resolved_at, resolved_by, resolved_reason, acked_by, is_synthetic
+            RETURNING id, resolved_at, resolved_by, resolved_reason, acked_by, is_synthetic,
+                      resolution_code, version
             ''',
             event_id,
             user.get('email') or 'unknown',
             body.reason,
+            (ResolutionCode(body.reason_code) if body.reason_code is not None else ResolutionCode.UNSPECIFIED).value,
         )
         # resolved_reason is free text and never logged (docs/41 Phase 2).
         await record_audit_event(
@@ -603,7 +656,54 @@ async def resolve_sos(
         'resolved_by': row['resolved_by'],
         'resolved_reason': row['resolved_reason'],
         'acked_by': row['acked_by'],
+        'resolution_code': row['resolution_code'],
+        'version': row['version'],
     }
+
+
+class ReopenIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=280)
+    expected_version: int | None = Field(default=None, ge=0)
+
+
+@protected_router.post('/{event_id}/reopen')
+async def reopen_sos(
+    event_id: int,
+    payload: ReopenIn | None = None,
+    user: dict = require_responder_roles,
+) -> dict[str, object]:
+    body = payload or ReopenIn()
+    pool = get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        prior = await conn.fetchrow('SELECT * FROM sos_events WHERE id = $1 FOR UPDATE', event_id)
+        if prior is None:
+            raise HTTPException(status_code=404, detail='no such SOS event')
+        if body.expected_version is not None and body.expected_version != prior['version']:
+            return _version_conflict(prior)
+        if prior['resolved_at'] is None:
+            return {'ok': True, 'id': event_id, 'outcome': 'no_change', 'version': prior['version']}
+        row = await conn.fetchrow(
+            '''
+            UPDATE sos_events
+               SET resolved_at = NULL, resolved_by = NULL, resolved_reason = NULL,
+                   resolution_code = NULL, reopened_at = NOW(), reopened_by = $2,
+                   version = version + 1
+             WHERE id = $1
+            RETURNING id, version, is_synthetic
+            ''',
+            event_id,
+            user.get('email') or 'unknown',
+        )
+        await record_audit_event(
+            conn,
+            actor=user,
+            action='sos.reopen',
+            resource_type='sos_event',
+            resource_id=row['id'],
+            outcome='updated',
+            is_demo=row['is_synthetic'],
+        )
+    return {'ok': True, 'id': row['id'], 'outcome': 'updated', 'version': row['version']}
 
 
 @router.get('/vessel/{vessel_id}')
@@ -625,14 +725,17 @@ async def vessel_sos(
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT id, local_id, seq, client_ts, acknowledged_at, acked_by,
+            SELECT id, vessel_id, local_id, seq, client_ts, nonce, created_at, acknowledged_at, acked_by,
                    eta_at, responder_status, responder_note,
-                   fisher_reply, resolved_at,
+                   fisher_reply, fisher_replied_at, resolved_at, resolution_code, version, reopened_at,
                    delivered_direct, delivered_via_buoy
             FROM sos_events
             WHERE vessel_id = $1
+              AND (resolved_at IS NULL OR id IN (
+                  SELECT id FROM sos_events WHERE vessel_id = $1 AND resolved_at IS NOT NULL
+                  ORDER BY created_at DESC LIMIT 20
+              ))
             ORDER BY created_at DESC
-            LIMIT 20
             ''',
             owned_vessel_id,
         )
@@ -642,24 +745,7 @@ async def vessel_sos(
         # Server time, so the handset can correct for clock drift before
         # rendering a countdown against eta_at.
         'server_time': datetime.now(UTC).isoformat(),
-        'events': [
-            {
-                'id': row['id'],
-                'local_id': row['local_id'],
-                'seq': row['seq'],
-                'client_ts': row['client_ts'],
-                'delivery_state': _delivery_state(row),
-                'acknowledged_at': _iso(row['acknowledged_at']),
-                'acked_by': row['acked_by'],
-                'eta_at': _iso(row['eta_at']),
-                'responder_status': row['responder_status'],
-                'responder_status_label': RESPONDER_STATUS_LABELS.get(row['responder_status']),
-                'responder_note': row['responder_note'],
-                'fisher_reply': row['fisher_reply'],
-                'resolved_at': _iso(row['resolved_at']),
-            }
-            for row in rows
-        ],
+        'events': [_event_json(row) for row in rows],
     }
 
 
@@ -667,6 +753,45 @@ class ReplyIn(BaseModel):
     """The fisher's one-tap answer to an acknowledgement."""
 
     reply: int = Field(ge=1, le=2, description='1 STILL_IN_DANGER, 2 SAFE_NOW')
+
+
+async def _apply_fisher_reply(conn: Any, row: Any, reply: int) -> Any:
+    now = datetime.now(UTC)
+    reopen = fisher_reply_reopens(row['resolved_at'], reply, now)
+    if row['resolved_at'] is not None and not reopen:
+        return row
+    updated = await conn.fetchrow(
+        '''
+        UPDATE sos_events
+           SET fisher_reply = $2::SMALLINT,
+               fisher_replied_at = NOW(),
+               resolved_at = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN NOW() ELSE NULL END,
+               resolution_code = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN $5 ELSE NULL END,
+               reopened_at = CASE WHEN $4::BOOLEAN THEN NOW() ELSE reopened_at END,
+               reopened_by = CASE WHEN $4::BOOLEAN THEN 'fisher' ELSE reopened_by END,
+               version = version + 1
+         WHERE id = $1
+        RETURNING id, fisher_reply, fisher_replied_at, resolved_at, resolution_code,
+                  version, reopened_at, reopened_by
+        ''',
+        row['id'],
+        reply,
+        REPLY_SAFE_NOW,
+        reopen,
+        ResolutionCode.STOOD_DOWN_BY_FISHER.value,
+    )
+    if reopen:
+        await record_audit_event(
+            conn,
+            actor=None,
+            action='sos.reopen',
+            resource_type='sos_event',
+            resource_id=row['id'],
+            outcome='updated',
+            metadata={'reopened_by': 'fisher'},
+            is_demo=row['is_synthetic'],
+        )
+    return updated
 
 
 @router.post('/{event_id}/reply')
@@ -683,22 +808,13 @@ async def fisher_reply(
     incident nor replace what was recorded, so retrying is always safe.
     """
     pool = get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            '''
-            UPDATE sos_events
-               SET fisher_reply      = CASE WHEN resolved_at IS NULL THEN $2 ELSE fisher_reply END,
-                   fisher_replied_at = CASE WHEN resolved_at IS NULL THEN NOW() ELSE fisher_replied_at END,
-                   resolved_at       = CASE WHEN resolved_at IS NULL AND $2 = $3 THEN NOW() ELSE resolved_at END
-             WHERE id = $1
-               AND vessel_id = $4
-            RETURNING id, fisher_reply, fisher_replied_at, resolved_at
-            ''',
+    async with pool.acquire() as conn, conn.transaction():
+        prior = await conn.fetchrow(
+            'SELECT * FROM sos_events WHERE id = $1 AND vessel_id = $2 FOR UPDATE',
             event_id,
-            payload.reply,
-            REPLY_SAFE_NOW,
             device['vessel_id'],
         )
+        row = await _apply_fisher_reply(conn, prior, payload.reply) if prior is not None else None
     if row is None:
         raise HTTPException(status_code=404, detail='no such SOS event')
     return {
@@ -729,20 +845,9 @@ async def fisher_reply_by_local_id(
     per-SOS random string generated by the handset and is never broadcast.
     """
     pool = get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            '''
-            UPDATE sos_events
-               SET fisher_reply      = CASE WHEN resolved_at IS NULL THEN $2 ELSE fisher_reply END,
-                   fisher_replied_at = CASE WHEN resolved_at IS NULL THEN NOW() ELSE fisher_replied_at END,
-                   resolved_at       = CASE WHEN resolved_at IS NULL AND $2 = $3 THEN NOW() ELSE resolved_at END
-             WHERE local_id = $1
-            RETURNING id, fisher_reply, fisher_replied_at, resolved_at
-            ''',
-            local_id,
-            payload.reply,
-            REPLY_SAFE_NOW,
-        )
+    async with pool.acquire() as conn, conn.transaction():
+        prior = await conn.fetchrow('SELECT * FROM sos_events WHERE local_id = $1 FOR UPDATE', local_id)
+        row = await _apply_fisher_reply(conn, prior, payload.reply) if prior is not None else None
     if row is None:
         raise HTTPException(status_code=404, detail='no such SOS event')
     return {

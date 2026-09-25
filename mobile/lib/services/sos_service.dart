@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import '../core/config.dart';
 import '../data/identity_store.dart';
 import '../data/outbox_store.dart';
 import '../models/buoy_contact.dart';
+import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
+import '../models/text_clamp.dart';
+import '../models/trust_tier.dart';
 import 'backend_client.dart';
 import 'buoy_client.dart';
 import 'location_service.dart';
@@ -18,17 +23,23 @@ class SosService {
     required BuoyClient buoy,
     required BackendClient backend,
     required LocationService location,
+    Duration lateFixPollInterval = const Duration(seconds: 5),
+    Duration lateFixTimeout = const Duration(minutes: 5),
   })  : _outbox = outbox,
         _identity = identity,
         _buoy = buoy,
         _backend = backend,
-        _location = location;
+        _location = location,
+        _lateFixPollInterval = lateFixPollInterval,
+        _lateFixTimeout = lateFixTimeout;
 
   final OutboxStore _outbox;
   final IdentityStore _identity;
   final BuoyClient _buoy;
   final BackendClient _backend;
   final LocationService _location;
+  final Duration _lateFixPollInterval;
+  final Duration _lateFixTimeout;
 
   final StreamController<void> _changes = StreamController<void>.broadcast();
   Stream<void> get changes => _changes.stream;
@@ -39,6 +50,11 @@ class SosService {
   bool _reconcileRunning = false;
   final Set<String> _closedIncidents = <String>{};
   final Map<String, int> _pendingReplies = <String, int>{};
+
+  Duration closureReconcileWindow = const Duration(hours: 2);
+
+  @visibleForTesting
+  Set<String> get closedIncidents => _closedIncidents;
 
   void start() {
     _relayTimer ??= Timer.periodic(
@@ -65,29 +81,64 @@ class SosService {
 
   Future<SosRecord> raiseSos({String? note}) async {
     final identity = await _identity.read();
-    if (identity == null || !identity.isComplete) {
+    final vesselId = identity?.vesselId;
+    if (vesselId == null || vesselId.isEmpty) {
       throw StateError('Vessel identity is not set up.');
     }
 
+    final nonce = Random.secure().nextInt(1 << 32);
     final fix = await _location.currentFix();
     final record = SosRecord(
       localId: _newLocalId(),
-      vesselId: identity.vesselId,
-      boat: identity.boat,
+      vesselId: vesselId,
+      boat: identity?.boat ?? '',
       clientTs: DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000,
       state: DeliveryState.saved,
-      trustTier: identity.trustTier,
+      trustTier: identity?.trustTier ?? TrustTier.selfDeclared,
       lat: fix?.lat,
       lon: fix?.lon,
       note: _clampNote(note),
+      nonce: nonce,
     );
 
     await _outbox.insert(record);
     _changes.add(null);
 
     unawaited(_attemptRelay(record.localId));
+    if (fix == null) {
+      unawaited(_waitForLateFix(record.localId));
+    }
     return record;
   }
+
+  Future<void> _waitForLateFix(String localId) async {
+    final deadline = DateTime.now().add(_lateFixTimeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(_lateFixPollInterval);
+      if (_changes.isClosed) {
+        return;
+      }
+      final current = await _outbox.byLocalId(localId);
+      if (current == null || current.hasFix) {
+        return;
+      }
+      final fix = await _location.currentFix();
+      if (fix != null) {
+        final filled = await _outbox.fillPosition(localId, fix.lat, fix.lon);
+        if (filled) {
+          await _attemptRelay(
+            localId,
+            routes: {SosRoute.pod, SosRoute.direct},
+          );
+        }
+        return;
+      }
+    }
+  }
+
+  OutboxStore get outbox => _outbox;
+
+  Future<bool> deleteUnsent(String localId) => _outbox.deleteUnsent(localId);
 
   Future<void> retryPending() async {
     if (_relayRunning) {
@@ -95,9 +146,18 @@ class SosService {
     }
     _relayRunning = true;
     try {
-      final pending = await _outbox.awaitingRelay();
+      final now = DateTime.now();
+      final pending = await _outbox.awaitingDelivery();
       for (final record in pending) {
-        final ok = await _attemptRelay(record.localId, notify: false);
+        final routes = routesDue(record, now);
+        if (routes.isEmpty) {
+          continue;
+        }
+        final ok = await _attemptRelay(
+          record.localId,
+          routes: routes,
+          notify: false,
+        );
         if (!ok) {
           break;
         }
@@ -124,9 +184,17 @@ class SosService {
   /// which will get through. The backend de-duplicates on
   /// (vessel_id, client_ts), so two successful deliveries are still one
   /// incident on the dispatcher's screen.
-  Future<bool> _attemptRelay(String localId, {bool notify = true}) async {
+  Future<bool> _attemptRelay(
+    String localId, {
+    Set<SosRoute>? routes,
+    bool notify = true,
+  }) async {
     final record = await _outbox.byLocalId(localId);
-    if (record == null || !record.awaitsRelay) {
+    if (record == null) {
+      return true;
+    }
+    final activeRoutes = routes ?? routesDue(record, DateTime.now());
+    if (activeRoutes.isEmpty) {
       return true;
     }
 
@@ -150,10 +218,22 @@ class SosService {
       }
     }
 
-    final buoyFuture = tryBuoy();
-    final directFuture = tryDirect();
-    final buoyResult = await buoyFuture;
-    final directOk = await directFuture;
+    Object? buoyResult;
+    bool directOk = false;
+
+    if (activeRoutes.contains(SosRoute.pod) &&
+        activeRoutes.contains(SosRoute.direct)) {
+      final buoyFuture = tryBuoy();
+      final directFuture = tryDirect();
+      buoyResult = await buoyFuture;
+      directOk = await directFuture;
+    } else if (activeRoutes.contains(SosRoute.pod)) {
+      buoyResult = await tryBuoy();
+    } else if (activeRoutes.contains(SosRoute.direct)) {
+      directOk = await tryDirect();
+    }
+
+    await _outbox.recordAttempt(localId, DateTime.now());
 
     // Both outcomes are processed, not just whichever is checked first - a
     // simultaneous buoy ack and direct success must not leave the record
@@ -189,21 +269,19 @@ class SosService {
       return true;
     }
 
-    // Neither route worked. Report both reasons rather than only the buoy's.
-    //
-    // Previously this preferred the buoy's message unconditionally, so a phone
-    // with perfectly good internet and a misconfigured backend URL displayed a
-    // buoy timeout - pointing every debugging effort at the mesh while the
-    // actual fault was the internet path. Whatever is shown here is the only
-    // diagnostic a field tester gets.
-    //
-    // BuoyUnreachable specifically gets a fixed, plain-language headline -
-    // "Not connected to the buoy" - rather than surfacing which flavor of
-    // transport exception caused it. This is what shows on the SOS log's
-    // "Last attempt" line (ui/widgets/delivery_state_tile.dart) on the home
-    // page, and it is also the single most common failure at sea: no buoy
-    // in range is expected, ordinary behaviour, not something worth
-    // describing like a bug.
+    final reason = _failureReason(buoyResult);
+    await _outbox.recordFailure(localId, reason);
+    if (notify) {
+      _changes.add(null);
+    }
+    return false;
+  }
+
+  String _failureReason(Object? buoyResult) {
+    final directReason = _backend.lastDirectError ?? 'internet path failed';
+    if (buoyResult == null) {
+      return directReason;
+    }
     final buoyReason = buoyResult is BuoyRejected
         ? buoyResult.reason
         : buoyResult is BuoyUnreachable
@@ -211,13 +289,7 @@ class SosService {
             : buoyResult is BuoyInvalidResponse
                 ? buoyResult.reason
                 : 'no buoy in range';
-    final directReason = _backend.lastDirectError ?? 'internet path failed';
-    final reason = '$buoyReason · $directReason';
-    await _outbox.recordFailure(localId, reason);
-    if (notify) {
-      _changes.add(null);
-    }
-    return false;
+    return '$buoyReason · $directReason';
   }
 
   Future<void> _refreshVesselProfile() async {
@@ -377,9 +449,19 @@ class SosService {
     }
     _reconcileRunning = true;
     try {
-      final pending = await _outbox.awaitingReconcile(
-        excludedIds: _closedIncidents,
-      );
+      final allAwaiting = await _outbox.awaitingReconcile();
+      final now = DateTime.now().toUtc();
+      for (final r in allAwaiting) {
+        final res = r.resolvedTime;
+        if (res != null && now.difference(res) >= closureReconcileWindow) {
+          _closedIncidents.add(r.localId);
+        } else if (res != null) {
+          _closedIncidents.remove(r.localId);
+        }
+      }
+      final pending = allAwaiting
+          .where((r) => !_closedIncidents.contains(r.localId))
+          .toList(growable: false);
       if (pending.isEmpty) {
         return;
       }
@@ -456,29 +538,33 @@ class SosService {
     }
     var changed = false;
 
-    final bySeq = <int, RemoteSos>{
-      for (final row in remote)
-        if (row.seq != null) row.seq!: row,
-    };
+    final claimedEvents = <RemoteSos>{};
+    final matches = <SosRecord, RemoteSos>{};
 
-    // Match on local_id first, seq only as a fallback.
-    //
-    // seq is assigned by the buoy ack, so an SOS that reached the backend
-    // over the direct path never has one. Matching on seq alone meant those
-    // records could never be reconciled and the fisher never learned they
-    // had been acknowledged - which, now that the direct path exists, is
-    // the common case rather than the edge case.
-    final byLocalId = <String, RemoteSos>{
-      for (final row in remote)
-        if (row.localId != null && row.localId!.isNotEmpty) row.localId!: row,
-    };
-
-    for (final record in records) {
-      final seq = record.seq;
-      final match = byLocalId[record.localId] ?? (seq == null ? null : bySeq[seq]);
-      if (match == null) {
-        continue;
+    void claim(bool Function(SosRecord, RemoteSos) matchesBy) {
+      for (final record in records) {
+        if (matches.containsKey(record)) continue;
+        for (final event in remote) {
+          if (!claimedEvents.contains(event) && matchesBy(record, event)) {
+            matches[record] = event;
+            claimedEvents.add(event);
+            break;
+          }
+        }
       }
+    }
+
+    claim((record, event) =>
+        event.localId != null && event.localId!.isNotEmpty && event.localId == record.localId);
+    claim((record, event) => record.nonce != null && event.nonce == record.nonce);
+    claim((record, event) =>
+        record.seq != null &&
+        event.seq == record.seq &&
+        (event.nonce == null || record.nonce == null || event.nonce == record.nonce));
+
+    for (final entry in matches.entries) {
+      final record = entry.key;
+      final match = entry.value;
       // _outbox.advance() merges state forward only (DeliveryState.merge),
       // so a stale or partial answer from either source can never regress an
       // already-confirmed state - see docs/06_DELIVERY_STATES.md.
@@ -516,7 +602,29 @@ class SosService {
         }
       }
 
-      final shouldMarkSynced = match.resolvedAt != null ||
+      // Reopen handling: when remote row has reopened_at later than local resolvedAt,
+      // clear it with OutboxStore.clearResolved(localId), which also resets the stand-down.
+      final localResolved = record.resolvedTime;
+      final remoteReopened = match.reopenedAt != null
+          ? DateTime.tryParse(match.reopenedAt!)?.toUtc()
+          : null;
+      final remoteResolved = match.resolvedAt != null
+          ? DateTime.tryParse(match.resolvedAt!)?.toUtc()
+          : null;
+
+      final isReopened = remoteReopened != null &&
+          localResolved != null &&
+          remoteReopened.isAfter(localResolved) &&
+          (remoteResolved == null || remoteReopened.isAfter(remoteResolved));
+
+      if (isReopened) {
+        await _outbox.clearResolved(record.localId);
+        _closedIncidents.remove(record.localId);
+        changed = true;
+      }
+
+      final resolvedAtToSave = isReopened ? null : match.resolvedAt;
+      final shouldMarkSynced = resolvedAtToSave != null ||
           (record.fisherReply != null && match.fisherReply == record.fisherReply);
 
       // Responder details live alongside the delivery state: the ETA and
@@ -527,7 +635,7 @@ class SosService {
         etaAt: adjustedEtaAt,
         responderStatus: match.responderStatus,
         responderNote: match.responderNote ?? match.responderStatusLabel,
-        resolvedAt: match.resolvedAt,
+        resolvedAt: resolvedAtToSave,
         fisherReplySynced: shouldMarkSynced ? true : null,
       );
       if (stored) {
@@ -552,8 +660,13 @@ class SosService {
         } catch (_) {}
       }
 
-      if (match.resolvedAt != null && !_pendingReplies.containsKey(record.localId)) {
-        _closedIncidents.add(record.localId);
+      if (resolvedAtToSave != null && !_pendingReplies.containsKey(record.localId)) {
+        final resTime = remoteResolved ?? DateTime.now().toUtc();
+        if (DateTime.now().toUtc().difference(resTime) >= closureReconcileWindow) {
+          _closedIncidents.add(record.localId);
+        } else {
+          _closedIncidents.remove(record.localId);
+        }
       }
 
     }
@@ -565,9 +678,7 @@ class SosService {
     if (trimmed == null || trimmed.isEmpty) {
       return null;
     }
-    return trimmed.length <= AqOneConfig.maxNoteLength
-        ? trimmed
-        : trimmed.substring(0, AqOneConfig.maxNoteLength);
+    return clampUtf8(trimmed, AqOneConfig.maxNoteBytes);
   }
 
   static String _newLocalId() {

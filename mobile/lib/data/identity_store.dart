@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_android/shared_preferences_android.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../core/config.dart';
@@ -7,6 +10,7 @@ import '../core/validators.dart';
 import '../models/license_type.dart';
 import '../models/trust_tier.dart';
 import '../core/field_cipher.dart';
+import '../models/text_clamp.dart';
 import 'app_database.dart';
 
 /// What this handset claims about itself.
@@ -22,6 +26,8 @@ class VesselIdentity {
     this.licenseType = LicenseType.none,
     this.licenseNumber = '',
     this.phone = '',
+    this.shoreContactName = '',
+    this.shoreContactPhone = '',
     this.trustTier = TrustTier.selfDeclared,
     this.avatarPath,
   });
@@ -32,6 +38,8 @@ class VesselIdentity {
   final LicenseType licenseType;
   final String licenseNumber;
   final String phone;
+  final String shoreContactName;
+  final String shoreContactPhone;
   final TrustTier trustTier;
 
   /// Local filesystem path to the skipper's chosen profile photo, if any.
@@ -58,6 +66,8 @@ class VesselIdentity {
         'license_type': licenseType.wire,
         'license_number': licenseNumber,
         'phone': phone,
+        'shore_contact_name': shoreContactName,
+        'shore_contact_phone': shoreContactPhone,
         'trust_tier': trustTier.wire,
       };
 
@@ -67,6 +77,8 @@ class VesselIdentity {
     LicenseType? licenseType,
     String? licenseNumber,
     String? phone,
+    String? shoreContactName,
+    String? shoreContactPhone,
     TrustTier? trustTier,
     String? avatarPath,
   }) {
@@ -77,6 +89,8 @@ class VesselIdentity {
       licenseType: licenseType ?? this.licenseType,
       licenseNumber: licenseNumber ?? this.licenseNumber,
       phone: phone ?? this.phone,
+      shoreContactName: shoreContactName ?? this.shoreContactName,
+      shoreContactPhone: shoreContactPhone ?? this.shoreContactPhone,
       trustTier: trustTier ?? this.trustTier,
       avatarPath: avatarPath ?? this.avatarPath,
     );
@@ -84,10 +98,49 @@ class VesselIdentity {
 }
 
 class IdentityStore {
-  IdentityStore(this._db, {FieldCipher? cipher})
-      : _cipher = cipher ?? FieldCipher.plaintext();
+  IdentityStore(
+    this._db, {
+    FieldCipher? cipher,
+    SharedPreferencesAsync? backupPreferences,
+  })  : _cipher = cipher ?? FieldCipher.plaintext(),
+        _backupPreferences = backupPreferences;
 
   final AppDatabase _db;
+  final SharedPreferencesAsync? _backupPreferences;
+
+  SharedPreferencesAsync _getBackupPreferences() {
+    if (_backupPreferences != null) {
+      return _backupPreferences;
+    }
+    return SharedPreferencesAsync(
+      options: defaultTargetPlatform == TargetPlatform.android
+          ? const SharedPreferencesAsyncAndroidOptions(
+              backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences,
+              originalSharedPreferencesOptions: AndroidSharedPreferencesStoreOptions(
+                fileName: 'aqone_identity_backup',
+              ),
+            )
+          : const SharedPreferencesOptions(),
+    );
+  }
+
+  Future<String?> _readBackupVesselId() async {
+    try {
+      final prefs = _getBackupPreferences();
+      return await prefs.getString(_keyVesselId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _writeBackupVesselId(String vesselId) async {
+    try {
+      final prefs = _getBackupPreferences();
+      await prefs.setString(_keyVesselId, vesselId);
+    } catch (_) {
+      // Best-effort write to backup shared preferences
+    }
+  }
 
   /// Encrypts the personal fields only. Injected rather than looked up so
   /// tests and the onboarding path can run without a platform keystore.
@@ -109,6 +162,8 @@ class IdentityStore {
     _keySkipperName,
     _keyLicenseNumber,
     _keyPhone,
+    _keyShoreContactName,
+    _keyShoreContactPhone,
   };
 
   static const String _keyVesselId = 'vessel_id';
@@ -117,6 +172,8 @@ class IdentityStore {
   static const String _keyLicenseType = 'license_type';
   static const String _keyLicenseNumber = 'license_number';
   static const String _keyPhone = 'phone';
+  static const String _keyShoreContactName = 'shore_contact_name';
+  static const String _keyShoreContactPhone = 'shore_contact_phone';
   static const String _keyTrustTier = 'trust_tier';
   static const String _keyAvatarPath = 'avatar_path';
   static const String _keyRememberMe = 'remember_me';
@@ -125,7 +182,20 @@ class IdentityStore {
     final db = await _db.database;
     final rows = await db.query('identity');
     if (rows.isEmpty) {
-      return null;
+      final backupVesselId = await _readBackupVesselId();
+      final vesselId = (backupVesselId != null && backupVesselId.isNotEmpty)
+          ? backupVesselId
+          : generateVesselId();
+      await db.insert(
+        'identity',
+        <String, Object?>{'key': _keyVesselId, 'value': vesselId},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await _writeBackupVesselId(vesselId);
+      return VesselIdentity(
+        vesselId: vesselId,
+        boat: '',
+      );
     }
     final values = <String, String>{
       for (final row in rows) row['key'] as String: row['value'] as String,
@@ -136,11 +206,22 @@ class IdentityStore {
         values[key] = await _cipher.decrypt(stored);
       }
     }
-    final vesselId = values[_keyVesselId];
-    final boat = values[_keyBoat];
-    if (vesselId == null || boat == null) {
-      return null;
+    var vesselId = values[_keyVesselId];
+    if (vesselId == null || vesselId.isEmpty) {
+      final backupVesselId = await _readBackupVesselId();
+      vesselId = (backupVesselId != null && backupVesselId.isNotEmpty)
+          ? backupVesselId
+          : generateVesselId();
+      await db.insert(
+        'identity',
+        <String, Object?>{'key': _keyVesselId, 'value': vesselId},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await _writeBackupVesselId(vesselId);
+    } else {
+      await _writeBackupVesselId(vesselId);
     }
+    final boat = values[_keyBoat] ?? '';
     final avatarPath = values[_keyAvatarPath];
     return VesselIdentity(
       vesselId: vesselId,
@@ -149,6 +230,8 @@ class IdentityStore {
       licenseType: LicenseType.fromWire(values[_keyLicenseType]),
       licenseNumber: values[_keyLicenseNumber] ?? '',
       phone: values[_keyPhone] ?? '',
+      shoreContactName: values[_keyShoreContactName] ?? '',
+      shoreContactPhone: values[_keyShoreContactPhone] ?? '',
       trustTier: TrustTier.fromWire(values[_keyTrustTier]),
       avatarPath: (avatarPath == null || avatarPath.isEmpty)
           ? null
@@ -236,11 +319,16 @@ class IdentityStore {
     LicenseType licenseType = LicenseType.none,
     String licenseNumber = '',
     String phone = '',
+    String shoreContactName = '',
+    String shoreContactPhone = '',
   }) async {
     final existing = await read();
+    final vesselId = (existing != null && existing.vesselId.isNotEmpty)
+        ? existing.vesselId
+        : (await _readBackupVesselId() ?? generateVesselId());
     final identity = VesselIdentity(
-      vesselId: existing?.vesselId ?? generateVesselId(),
-      boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatLength),
+      vesselId: vesselId,
+      boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatBytes),
       skipperName: _clamp(
         Validators.normalizeName(skipperName),
         AqOneConfig.maxNameLength,
@@ -256,6 +344,14 @@ class IdentityStore {
         Validators.normalizePhone(phone),
         AqOneConfig.maxPhoneLength,
       ),
+      shoreContactName: _clamp(
+        Validators.normalizeName(shoreContactName),
+        AqOneConfig.maxNameLength,
+      ),
+      shoreContactPhone: _clamp(
+        Validators.normalizePhone(shoreContactPhone),
+        AqOneConfig.maxPhoneLength,
+      ),
       // Anything typed on this handset is self-declared, full stop. Only the
       // MDRRMO side can raise this, and only after meeting the vessel.
       trustTier: _preservedTier(existing),
@@ -264,6 +360,7 @@ class IdentityStore {
       avatarPath: existing?.avatarPath,
     );
     await _write(identity);
+    await _writeBackupVesselId(vesselId);
     return identity;
   }
 
@@ -275,7 +372,7 @@ class IdentityStore {
     }
     await _write(
       existing.copyWith(
-        boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatLength),
+        boat: _clamp(Validators.normalizeName(boat), AqOneConfig.maxBoatBytes),
       ),
     );
   }
@@ -309,6 +406,8 @@ class IdentityStore {
       _keyLicenseType: identity.licenseType.wire,
       _keyLicenseNumber: identity.licenseNumber,
       _keyPhone: identity.phone,
+      _keyShoreContactName: identity.shoreContactName,
+      _keyShoreContactPhone: identity.shoreContactPhone,
       _keyTrustTier: identity.trustTier.wire,
       if (identity.avatarPath != null && identity.avatarPath!.isNotEmpty)
         _keyAvatarPath: identity.avatarPath!,
@@ -333,7 +432,7 @@ class IdentityStore {
 
   static String _clamp(String value, int max) {
     final trimmed = value.trim();
-    return trimmed.length <= max ? trimmed : trimmed.substring(0, max);
+    return clampUtf8(trimmed, max);
   }
 
   static String generateVesselId() {

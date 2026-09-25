@@ -172,3 +172,12 @@ async def logout(user: dict = Depends(require_user)) -> dict[str, object]:
             user_id_val,
         )
     return {'message': 'Logged out.'}
+
+
+@router.post('/token/refresh')
+async def refresh_token(user: dict = Depends(require_user)) -> dict[str, str]:
+    return {
+        'token': create_token(
+            int(user['id']), user['email'], user['role'], token_version=user['token_version']
+        )
+    }

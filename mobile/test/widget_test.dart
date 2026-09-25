@@ -5,9 +5,23 @@ import 'package:aqone/models/delivery_state.dart';
 import 'package:aqone/models/sos_record.dart';
 import 'package:aqone/ui/widgets/buoy_status_card.dart';
 import 'package:aqone/ui/widgets/delivery_state_tile.dart';
+import 'package:aqone/data/app_database.dart';
+import 'package:aqone/data/identity_store.dart';
+import 'package:aqone/data/outbox_store.dart';
+import 'package:aqone/services/backend_client.dart';
+import 'package:aqone/services/buoy_client.dart';
+import 'package:aqone/services/location_service.dart';
+import 'package:aqone/services/sos_alarm.dart';
+import 'package:aqone/services/sos_service.dart';
+import 'package:aqone/services/venture_feeds.dart';
+import 'package:aqone/ui/home_page.dart';
+import 'package:aqone/ui/venture_page.dart';
+import 'package:aqone/ui/widgets/action_pill.dart';
+import 'package:aqone/ui/widgets/responder_eta_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Widgets under test now read their copy from AppLocalizations, so the host
 /// has to carry the delegates. Defaults to English: these tests assert the
@@ -25,6 +39,21 @@ Widget _host(Widget child, {Locale locale = const Locale('en')}) {
       ...kFallbackDelegates,
     ],
     home: Scaffold(body: SingleChildScrollView(child: child)),
+  );
+}
+
+Widget _hostPage(Widget page, {Locale locale = const Locale('en')}) {
+  return MaterialApp(
+    locale: locale,
+    supportedLocales: kSupportedLocales,
+    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      ...kFallbackDelegates,
+    ],
+    home: page,
   );
 }
 
@@ -52,6 +81,7 @@ SosRecord _record({
   String? resolvedAt,
   int? fisherReply,
   bool fisherReplySynced = false,
+  int? relayedAt,
 }) {
   return SosRecord(
     localId: 'local-1',
@@ -68,6 +98,7 @@ SosRecord _record({
     resolvedAt: resolvedAt,
     fisherReply: fisherReply,
     fisherReplySynced: fisherReplySynced,
+    relayedAt: relayedAt,
   );
 }
 
@@ -260,5 +291,262 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+        'relayed record past 10 min deadline shows sosPodNotConfirmed',
+        (tester) async {
+      final nowSec = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+      await tester.pumpWidget(
+        _host(
+          DeliveryStateTile(
+            record: _record(
+              state: DeliveryState.relayed,
+              relayedAt: nowSec - 601,
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'The pod has not confirmed this SOS reached shore yet. Still trying.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('reopened incident clears resolved card', (tester) async {
+      final t = await AppLocalizations.delegate.load(const Locale('en'));
+      final resolvedRecord = _record(
+        state: DeliveryState.acknowledged,
+        resolvedAt: '2026-09-15T00:00:00Z',
+      );
+
+      await tester.pumpWidget(_host(DeliveryStateTile(record: resolvedRecord)));
+      expect(find.text(t.resolvedTitle), findsAtLeastNWidgets(1));
+
+      final reopenedRecord = _record(
+        state: DeliveryState.acknowledged,
+        resolvedAt: null,
+      );
+
+      await tester.pumpWidget(_host(DeliveryStateTile(record: reopenedRecord)));
+      expect(find.text(t.resolvedTitle), findsNothing);
+      expect(find.text(DeliveryState.acknowledged.title(t)), findsOneWidget);
+    });
   });
+
+  group('Stand-down and Responder ETA', () {
+    testWidgets('stand-down needs confirmation', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final t = await AppLocalizations.delegate.load(const Locale('en'));
+      var stoodDown = false;
+
+      await tester.pumpWidget(
+        _host(
+          EmergencyDetailsSheet(
+            boat: 'BG-123',
+            onSubmitNote: (_) async {},
+            onStandDown: () async {
+              stoodDown = true;
+            },
+          ),
+        ),
+      );
+
+      // Slide to stand down
+      await tester.drag(find.byIcon(Icons.undo_rounded), const Offset(700, 0));
+      await tester.pumpAndSettle();
+
+      // Confirmation dialog must appear
+      expect(find.text(t.sosStandDownConfirmTitle), findsOneWidget);
+      expect(find.text(t.sosStandDownConfirmBody), findsOneWidget);
+
+      // Cancel the dialog
+      await tester.tap(find.text(t.actionCancel));
+      await tester.pumpAndSettle();
+
+      expect(stoodDown, isFalse);
+
+      // Drag again and confirm
+      await tester.drag(find.byIcon(Icons.undo_rounded), const Offset(700, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_stand_down')));
+      await tester.pumpAndSettle();
+
+      expect(stoodDown, isTrue);
+    });
+
+    testWidgets('undo within 2 minutes sends still-in-danger', (tester) async {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final t = await AppLocalizations.delegate.load(const Locale('en'));
+      var repliedCode = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          supportedLocales: kSupportedLocales,
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            ...kFallbackDelegates,
+          ],
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      duration: const Duration(minutes: 2),
+                      content: Text(t.standDownTitle),
+                      action: SnackBarAction(
+                        label: t.sosStandDownUndo,
+                        onPressed: () {
+                          repliedCode = 1;
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Trigger Stand Down'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Trigger Stand Down'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.sosStandDownUndo), findsOneWidget);
+      await tester.tap(find.text(t.sosStandDownUndo));
+      await tester.pumpAndSettle();
+
+      expect(repliedCode, 1);
+    });
+
+    testWidgets('no ETA copy when acknowledged without eta', (tester) async {
+      final t = await AppLocalizations.delegate.load(const Locale('en'));
+      final record = _record(
+        state: DeliveryState.acknowledged,
+        etaAt: null,
+      );
+
+      await tester.pumpWidget(
+        _host(
+          ResponderEtaDialog(
+            record: record,
+            sos: _DummySosService(),
+          ),
+        ),
+      );
+
+      expect(find.text(t.sosNoEtaYet), findsOneWidget);
+    });
+
+    testWidgets('HomePage displays SOS action pill', (tester) async {
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(ActionPill), findsOneWidget);
+      expect(find.text('SOS'), findsOneWidget);
+    });
+
+    testWidgets('silent SOS starts no alarm', (tester) async {
+      SharedPreferences.setMockInitialValues({'silent_sos': true});
+      final alarm = _TrackingSosAlarm();
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+            sosAlarm: alarm,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('SOS'));
+      await tester.pump();
+
+      expect(alarm.startCalled, isFalse);
+    });
+
+    testWidgets('holding SOS for 3 seconds sends silently', (tester) async {
+      SharedPreferences.setMockInitialValues({'silent_sos': false});
+      final alarm = _TrackingSosAlarm();
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+            sosAlarm: alarm,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('SOS')));
+      await tester.pump(const Duration(seconds: 3));
+      await gesture.up();
+      await tester.pump();
+
+      expect(alarm.startCalled, isFalse);
+    });
+  });
+}
+
+class _TrackingSosAlarm extends SosAlarm {
+  bool startCalled = false;
+
+  @override
+  Future<void> start() async {
+    startCalled = true;
+  }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _DummySosService extends SosService {
+  _DummySosService()
+      : super(
+          outbox: OutboxStore(AppDatabase()),
+          identity: IdentityStore(AppDatabase()),
+          buoy: BuoyClient(),
+          backend: BackendClient(),
+          location: LocationService(),
+        );
+
+  @override
+  void start() {}
+
+  @override
+  Future<List<SosRecord>> history() async => const <SosRecord>[];
 }

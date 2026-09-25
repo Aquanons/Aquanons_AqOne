@@ -41,6 +41,10 @@
       : { text: 'DEMO', cssClass: 'alert-demo-badge' };
   };
   var formatEta = dashboardUtils.formatEta || function () { return ''; };
+  var utf8ByteLength = dashboardUtils.utf8ByteLength;
+  var lateLabel = dashboardUtils.lateLabel;
+  var flagLabel = dashboardUtils.flagLabel;
+  var deliveryLabel = dashboardUtils.deliveryLabel;
   var responderStatusHtml = dashboardUtils.responderStatusHtml || function () { return ''; };
   var registrationBadgeHtml = dashboardUtils.registrationBadgeHtml || function () { return ''; };
   var tripChecksListHtml = dashboardUtils.tripChecksListHtml || function () { return ''; };
@@ -119,6 +123,15 @@
         }
         return res;
       });
+  }
+
+  function tokenExpiry(token) {
+    try {
+      var payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(window.atob(payload)).exp * 1000;
+    } catch (e) {
+      return null;
+    }
   }
 
   // Guard: no token means never logged in, so do not even start the panels.
@@ -289,7 +302,7 @@
 
 
    // ===== TOAST =====
-   function showToast(title, msg, isError) {
+   function showToast(title, msg, isError, action) {
      var container = document.getElementById('toast-container');
      var toast = document.createElement('div');
      toast.className = 'toast';
@@ -297,21 +310,68 @@
      // title/msg can carry server-provided SOS text (boat name, position) -
      // see the loadActiveSos() call site - so both must be escaped.
      toast.innerHTML = '<div class="toast-title">' + escapeHtml(title) + '</div><div class="toast-msg">' + escapeHtml(msg) + '</div>';
+     if (action && action.label && action.onClick) {
+       var button = document.createElement('button');
+       button.type = 'button';
+       button.textContent = action.label;
+       button.addEventListener('click', function () {
+         action.onClick();
+         if (toast.parentNode) toast.parentNode.removeChild(toast);
+       });
+       toast.appendChild(button);
+     }
      container.appendChild(toast);
      setTimeout(function () {
        toast.classList.add('toast-leave');
        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
-     }, 4000);
+     }, action ? 10000 : 4000);
    }
 
 
   ns.ready = true;
   ns.dashboardUtils = dashboardUtils;
   ns.escapeHtml = escapeHtml;
+  ns.formatLatLon = dashboardUtils.formatLatLon;
   ns.classifyFreshness = classifyFreshness;
   ns.freshnessLabel = freshnessLabel;
   ns.alertBadge = alertBadge;
   ns.formatEta = formatEta;
+  ns.utf8ByteLength = utf8ByteLength;
+  ns.lateLabel = lateLabel;
+  ns.flagLabel = flagLabel;
+  ns.deliveryLabel = deliveryLabel;
+  var sessionExpiryBanner = document.getElementById('session-expiry-banner');
+  var refreshAttemptExpiry = null;
+  function refreshSessionIfNeeded() {
+    if (document.visibilityState === 'hidden') return;
+    var token = getToken();
+    var expiresAt = tokenExpiry(token);
+    if (!expiresAt) return;
+    var remaining = expiresAt - Date.now();
+    if (sessionExpiryBanner) {
+      sessionExpiryBanner.hidden = remaining > 3600000;
+      sessionExpiryBanner.textContent = remaining <= 0
+        ? 'Session expired - sign in again.'
+        : 'Session expires soon at ' + new Date(expiresAt).toLocaleTimeString() + '. Keep this page open to refresh it.';
+    }
+    if (remaining <= 0 || remaining > 24 * 3600000 || refreshAttemptExpiry === expiresAt) return;
+    refreshAttemptExpiry = expiresAt;
+    authFetch('/api/token/refresh', { method: 'POST' }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (result) {
+      var freshToken = result.token || result.access_token;
+      if (freshToken) {
+        sessionStorage.setItem(TOKEN_KEY, freshToken);
+        refreshAttemptExpiry = null;
+        refreshSessionIfNeeded();
+      }
+    }).catch(function () {});
+  }
+  refreshSessionIfNeeded();
+  setInterval(refreshSessionIfNeeded, 60000);
+  document.addEventListener('visibilitychange', refreshSessionIfNeeded);
+  ns.refreshSessionIfNeeded = refreshSessionIfNeeded;
   ns.responderStatusHtml = responderStatusHtml;
   ns.registrationBadgeHtml = registrationBadgeHtml;
   ns.tripChecksListHtml = tripChecksListHtml;

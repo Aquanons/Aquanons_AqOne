@@ -11,7 +11,7 @@ from app.api.auth import _DUMMY_HASH
 from app.api.current_events import CurrentEventIn, ingest_current_event
 from app.api.public import _serialise_public_sea_condition
 from app.api.squall import _load_rows
-from app.auth import create_token, verify_user_session
+from app.auth import ALGORITHM, JWT_SECRET, create_token, verify_user_session
 from app.demo.weather import MAX_COORDINATE_CELLS, coordinates
 from app.main import app
 
@@ -131,6 +131,41 @@ def test_logout_endpoint_increments_token_version(monkeypatch):
     assert res.status_code == 200
     assert res.json() == {'message': 'Logged out.'}
     assert any('UPDATE users SET token_version = token_version + 1' in q[0] for q in conn.queries)
+
+
+@pytest.mark.real_user_session
+def test_operator_token_refresh(probe_db):
+    import jwt
+
+    token = create_token(1, 'probe.mdrrmo@example.invalid', 'mdrrmo', token_version=0)
+    with TestClient(app) as client:
+        response = client.post('/api/token/refresh', headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == 200
+    claims = jwt.decode(response.json()['token'], JWT_SECRET, algorithms=[ALGORITHM])
+    assert claims['sub'] == '1'
+    assert claims['role'] == 'mdrrmo'
+    assert claims['ver'] == 0
+
+
+@pytest.mark.real_user_session
+def test_operator_token_refresh_rejects_revoked(probe_db):
+    import asyncio
+
+    import asyncpg
+
+    async def revoke():
+        conn = await asyncpg.connect(probe_db)
+        try:
+            await conn.execute("UPDATE users SET token_version = 1 WHERE id = 1")
+        finally:
+            await conn.close()
+
+    asyncio.run(revoke())
+    token = create_token(1, 'probe.mdrrmo@example.invalid', 'mdrrmo', token_version=0)
+    with TestClient(app) as client:
+        response = client.post('/api/token/refresh', headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == 401
+    assert response.json()['detail'] == 'session revoked'
 
 
 def test_login_unknown_email_verifies_dummy_hash(monkeypatch):

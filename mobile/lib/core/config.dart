@@ -201,8 +201,8 @@ class AqOneConfig {
   static const Duration squallPollInterval = Duration(seconds: 60);
 
   static const int maxVesselIdLength = 32;
-  static const int maxBoatLength = 32;
-  static const int maxNoteLength = 64;
+  static const int maxBoatBytes = 32;
+  static const int maxNoteBytes = 64;
 
   static const int maxSpotNoteLength = 240;
   static const int maxNameLength = 64;

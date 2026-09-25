@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:aqone/core/l10n_fallback.dart';
 import 'package:aqone/core/validators.dart';
 import 'package:aqone/l10n/app_localizations.dart';
@@ -190,5 +193,46 @@ void main() {
     expect(settingsLabels.length, 2);
     expect(darkModeLabels.length, 2);
     expect(logoutLabels.length, 3);
+  });
+
+  group('Phase M6 localization', () {
+    test('the new keys exist in all three ARB files', () {
+      final en = jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final fil = jsonDecode(File('lib/l10n/app_fil.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final akl = jsonDecode(File('lib/l10n/app_akl.arb').readAsStringSync())
+          as Map<String, dynamic>;
+
+      const requiredKeys = <String>[
+        'settingsSilentSos',
+        'settingsSilentSosDescription',
+        'sosStoodDown',
+        'sosNoneSentYet',
+      ];
+
+      for (final key in requiredKeys) {
+        expect(en.containsKey(key), isTrue,
+            reason: 'app_en.arb missing $key');
+        expect(fil.containsKey(key), isTrue,
+            reason: 'app_fil.arb missing $key');
+        expect(akl.containsKey(key), isTrue,
+            reason: 'app_akl.arb missing $key');
+      }
+    });
+
+    test('no bare Text literal remains in venture_page.dart or home_page.dart',
+        () {
+      final ventureContent =
+          File('lib/ui/venture_page.dart').readAsStringSync();
+      final homeContent = File('lib/ui/home_page.dart').readAsStringSync();
+
+      final bareTextRegex = RegExp(r"Text\(\s*'");
+
+      expect(bareTextRegex.hasMatch(ventureContent), isFalse,
+          reason: 'venture_page.dart contains bare Text(\' literals');
+      expect(bareTextRegex.hasMatch(homeContent), isFalse,
+          reason: 'home_page.dart contains bare Text(\' literals');
+    });
   });
 }

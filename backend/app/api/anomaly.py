@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -9,6 +9,7 @@ from app.ai.anomaly_service import demo_evaluation_enabled, evaluate_and_persist
 from app.db import get_pool
 
 router = APIRouter(prefix='/api/ai/anomaly', tags=['anomaly'])
+MONITORING_WINDOW = timedelta(minutes=30)
 
 _SCORE_COLUMNS = '''
     vessel_id, trip_id, observed_at, last_contact_at, score, status,
@@ -31,7 +32,7 @@ def _score_response(row: Any, *, now: datetime) -> dict[str, object]:
 
 
 @router.get('/active')
-async def active() -> list[dict[str, object]]:
+async def active() -> dict[str, object]:
     """Read-only (docs/38 Phase 2 / acceptance boundary): never evaluates or
     writes. Scoring happens only through POST /evaluate or the scheduled job
     (app/ai/run_anomaly_evaluation.py); this route just reads whatever the
@@ -40,6 +41,19 @@ async def active() -> list[dict[str, object]]:
     """
     pool = get_pool()
     async with pool.acquire() as conn:
+        has_live_contact = await conn.fetchval(
+            '''
+            SELECT EXISTS (
+                SELECT 1
+                FROM buoy_contacts
+                WHERE source = 'live'
+                  AND is_synthetic IS FALSE
+                  AND contact_via <> 'handset'
+                  AND observed_at >= NOW() - $1::interval
+            )
+            ''',
+            MONITORING_WINDOW,
+        )
         rows = await conn.fetch(
             f'''
             SELECT {_SCORE_COLUMNS}
@@ -49,7 +63,11 @@ async def active() -> list[dict[str, object]]:
             '''
         )
     now = datetime.now(UTC)
-    return [_score_response(row, now=now) for row in rows]
+    return {
+        'rows': [_score_response(row, now=now) for row in rows],
+        'monitoring': 'active' if has_live_contact else 'unavailable',
+        'monitoring_reason': None if has_live_contact else 'No live vessel contact in the last 30 minutes.',
+    }
 
 
 @router.get('/vessel/{vessel_id}')

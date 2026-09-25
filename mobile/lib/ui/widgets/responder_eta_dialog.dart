@@ -267,6 +267,26 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
                 ],
               ),
             ),
+          ] else ...<Widget>[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accent),
+              ),
+              child: Text(
+                t.sosNoEtaYet,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: accent,
+                ),
+              ),
+            ),
           ],
           if (widget.record.responderNote != null &&
               widget.record.responderNote!.trim().isNotEmpty) ...<Widget>[

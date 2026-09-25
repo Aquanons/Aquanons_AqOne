@@ -35,8 +35,8 @@ def _row(vessel_id: str, trip_id: str, buoy_id: str, observed_at: datetime) -> d
         'trip_id': trip_id,
         'buoy_id': buoy_id,
         'observed_at': observed_at,
-        'latitude': 11.6892,
-        'longitude': 122.3667,
+        'latitude': 11.7,
+        'longitude': 122.5,
         'is_synthetic': False,
     }
 

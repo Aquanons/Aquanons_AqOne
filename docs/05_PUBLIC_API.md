@@ -1460,8 +1460,16 @@ Without one it returns 401.
 
 **Anomaly (B7, EC-H6 to EC-H9, EC-H16).**
 
-- `GET /api/ai/anomaly/active` adds `monitoring` (`active` or `unavailable`) and `monitoring_reason` (string or null).
-  `unavailable` means there is no live contact source, so the absence of a case means nothing.
+- `GET /api/ai/anomaly/active` changes from a bare list to an object (amended 2026-09-25 after review, docs/63 F3):
+
+  ```json
+  { "rows": [], "monitoring": "unavailable", "monitoring_reason": "No live vessel contact in the last 30 minutes." }
+  ```
+
+  - `rows` is the list the route returned before, unchanged per row.
+  - `monitoring` is fleet-wide: `active` when at least one live, non-synthetic contact with `contact_via` other than `handset` arrived in the last 30 minutes, otherwise `unavailable`.
+  - `monitoring_reason` is `null` when `active`, and a plain sentence when `unavailable`.
+  - `unavailable` means there is no live contact source, so an empty `rows` means nothing.
 - Anomaly statuses gain `check_needed`, for a trip with no contacts at all that has passed its expected return.
 - How contacts are tagged by device is in `docs/04` E4.2.
 

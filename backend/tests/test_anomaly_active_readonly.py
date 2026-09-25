@@ -47,6 +47,7 @@ class _FakePool:
         }
         self.executed: list[str] = []
         self.fetched: list[str] = []
+        self.monitoring_active = True
 
     def acquire(self):
         return self
@@ -79,6 +80,10 @@ class _FakePool:
             return self.score_row
         return None
 
+    async def fetchval(self, query: str, *args):
+        self.fetched.append(query)
+        return self.monitoring_active
+
     async def execute(self, query: str, *args):
         self.executed.append(query)
         return 'OK'
@@ -95,10 +100,10 @@ def test_active_never_writes(monkeypatch):
     assert response.status_code == 200
     assert pool.executed == [], 'GET /active must never issue a write/DDL statement'
     body = response.json()
-    assert body[0]['vessel_id'] == 'V-001'
-    assert body[0]['source'] == 'live'
-    assert body[0]['evaluated_at'] == body[0]['observed_at']
-    assert body[0]['data_age_seconds'] >= 0
+    assert body['rows'][0]['vessel_id'] == 'V-001'
+    assert body['rows'][0]['source'] == 'live'
+    assert body['rows'][0]['evaluated_at'] == body['rows'][0]['observed_at']
+    assert body['rows'][0]['data_age_seconds'] >= 0
 
 
 def test_vessel_detail_never_writes(monkeypatch):

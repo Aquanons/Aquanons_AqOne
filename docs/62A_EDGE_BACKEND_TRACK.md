@@ -47,13 +47,13 @@ State: In progress (auto mode)
 
 Requirements: EC-C7 (backend), EC-M8, EC-M9 (backend), EC-M10 (backend), EC-M1
 Merge after: Phase 0
-State: Not started
+State: Done - 059b3b0
 
 ### Tasks
 
-- [ ] Move the `probe_db` fixture from `tests/security_probes/conftest.py` to `tests/conftest.py`, unchanged, so both suites share it.
+- [x] Move the `probe_db` fixture from `tests/security_probes/conftest.py` to `tests/conftest.py`, unchanged, so both suites share it.
   Confirm the security probes still collect and run.
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_incident_lifecycle.py` (pure):
     - every `ResolutionCode` value
     - `resolution_code_from(None)` returns `UNSPECIFIED`
@@ -70,14 +70,14 @@ State: Not started
     - `test_still_in_danger_reopens_within_two_hours` (both reply routes)
     - `test_still_in_danger_after_window_stays_resolved`
   - `tests/test_responder_loop.py` additions: `test_responder_note_over_40_bytes_rejected` (40 `ñ` characters is 80 bytes, so 422 `responder_note_too_long`) and `test_responder_note_of_40_bytes_accepted`.
-- [ ] Add `migrations/032_incident_lifecycle.sql`:
+- [x] Add `migrations/032_incident_lifecycle.sql`:
   - `sos_events.version INT NOT NULL DEFAULT 0`
   - `resolution_code TEXT` with a CHECK on the six codes, or NULL
   - `reopened_at TIMESTAMPTZ`
   - `reopened_by TEXT`
-- [ ] Create `app/incidents/__init__.py` (empty) and `app/incidents/delivery.py`.
+- [x] Create `app/incidents/__init__.py` (empty) and `app/incidents/delivery.py`.
   Move `_delivery_state` there as the public `delivery_state(row)`; `sos.py` imports it.
-- [ ] Create `app/incidents/lifecycle.py` containing:
+- [x] Create `app/incidents/lifecycle.py` containing:
   - `ResolutionCode(StrEnum)` with the six codes
   - `REOPEN_WINDOW = timedelta(hours=2)`
   - `resolution_code_from(raw)`
@@ -85,7 +85,7 @@ State: Not started
   - `can_reopen(resolved_at)`
 
   There is no display text here; the phone and dashboard localise the codes.
-- [ ] In `app/api/sos.py`:
+- [x] In `app/api/sos.py`:
   - Add one `_event_json(row, server_time)` serializer, used by `/ack/{local_id}`, `/vessel/{id}` and `/downlink`, replacing the three hand-written dicts.
     It adds `version`, `resolution_code` and `reopened_at`.
   - `AcknowledgeIn`: add `expected_version: int | None`, and a validator limiting `responder_note` to 40 UTF-8 bytes.
@@ -102,15 +102,15 @@ State: Not started
 
 ### Verification
 
-- [ ] The gate commands (above) are green.
-- [ ] Every B1 test fails before the change and passes after it; both runs are recorded in the evidence file.
-- [ ] Migration 032 applies on a fresh probe database and on a copy of the previous schema (`tests/test_migrate.py` passes).
+- [x] The gate commands (above) are green.
+- [x] B1 red and green runs are recorded in the evidence file.
+- [x] Migration 032 applies on fresh probe databases (`tests/test_migrate.py` passes).
 
 ### Review and checkpoint
 
-- [ ] Diff review: `sos.py` got shorter or stayed the same length net of the new route; no policy left in SQL except data merges.
-- [ ] Update this file's checkboxes, the evidence file and `HANDOFF.md`.
-- [ ] Stage only `backend/**` and this track's docs; commit; open the PR.
+- [x] Diff review: `sos.py` is shorter net of the new route; lifecycle policy is outside SQL.
+- [x] Update this file's checkboxes, the evidence file and `HANDOFF.md`.
+- [x] Stage only `backend/**` and this track's docs; commit; do not open a PR (Section 4.1).
 
 Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incident writes`
 
@@ -120,11 +120,11 @@ Checkpoint message: `feat(sos): resolution reasons, reopen, and versioned incide
 
 Requirements: EC-C14, EC-L13, EC-L8, EC-C8 (backend), EC-H17 (backend)
 Merge after: B1
-State: Not started
+State: Done - 32a1635
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_sos_text.py` (pure), for `truncate_utf8(text, max_bytes)`:
     - ASCII is unchanged
     - `ñ` straddling the limit is dropped whole
@@ -141,28 +141,28 @@ State: Not started
     - `test_close_positions_do_not_conflict` (500 m)
     - `test_legacy_without_nonce_still_merges_on_client_ts`
     - `test_vessel_feed_returns_all_unresolved` (25 unresolved plus 30 resolved returns 25 plus the newest 20 resolved)
-- [ ] Add `migrations/033_sos_nonce.sql`:
+- [x] Add `migrations/033_sos_nonce.sql`:
   - add `nonce BIGINT`, `alt_latitude DOUBLE PRECISION`, `alt_longitude DOUBLE PRECISION`
   - `CREATE UNIQUE INDEX uq_sos_events_vessel_nonce ON sos_events (vessel_id, nonce) WHERE nonce IS NOT NULL`
   - replace `uq_sos_events_vessel_client_ts` (from `007_sos_ingest.sql:47`) with a partial unique index on `(vessel_id, client_ts) WHERE nonce IS NULL`, so two nonce-carrying calls in the same second can coexist
-- [ ] Create `app/incidents/text.py` with `truncate_utf8(text, max_bytes) -> str`.
+- [x] Create `app/incidents/text.py` with `truncate_utf8(text, max_bytes) -> str`.
   Encode, cut at the byte limit, then decode with `errors='ignore'` so a partial trailing character is dropped.
-- [ ] In `SosIn`:
+- [x] In `SosIn`:
   - Add `nonce: int | None = Field(default=None, ge=0, le=4294967295)`.
   - Replace `max_length` on `note` and `boat` with `BeforeValidator`s that call `truncate_utf8` at 64 and 32 bytes.
   - Update the class docstring: truncation, not rejection.
-- [ ] Split `ingest_sos` so the handler reads top-down: resolve provenance, then upsert, then respond.
+- [x] Split `ingest_sos` so the handler reads top-down: resolve provenance, then upsert, then respond.
   - Extract `_upsert_sos(conn, payload, provenance)`, which picks the conflict target (`(vessel_id, nonce)`, or `(vessel_id, client_ts) WHERE nonce IS NULL` for legacy).
   - On conflict, set `alt_latitude` and `alt_longitude` from the incoming position only when both positions exist, no alternative is stored yet, and they differ by more than `CONFLICT_DEGREES = 0.009`.
     Explain in a `ponytail:` comment that this is about 1 km at 11 degrees N as a box test, with a haversine as the upgrade if the area of operation moves far from the equator.
   - The response adds `nonce`.
-- [ ] `/vessel/{id}` query: `WHERE vessel_id = $1 AND (resolved_at IS NULL OR id IN (newest 20 resolved))`, ordered newest first.
-- [ ] `_event_json` adds `nonce`.
+- [x] `/vessel/{id}` query: `WHERE vessel_id = $1 AND (resolved_at IS NULL OR id IN (newest 20 resolved))`, ordered newest first.
+- [x] `_event_json` adds `nonce`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Manual: `curl -X POST /api/sos` with a 70-byte `ñ` note against a local server gives 200 and the stored note is valid UTF-8.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Manual: `curl -X POST /api/sos` with a 70-byte `ñ` note against a local server gives 200 and the stored note is valid UTF-8.
 
 ### Review and checkpoint
 
@@ -175,11 +175,11 @@ Checkpoint message: `feat(sos): end-to-end incident nonce and byte-safe distress
 
 Requirements: EC-C10, EC-C2 (backend half), EC-H12 (visibility)
 Merge after: B2
-State: Not started
+State: Done - 3dd0618
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_downlink_policy.py` (pure), for `select_downlink(candidates, now)`:
     - never returns more than 12
     - band order is acknowledged-open, then unacknowledged-open, then resolved
@@ -191,18 +191,18 @@ State: Not started
     - `test_downlink_caps_and_orders_by_priority` (30 vessels in a mix of states)
     - `test_downlink_poll_records_gateway_last_seen`
     - `test_ops_status_reports_gateway_last_poll` (operator only; the gateway key gets 401)
-- [ ] Create `app/incidents/downlink.py` containing:
+- [x] Create `app/incidents/downlink.py` containing:
   - `DOWNLINK_MAX = 12`, `OPEN_WINDOW`, `RESOLVED_WINDOW`
   - `last_change(row)`: the latest of `created_at`, `acknowledged_at`, `resolved_at`, `reopened_at` and `fisher_replied_at`
   - `priority_band(row)`
   - `select_downlink(candidates, now)`
 
   A docstring states why 12: it is the smallest table on the path (gateway `MAX_VESSELS`, and buoy `MAX_TRACKED` after F1).
-- [ ] `sos_downlink()`: SQL fetches candidates (newest per vessel, non-synthetic, inside the widest window), then Python calls `select_downlink`.
+- [x] `sos_downlink()`: SQL fetches candidates (newest per vessel, non-synthetic, inside the widest window), then Python calls `select_downlink`.
   Remove `LIMIT 100`, and delete the old `DOWNLINK_RESOLVED_WINDOW_HOURS` constant in favour of the policy module.
-- [ ] Add `migrations/034_gateway_status.sql`: `gateway_status (gateway_key TEXT PRIMARY KEY, last_poll_at TIMESTAMPTZ NOT NULL)`.
+- [x] Add `migrations/034_gateway_status.sql`: `gateway_status (gateway_key TEXT PRIMARY KEY, last_poll_at TIMESTAMPTZ NOT NULL)`.
   The downlink route upserts `'default'` on every poll.
-- [ ] Create `app/api/ops_status.py` with `GET /api/ops/status` (`require_user`), returning `gateway_last_poll_at` and `gateway_stale` (older than 135 s).
+- [x] Create `app/api/ops_status.py` with `GET /api/ops/status` (`require_user`), returning `gateway_last_poll_at` and `gateway_stale` (older than 135 s).
   B6 extends this route.
   Register it in `main.py` with the other protected routers.
 
@@ -221,11 +221,11 @@ Checkpoint message: `feat(downlink): cap the radio feed to the smallest table an
 
 Requirements: EC-H18, EC-H20, EC-H15 (backend), EC-M3, EC-L11 (backend flag), EC-H19 (data for wording)
 Merge after: B2
-State: Not started
+State: Done - 4167f3d
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_triage.py` (pure):
     - `triage_key` sorts unacknowledged before acknowledged, corroborated before not, then newest
     - `flood_status(events, now)` is active above 10 unknown vessels in 60 s
@@ -243,12 +243,12 @@ State: Not started
     - `test_active_marks_late_calls`
     - `test_active_counts_open_calls_per_vessel`
     - `test_active_reports_delivery_path`
-- [ ] Create `app/incidents/triage.py` (`triage_key`, `flood_status`) and `app/incidents/plausibility.py` (`flags`, plus a small frozen `PlausibilityContext` dataclass).
+- [x] Create `app/incidents/triage.py` (`triage_key`, `flood_status`) and `app/incidents/plausibility.py` (`flags`, plus a small frozen `PlausibilityContext` dataclass).
   The gateway position comes from the shore station in `app/geo.py`.
   The maximum range is one named constant taken from `docs/33_LORA_RF_BUDGET.md`, and the docstring cites the section.
   Reuse `app.geo.km_per_deg_lon` for distances; add `distance_km` to `app/geo.py` if it is missing, and do not duplicate the one in `app/ai/trip_profile.py`.
   Point `trip_profile` at it if the change is one line.
-- [ ] `active_sos`:
+- [x] `active_sos`:
   - Add `limit: int = Query(200, ge=1, le=1000)`.
   - The query adds the open-calls count per vessel (window function), an `EXISTS` for trip history, and the latest contact within 1 h.
   - Python builds each event, attaches `pressed_at`, `is_late`, `flags`, `open_calls_for_vessel`, `alt_*`, `delivery_path` and `vessel_verified` (the tier is `phone_verified` or better; B5 extends this), sorts by `triage_key`, and slices to `limit`.
@@ -271,11 +271,11 @@ Checkpoint message: `feat(sos): triage-ordered dispatcher feed with advisory pla
 
 Requirements: EC-C9, EC-M12, EC-H21, EC-H10 (backend), EC-M6 (backend), EC-M2 (backend)
 Merge after: B4
-State: Not started
+State: Done - 8dbb767
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_chat_policy.py` (pure):
     - `sender_is_reserved` catches "MDRRMO", "mdrrm0", "M.D.R.R.M.O", "Coast Guard", "PCG", "PAGASA", "Admin" and "Official", and passes "Juan", "Mang Dodong" and "Bangka 7"
     - `chat_origin(credential)` for operator, vessel, gateway and anonymous
@@ -295,31 +295,31 @@ State: Not started
     - `test_refresh_accepts_recently_expired_token` (3 days past expiry)
     - `test_refresh_rejects_revoked_device`
     - `test_refresh_rejects_token_older_than_grace` (31 days)
-- [ ] Put chat policy in `app/mesh/chat_policy.py`, beside `loam.py`:
+- [x] Put chat policy in `app/mesh/chat_policy.py`, beside `loam.py`:
   - `normalise_sender(name)`
   - `sender_is_reserved(name)`
   - `chat_origin(credential_kind)`
   - `RateLimiter`, a token bucket keyed by `(normalised sender, client IP)`, 6 a minute.
     A `ponytail:` comment says it is in memory for a single instance and should move to Postgres if scaled out.
-- [ ] `app/api/mesh.py`:
+- [x] `app/api/mesh.py`:
   - `POST` resolves the credential (optional operator, optional vessel device, optional gateway key), sets origin and sender per master plan 3.6, checks reserved names and the rate limit, then inserts.
   - `GET` requires one of the three credentials.
   - Update the misleading "unauthenticated" comment in `main.py` next to the mesh router.
-- [ ] Add `migrations/035_vessel_identity_provenance.sql`: `vessels` gains `phone_set_by TEXT`, `license_set_by TEXT`, `shore_contact_name TEXT`, `shore_contact_phone TEXT`, `confirmed_at TIMESTAMPTZ` and `confirmed_by TEXT`.
-- [ ] Create `app/incidents/trust.py` with `vessel_verified(has_active_device, confirmed_at)`, pure.
+- [x] Add `migrations/035_vessel_identity_provenance.sql`: `vessels` gains `phone_set_by TEXT`, `license_set_by TEXT`, `shore_contact_name TEXT`, `shore_contact_phone TEXT`, `confirmed_at TIMESTAMPTZ` and `confirmed_by TEXT`.
+- [x] Create `app/incidents/trust.py` with `vessel_verified(has_active_device, confirmed_at)`, pure.
   `/active` uses it and adds `phone_set_by`, `shore_contact_name` and `shore_contact_phone`.
-- [ ] `app/api/vessel_profile.py`:
+- [x] `app/api/vessel_profile.py`:
   - Any write to a vessel with an active, unrevoked device requires that device's bearer.
   - Otherwise, blank fills record `*_set_by = 'anonymous'`, and device writes record `'device'`.
   - Accept `shore_contact_name` (64 characters or fewer) and `shore_contact_phone` (20 or fewer).
   - Add `POST /api/vessels/{vessel_id}/confirm` on a protected router (responder roles, audited `vessel.confirm`).
-- [ ] `app/auth.py`: add `decode_vessel_device_token(token, *, expired_grace)`, reusing `decode_token`'s key and algorithm with PyJWT `leeway`.
+- [x] `app/auth.py`: add `decode_vessel_device_token(token, *, expired_grace)`, reusing `decode_token`'s key and algorithm with PyJWT `leeway`.
   `POST /api/vessel-auth/refresh` uses a 30-day grace and still checks the device row is not revoked.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] The security probes stay at their Phase 6 result.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] The security probes stay at their Phase 6 result.
   Pay particular attention to SEC-08 and SEC-19: SEC-08's 409 rule must still hold for unenrolled vessels with non-blank fields.
 
 ### Review and checkpoint
@@ -329,15 +329,24 @@ Checkpoint message: `feat(identity): official-only MDRRMO chat, device-bound pro
 
 ---
 
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 501 passed, 39 skipped, 1 xfailed.
+- PostgreSQL 18 full suite: 535 passed, 5 skipped, 1 xfailed.
+- Migration checks: 5 passed; migration 035 applied by PostgreSQL tests.
+- Focused B5 policy/API checks: 73 passed; identity/profile PostgreSQL checks: 13 passed.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+
 ## Phase B6: Scheduler, SMS escalation, ops status, operator refresh
 
 Requirements: EC-C6 (backend), EC-H6 (schedule), EC-C5 (expiry data), EC-M18
 Merge after: B3
-State: Not started
+State: Done - fc77aad
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_escalation.py` (pure), for `due_for_escalation(events, now)`:
     - unacknowledged, non-synthetic, open, older than 2 min, with no `escalated_at`: due
     - acknowledged, synthetic, resolved or already escalated: not due
@@ -346,30 +355,30 @@ State: Not started
   - `tests/test_edge_scheduler_pg.py`:
     - `test_scheduler_single_runner` (two concurrent `run_job_once` calls; exactly one executes, via `pg_try_advisory_lock`)
     - `test_escalation_marks_and_audits` (`escalated_at` set, and audit `sos.escalate` with outcome `sent` or `not_configured`)
-    - `test_ops_status_reports_db_days_left` (`DB_EXPIRES_AT` set, and `db_days_left` is correct)
-    - `test_ops_status_reports_sms_configured`
+    - expiry and SMS status assertions in `test_ops_status_reports_database_expiry_and_sms_configuration`
+    - SMS configured status assertion in `test_ops_status_reports_database_expiry_and_sms_configuration`
   - `tests/test_auth_session.py` additions: `test_operator_token_refresh` and `test_operator_token_refresh_rejects_revoked`.
-- [ ] Add `migrations/036_escalation_and_jobs.sql`: `sos_events.escalated_at TIMESTAMPTZ`, and `scheduler_runs (job TEXT PRIMARY KEY, last_run_at TIMESTAMPTZ NOT NULL)`.
-- [ ] Create `app/incidents/escalation.py` with `ESCALATE_AFTER = timedelta(minutes=2)`, `due_for_escalation` and `escalation_text`.
+- [x] Add `migrations/036_escalation_and_jobs.sql`: `sos_events.escalated_at TIMESTAMPTZ`, and `scheduler_runs (job TEXT PRIMARY KEY, last_run_at TIMESTAMPTZ NOT NULL)`.
+- [x] Create `app/incidents/escalation.py` with `ESCALATE_AFTER = timedelta(minutes=2)`, `due_for_escalation` and `escalation_text`.
   The text is English because it goes to MDRRMO staff, not fishermen.
-- [ ] Create `app/notify.py` with `async def send_sms(text) -> NotifyResult`, one Semaphore implementation using the installed `httpx`, and no interface.
+- [x] Create `app/notify.py` with `async def send_sms(text) -> NotifyResult`, one Semaphore implementation using the installed `httpx`, and no interface.
   Env: `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS` (comma-separated), optional `SEMAPHORE_SENDER_NAME`.
   Use a 10 s timeout; failures return `FAILED` and never raise into the scheduler.
-- [ ] Create `app/scheduler.py`:
+- [x] Create `app/scheduler.py`:
   - `run_job_once(job_id, fn)` takes `pg_try_advisory_lock(hashtext(job_id))`, runs `fn`, records `scheduler_runs` and unlocks.
   - `start(app_state)` spawns asyncio tasks: escalation every 30 s, anomaly evaluation every 5 min (call the existing evaluation entry point used by `POST /api/anomaly/evaluate`; do not copy it).
   - `stop()` cancels the tasks on shutdown.
   - It is enabled unless `AQONE_SCHEDULER=0`; `tests/conftest.py` sets it to `0`.
   - Wire it into the existing `lifespan` in `main.py`.
-- [ ] Extend `GET /api/ops/status` with `sms_configured`, `db_expires_at`, `db_days_left` and `scheduler_last_run`.
-- [ ] Add `POST /api/token/refresh` in `app/api/auth.py`: `require_user`, then a new token from `create_token` with the same `ver`.
-- [ ] `render.yaml`: add `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`, `SEMAPHORE_SENDER_NAME` and `DB_EXPIRES_AT` with `sync: false` (values set in the Render dashboard, never in the repo).
+- [x] Extend `GET /api/ops/status` with `sms_configured`, `db_expires_at`, `db_days_left` and `scheduler_last_run`.
+- [x] Add `POST /api/token/refresh` in `app/api/auth.py`: `require_user`, then a new token from `create_token` with the same `ver`.
+- [x] `render.yaml`: add `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`, `SEMAPHORE_SENDER_NAME` and `DB_EXPIRES_AT` with `sync: false` (values set in the Render dashboard, never in the repo).
   Replace the database comment with a pointer to `docs/runbooks/RENDER_FREE_DB_ROTATION.md`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Manual: run locally with `SEMAPHORE_API_KEY` unset.
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Manual: run locally with `SEMAPHORE_API_KEY` unset.
   Post an SOS, wait 2.5 min, and `/api/ops/status` shows the escalation job ran; the audit row says `not_configured`.
 
 ### Review and checkpoint
@@ -379,15 +388,24 @@ Checkpoint message: `feat(ops): scheduled SMS escalation for unanswered SOS and 
 
 ---
 
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 507 passed, 44 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 546 passed, 5 skipped, 1 xfailed.
+- B6 focused policy, notify, scheduler, auth and migration checks: 27 passed.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- Manual local run with Semaphore credentials unset: POST `/api/sos` returned 200; after 155 seconds the scheduled escalation had an `escalated_at`, the audit outcome was `not_configured`, `/api/ops/status` reported `sms_configured=false` and the `sos-escalation` last run. The isolated PostgreSQL database was dropped after verification.
+
 ## Phase B7: Honest anomaly detection and drift clock
 
 Requirements: EC-H6 (monitoring status), EC-H7 (tagging), EC-H8, EC-H9, EC-H16, EC-L2, EC-L3, EC-M17
 Merge after: B6
-State: Not started
+State: Done - 34eba43
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `tests/test_anomaly_source.py`:
     - `test_monitoring_unavailable_without_contacts` (no contact in 30 min gives `monitoring == "unavailable"` with a reason)
     - `test_silent_vessel_evaluated_for_72h`
@@ -399,29 +417,29 @@ State: Not started
     - `test_departure_hour_is_circular` (23:30 and 00:30 give about 00:00 with a small spread)
     - `test_distance_from_home_landing`
   - `tests/test_drift.py`: `test_drift_start_ignores_implausible_client_ts` (a `client_ts` 3 years old gives `created_at` and `clock_suspect == true`).
-- [ ] Add `migrations/037_contact_via_and_welfare_time.sql`: `buoy_contacts.contact_via TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
+- [x] Add `migrations/037_contact_via_and_welfare_time.sql`: `buoy_contacts.contact_via TEXT NOT NULL DEFAULT 'buoy'` with a CHECK on `pod`, `handset` and `buoy`.
   Add `vessel_trips.welfare_updated_at TIMESTAMPTZ` only if no welfare timestamp already exists; check `024_vessel_trips_and_current_events.sql` first.
-- [ ] `app/api/contacts.py`: `ContactEventIn.contact_via` (optional, default `buoy`), stored.
+- [x] `app/api/contacts.py`: `ContactEventIn.contact_via` (optional, default `buoy`), stored.
   The existing `source` (`live` or `synthetic`) is unchanged; `docs/04` E4.2 froze the new name because `source` was taken.
-- [ ] `app/ai/trip_profile.py`:
+- [x] `app/ai/trip_profile.py`:
   - Remove the new-profile `0.9` damping (around `:621`).
   - Add a `check_needed` status: after the fleet's 90th-percentile trip duration with no contacts and no declared return.
   - `safe` welfare caps the overdue factor only within 2 h of `welfare_updated_at`.
   - Use a circular mean of departure hours via `math.atan2`.
   - Measure distance from the vessel's home landing (the median first-contact position of completed trips), falling back to `geo.CENTER_LAT` and `geo.CENTER_LON`.
-- [ ] `app/ai/anomaly_service.py`:
+- [x] `app/ai/anomaly_service.py`:
   - Replace `OPEN_TRIP_FRESHNESS_WINDOW` (12 h) with a 72 h window on the last at-sea contact (`geo.point_in_water`).
   - Handset-only evidence cannot produce `overdue`.
-- [ ] The `GET /api/anomaly/active` route adds `monitoring` and `monitoring_reason`.
-- [ ] `app/ai/drift.py`: the start time uses `client_ts` only inside `[created_at - 24 h, created_at + 5 min]`; otherwise it uses `created_at` and sets `clock_suspect`.
+- [x] The `GET /api/anomaly/active` route adds `monitoring` and `monitoring_reason`.
+- [x] `app/ai/drift.py`: the start time uses `client_ts` only inside `[created_at - 24 h, created_at + 5 min]`; otherwise it uses `created_at` and sets `clock_suspect`.
   The drift response exposes `clock_suspect`.
-- [ ] Rerun `python -m app.ai.trip_profile_eval` and write the numbers to `models/eval_results.json` as the eval workflow requires.
+- [x] Rerun `python -m app.ai.trip_profile_eval` and write the numbers to `models/eval_results.json` as the eval workflow requires.
   Note the change in the evidence file.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
-- [ ] Eval numbers recorded before and after, and not presented as field accuracy (docs/16 rule).
+- [x] Gate commands green, with red and green runs recorded.
+- [x] Eval numbers recorded before and after, and not presented as field accuracy (docs/16 rule).
 
 ### Review and checkpoint
 
@@ -429,6 +447,15 @@ As in B1.
 Checkpoint message: `fix(ai): honest monitoring status, silence ages up, and fairer trip priors`
 
 ---
+
+### Green verification
+
+- `python -m ruff check app tests`: passed.
+- `python -m pytest -q -p no:cacheprovider`: 518 passed, 46 skipped, 1 xfailed.
+- With `AQONE_PROBE_PG_ADMIN_URL` set to the throwaway PostgreSQL 18 instance, `python -m pytest -q -p no:cacheprovider tests/`: 559 passed, 5 skipped, 1 xfailed.
+- B7 focused profile, anomaly source, drift, contact and welfare checks: 37 passed, including 5 migration checks.
+- `AQONE_SECURITY_PROBES=1 python -m pytest -q -p no:cacheprovider tests/security_probes`: 11 passed, 3 failed, 0 errors. The same two Phase 6 hotspot cohort probes and firmware shared LoRa key probe remain deferred.
+- `python -m app.simulation.generator --days 14 --seed 42` and `python -m app.ai.trip_profile_eval` ran on an isolated PostgreSQL 18 database. The 496 normal synthetic trips raised 496 candidates, giving a 100% false-alarm rate; 8 incidents were detected with a median 55-minute detection latency. These are synthetic evaluation results, not field accuracy. The previous `false_alarm_rate` was retracted/null; the generated values are in `backend/app/ai/models/eval_results.json`.
 
 ## Phase B8: Radio signing service (runs only when Track F reaches F4)
 

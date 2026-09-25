@@ -101,6 +101,15 @@ def decode_token(token: str) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail='invalid token') from exc
 
 
+def decode_vessel_device_token(token: str, *, expired_grace: timedelta) -> dict[str, Any]:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM], leeway=expired_grace)
+    except jwt.ExpiredSignatureError as exc:
+        raise HTTPException(status_code=401, detail='session expired') from exc
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(status_code=401, detail='invalid token') from exc
+
+
 async def verify_user_session(user_id: int | str, claims: dict[str, Any]) -> dict[str, Any]:
     try:
         user_id_int = int(user_id)
@@ -117,7 +126,7 @@ async def verify_user_session(user_id: int | str, claims: dict[str, Any]) -> dic
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             '''
-            SELECT id, email, role, token_version
+            SELECT id, email, full_name, role, token_version
               FROM users
              WHERE id = $1
             ''',
@@ -134,7 +143,9 @@ async def verify_user_session(user_id: int | str, claims: dict[str, Any]) -> dic
     return {
         'id': str(row['id']),
         'email': row['email'],
+        'full_name': row.get('full_name', ''),
         'role': row['role'],
+        'token_version': row['token_version'],
     }
 
 

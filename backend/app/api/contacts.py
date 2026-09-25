@@ -77,6 +77,7 @@ class ContactEventIn(BaseModel):
     observed_at: datetime
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
+    contact_via: Literal['pod', 'handset', 'buoy'] = 'buoy'
     source: Literal['live', 'synthetic']
 
     @field_validator('observed_at')
@@ -114,10 +115,10 @@ async def ingest_contact(payload: ContactEventIn) -> dict[str, object]:
                 '''
                 INSERT INTO buoy_contacts (
                   event_id, buoy_id, vessel_id, trip_id, observed_at,
-                  latitude, longitude, source, is_synthetic,
+                  latitude, longitude, source, is_synthetic, contact_via,
                   contact_type, contact_value
                 )
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'mesh_ping',$1)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'mesh_ping',$1)
                 ON CONFLICT (event_id) WHERE event_id IS NOT NULL DO NOTHING
                 RETURNING id, event_id, vessel_id, trip_id
                 ''',
@@ -130,6 +131,7 @@ async def ingest_contact(payload: ContactEventIn) -> dict[str, object]:
                 payload.longitude,
                 payload.source,
                 payload.source == 'synthetic',
+                payload.contact_via,
             )
         except asyncpg.ForeignKeyViolationError as exc:
             raise HTTPException(status_code=400, detail='unknown buoy_id') from exc

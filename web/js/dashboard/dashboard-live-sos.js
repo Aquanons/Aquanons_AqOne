@@ -8,6 +8,9 @@
   var map = ns.map;
   var showToast = ns.showToast;
   var liveAlerts = ns.liveAlerts;
+  var formatLatLon = ns.formatLatLon || function () { return 'unknown position'; };
+  var lateLabel = ns.lateLabel || function () { return ''; };
+  var deliveryLabel = ns.deliveryLabel || function () { return 'Direct delivery'; };
 
   // ===== LIVE SOS FEED =====
   //
@@ -21,6 +24,9 @@
   const LIVE_SOS_POLL_MS = 3000;
   const liveSosLayer = L.layerGroup().addTo(map);
   const liveSosMarkers = {};
+  const alternateMarkers = {};
+  const floodBannerEl = document.getElementById('sos-flood-banner');
+  const moreCountEl = document.getElementById('sos-more-count');
   let liveSosFirstLoad = true;
   let knownSosIds = Object.create(null);
 
@@ -106,14 +112,12 @@
   }
 
   function sosPosition(ev) {
-    if (typeof ev.latitude !== 'number' || typeof ev.longitude !== 'number') {
-      return 'No GPS fix reported';
-    }
-    return ev.latitude.toFixed(4) + '° N, ' + ev.longitude.toFixed(4) + '° E';
+    return formatLatLon(ev.latitude, ev.longitude);
   }
 
   function liveAlertFromEvent(ev) {
-    const boat = ev.boat || ev.vessel_id || 'Unidentified vessel';
+    const boat = ev.boat || null;
+    const vesselId = ev.vessel_id || 'Unknown vessel';
     const skipperName = ev.skipper_name || null;
     const hasFix = typeof ev.latitude === 'number' && typeof ev.longitude === 'number';
     const provenance = ev.is_synthetic === false ? 'real' : (ev.is_synthetic === true ? 'synthetic' : 'unknown');
@@ -124,9 +128,19 @@
       isSynthetic: isSynthetic,
       provenance: provenance,
       sosEventId: ev.id,
+      version: ev.version,
       type: 'sos',
-      desc: 'SOS — ' + boat + (ev.note ? ' — “' + ev.note + '”' : ''),
-      time: relativeTime(ev.created_at),
+      desc: 'SOS - ' + vesselId + (ev.note ? ' - ' + ev.note : ''),
+      subtitle: boat ? '"' + boat + '"' : '',
+      time: relativeTime(ev.pressed_at || ev.created_at),
+      pressedAt: ev.pressed_at || ev.created_at,
+      isLate: ev.is_late === true,
+      lateLabel: ev.is_late === true ? lateLabel(ev.pressed_at, Date.now()) : '',
+      flags: Array.isArray(ev.flags) ? ev.flags : [],
+      openCallsForVessel: ev.open_calls_for_vessel || 0,
+      altLat: typeof ev.alt_latitude === 'number' ? ev.alt_latitude : null,
+      altLng: typeof ev.alt_longitude === 'number' ? ev.alt_longitude : null,
+      delivery: deliveryLabel(ev),
       lat: hasFix ? Number(ev.latitude.toFixed(4)) : null,
       lng: hasFix ? Number(ev.longitude.toFixed(4)) : null,
       status: ev.acknowledged_at ? 'acknowledged' : 'active',
@@ -136,6 +150,8 @@
       // who pressed the button, not just the boat id.
       owner: skipperName || null,
       phone: ev.phone || null,
+      vesselVerified: ev.vessel_verified === true,
+      phoneSetBy: ev.phone_set_by || null,
       confidence: null,
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
@@ -148,29 +164,31 @@
         ? 'SOS — DISTRESS CALL RECEIVED'
         : (provenance === 'synthetic' ? 'DEMO SOS — SIMULATED DISTRESS CALL' : 'SOS — DISTRESS CALL (PROVENANCE UNKNOWN)'),
       sosEventId: ev.id,
+      version: ev.version,
       isSynthetic: isSynthetic,
       provenance: provenance,
       vesselId: ev.vessel_id || 'Unknown',
+      pressedAt: ev.pressed_at || ev.created_at || null,
+      vesselVerified: ev.vessel_verified === true,
+      phoneSetBy: ev.phone_set_by || null,
+      shoreContactName: ev.shore_contact_name || null,
+      shoreContactPhone: ev.shore_contact_phone || null,
       // The declared owner identity (POST /api/vessel-profile): person first,
       // boat as fallback until the profile arrives, so the drawer tells the
       // dispatcher who raised the call - not just which boat id did.
       skipperName: ev.skipper_name || null,
       owner: ev.skipper_name || null,
       boat: boat,
-      license: (ev.license_type && ev.license_type !== 'none')
-        ? (ev.license_number ? ev.license_type + ' ' + ev.license_number : ev.license_type)
-        : (ev.license_number || null),
-      licenseType: ev.license_type || null,
       phone: ev.phone || null,
       position: sosPosition(ev),
       lat: alert.lat,
       lng: alert.lng,
       buoy: ev.buoy_id || 'Not relayed by a buoy',
-      coverage: deliveryPath(ev) + (ev.trust_tier ? ' · trust tier ' + ev.trust_tier : ''),
+      coverage: deliveryPath(ev),
       confidence: null,
       stage: 'DISTRESS CALL — human pressed the button',
       nextContact: ev.note || 'No message attached',
-      timerBaseline: Math.max(0, Math.floor((Date.now() - new Date(ev.created_at).getTime()) / 1000)),
+      timerBaseline: Math.max(0, Math.floor((Date.now() - new Date(ev.pressed_at || ev.created_at).getTime()) / 1000)),
       // The responder loop (docs/13_RESPONDER_LOOP.md): what the dispatcher
       // recorded, and how the fisher answered it. acknowledgedAt gates
       // whether the drawer's responder section renders at all.
@@ -203,6 +221,22 @@
       }
       marker.off('click');
       marker.on('click', function () { ns.openIncidentDrawer(a.drawerData, marker); });
+      if (a.altLat != null && a.altLng != null) {
+        let alternate = alternateMarkers[a.sosEventId];
+        if (!alternate) {
+          alternate = L.marker([a.altLat, a.altLng], {
+            icon: L.divIcon({ className: 'live-sos-alt-marker', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] })
+          });
+          alternate.bindTooltip('conflicting position');
+          liveSosLayer.addLayer(alternate);
+          alternateMarkers[a.sosEventId] = alternate;
+        } else {
+          alternate.setLatLng([a.altLat, a.altLng]);
+        }
+      } else if (alternateMarkers[a.sosEventId]) {
+        liveSosLayer.removeLayer(alternateMarkers[a.sosEventId]);
+        delete alternateMarkers[a.sosEventId];
+      }
     });
 
     // An acknowledged-but-unresolved event stays in /active (Phase 2 of
@@ -213,6 +247,10 @@
       if (!seen[id]) {
         liveSosLayer.removeLayer(liveSosMarkers[id]);
         delete liveSosMarkers[id];
+        if (alternateMarkers[id]) {
+          liveSosLayer.removeLayer(alternateMarkers[id]);
+          delete alternateMarkers[id];
+        }
       }
     });
   }
@@ -222,7 +260,7 @@
 
   function loadActiveSos() {
     const seq = ++activeSosReqSeq;
-    return authFetch('/api/sos/active')
+    return authFetch('/api/sos/active?limit=200')
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -243,6 +281,20 @@
         Array.prototype.push.apply(liveAlerts, mapped);
 
         const events = data.events;
+        const flood = data.flood || { active: false, unknown_vessels_last_minute: 0 };
+        const floodActive = flood.active === true;
+        if (floodBannerEl) {
+          floodBannerEl.hidden = !floodActive;
+          floodBannerEl.textContent = floodActive
+            ? 'High call volume - ' + (flood.unknown_vessels_last_minute || 0) + ' calls from unknown vessels in the last minute.'
+            : '';
+        }
+        if (moreCountEl) {
+          const more = Math.max(0, (Number.isFinite(data.total) ? data.total : events.length) - events.length);
+          moreCountEl.textContent = more ? '+' + more + ' more' : '';
+          moreCountEl.hidden = more === 0;
+        }
+        if (ns.sosAlarm) ns.sosAlarm.sync(events);
         // Announce genuinely new calls, but never on the first load - a
         // dispatcher opening the dashboard should not be hit with a klaxon for
         // events they already handled before the page refreshed.
@@ -251,11 +303,13 @@
           // arrive while the dashboard is open, never on the first load for
           // events handled before the page refreshed. sync() then keeps it
           // ringing until every call in the feed has been acknowledged.
-          if (ns.sosAlarm) ns.sosAlarm.sync(events);
           events.forEach(function (ev) {
-            if (!knownSosIds[ev.id]) {
+            const seen = knownSosIds[ev.id];
+            const reopened = seen && ev.reopened_at && seen.reopened_at !== ev.reopened_at &&
+              (!seen.reopened_at || new Date(ev.reopened_at).getTime() > new Date(seen.reopened_at).getTime());
+            if (!seen || reopened) {
               if (ns.sosAlarm && !(ev.acknowledged_at != null || ev.status === 'acknowledged')) {
-                ns.sosAlarm.start();
+                ns.sosAlarm.notify(ev);
               }
               showToast(
                 'SOS received',
@@ -267,7 +321,7 @@
           });
         }
         knownSosIds = Object.create(null);
-        events.forEach(function (ev) { knownSosIds[ev.id] = true; });
+        events.forEach(function (ev) { knownSosIds[ev.id] = { reopened_at: ev.reopened_at || null }; });
         liveSosFirstLoad = false;
 
         // The one fact updateSyncStatus() needs: this poll actually

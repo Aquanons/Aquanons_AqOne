@@ -92,8 +92,8 @@ def _row(vessel_id: str, trip_id: str, buoy_id: str, observed_at: datetime) -> d
         'trip_id': trip_id,
         'buoy_id': buoy_id,
         'observed_at': observed_at,
-        'latitude': 11.6892,
-        'longitude': 122.3667,
+        'latitude': 11.7,
+        'longitude': 122.5,
         'is_synthetic': False,
     }
 
@@ -102,7 +102,7 @@ def test_eligible_latest_trips_excludes_a_trip_outside_the_freshness_window():
     as_of = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
     rows = [
         _row('V-FRESH', 'trip-1', 'B01', as_of - timedelta(hours=2)),
-        _row('V-STALE', 'trip-1', 'B01', as_of - timedelta(hours=20)),
+        _row('V-STALE', 'trip-1', 'B01', as_of - timedelta(hours=80)),
     ]
     latest = anomaly_service.eligible_latest_trips(rows, as_of=as_of)
     eligible = {vessel_id for vessel_id, _trip_id, _contacts in latest}
@@ -121,6 +121,39 @@ def test_eligible_latest_trips_boundary_is_inclusive():
     assert eligible == {'V-AT-CUTOFF'}
 
 
+def test_silent_vessel_evaluated_for_72h():
+    as_of = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
+    rows = [_row('V-SILENT', 'trip-1', 'B01', as_of - timedelta(hours=48))]
+    latest = anomaly_service.eligible_latest_trips(rows, as_of=as_of)
+    assert {vessel_id for vessel_id, _, _ in latest} == {'V-SILENT'}
+
+
+def test_handset_contacts_never_raise_overdue_alone():
+    as_of = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
+    contact = _row('V-HANDSET', 'trip-handset', 'B01', as_of - timedelta(hours=3))
+    contact['contact_via'] = 'handset'
+    trip_state = {
+        'trip_id': 'trip-handset', 'vessel_id': 'V-HANDSET', 'status': 'open',
+        'welfare_status': 'unknown', 'departure_at': as_of - timedelta(hours=4),
+        'expected_return_at': None, 'reported_at': None, 'amendments': [],
+    }
+
+    class _HandsetOnlyConn(_FakeConnection):
+        async def fetch(self, query: str, *args):
+            self.executed.append((query, args))
+            if 'FROM buoy_contacts' in query:
+                return [contact]
+            if 'FROM vessel_trips' in query:
+                return [trip_state]
+            return []
+
+    result = asyncio.run(
+        anomaly_service.evaluate_and_persist(_HandsetOnlyConn([]), as_of=as_of, include_synthetic=False)
+    )
+    assert len(result) == 1
+    assert result[0]['status'] not in {'overdue', 'alert'}
+
+
 def _fleet_rows() -> list[dict[str, object]]:
     """Two vessels with enough history to avoid the cold-start fleet
     fallback, plus one "current" trip each. V-FRESH's current trip has
@@ -130,7 +163,7 @@ def _fleet_rows() -> list[dict[str, object]]:
     every `as_of` these tests use, so it must never be scored.
     """
     rows: list[dict[str, object]] = []
-    for vessel_id, current_day in (('V-FRESH', 10), ('V-STALE', 9)):
+    for vessel_id, current_day in (('V-FRESH', 10), ('V-STALE', 6)):
         for day in range(1, 5):
             start = datetime(2026, 8, day, 6, 0, tzinfo=UTC)
             for index, buoy_id in enumerate(('B01', 'B02', 'B03')):
@@ -271,4 +304,22 @@ def test_contact_event_in_rejects_future_clock_skew():
             buoy_id='B1',
             observed_at=now + timedelta(minutes=6),
             source='live',
+        )
+
+
+def test_contact_via_defaults_to_buoy_and_accepts_handset_and_pod():
+    base = {
+        'event_id': 'via-1', 'vessel_id': 'V1', 'trip_id': 'T1', 'buoy_id': 'B1',
+        'observed_at': datetime.now(UTC), 'source': 'live',
+    }
+    assert ContactEventIn(**base).contact_via == 'buoy'
+    assert ContactEventIn(**base, contact_via='handset').contact_via == 'handset'
+    assert ContactEventIn(**base, contact_via='pod').contact_via == 'pod'
+
+
+def test_contact_via_rejects_unknown_source():
+    with pytest.raises(ValidationError):
+        ContactEventIn(
+            event_id='via-2', vessel_id='V1', trip_id='T1', buoy_id='B1',
+            observed_at=datetime.now(UTC), source='live', contact_via='phone',
         )

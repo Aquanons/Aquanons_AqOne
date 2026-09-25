@@ -24,6 +24,7 @@ import os
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
+from app import geo
 from app.ai.trip_profile import (
     ContactPoint,
     _build_profile,
@@ -57,18 +58,12 @@ def _determine_last_contact_at(
             return rep if isinstance(rep, datetime) else datetime.fromisoformat(str(rep))
     return as_of
 
-# Decided 2026-08-29 (docs/38 Phase 2 stop-and-ask condition, project lead) -
-# see docs/08_DEMO_AND_STATUS.md for the recorded rationale. How long after a
-# vessel's last buoy contact its most recent trip still counts as "possibly
-# still open," rather than excluded as stale/completed. Too short would
-# exclude a vessel that is *already* hours overdue - the exact case this
-# feature exists to catch. Too long lets a trip from days ago re-alert just
-# because the wall clock advanced, the design flaw
-# docs/31_DEMO_VERIFICATION_01.md found in the previous dataset-max-timestamp
-# approach. The synthetic generator models full trips (departure to return)
-# of roughly 6-13 hours, so 12 hours covers a complete trip cycle while still
-# excluding anything from a prior day.
-OPEN_TRIP_FRESHNESS_WINDOW = timedelta(hours=12)
+# How long after a vessel's last at-sea contact its latest trip stays
+# eligible. Was 12 h (decided 2026-08-29, docs/08); raised to 72 h for
+# EC-H9 so a boat silent overnight is still evaluated instead of dropping
+# out. Trips from earlier days still age out, so the wall-clock re-alert
+# flaw found in docs/31 stays fixed.
+OPEN_TRIP_FRESHNESS_WINDOW = timedelta(hours=72)
 
 
 def demo_evaluation_enabled() -> bool:
@@ -92,14 +87,14 @@ async def _load_trip_rows(conn, *, include_synthetic: bool) -> list[dict[str, ob
         SELECT bc.vessel_id, bc.trip_id, bc.buoy_id, bc.observed_at,
                COALESCE(bc.latitude, b.lat) AS latitude,
                COALESCE(bc.longitude, b.lon) AS longitude,
-               bc.is_synthetic
+               bc.is_synthetic, bc.contact_via
         FROM buoy_contacts bc
         JOIN buoys b ON b.id = bc.buoy_id
         WHERE {source_clause}
         ORDER BY bc.vessel_id, bc.trip_id, bc.observed_at
         '''
     )
-    return [dict(row) for row in rows]
+    return [dict(row) for row in rows if row.get('contact_via', 'buoy') != 'handset']
 
 
 def _group_latest_trips(rows: list[dict[str, object]]) -> list[tuple[str, str, list[ContactPoint]]]:
@@ -142,7 +137,7 @@ def _trip_is_synthetic(rows: list[dict[str, object]]) -> dict[tuple[str, str], b
 async def _load_trip_states(conn) -> dict[str, dict[str, object]]:
     rows = await conn.fetch(
         '''
-        SELECT trip_id, vessel_id, status, welfare_status, departure_at,
+        SELECT trip_id, vessel_id, status, welfare_status, welfare_updated_at, departure_at,
                expected_return_at, expected_checkin_interval_minutes, reported_at, amendments
         FROM vessel_trips
         '''
@@ -158,12 +153,8 @@ def eligible_latest_trips(
 ) -> list[tuple[str, str, list[ContactPoint]]]:
     """The latest trip per vessel.
 
-    Task 3.5 & Scenario C5: Determine eligibility from open/unresolved trip state rather
-    than an arbitrary 12-hour latest-contact cutoff. An open/unresolved trip
-    persists beyond 12 hours without silent expiration, while completed or
-    cancelled trips are excluded. Open trips with zero contacts (e.g. during an outage)
-    remain eligible rather than being silently ignored. Unrecorded legacy/synthetic
-    trips fall back to OPEN_TRIP_FRESHNESS_WINDOW.
+    Open trips remain eligible without contacts for a check-needed score; contacted
+    trips must have an at-sea contact in the last 72 hours.
     """
     trip_states = trip_states or {}
     cutoff = as_of - OPEN_TRIP_FRESHNESS_WINDOW
@@ -172,15 +163,19 @@ def eligible_latest_trips(
 
     for vessel_id, trip_id, contacts in _group_latest_trips(rows):
         state = trip_states.get(trip_id)
+        at_sea = [
+            contact for contact in contacts
+            if geo.point_in_water(contact.latitude, contact.longitude)
+        ]
         if state is not None:
             status = str(state.get('status') or '')
             if status in {'completed', 'cancelled'}:
                 continue
-            if status in {'open', 'overdue', 'unresolved'}:
-                eligible.append((vessel_id, trip_id, contacts))
+            if status in {'open', 'overdue', 'unresolved'} and not at_sea:
+                eligible.append((vessel_id, trip_id, []))
                 seen_trips.add(trip_id)
                 continue
-        if contacts[-1].observed_at >= cutoff:
+        if at_sea and max(contact.observed_at for contact in at_sea) >= cutoff:
             eligible.append((vessel_id, trip_id, contacts))
             seen_trips.add(trip_id)
 
@@ -230,6 +225,9 @@ async def evaluate_and_persist(conn, *, as_of: datetime, include_synthetic: bool
                 fleet_prof = profiles.get('fleet') or _build_profile('fleet', [], built_at=as_of, low_confidence=False)
                 profile = fleet_prof.for_vessel(vessel_id, low_confidence=True)
             trip_state = trip_states.get(trip_id)
+            if trip_state is not None:
+                trip_state = dict(trip_state)
+                trip_state['fleet_p90_trip_duration_minutes'] = profiles['fleet'].typical_trip_duration_minutes['p90']
             score = score_trip(
                 profile,
                 contacts,
@@ -291,7 +289,7 @@ async def evaluate_and_persist(conn, *, as_of: datetime, include_synthetic: bool
                 score.expected_contact.buoy_id,
                 score.expected_contact.window_start,
                 score.expected_contact.window_end,
-                score.status in {'watch', 'overdue', 'alert'},
+                score.status in {'watch', 'overdue', 'alert', 'check_needed'},
                 profile.low_confidence,
                 datetime.now(UTC),
                 is_synthetic,

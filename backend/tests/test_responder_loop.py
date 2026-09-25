@@ -61,6 +61,10 @@ class _FakePool:
             'resolved_at': None,
             'resolved_by': None,
             'resolved_reason': None,
+            'resolution_code': None,
+            'version': 0,
+            'reopened_at': None,
+            'reopened_by': None,
             'is_synthetic': False,
         }
         base.update(row)
@@ -109,6 +113,27 @@ class _FakePool:
     async def fetchrow(self, query: str, *args):
         if 'WHERE local_id = $1' in query and 'SELECT id, vessel_id' in query:
             matches = [e for e in self.sos_events.values() if e.get('local_id') == args[0]]
+            if not matches:
+                return None
+            event = matches[0]
+            return {key: event[key] for key in (
+                'id', 'vessel_id', 'local_id', 'seq', 'client_ts', 'acknowledged_at', 'acked_by',
+                'eta_at', 'responder_status', 'responder_note', 'fisher_reply', 'fisher_replied_at',
+                'resolved_at', 'resolution_code', 'version', 'reopened_at', 'delivered_direct', 'delivered_via_buoy',
+            )}
+
+        if 'SELECT * FROM sos_events WHERE id = $1 AND vessel_id = $2 FOR UPDATE' in query:
+            event = self.sos_events.get(int(args[0]))
+            return event if event and event['vessel_id'] == args[1] else None
+
+        if 'SELECT * FROM sos_events WHERE id = $1 FOR UPDATE' in query:
+            return self.sos_events.get(int(args[0]))
+
+        if 'SELECT * FROM sos_events WHERE id = $1' in query:
+            return self.sos_events.get(int(args[0]))
+
+        if 'SELECT * FROM sos_events WHERE local_id = $1 FOR UPDATE' in query:
+            matches = [e for e in self.sos_events.values() if e.get('local_id') == args[0]]
             return matches[0] if matches else None
 
         if 'UPDATE vessel_devices' in query and 'SET last_seen_at = NOW()' in query:
@@ -121,9 +146,9 @@ class _FakePool:
             return {'resolved_at': event['resolved_at']}
 
         if 'UPDATE sos_events' in query and 'SET acknowledged_at' in query:
-            event_id, acked_by, responder_status, responder_note, eta_minutes = args
+            event_id, acked_by, responder_status, responder_note, eta_minutes, expected_version = args
             event = self.sos_events.get(int(event_id))
-            if event is None:
+            if event is None or (expected_version is not None and expected_version != event['version']):
                 return None
             event['acknowledged_at'] = event['acknowledged_at'] or datetime.now(UTC)
             event['acked_by'] = acked_by
@@ -132,28 +157,34 @@ class _FakePool:
                 event['responder_note'] = responder_note
             if eta_minutes is not None:
                 event['eta_at'] = datetime.now(UTC) + timedelta(minutes=eta_minutes)
+            event['version'] += 1
             return event
 
         if 'UPDATE sos_events' in query and 'SET resolved_at' in query:
-            event_id, resolved_by, resolved_reason = args
+            event_id, resolved_by, resolved_reason, resolution_code = args
             event = self.sos_events.get(int(event_id))
             if event is None:
                 return None
             event['resolved_at'] = event['resolved_at'] or datetime.now(UTC)
             event['resolved_by'] = event['resolved_by'] or resolved_by
             event['resolved_reason'] = event['resolved_reason'] or resolved_reason
+            event['resolution_code'] = event['resolution_code'] or resolution_code
+            event['version'] += 1
             return event
 
         if 'UPDATE sos_events' in query and 'SET fisher_reply' in query:
-            event_id, reply, safe_now, vessel_id = args
+            event_id, reply, safe_now, reopen, safe_now_code = args
             event = self.sos_events.get(int(event_id))
-            if event is None or event['vessel_id'] != vessel_id:
+            if event is None:
                 return None
-            if event['resolved_at'] is None:
-                event['fisher_reply'] = reply
-                event['fisher_replied_at'] = datetime.now(UTC)
-                if reply == safe_now:
-                    event['resolved_at'] = datetime.now(UTC)
+            event['fisher_reply'] = reply
+            event['fisher_replied_at'] = datetime.now(UTC)
+            event['resolved_at'] = datetime.now(UTC) if reply == safe_now else None
+            event['resolution_code'] = safe_now_code if reply == safe_now else None
+            if reopen:
+                event['reopened_at'] = datetime.now(UTC)
+                event['reopened_by'] = 'fisher'
+            event['version'] += 1
             return event
 
         return None
@@ -294,7 +325,7 @@ def test_safe_now_resolves_and_removes_the_event_from_the_active_feed(monkeypatc
     assert 4 not in ids
 
 
-def test_retrying_the_reply_after_resolution_is_safe_and_cannot_reopen_it(monkeypatch):
+def test_still_in_danger_reopens_recently_resolved_incident(monkeypatch):
     pool = _FakePool()
     pool.seed(id=5)
     _patch(monkeypatch, pool)
@@ -303,15 +334,14 @@ def test_retrying_the_reply_after_resolution_is_safe_and_cannot_reopen_it(monkey
 
     with TestClient(app, raise_server_exceptions=False) as client:
         first = client.post('/api/sos/5/reply', headers=headers, json={'reply': 2})
-        # A stray retry of the earlier "still in danger" tap, or the network
-        # simply redelivering the SAFE_NOW request - either way this must not
-        # change what was already recorded.
+        # A later danger report inside the two-hour window reopens the call.
         second = client.post('/api/sos/5/reply', headers=headers, json={'reply': 1})
 
     assert first.status_code == 200
     assert second.status_code == 200
-    assert first.json()['resolved_at'] == second.json()['resolved_at']
-    assert second.json()['fisher_reply'] == 2
+    assert first.json()['resolved_at'] is not None
+    assert second.json()['resolved_at'] is None
+    assert second.json()['fisher_reply'] == 1
 
 
 def test_a_different_vessels_device_cannot_reply_to_the_event(monkeypatch):
@@ -390,6 +420,33 @@ def test_ack_by_local_id_is_404_for_an_unknown_id(monkeypatch):
     assert response.status_code == 404
 
 
+def test_responder_note_over_40_bytes_rejected(monkeypatch):
+    pool = _FakePool()
+    pool.seed(id=21)
+    _patch(monkeypatch, pool)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post(
+            '/api/sos/21/acknowledge',
+            headers=_operator_headers(),
+            json={'responder_note': 'ñ' * 40},
+        )
+    assert response.status_code == 422
+    assert response.json()['detail'] == 'responder_note_too_long'
+
+
+def test_responder_note_of_40_bytes_accepted(monkeypatch):
+    pool = _FakePool()
+    pool.seed(id=22)
+    _patch(monkeypatch, pool)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post(
+            '/api/sos/22/acknowledge',
+            headers=_operator_headers(),
+            json={'responder_note': 'ñ' * 20},
+        )
+    assert response.status_code == 200
+
+
 def test_ack_by_local_id_reveals_only_the_named_incidents_ack(monkeypatch):
     """Keyed on the handset's own id, the endpoint must never leak another
     incident - the display row should be the ack fields only, not the full
@@ -435,4 +492,3 @@ def test_recent_lists_only_resolved_incidents_with_sender_report(monkeypatch):
     assert events[0]['skipper_name'] == 'Jade N. Salvador'
     assert events[0]['fisher_reply'] == 2
     assert events[0]['resolved_at'] is not None
-

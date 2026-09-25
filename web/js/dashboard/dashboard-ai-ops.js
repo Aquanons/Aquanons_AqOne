@@ -610,10 +610,19 @@
     });
   }
 
-  function renderRiskFeed(rows, freshness) {
+  let lastRiskMonitoring = 'active';
+  let lastRiskMonitoringReason = null;
+
+  function renderRiskFeed(rows, freshness, monitoring, monitoringReason) {
     var list = document.getElementById('ai-risk-list');
     var count = document.getElementById('ai-risk-count');
     if (!list) return;
+    if (monitoring === 'unavailable') {
+      list.innerHTML = '<div class="ai-empty-state ai-unavailable-state">Not monitoring - no live contact source</div>';
+      list.title = monitoringReason || '';
+      if (count) count.textContent = '--';
+      return;
+    }
     if (rows === null || (freshness === 'offline' && (!rows || !rows.length))) {
       list.innerHTML = '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed unavailable &middot; unable to reach the anomaly service.</div>';
       if (count) count.textContent = '--';
@@ -642,7 +651,7 @@
       var score = typeof row.score === 'number' ? row.score.toFixed(2) : String(row.score || '--');
       var lastSeen = row.last_contact_at ? new Date(row.last_contact_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
       var expectedBuoy = row.expected_next_buoy_id || 'n/a';
-      var statusLabel = (row.status || 'normal').toUpperCase();
+      var statusLabel = row.status === 'check_needed' ? 'CHECK NEEDED' : (row.status || 'normal').toUpperCase();
       var factors = Array.isArray(row.factors) ? row.factors : [];
       return '' +
         '<details class="ai-risk-item"' + (index === 0 ? ' open' : '') + '>' +
@@ -847,6 +856,10 @@
     return aiFetchJson('/api/ai/drift/incident/' + encodeURIComponent(incidentId) + '?forecast_hours=24')
       .then(function (payload) {
         renderDriftContours(payload);
+        if (payload && payload.clock_suspect) {
+          var metaEl = document.getElementById('ai-drift-meta');
+          if (metaEl) metaEl.innerHTML += '<br><span class="ai-clock-suspect">Client clock looked inaccurate; this estimate uses server time.</span>';
+        }
       })
       .catch(function (err) {
         console.warn('[AqOne] Drift incident load failed:', err.message);
@@ -906,9 +919,9 @@
     }) : 'offline';
     if (riskFreshness === 'stale' || riskFreshness === 'offline') {
       if (!lastKnownRiskRows || !lastKnownRiskRows.length) {
-        renderRiskFeed(null, riskFreshness);
+        renderRiskFeed(null, riskFreshness, lastRiskMonitoring, lastRiskMonitoringReason);
       } else {
-        renderRiskFeed(lastKnownRiskRows, riskFreshness);
+        renderRiskFeed(lastKnownRiskRows, riskFreshness, lastRiskMonitoring, lastRiskMonitoringReason);
       }
     }
 
@@ -942,10 +955,16 @@
     updateAIFreshness();
 
     aiFetchJson('/api/ai/anomaly/active')
-      .then(function (rows) {
+      .then(function (payload) {
+        if (!payload || !Array.isArray(payload.rows)) {
+          renderRiskFeed(null, 'offline');
+          return;
+        }
         lastRiskSuccessMs = Date.now();
-        lastKnownRiskRows = rows || [];
-        renderRiskFeed(lastKnownRiskRows, 'live');
+        lastKnownRiskRows = payload.rows;
+        lastRiskMonitoring = payload.monitoring || 'active';
+        lastRiskMonitoringReason = payload.monitoring_reason || null;
+        renderRiskFeed(lastKnownRiskRows, 'live', lastRiskMonitoring, lastRiskMonitoringReason);
       })
       .catch(function (err) {
         console.warn('[AqOne] Vessel risk poll failed, checking freshness:', err.message);
@@ -989,10 +1008,12 @@
       var incidentsResult = results[1];
       var squallResult = results[2];
 
-      if (riskResult.status === 'fulfilled') {
+      if (riskResult.status === 'fulfilled' && riskResult.value && Array.isArray(riskResult.value.rows)) {
         lastRiskSuccessMs = Date.now();
-        lastKnownRiskRows = riskResult.value || [];
-        renderRiskFeed(lastKnownRiskRows, 'live');
+        lastKnownRiskRows = riskResult.value.rows;
+        lastRiskMonitoring = riskResult.value.monitoring || 'active';
+        lastRiskMonitoringReason = riskResult.value.monitoring_reason || null;
+        renderRiskFeed(lastKnownRiskRows, 'live', lastRiskMonitoring, lastRiskMonitoringReason);
       } else {
         renderRiskFeed(null, 'offline');
       }

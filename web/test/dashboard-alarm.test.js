@@ -45,7 +45,9 @@ function createStubElement(tag, id) {
 function createDOMContext(elements = {}, ns = { ready: true }) {
   const elMap = new Map();
   const windowListeners = {};
+  const intervals = [];
   const documentStub = {
+    title: 'AqOne Dashboard',
     activeElement: null,
     getElementById(id) {
       if (!elMap.has(id)) { elMap.set(id, createStubElement('div', id)); }
@@ -63,10 +65,11 @@ function createDOMContext(elements = {}, ns = { ready: true }) {
   }
   const windowStub = {
     document: documentStub,
+    intervalCalls: intervals,
     AqOneDashboardUtils: { escapeHtml },
     AqOneDashboard: ns,
     console: { log() {}, warn() {}, error() {} },
-    setInterval() { return 1; },
+    setInterval(fn) { intervals.push(fn); return intervals.length; },
     clearInterval() {},
     setTimeout(fn) { return 1; },
     addEventListener(event, fn) { (windowListeners[event] = windowListeners[event] || []).push(fn); },
@@ -75,13 +78,14 @@ function createDOMContext(elements = {}, ns = { ready: true }) {
     Date, JSON, Number, String, Array, Object, Math
   };
   windowStub.window = windowStub;
-  return { window: windowStub, document: documentStub };
+  return { window: windowStub, document: documentStub, intervals };
 }
 
 function loadAlarm(ns, opts) {
   opts = opts || {};
   const { window, document } = createDOMContext(opts.elements || {}, ns);
   const fakeWindow = Object.assign({}, window);
+  if (opts.Notification) fakeWindow.Notification = opts.Notification;
   if (opts.AudioContext === null) {
     delete fakeWindow.AudioContext;
   } else if (typeof opts.AudioContext === 'function') {
@@ -113,7 +117,7 @@ function createSuspendedAudioContext() {
   }
   FakeAudioContext.prototype.resume = function () {
     this.resumed++;
-    if (inGesture) this.state = 'running';
+    if (inGesture) return Promise.resolve().then(() => { this.state = 'running'; return this.state; });
     return Promise.resolve(this.state);
   };
   FakeAudioContext.prototype.createOscillator = function () {
@@ -140,6 +144,7 @@ test('dashboard-alarm: module registers sosAlarm and hasUnacknowledgedSos', () =
   assert.equal(typeof ns.sosAlarm.start, 'function');
   assert.equal(typeof ns.sosAlarm.stop, 'function');
   assert.equal(typeof ns.sosAlarm.sync, 'function');
+  assert.equal(typeof ns.sosAlarm.notify, 'function');
   assert.equal(typeof ns.hasUnacknowledgedSos, 'function');
 });
 
@@ -178,20 +183,17 @@ test('dashboard-alarm: hasUnacknowledgedSos truth table', () => {
   );
 });
 
-test('dashboard-alarm: sync stops the siren once nothing is unacknowledged', () => {
+test('dashboard-alarm: first load rings only when an event is unacknowledged', () => {
   const ns = { ready: true };
   loadAlarm(ns, { AudioContext: null });
 
   assert.equal(ns.sosAlarm.isRunning(), false, 'no alarm before any SOS');
 
   ns.sosAlarm.sync([{ id: 'S1' }]);
-  assert.equal(ns.sosAlarm.isRunning(), false, 'sync never starts the siren on its own');
-
-  ns.sosAlarm.start();
-  assert.equal(ns.sosAlarm.isRunning(), true, 'a new SOS starts the siren');
+  assert.equal(ns.sosAlarm.isRunning(), true, 'first load rings for a waiting call');
 
   ns.sosAlarm.sync([{ id: 'S1', acknowledged_at: '2026-09-16T00:00:00Z' }]);
-  assert.equal(ns.sosAlarm.isRunning(), false, 'acknowledging every call stops the siren');
+  assert.equal(ns.sosAlarm.isRunning(), false, 'first load stays silent when every call is acknowledged');
 
   ns.sosAlarm.start();
   ns.sosAlarm.stop();
@@ -210,7 +212,7 @@ test('dashboard-alarm: start/stop are idempotent and tolerate no AudioContext', 
   assert.equal(ns.sosAlarm.isRunning(), false);
 });
 
-test('dashboard-alarm: suspended context rings after a user gesture', () => {
+test('dashboard-alarm: suspended context rings after an asynchronous gesture resume', async () => {
   const ns = { ready: true };
   const { FakeAudioContext, latest, dispatchGesture } = createSuspendedAudioContext();
   const context = loadAlarm(ns, { AudioContext: FakeAudioContext });
@@ -227,6 +229,7 @@ test('dashboard-alarm: suspended context rings after a user gesture', () => {
   // The first real gesture releases the context and rings the siren.
   dispatchGesture(context, 'pointerdown');
   assert.ok(ctx.resumed >= 1, 'a user gesture resumes the context');
+  await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(ctx.state, 'running');
   assert.ok(ctx.oscillators >= 1, 'unlock builds the oscillator once running');
   assert.equal(ns.sosAlarm.isRunning(), true);
@@ -257,6 +260,7 @@ test('dashboard-alarm: start/stop still work when the context is suspended', () 
 
 test('dashboard-live-sos: rings on a new unacknowledged SOS and stops once acknowledged', async () => {
   const events = {};
+  const toasts = [];
   const ns = {
     ready: true,
     liveAlerts: [],
@@ -268,19 +272,21 @@ test('dashboard-live-sos: rings on a new unacknowledged SOS and stops once ackno
     syncAlertIndicators() {},
     renderIncidentFeed() {},
     refreshOpenDrawer() {},
-    showToast() {}
+    showToast(...args) { toasts.push(args); }
   };
 
   const sosAlarmStub = {
     starts: 0,
     stops: 0,
-    start() { this.starts++; },
-    stop() { this.stops++; },
+    running: false,
+    start() { if (!this.running) this.starts++; this.running = true; },
+    stop() { if (this.running) this.stops++; this.running = false; },
+    notify() {},
     sync(eventList) {
       const allAcknowledged = Array.isArray(eventList) && eventList.every((ev) =>
         ev.acknowledged_at != null || ev.status === 'acknowledged'
       );
-      if (allAcknowledged) this.stop();
+      if (allAcknowledged) this.stop(); else this.start();
     }
   };
   ns.sosAlarm = sosAlarmStub;
@@ -329,4 +335,70 @@ test('dashboard-live-sos: rings on a new unacknowledged SOS and stops once ackno
   await poll3;
   assert.equal(sosAlarmStub.starts, 1, 'no re-ring for an already-seen call');
   assert.equal(sosAlarmStub.stops, 1, 'acknowledging every call stops the siren');
+
+  const poll4 = ns.loadActiveSos();
+  await new Promise((r) => setTimeout(r, 0));
+  events.next({ ok: true, json: () => Promise.resolve({
+    events: [
+      { id: 'OLD', boat: 'Old Boat', created_at: now, acknowledged_at: now, is_synthetic: false },
+      { id: 'NEW', vessel_id: 'NW-1', boat: 'Sea Star', created_at: now, reopened_at: new Date(Date.now() + 1000).toISOString(), is_synthetic: false }
+    ]
+  }) });
+  await poll4;
+  assert.equal(sosAlarmStub.starts, 2, 'reopened incident rings again');
+  assert.equal(toasts.length, 2, 'reopened incident is announced as new');
+});
+
+test('dashboard-alarm: feed polls do not restart title flashing for the same waiting SOS', () => {
+  const ns = { ready: true };
+  const context = loadAlarm(ns, { AudioContext: null });
+  const { document, intervalCalls: intervals } = context;
+  const event = { id: 'S1', vessel_id: 'NW-1' };
+  ns.sosAlarm.sync([event]);
+  const firstTitle = document.title;
+  const firstTimerCount = intervals.length;
+  ns.sosAlarm.sync([event]);
+  assert.equal(intervals.length, firstTimerCount, 'the three-second poll reuses the title timer');
+  assert.equal(document.title, firstTitle, 'polling does not pin the title to the SOS text');
+  ns.sosAlarm.sync([{ id: 'S1', acknowledged_at: '2026-09-24T00:00:00Z' }]);
+  assert.equal(document.title, 'AqOne Dashboard', 'acknowledgement restores the page title');
+});
+
+test('dashboard-alarm: banner stays until a user gesture resumes audio', async () => {
+  const banner = createStubElement('div', 'alarm-sound-banner');
+  const ns = { ready: true };
+  const { FakeAudioContext, latest, dispatchGesture } = createSuspendedAudioContext();
+  const context = loadAlarm(ns, { AudioContext: FakeAudioContext, elements: { 'alarm-sound-banner': banner } });
+  assert.equal(banner.hidden, false);
+  assert.match(banner.textContent, /Alarm sound is OFF - click to enable/);
+  dispatchGesture(context, 'pointerdown');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(latest().state, 'running');
+  assert.equal(banner.hidden, true);
+});
+
+test('dashboard-alarm: granted notification permission announces a new call', () => {
+  const made = [];
+  function Notification(title, options) { made.push({ title, options }); }
+  Notification.permission = 'granted';
+  const ns = { ready: true };
+  const context = loadAlarm(ns, { Notification });
+  ns.sosAlarm.notify({ id: 'SOS-7', vessel_id: 'NW-7', boat: 'Sea Star' });
+  assert.equal(made.length, 1);
+  assert.equal(made[0].title, 'SOS - NW-7');
+  assert.equal(made[0].options.body, '"Sea Star"');
+  assert.match(context.document.title, /SOS - NW-7/);
+});
+
+test('dashboard-alarm: notification permission is requested only from the banner click', () => {
+  let requests = 0;
+  function Notification() {}
+  Notification.permission = 'default';
+  Notification.requestPermission = () => { requests++; return Promise.resolve('granted'); };
+  const banner = createStubElement('button', 'alarm-sound-banner');
+  const ns = { ready: true };
+  loadAlarm(ns, { Notification, elements: { 'alarm-sound-banner': banner }, AudioContext: null });
+  assert.equal(requests, 0, 'permission is never requested on load');
+  banner.dispatchEvent('click');
+  assert.equal(requests, 1, 'banner click requests permission');
 });

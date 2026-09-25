@@ -58,7 +58,7 @@ def test_register_upserts_into_vessels(monkeypatch):
             self.args = None
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return None
             self.query = query
             self.args = args
@@ -102,7 +102,7 @@ def test_register_rejects_overwrite_of_non_blank_identity_without_auth(monkeypat
 
     class _ExistingPool:
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'NW-001',
                     'skipper_name': 'Original Skipper', 'license_type': 'motorized',
@@ -139,7 +139,7 @@ def test_register_allows_overwrite_with_vessel_auth(monkeypatch):
             self.updated = False
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'NW-001',
                     'skipper_name': 'Original Skipper', 'license_type': 'motorized',
@@ -185,7 +185,7 @@ def test_register_allows_filling_blanks_without_auth(monkeypatch):
             self.updated = False
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'V001',  # skeleton boat_name is id
                     'skipper_name': None, 'license_type': 'none',
@@ -271,3 +271,45 @@ def test_active_feed_carries_the_vessel_profile(monkeypatch):
     assert event['skipper_name'] == 'Juan Dela Cruz'
     assert event['license_number'] == 'NWB-2026-08412'
     assert event['phone'] == '+639171234567'
+
+
+def test_register_normalises_unknown_license_type_to_none(monkeypatch):
+    """A forged or hand-typed license type must never light the green badge,
+    but the profile itself still lands - rejecting the whole write would also
+    drop the skipper name and phone number."""
+    from app import db as app_db
+    from app.api import vessel_profile as profile_api
+
+    class _FakePool:
+        def __init__(self):
+            self.args = None
+
+        async def fetchrow(self, query, *args):
+            if 'FROM vessels v' in query:
+                return None
+            self.args = args
+            return {
+                'id': args[0], 'boat_name': args[1] or 'NW-001',
+                'skipper_name': args[2], 'license_type': args[3],
+                'license_number': args[4], 'phone': args[5],
+                'profile_updated_at': None,
+            }
+
+        def acquire(self):
+            return self
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+    pool = _FakePool()
+    monkeypatch.setattr(app_db, 'get_pool', lambda: pool)
+    monkeypatch.setattr(profile_api, 'get_pool', lambda: pool)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/vessel-profile', json=_payload(license_type='forged'))
+
+    assert response.status_code == 200
+    assert pool.args[3] == 'none'
+    assert response.json()['license_type'] == 'none'

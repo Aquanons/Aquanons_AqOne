@@ -91,6 +91,19 @@ def _static_asserts(path) -> list[str]:
     return re.findall(r'static_assert\s*\((.*?)\)\s*;', path.read_text('utf-8'), re.S)
 
 
+def _function_body(code: str, signature: str) -> str:
+    opening = code.index('{', code.index(signature))
+    depth = 0
+    for position in range(opening, len(code)):
+        if code[position] == '{':
+            depth += 1
+        elif code[position] == '}':
+            depth -= 1
+            if depth == 0:
+                return code[opening:position + 1]
+    raise AssertionError(f'unclosed function body for {signature}')
+
+
 def test_loam_key_guard_rejects_every_committed_placeholder_at_compile_time():
     rejected = {OLD_DEFAULT_LOAM_KEY} | {_loam_key_example(p) for p in SECRETS_EXAMPLES}
     for header in LOAM_HEADERS:
@@ -115,3 +128,12 @@ def test_tx_ring_chat_reserve_reads_the_type_byte_the_encoder_writes():
         f'txEnqueue must decide the chat reserve from bytes[{type_offset.group(1)}] (TYPE); '
         'any other offset never matches T_CHAT, so chat can fill the ring again'
     )
+
+
+def test_shore_chat_calls_send_gateway_key():
+    code = SHORE_SKETCH.read_text('utf-8')
+    for signature in ('bool postChat(', 'void pollChat('):
+        body = _function_body(code, signature)
+        assert 'https.addHeader("X-Api-Key", GATEWAY_API_KEY);' in body, (
+            f'{signature} must authenticate its /api/mesh/chat request with GATEWAY_API_KEY'
+        )

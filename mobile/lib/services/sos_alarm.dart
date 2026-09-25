@@ -14,9 +14,20 @@ import 'package:vibration/vibration.dart';
 /// Same caveat as [SquallAlarm]: this only runs while the app is in the
 /// foreground. It is not a wake-the-locked-phone push notification.
 class SosAlarm {
-  final AudioPlayer _player = AudioPlayer();
+  SosAlarm({AudioPlayer? player}) : _player = player ?? AudioPlayer();
+
+  final AudioPlayer _player;
   bool _ringing = false;
   bool _sourceSet = false;
+
+  static final AudioContext alarmContext = AudioContext(
+    android: const AudioContextAndroid(
+      usageType: AndroidUsageType.alarm,
+      contentType: AndroidContentType.sonification,
+    ),
+  );
+
+  AudioContext get audioContext => alarmContext;
 
   bool get isRinging => _ringing;
 
@@ -56,6 +67,7 @@ class SosAlarm {
 
   Future<void> _startSound() async {
     try {
+      await _player.setAudioContext(alarmContext);
       if (!_sourceSet) {
         await _player.setSource(AssetSource('audio/sos_alarm.wav'));
         await _player.setReleaseMode(ReleaseMode.loop);

@@ -69,8 +69,8 @@ class Validators {
     if (boat.isEmpty) {
       return t.validatorBoatRequired;
     }
-    if (boat.length > AqOneConfig.maxBoatLength) {
-      return t.validatorMaxCharacters(AqOneConfig.maxBoatLength);
+    if (boat.length > AqOneConfig.maxBoatBytes) {
+      return t.validatorMaxCharacters(AqOneConfig.maxBoatBytes);
     }
     return null;
   }
