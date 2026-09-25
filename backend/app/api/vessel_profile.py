@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.audit import record_audit_event
 from app.auth import get_optional_vessel_device, require_responder_roles
@@ -32,6 +32,16 @@ class VesselProfileIn(BaseModel):
     phone: str = Field(default='', max_length=20)
     shore_contact_name: str | None = Field(default=None, max_length=64)
     shore_contact_phone: str | None = Field(default=None, max_length=20)
+
+    @field_validator('license_type')
+    @classmethod
+    def _normalise_license_type(cls, value: str) -> str:
+        # Same shape as SosIn's trust-tier normalisation: the handset sends
+        # one of boatr/fishr/cfvgl/none, and anything else is a forged or
+        # hand-typed value that must never light the green badge - it reads
+        # as unverified rather than rejecting the whole profile, because a
+        # 422 here would also drop the skipper name and phone number.
+        return value if value in {'boatr', 'fishr', 'cfvgl', 'none'} else 'none'
 
 
 @router.post('', status_code=200)

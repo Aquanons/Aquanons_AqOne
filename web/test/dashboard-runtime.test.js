@@ -284,6 +284,45 @@ test('Phase 1 - F01: Secure rendering prevents unescaped HTML injection', async 
     assert.ok(resolvedList.innerHTML.includes('Registered Boat'), 'registration pill rendered');
   });
 
+  await t.test('reopen posts to the reopen endpoint and refreshes both feeds', async () => {
+    const requested = [];
+    let activeReloaded = false;
+    const ns = {
+      ready: true,
+      OPS_CENTER: [11.7, 122.4],
+      OPS_ZOOM: 11,
+      shoreStations: [],
+      initialBuoys: [],
+      vessels: [],
+      incidents: [],
+      map: { setView() {}, on() {} },
+      openPanel() {},
+      closePanel() {},
+      allAlerts: () => [],
+      alertIcon: () => '<span class="icon"></span>',
+      escapeHtml: escapeHtml,
+      registrationBadgeHtml: () => '',
+      loadActiveSos: () => { activeReloaded = true; return Promise.resolve(); },
+      authFetch: (url) => {
+        requested.push(url);
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ events: [] }) });
+      }
+    };
+
+    const resolvedList = createStubElement('div', 'resolved-feed-list');
+    const { window, document } = createDOMContext({ 'resolved-feed-list': resolvedList }, ns);
+    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-buoy-health.js'), 'utf8');
+    const context = vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns }));
+    vm.runInContext(code, context);
+    await new Promise(r => setTimeout(r, 10));
+
+    requested.length = 0;
+    await ns.reopenIncident(7);
+
+    assert.equal(requested[0], '/api/sos/7/reopen', 'reopen hits the reopen endpoint');
+    assert.ok(activeReloaded, 'active feed refreshes after reopen');
+  });
+
   await t.test('sea condition in dashboard-emergency-advisory.js escapes reason and setByName', async () => {
     const seaCurrent = createStubElement('div', 'sea-condition-current');
     const ns = {

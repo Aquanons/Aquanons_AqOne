@@ -95,7 +95,7 @@ def test_unenrolled_blank_fill_records_anonymous(probe_db):
     _sql(probe_db, "INSERT INTO vessels (id, boat_name, license_type) VALUES ('OPEN', 'OPEN', 'none')")
     payload = {
         'vessel_id': 'OPEN', 'boat': 'Bangka 2', 'skipper_name': 'Maria',
-        'license_type': 'FishR', 'license_number': '', 'phone': '+639170000001',
+        'license_type': 'fishr', 'license_number': '', 'phone': '+639170000001',
     }
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.post('/api/vessel-profile', json=payload)

@@ -43,6 +43,7 @@
         reportHtml +
         regHtml +
         '<div class="incident-feed-meta">Resolved ' + escapeHtml(when) + '</div>' +
+        '<button class="incident-feed-reopen" data-event-id="' + ev.id + '">Reopen</button>' +
       '</div>' +
     '</div>';
   }
@@ -56,6 +57,30 @@
       return;
     }
     el.innerHTML = list.map(resolvedRowHtml).join('');
+    el.querySelectorAll('.incident-feed-reopen').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        reopenIncident(btn.getAttribute('data-event-id'));
+      });
+    });
+  }
+
+  function reopenIncident(eventId) {
+    if (typeof ns.authFetch !== 'function') return Promise.resolve();
+    return ns.authFetch('/api/sos/' + encodeURIComponent(eventId) + '/reopen', {
+      method: 'POST'
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function () {
+        if (typeof ns.loadActiveSos === 'function') ns.loadActiveSos();
+        return loadResolvedSos();
+      })
+      .catch(function (err) {
+        console.warn('[AqOne] Reopen not delivered:', err.message);
+      });
   }
 
   function loadResolvedSos() {
@@ -358,6 +383,7 @@
   ns.renderIncidentFeed = renderIncidentFeed;
   ns.renderResolvedFeed = renderResolvedFeed;
   ns.loadResolvedSos = loadResolvedSos;
+  ns.reopenIncident = reopenIncident;
   ns.updateStats = updateStats;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

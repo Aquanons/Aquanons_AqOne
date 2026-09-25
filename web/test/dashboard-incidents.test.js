@@ -48,3 +48,10 @@ test('vessel confirmation is restricted to responder roles and posts the vessel 
   assert.match(incidents, /\['mdrrmo', 'lgu', 'admin'\]/);
   assert.match(incidents, /\/api\/vessels\/.*\/confirm/);
 });
+
+test('Escape can close the resolve dialog', () => {
+  const shortcuts = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-shortcuts-weather.js'), 'utf8');
+  assert.match(shortcuts, /ns\.closeResolveModal/);
+  assert.match(incidents, /ns\.resolveOverlay = resolveOverlay;/);
+  assert.match(incidents, /ns\.closeResolveModal = closeResolveModal;/);
+});

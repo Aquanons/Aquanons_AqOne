@@ -644,6 +644,8 @@
   ns.ackOverlay = ackOverlay;
   ns.closeAckModal = closeAckModal;
   ns.openAckModal = openAckModal;
+  ns.resolveOverlay = resolveOverlay;
+  ns.closeResolveModal = closeResolveModal;
   ns.refreshOpenDrawer = refreshOpenDrawer;
   ns.confidenceColor = ns.confidenceColor || confidenceColor;
 
