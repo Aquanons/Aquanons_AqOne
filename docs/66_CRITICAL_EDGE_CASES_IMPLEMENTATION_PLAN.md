@@ -3,7 +3,7 @@
 **Status:** APPROVED - Revision 2, except Phase 6 (redesigned after D3, needs Len's look before it starts); Phase 1 next
 **Owner:** Lenard (plan, review, ops), Daniel (bench, hardware), Jade (mobile, Phase 6)
 **Created:** 2026-09-25T17:50:00+08:00
-**Updated:** 2026-09-25T18:05:00+08:00
+**Updated:** 2026-09-25T21:55:00+08:00
 **Related:** `docs/60_EXTREME_EDGE_CASE_REPORT.md` (findings C1-C14), `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (design D1-D12), `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` and tracks `62A` to `62D`
 
 Revision: 2
@@ -201,16 +201,19 @@ C5 is out of this phase by D7.
 - [x] Create `docs/edge-remediation/EVIDENCE-critical.md`; each check below appends its dated section.
 - [x] D2 (Gemini): install PlatformIO Core and a host `g++`, prove both with a firmware build and a host compile, and record `pio --version` and `g++ --version`. PlatformIO 6.2.0 and `g++` 16.1.0; both firmware environments build with 0 warnings (Claude re-ran, 2026-09-25).
 - [ ] **C9 and C13 - shore reflash.**
-  Len: `pio run -d firmware -e shore -t upload` from `master`.
+  Daniel: `pio run -d firmware -e shore -t upload` from `master`, following `docs/edge-remediation/HANDOFF-daniel-shore-reflash.md` (Len supplies the secrets privately).
   Record from the serial log: a verified TLS connection (no `setInsecure`), a successful `GET /api/mesh/chat` with `X-Api-Key`, and a dashboard chat line that reaches a phone on a pod.
+  The shore logs nothing on a successful chat poll, so the dashboard line reaching the phone is the proof of the `GET`; `[ack] poll ok` is the proof of verified TLS with the key.
   Then, against the deployed backend: `POST /api/mesh/chat` with no credential and `sender = "MDRRMO"` returns 422 `sender_reserved` (docs/05 line 1430).
-- [ ] **C6 - dashboard with a waiting SOS.**
+  The deployed-backend half passed on 2026-09-25 (`EVIDENCE-critical.md`); the shore half is open.
+- [x] **C6 - dashboard with a waiting SOS.** Browser half done 2026-09-25 (armed on first load, rings after one click); SMS half open.
   With the dashboard closed, post a test SOS; open the dashboard in a browser; the alarm rings on first load (or the audio-unlock banner shows and rings on one click).
   Record whether `SEMAPHORE_API_KEY` and `ONCALL_SMS_NUMBERS` are set on Render (names only), and if they are, let the test SOS go unanswered past the escalation window and record the SMS arriving on the duty phone.
   If they are not set, record "SMS escalation not configured" as an open item for Len; do not mark C6 closed on the SMS half.
-- [ ] **C7 - resolve.**
+  Len, 2026-09-25: neither is set on Render. The SMS half is an open to-do (`EVIDENCE-critical.md`); C6 closes on the browser half only.
+- [x] **C7 - resolve.** Done 2026-09-25 (reason and confirm required, Undo reopens); vessel-feed half checked through `/api/sos/active` only.
   In the browser: Resolve asks for a reason and confirmation; Undo reopens; the boat's vessel feed shows the reopened incident as active.
-- [ ] **C3 - phone keeps trying.**
+- [x] **C3 - phone keeps trying.** Done 2026-09-25: `delivered` within 2 s with the backend up; with it down the phone keeps retrying past `relayed` and delivers on the next backoff step (4 min 9 s in the run). A one-off frozen countdown on the first SOS is recorded as open in `EVIDENCE-critical.md`.
   Emulator with the backend reachable and the buoy client pointed at a stub that answers `{"accepted": true}` and never delivers.
   The record goes `saved`, `relayed`, then `delivered` within 60 s (the `Pending - Len` item in `EVIDENCE-mobile.md`).
 - [ ] Any check that fails: write the failing test in the owning layer first, fix the root cause, and re-run the check.

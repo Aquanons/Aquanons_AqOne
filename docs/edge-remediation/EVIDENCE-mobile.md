@@ -24,6 +24,7 @@ Row counts and IDs only; never data, URLs or credentials.
 
 ### Manual / Device checks
 - `Pending - Len: Manual (emulator): point the buoy client at a stub that accepts and never delivers, with the backend reachable. The record goes saved, then relayed, then delivered within 60 s.`
+  Done 2026-09-25 (plan 66 C3): see `EVIDENCE-critical.md`.
 
 ## Phase M2: Foreground service while an SOS is pending (2026-09-24)
 

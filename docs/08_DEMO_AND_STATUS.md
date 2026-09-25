@@ -5,6 +5,17 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-25 - Plan 66 Phase 1: evidence for C3, C6, C7 and the backend half of C9
+
+Checks against the deployed backend (`a0f8284`); details and screenshots in [`edge-remediation/EVIDENCE-critical.md`](edge-remediation/EVIDENCE-critical.md).
+
+- **C9 (backend half) - pass.** Anonymous chat posts under reserved names (`MDRRMO`, `M.D.R.R.M.0`, `coast guard`, and a spoofed `origin`) return 422 `sender_reserved`; anonymous chat reads return 401.
+- **C3 - pass.** Real app on an emulator with a stub pod that accepts and never delivers: `delivered` within 2 s with the backend up; with the backend down it keeps retrying past `relayed` and delivered 4 min 9 s after the backend returned (the 5 min backoff step).
+- **C6 (browser half) - pass.** The dashboard arms the alarm on first load for a waiting SOS; the browser holds sound until one click on the "Alarm sound is OFF" banner, then the siren runs. SMS escalation is **not configured** on Render (`SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`): open to-do for Len.
+- **C7 - pass.** Resolve needs a reason and a confirm; Undo within 10 s reopens the incident.
+- **Open:** the shore reflash for C9 and C13 (handed to Daniel: [`edge-remediation/HANDOFF-daniel-shore-reflash.md`](edge-remediation/HANDOFF-daniel-shore-reflash.md)); one frozen SOS countdown seen once on the first SOS after registration, not reproduced (owner Jade); dashboard layout defects listed in the evidence file (owner Arnold).
+- Test incidents 429 and 430 (boat `TEST-C3`) were created on production and resolved as "Closed without reaching the boat".
+
 ## 2026-09-25 - Status check on `master` (`2528f30`)
 
 A full re-run of every software gate on the current `master`, plus a catch-up of work since the last README check on 2026-09-19.
