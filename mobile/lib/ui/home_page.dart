@@ -22,9 +22,8 @@ import '../services/location_service.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/venture_feeds.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'venture_page.dart';
+import 'sos_flow.dart';
 import 'widgets/action_pill.dart';
 import 'widgets/advisory_card.dart';
 import 'widgets/buoy_status_card.dart';
@@ -282,116 +281,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _pollBuoy();
   }
 
-  Future<void> _handleSosTap({bool silent = false}) async {
-    if (_isSendingSos) {
-      return;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    final isSilent = silent || (prefs.getBool('silent_sos') ?? false);
-
-    setState(() => _isSendingSos = true);
-    if (!isSilent) {
-      unawaited(_sosAlarm.start());
-    }
-
-    final shouldSend = await _runSosCountdown();
-    if (!mounted) {
-      return;
-    }
-
-    if (!shouldSend) {
-      unawaited(_sosAlarm.stop());
-      setState(() => _isSendingSos = false);
-      _snack(AppLocalizations.of(context).sosCancelledNothingSent);
-      return;
-    }
-
-    try {
-      final record = await widget.service.raiseSos();
-      if (!mounted) {
-        return;
-      }
-      await _loadRecords();
-      await _showEmergencyDetailsSheet(record);
-    } on StateError {
-      if (mounted) {
-        _snack(AppLocalizations.of(context).sosSetupBoatRequired);
-      }
-    } finally {
-      unawaited(_sosAlarm.stop());
-      if (mounted) {
-        setState(() => _isSendingSos = false);
-      }
-    }
-  }
-
-  Future<bool> _runSosCountdown() async {
-    final result = await showGeneralDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black87,
-      transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder: (ctx, __, ___) =>
-          const SosCountdownScreen(duration: _sosCountdown),
-    );
-    return result ?? false;
-  }
-
-  Future<void> _showEmergencyDetailsSheet(SosRecord record) async {
-    if (!mounted) {
-      return;
-    }
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => EmergencyDetailsSheet(
-        boat: widget.identity.boat,
-        onSubmitNote: (note) async {
-          try {
-            await widget.service.amendNote(record.localId, note);
-            if (mounted) {
-              await _loadRecords();
-            }
-          } catch (_) {
-            // Best-effort per amendNote()'s own contract - the note is
-            // already saved locally regardless of whether this succeeded.
-          }
-        },
-        onStandDown: () async {
-          await widget.service.standDown(record.localId);
-          if (!mounted) return;
-          final t = AppLocalizations.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(minutes: 2),
-              content: Text(t.sosStoodDown),
-              action: SnackBarAction(
-                label: t.sosStandDownUndo,
-                onPressed: () {
-                  widget.service.replyToSos(record.localId, 1);
-                },
-              ),
-            ),
-          );
-        },
-      ),
-    );
-    unawaited(_sosAlarm.stop());
-  }
-
-  void _snack(String message) {
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
@@ -405,8 +294,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           label: 'SOS',
           color: const Color(0xFFDC2626),
           isDark: Theme.of(context).brightness == Brightness.dark,
-          onTap: _isSendingSos ? null : () => _handleSosTap(),
-          onHold: _isSendingSos ? null : () => _handleSosTap(silent: true),
+          onTap: _isSendingSos
+              ? null
+              : () => handleSosTap(
+                    context: context,
+                    service: widget.service,
+                    alarm: _sosAlarm,
+                    countdown: _sosCountdown,
+                    isSending: _isSendingSos,
+                    setSending: (value) {
+                      if (mounted) setState(() => _isSendingSos = value);
+                    },
+                    onRaised: (_) => _loadRecords(),
+                  ),
         ),
       ),
       body: SafeArea(
@@ -505,7 +405,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               // declaration is a standing judgement about the day; a squall is
               // happening now and has minutes of lead time, so it must be the
               // first thing seen. Renders nothing when there is no squall.
-              if (!AqOneConfig.pitchMode && widget.squall.shouldDisplay) ...<Widget>[
+              if (!AqOneConfig.pitchMode &&
+                  widget.squall.shouldDisplay) ...<Widget>[
                 SquallBanner(
                   watch: widget.squall,
                   acknowledged: widget.squallAcknowledged,
@@ -706,7 +607,8 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: palette.primaryText),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: palette.primaryText),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -746,9 +648,7 @@ class _WiFiSelectionScreenState extends State<_WiFiSelectionScreen> {
                     vertical: AqSpace.xs,
                   ),
                   leading: Icon(
-                    _ssid.isEmpty
-                        ? Icons.wifi_off_rounded
-                        : Icons.wifi_rounded,
+                    _ssid.isEmpty ? Icons.wifi_off_rounded : Icons.wifi_rounded,
                     color: _ssid.isEmpty
                         ? palette.secondaryText
                         : palette.primaryText,

@@ -4,8 +4,8 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/tokens.dart';
-import '../../models/delivery_policy.dart';
 import '../../models/delivery_state.dart';
+import '../../models/fisher_sos_situation.dart';
 import '../../models/sos_record.dart';
 
 class DeliveryStateTile extends StatelessWidget {
@@ -13,27 +13,12 @@ class DeliveryStateTile extends StatelessWidget {
 
   final SosRecord record;
 
-  Color _accent() {
-    if (record.isResolved) {
-      return AqColors.success;
-    }
-    switch (record.state) {
-      case DeliveryState.saved:
-        return AqColors.warning;
-      case DeliveryState.relayed:
-        return AqColors.connectivity;
-      case DeliveryState.delivered:
-        return AqColors.info;
-      case DeliveryState.acknowledged:
-        return AqColors.success;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
     final t = AppLocalizations.of(context);
-    final accent = _accent();
+    final situation = FisherSosSituation.of(record);
+    final accent = situation.color;
     final resolved = record.isResolved;
 
     // Coordinates are numbers, not copy - they are formatted, never
@@ -55,17 +40,10 @@ class DeliveryStateTile extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: accent,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              Icon(situation.icon, size: 20, color: accent),
               const SizedBox(width: AqSpace.sm),
               Text(
-                resolved ? t.resolvedTitle : record.state.title(t),
+                situation.title(t),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -84,33 +62,13 @@ class DeliveryStateTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AqSpace.sm),
-          Builder(
-            builder: (_) {
-              final pastDeadline = record.state == DeliveryState.relayed &&
-                  record.relayedAt != null &&
-                  DateTime.now().toUtc().difference(
-                        DateTime.fromMillisecondsSinceEpoch(
-                          record.relayedAt! * 1000,
-                          isUtc: true,
-                        ),
-                      ) >=
-                      podDeliveryDeadline;
-
-              final description = resolved
-                  ? t.resolvedDescription
-                  : pastDeadline
-                      ? t.sosPodNotConfirmed
-                      : record.state.description(t);
-
-              return Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: palette.secondaryText,
-                ),
-              );
-            },
+          Text(
+            situation.description(t),
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: palette.secondaryText,
+            ),
           ),
           if (resolved)
             Padding(

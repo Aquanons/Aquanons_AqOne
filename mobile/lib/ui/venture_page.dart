@@ -5,14 +5,13 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/config.dart';
 import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
 import '../models/buoy_marker.dart';
-import '../models/delivery_state.dart';
 import '../models/hazard_alert.dart';
+import '../models/fisher_sos_situation.dart';
 import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
@@ -24,6 +23,7 @@ import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
 import '../services/venture_feeds.dart';
 import 'chathubb.dart';
+import 'sos_flow.dart';
 import 'widgets/action_pill.dart';
 import 'widgets/compass_dial.dart';
 import 'widgets/offline_map_banner.dart';
@@ -42,21 +42,6 @@ const Color _success = Color(0xFF16A34A);
 /// alert behind typing a note - but long enough that a pocket tap can be
 /// caught before anything reaches the MDRRMO.
 const Duration _sosCountdown = Duration(seconds: 4);
-
-/// Preset emergency types offered on the post-dispatch follow-up. Picking
-/// one amends the note already on file with the MDRRMO; it never delays the
-/// SOS itself, which has already gone out by the time this is shown.
-enum _EmergencyType {
-  engine('Engine failure', Icons.settings_suggest_rounded),
-  capsizing('Capsizing / taking on water', Icons.waves_rounded),
-  medical('Medical emergency', Icons.medical_services_rounded),
-  other('Other', Icons.edit_note_rounded);
-
-  const _EmergencyType(this.label, this.icon);
-
-  final String label;
-  final IconData icon;
-}
 
 /// The at-sea operational screen: map, conditions and SOS.
 ///
@@ -307,117 +292,6 @@ class _VenturePageState extends State<VenturePage> {
   /// Only once the countdown runs out (uninterrupted) does anything actually
   /// go to the MDRRMO; the "what's wrong?" detail is gathered afterwards,
   /// while the alert is already in flight.
-  Future<void> _handleSosTap({bool silent = false}) async {
-    if (_isSendingSos) {
-      return;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    final isSilent = silent || (prefs.getBool('silent_sos') ?? false);
-
-    setState(() => _isSendingSos = true);
-    if (!isSilent) {
-      unawaited(_sosAlarm.start());
-    }
-
-    final shouldSend = await _runSosCountdown();
-    if (!mounted) {
-      return;
-    }
-
-    if (!shouldSend) {
-      unawaited(_sosAlarm.stop());
-      setState(() => _isSendingSos = false);
-      _snack(AppLocalizations.of(context).sosCancelledNothingSent);
-      return;
-    }
-
-    try {
-      // Sent with no note - the alert itself must never wait on the fisher
-      // typing anything. The follow-up sheet attaches detail afterwards.
-      final record = await widget.sos.raiseSos();
-      if (!mounted) {
-        return;
-      }
-      setState(() => _latestSos = record);
-      await _showEmergencyDetailsSheet(record);
-    } on StateError {
-      if (mounted) {
-        _snack(AppLocalizations.of(context).sosSetupBoatRequired);
-      }
-    } finally {
-      unawaited(_sosAlarm.stop());
-      if (mounted) {
-        setState(() => _isSendingSos = false);
-      }
-    }
-  }
-
-  /// Full-screen countdown with a slide-to-cancel control. Returns true if
-  /// the countdown ran out (dispatch), false if the fisher cancelled -
-  /// before anything was sent either way.
-  Future<bool> _runSosCountdown() async {
-    final result = await showGeneralDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black87,
-      transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder: (ctx, __, ___) =>
-          const SosCountdownScreen(duration: _sosCountdown),
-    );
-    return result ?? false;
-  }
-
-  /// Shown immediately after dispatch, while the alarm keeps ringing: lets
-  /// the fisher attach what's actually wrong, or stand the alert down if it
-  /// was raised by mistake. Either action stops the alarm; so does just
-  /// leaving it on the "already sent" state and closing without picking
-  /// anything.
-  Future<void> _showEmergencyDetailsSheet(SosRecord record) async {
-    if (!mounted) {
-      return;
-    }
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => EmergencyDetailsSheet(
-        boat: widget.identity.boat,
-        onSubmitNote: (note) async {
-          try {
-            final updated = await widget.sos.amendNote(record.localId, note);
-            if (mounted) {
-              setState(() => _latestSos = updated);
-            }
-          } catch (_) {
-            // Best-effort per amendNote()'s own contract - the note is
-            // already saved locally regardless of whether this succeeded.
-          }
-        },
-        onStandDown: () async {
-          await widget.sos.standDown(record.localId);
-          if (!mounted) return;
-          final t = AppLocalizations.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(minutes: 2),
-              content: Text(t.sosStoodDown),
-              action: SnackBarAction(
-                label: t.sosStandDownUndo,
-                onPressed: () {
-                  widget.sos.replyToSos(record.localId, 1);
-                },
-              ),
-            ),
-          );
-        },
-      ),
-    );
-    unawaited(_sosAlarm.stop());
-  }
-
   void _queueHazardDialog(HazardKind kind) {
     if (!_hazardQueue.contains(kind)) {
       _hazardQueue.add(kind);
@@ -864,8 +738,7 @@ class _VenturePageState extends State<VenturePage> {
           isActive: false,
           isDark: isDark,
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) =>
-                Chathubb(identity: widget.identity)),
+            MaterialPageRoute<void>(builder: (_) => Chathubb(identity: widget.identity)),
           ),
         ),
         const SizedBox(height: 14),
@@ -874,56 +747,29 @@ class _VenturePageState extends State<VenturePage> {
           label: 'SOS',
           color: _danger,
           isDark: isDark,
-          onTap: _isSendingSos ? null : () => _handleSosTap(),
-          onHold: _isSendingSos ? null : () => _handleSosTap(silent: true),
+          onTap: _isSendingSos
+              ? null
+              : () => handleSosTap(
+                    context: context,
+                    service: widget.sos,
+                    alarm: _sosAlarm,
+                    countdown: _sosCountdown,
+                    isSending: _isSendingSos,
+                    setSending: (value) {
+                      if (mounted) setState(() => _isSendingSos = value);
+                    },
+                    onRaised: (record) async =>
+                        setState(() => _latestSos = record),
+                  ),
         ),
       ],
     );
   }
 
   Widget _buildSosStatus(bool isDark, SosRecord record) {
-    final state = record.state;
-    final resolvedByMDRRMO = record.resolvedAt != null;
-    final standDown = !resolvedByMDRRMO && record.isStoodDown;
-    final standDownPending =
-        !resolvedByMDRRMO && record.fisherReply == 2 && !record.fisherReplySynced;
     final t = AppLocalizations.of(context);
-    final color = resolvedByMDRRMO
-        ? _success
-        : (standDown || standDownPending)
-            ? const Color(0xFF64748B)
-            : switch (state) {
-                DeliveryState.saved => const Color(0xFFD97706),
-                DeliveryState.relayed => _brandPrimary,
-                DeliveryState.delivered => const Color(0xFF0284C7),
-                DeliveryState.acknowledged => _success,
-              };
-    final title = resolvedByMDRRMO
-        ? t.resolvedTitle
-        : standDown
-            ? t.standDownTitle
-            : standDownPending
-                ? t.standDownPendingTitle
-                : state.title(t);
-    final sosTitle = 'SOS: $title';
-    final description = resolvedByMDRRMO
-        ? t.resolvedDescription
-        : standDown
-            ? t.standDownDescription
-            : standDownPending
-                ? t.standDownPendingDescription
-                : state.description(t);
-    final icon = resolvedByMDRRMO
-        ? Icons.task_alt_rounded
-        : (standDown || standDownPending)
-            ? Icons.undo_rounded
-            : switch (state) {
-                DeliveryState.saved => Icons.hourglass_top_rounded,
-                DeliveryState.relayed => Icons.sync_rounded,
-                DeliveryState.delivered => Icons.cloud_done_rounded,
-                DeliveryState.acknowledged => Icons.check_circle_rounded,
-              };
-
+    final situation = FisherSosSituation.of(record);
+    final title = 'SOS: ${situation.title(t)}';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -945,7 +791,7 @@ class _VenturePageState extends State<VenturePage> {
       ),
       child: Row(
         children: <Widget>[
-          Icon(icon, size: 20, color: color),
+          Icon(situation.icon, size: 20, color: situation.color),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -953,17 +799,17 @@ class _VenturePageState extends State<VenturePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  sosTitle,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
-                    color: color,
+                    color: situation.color,
                   ),
                 ),
                 Text(
-                  description,
+                  situation.description(t),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -976,11 +822,8 @@ class _VenturePageState extends State<VenturePage> {
           ),
           if (!record.hasFix) ...<Widget>[
             const SizedBox(width: 8),
-            const Icon(
-              Icons.gps_off_rounded,
-              size: 15,
-              color: Color(0xFFD97706),
-            ),
+            const Icon(Icons.gps_off_rounded,
+                size: 15, color: Color(0xFFD97706)),
           ],
         ],
       ),
@@ -993,7 +836,8 @@ class _VenturePageState extends State<VenturePage> {
   Widget _buildCompass(bool isDark) {
     final AppLocalizations t = AppLocalizations.of(context);
     final double? sensorHeading = _heading;
-    final double? shown = sensorHeading ?? (_rotation == 0 ? null : -_rotation * 180.0 / math.pi);
+    final double? shown =
+        sensorHeading ?? (_rotation == 0 ? null : -_rotation * 180.0 / math.pi);
 
     return Semantics(
       button: true,
@@ -1126,517 +970,6 @@ class _RoundButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Full-screen "sending SOS in N…" countdown with a slide-to-cancel bar.
-///
-/// Deliberately not a plain [AlertDialog]: this has to be impossible to
-/// dismiss by accident (no tap-outside, no back-gesture - see [PopScope]
-/// below) while still being trivially easy to cancel on purpose via the
-/// slide, which is a large, deliberate, hard-to-trigger-by-accident gesture.
-class SosCountdownScreen extends StatefulWidget {
-  const SosCountdownScreen({super.key, required this.duration});
-
-  final Duration duration;
-
-  @override
-  State<SosCountdownScreen> createState() => _SosCountdownScreenState();
-}
-
-class _SosCountdownScreenState extends State<SosCountdownScreen> {
-  static const Duration _tick = Duration(milliseconds: 100);
-
-  late Duration _remaining = widget.duration;
-  Timer? _timer;
-  bool _resolved = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(_tick, (_) {
-      final next = _remaining - _tick;
-      if (next <= Duration.zero) {
-        _finish(true);
-        return;
-      }
-      setState(() => _remaining = next);
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _finish(bool dispatch) {
-    if (_resolved) {
-      return;
-    }
-    _resolved = true;
-    _timer?.cancel();
-    Navigator.of(context).pop(dispatch);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final fraction = 1 -
-        (_remaining.inMilliseconds / widget.duration.inMilliseconds)
-            .clamp(0.0, 1.0);
-    final secondsLeft =
-        (_remaining.inMilliseconds / 1000).ceil().clamp(1, 99);
-    final secondsDisplay = '$secondsLeft';
-
-    return PopScope(
-      // No back-gesture, no back-button dismissal - the only way out of this
-      // screen is the slide-to-cancel control below, or letting it run out.
-      canPop: false,
-      child: Scaffold(
-        backgroundColor: const Color(0xFF7A0E0E),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-            child: Column(
-              children: <Widget>[
-                const Spacer(),
-                const Icon(
-                  Icons.warning_rounded,
-                  color: Colors.white,
-                  size: 60,
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  t.sosSendingTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t.sosSendingSubtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: 130,
-                  height: 130,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 130,
-                        height: 130,
-                        child: CircularProgressIndicator(
-                          value: fraction,
-                          strokeWidth: 7,
-                          backgroundColor: Colors.white24,
-                          valueColor:
-                              const AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                      Text(
-                        secondsDisplay,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 42,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                _SlideToAction(
-                  label: t.sosSlideToCancel,
-                  icon: Icons.close_rounded,
-                  accentColor: Colors.white,
-                  thumbIconColor: const Color(0xFF7A0E0E),
-                  onConfirmed: () => _finish(false),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  t.sosAutoSendNotice,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Shown right after dispatch. Lets the fisher attach what's actually wrong
-/// (updating the note already on file at the MDRRMO) or stand the alert
-/// down if it went out by mistake - both remain available at once, they are
-/// not mutually exclusive steps.
-@visibleForTesting
-class EmergencyDetailsSheet extends StatefulWidget {
-  const EmergencyDetailsSheet({
-    super.key,
-    required this.boat,
-    required this.onSubmitNote,
-    required this.onStandDown,
-  });
-
-  final String boat;
-  final Future<void> Function(String note) onSubmitNote;
-  final Future<void> Function() onStandDown;
-
-  @override
-  State<EmergencyDetailsSheet> createState() =>
-      _EmergencyDetailsSheetState();
-}
-
-class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
-  _EmergencyType? _selected;
-  final TextEditingController _custom = TextEditingController();
-  bool _submitting = false;
-  bool _standingDown = false;
-
-  @override
-  void dispose() {
-    _custom.dispose();
-    super.dispose();
-  }
-
-  String? get _noteToSend {
-    final type = _selected;
-    if (type == null) {
-      return null;
-    }
-    if (type == _EmergencyType.other) {
-      final text = _custom.text.trim();
-      return text.isEmpty ? null : text;
-    }
-    return type.label;
-  }
-
-  Future<void> _submit() async {
-    final note = _noteToSend;
-    setState(() => _submitting = true);
-    if (note != null) {
-      await widget.onSubmitNote(note);
-    }
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
-  }
-
-  Future<void> _standDown() async {
-    final t = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.sosStandDownConfirmTitle),
-        content: Text(t.sosStandDownConfirmBody),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.actionCancel),
-          ),
-          FilledButton(
-            key: const Key('confirm_stand_down'),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: _danger),
-            child: Text(t.standDownTitle),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    setState(() => _standingDown = true);
-    await widget.onStandDown();
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? _canvasDark : Colors.white;
-    final fg = isDark ? Colors.white : const Color(0xFF0F172A);
-    final dim = isDark ? Colors.white60 : const Color(0xFF64748B);
-
-    return PopScope(
-      // Closing this sheet is only ever a deliberate choice - "send update",
-      // "stand down", or explicitly dismissing without either - never an
-      // accidental back-swipe, since the alarm is still ringing underneath
-      // it and a stray dismissal must not leave the fisher unsure whether
-      // anything was recorded.
-      canPop: false,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: dim.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Row(
-                children: <Widget>[
-                  const Icon(Icons.check_circle_rounded,
-                      color: _success, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      t.sosSentForBoat(widget.boat),
-                      style: TextStyle(
-                        color: fg,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                t.sosWhatsWrongNotice,
-                style: TextStyle(color: dim, fontSize: 12.5, height: 1.35),
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  for (final type in _EmergencyType.values)
-                    ChoiceChip(
-                      label: Text(type.label),
-                      avatar: Icon(type.icon, size: 16),
-                      selected: _selected == type,
-                      onSelected: _submitting || _standingDown
-                          ? null
-                          : (value) =>
-                              setState(() => _selected = value ? type : null),
-                    ),
-                ],
-              ),
-              if (_selected == _EmergencyType.other) ...<Widget>[
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _custom,
-                  maxLength: AqOneConfig.maxNoteBytes,
-                  textCapitalization: TextCapitalization.sentences,
-                  enabled: !_submitting && !_standingDown,
-                  decoration: InputDecoration(
-                    hintText: t.sosDescribeWrong,
-                    counterText: '',
-                    isDense: true,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: (_submitting || _standingDown) ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _brandPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    _selected == null ? t.actionClose : t.sosSendUpdate,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Divider(color: dim.withValues(alpha: 0.25)),
-              const SizedBox(height: 8),
-              Text(
-                t.sosSentByMistake,
-                style: TextStyle(
-                  color: fg,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _SlideToAction(
-                label: _standingDown ? t.standDownTitle : t.sosSlideToStandDown,
-                icon: Icons.undo_rounded,
-                accentColor: _danger,
-                onConfirmed: _submitting || _standingDown ? null : _standDown,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A large, deliberate "slide to confirm" control - used both to cancel the
-/// countdown and to stand down an already-sent SOS. A tap can happen by
-/// accident; dragging a thumb the width of a track cannot, which is exactly
-/// the asymmetry wanted for actions this consequential.
-class _SlideToAction extends StatefulWidget {
-  const _SlideToAction({
-    required this.label,
-    required this.icon,
-    required this.accentColor,
-    required this.onConfirmed,
-    this.thumbIconColor = Colors.white,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color accentColor;
-  final Color thumbIconColor;
-
-  /// Null disables the control (shown mid-action, e.g. while a stand-down
-  /// request is already in flight).
-  final VoidCallback? onConfirmed;
-
-  @override
-  State<_SlideToAction> createState() => _SlideToActionState();
-}
-
-class _SlideToActionState extends State<_SlideToAction> {
-  static const double _thumbSize = 48;
-
-  double _fraction = 0;
-  bool _dragging = false;
-  bool _confirmed = false;
-
-  void _onDragUpdate(DragUpdateDetails details, double maxDrag) {
-    if (_confirmed || widget.onConfirmed == null || maxDrag <= 0) {
-      return;
-    }
-    setState(() {
-      _dragging = true;
-      _fraction =
-          (_fraction * maxDrag + details.delta.dx).clamp(0, maxDrag) /
-              maxDrag;
-    });
-  }
-
-  void _onDragEnd(DragEndDetails details) {
-    if (_confirmed || widget.onConfirmed == null) {
-      return;
-    }
-    if (_fraction > 0.8) {
-      setState(() {
-        _confirmed = true;
-        _fraction = 1;
-        _dragging = false;
-      });
-      widget.onConfirmed!();
-      if (mounted) {
-        setState(() {
-          _confirmed = false;
-          _fraction = 0;
-        });
-      }
-    } else {
-      setState(() {
-        _dragging = false;
-        _fraction = 0;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = widget.onConfirmed != null;
-    final accent = enabled ? widget.accentColor : Colors.grey;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final trackWidth = constraints.maxWidth;
-        final maxDrag = (trackWidth - _thumbSize).clamp(0, trackWidth);
-        final thumbLeft = _fraction * maxDrag;
-        return Container(
-          height: _thumbSize + 8,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular((_thumbSize + 8) / 2),
-            border: Border.all(color: accent.withValues(alpha: 0.45)),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: _thumbSize),
-                  child: Text(
-                    widget.label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: accent,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ),
-              AnimatedPositioned(
-                duration: _dragging
-                    ? Duration.zero
-                    : const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                left: thumbLeft,
-                child: GestureDetector(
-                  onHorizontalDragUpdate: (d) =>
-                      _onDragUpdate(d, maxDrag.toDouble()),
-                  onHorizontalDragEnd: _onDragEnd,
-                  child: Container(
-                    width: _thumbSize,
-                    height: _thumbSize,
-                    decoration: BoxDecoration(
-                      color: accent,
-                      shape: BoxShape.circle,
-                      boxShadow: const <BoxShadow>[
-                        BoxShadow(color: Colors.black26, blurRadius: 6),
-                      ],
-                    ),
-                    child: Icon(
-                      widget.icon,
-                      color: widget.thumbIconColor,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

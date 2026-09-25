@@ -1169,7 +1169,7 @@
   "@settingsSilentSos": {
     "description": "Label for settings toggle to send SOS silently."
   },
-  "settingsSilentSosDescription": "Send an SOS with no siren or sound. You can also hold the SOS button for 3 seconds.",
+  "settingsSilentSosDescription": "Send an SOS with no siren or sound.",
   "@settingsSilentSosDescription": {
     "description": "Description for silent SOS settings toggle."
   },
@@ -1205,19 +1205,9 @@
   "@sosAutoSendNotice": {
     "description": "Instruction on countdown screen that SOS dispatches automatically when timer expires."
   },
-  "sosSentForBoat": "SOS sent for {boat}",
-  "@sosSentForBoat": {
-    "description": "Heading on emergency details sheet showing vessel name.",
-    "placeholders": {
-      "boat": {
-        "type": "String",
-        "example": "M/B Elena"
-      }
-    }
-  },
-  "sosWhatsWrongNotice": "What's wrong? This updates what the MDRRMO sees - optional, the alert has already gone out.",
-  "@sosWhatsWrongNotice": {
-    "description": "Explanation on emergency details sheet that note is optional and alert has dispatched."
+  "sosSituationNotePrompt": "What is wrong? Optional. This will be added to your SOS.",
+  "@sosSituationNotePrompt": {
+    "description": "Prompt above the optional emergency details; true before and after delivery."
   },
   "sosSendUpdate": "Send update",
   "@sosSendUpdate": {
