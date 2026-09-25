@@ -194,8 +194,8 @@ C5 is out of this phase by D7.
 
 ### Tasks
 
-- [ ] Create `docs/edge-remediation/EVIDENCE-critical.md` with one section per Critical.
-- [ ] D2 (Gemini): install PlatformIO Core and a host `g++`, prove both with a firmware build and a host compile, and record `pio --version` and `g++ --version`.
+- [x] Create `docs/edge-remediation/EVIDENCE-critical.md`; each check below appends its dated section.
+- [x] D2 (Gemini): install PlatformIO Core and a host `g++`, prove both with a firmware build and a host compile, and record `pio --version` and `g++ --version`. PlatformIO 6.2.0 and `g++` 16.1.0; both firmware environments build with 0 warnings (Claude re-ran, 2026-09-25).
 - [ ] **C9 and C13 - shore reflash.**
   Len: `pio run -d firmware -e shore -t upload` from `master`.
   Record from the serial log: a verified TLS connection (no `setInsecure`), a successful `GET /api/mesh/chat` with `X-Api-Key`, and a dashboard chat line that reaches a phone on a pod.
