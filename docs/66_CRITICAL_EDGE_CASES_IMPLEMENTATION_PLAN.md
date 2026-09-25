@@ -3,14 +3,14 @@
 **Status:** APPROVED - Revision 2, except Phase 6 (redesigned after D3, needs Len's look before it starts); Phase 1 next
 **Owner:** Lenard (plan, review, ops), Daniel (bench, hardware), Jade (mobile, Phase 6)
 **Created:** 2026-09-25T17:50:00+08:00
-**Updated:** 2026-09-25T18:25:00+08:00
+**Updated:** 2026-09-25T18:05:00+08:00
 **Related:** `docs/60_EXTREME_EDGE_CASE_REPORT.md` (findings C1-C14), `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (design D1-D12), `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` and tracks `62A` to `62D`
 
 Revision: 2
 **Execution mode:** hard-stop
 Feature spec and revision: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (the approved design for docs/60), Critical rows C1-C14 only
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`, docs/61 Section 4.3 and Section 11 (Clean Architecture placement)
-Len's chat decisions, 2026-09-25T18:20:00+08:00, on Revision 1: D1 second byte-identical header; D2 yes, handed to Gemini; D3 no pod password, reduce friction; D4 yes; D6 yes, `TinyGPSPlus`; D7 deal with the database when it expires, not a top concern (RSTW is 2026-10-01 to 03, Enactus 2026-10-09 to 10). D5 not answered yet.
+Len's chat decisions, 2026-09-25T18:03:00+08:00, on Revision 1: D1 second byte-identical header; D2 yes, handed to Gemini; D3 no pod password, reduce friction; D4 yes; D6 yes, `TinyGPSPlus`; D7 deal with the database when it expires, not a top concern (RSTW is 2026-10-01 to 03, Enactus 2026-10-09 to 10). D5 not answered yet.
 Revision 2 records those answers, drops the database rotation from Phase 1, and replaces Phase 6's pod password with a check the fisher never sees.
 Len's chat approval: Revision 2 Phases 1-5 and 7 treated as approved by the decisions above; Phase 6 needs explicit approval.
 Target branch: `edge/critical` from `master`, one commit per phase; Len may push verified phases straight to `master`
