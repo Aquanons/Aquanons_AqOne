@@ -118,6 +118,16 @@
     </div>
   </header>
 
+  <button type="button" id="alarm-sound-banner" class="alarm-sound-banner" aria-live="polite">
+    Alarm sound is OFF - click to enable
+  </button>
+  <div id="session-expiry-banner" class="ops-banner ops-banner-warning" role="alert" hidden></div>
+  <section id="ops-status" class="ops-status" aria-live="polite">
+    <span id="ops-gateway-status">Gateway status checking</span>
+    <div id="ops-sms-banner" class="ops-banner ops-banner-error" hidden></div>
+    <div id="ops-db-banner" class="ops-banner ops-banner-warning" hidden></div>
+  </section>
+
   <!-- ══════════════════════════════════════════════════════════════
        LIVE ALERT BANNER
        ══════════════════════════════════════════════════════════════ -->
@@ -593,7 +603,9 @@
           </div>
 
           <div class="tab-content" id="tab-alerts">
+            <div class="sos-flood-banner" id="sos-flood-banner" role="alert" hidden></div>
             <div class="alert-list" id="alert-list"></div>
+            <div class="sos-more-count" id="sos-more-count" hidden></div>
           </div>
 
           <div class="tab-content" id="tab-tripchecks">
@@ -808,7 +820,6 @@
       <span class="sos-drawer-title" id="sos-drawer-title">MANUAL SOS TRIGGERED</span>
       <button class="sos-drawer-close" id="sos-drawer-close" aria-label="Close incident drawer">&times;</button>
     </div>
-    <div class="sos-reg-row" id="sos-registration-badge"></div>
     <div class="sos-drawer-body">
       <div class="sos-section sos-details">
         <div class="sos-detail-row">
@@ -824,12 +835,16 @@
           <span class="sos-detail-value" id="sos-boat"></span>
         </div>
         <div class="sos-detail-row">
-          <span class="sos-detail-label">Registration No.</span>
-          <span class="sos-detail-value" id="sos-registration"></span>
+          <span class="sos-detail-label">Vessel verification</span>
+          <span class="sos-detail-value" id="sos-vessel-verification"></span>
         </div>
         <div class="sos-detail-row">
           <span class="sos-detail-label">Contact Number</span>
           <span class="sos-detail-value" id="sos-contact"></span>
+        </div>
+        <div class="sos-detail-row">
+          <span class="sos-detail-label">Shore contact</span>
+          <span class="sos-detail-value" id="sos-shore-contact"></span>
         </div>
         <div class="sos-detail-row">
           <span class="sos-detail-label">Last Known Position</span>
@@ -875,10 +890,36 @@
       <div class="sos-section sos-actions">
         <button class="sos-btn sos-btn-acknowledge" id="sos-btn-acknowledge">Acknowledge</button>
         <button class="sos-btn sos-btn-resolve" id="sos-btn-resolve">Resolve Incident</button>
+        <button class="sos-btn" id="sos-btn-confirm-vessel" hidden>Confirm vessel</button>
         <button class="sos-btn sos-btn-broadcast" id="sos-btn-broadcast" disabled title="Broadcast to nearby vessels is not supported in this release">Broadcast to Nearby Vessels (Unavailable)</button>
         <button class="sos-btn sos-btn-checkin" id="sos-btn-checkin" disabled title="Silent check-in is not supported in this release">Request Silent Check-in (Unavailable)</button>
         <button class="sos-btn sos-btn-activity" id="sos-btn-activity">View Activity</button>
         <div class="sos-broadcast-msg" id="sos-broadcast-msg"></div>
+      </div>
+    </div>
+
+    <div class="ack-modal-overlay" id="resolve-modal-overlay" hidden>
+      <div class="ack-modal" role="dialog" aria-modal="true" aria-labelledby="resolve-modal-title">
+        <div class="ack-modal-header">
+          <span id="resolve-modal-title">Resolve incident</span>
+          <button type="button" class="ack-modal-close" id="resolve-modal-close" aria-label="Close resolve modal">&times;</button>
+        </div>
+        <div class="ack-modal-body">
+          <p id="resolve-modal-event"></p>
+          <fieldset id="resolve-reasons">
+            <legend>Why is this incident closing?</legend>
+            <label><input type="radio" name="resolve-reason" value="rescued"> Crew was picked up or assisted</label>
+            <label><input type="radio" name="resolve-reason" value="safe_confirmed"> Boat reached and confirmed safe</label>
+            <label><input type="radio" name="resolve-reason" value="stood_down_by_fisher"> Fisher reported safe</label>
+            <label><input type="radio" name="resolve-reason" value="duplicate"> Duplicate of another call</label>
+            <label><input type="radio" name="resolve-reason" value="closed_unconfirmed"> Closed without reaching the boat</label>
+          </fieldset>
+          <p id="resolve-conflict" role="alert" hidden></p>
+        </div>
+        <div class="ack-modal-actions">
+          <button type="button" class="sos-btn ack-btn-cancel" id="resolve-btn-cancel">Cancel</button>
+          <button type="button" class="sos-btn sos-btn-resolve" id="resolve-btn-confirm" disabled>Confirm resolution</button>
+        </div>
       </div>
     </div>
 
@@ -905,14 +946,17 @@
 
           <label class="ack-label" for="ack-eta">Time to reach the vessel</label>
           <div class="ack-eta-row" id="ack-eta-quick">
-            <button type="button" class="ack-eta-chip" data-eta="10">10 min</button>
-            <button type="button" class="ack-eta-chip is-selected" data-eta="20">20 min</button>
+            <button type="button" class="ack-eta-chip is-selected" data-eta="">No ETA yet</button>
+            <button type="button" class="ack-eta-chip" data-eta="15">15 min</button>
             <button type="button" class="ack-eta-chip" data-eta="30">30 min</button>
             <button type="button" class="ack-eta-chip" data-eta="45">45 min</button>
             <button type="button" class="ack-eta-chip" data-eta="60">60 min</button>
+            <button type="button" class="ack-eta-chip" data-eta="90">90 min</button>
+            <button type="button" class="ack-eta-chip" data-eta="120">120 min</button>
           </div>
-          <input class="ack-input" id="ack-eta" type="number" min="1" max="720" value="20"
+          <input class="ack-input" id="ack-eta" type="number" min="1" max="720" value=""
                  aria-label="Estimated minutes until arrival" />
+          <p class="ack-hint" id="ack-eta-preview">No ETA yet</p>
           <p class="ack-hint">
             The fisherman sees a live countdown. If this time passes before
             rescue arrives it changes to &ldquo;delayed — still en route&rdquo;
@@ -922,6 +966,8 @@
           <label class="ack-label" for="ack-note">Message (optional)</label>
           <input class="ack-input" id="ack-note" type="text" maxlength="120"
                  placeholder="e.g. Stay with the boat, keep your light on" />
+          <p class="ack-note-count" id="ack-note-count" role="status">0 / 40 bytes</p>
+          <p id="ack-conflict" role="alert" hidden></p>
         </div>
         <div class="ack-modal-actions">
           <button type="button" class="sos-btn ack-btn-cancel" id="ack-btn-cancel">Cancel</button>
@@ -1137,6 +1183,7 @@
   <script src="../js/dangerZonePredictor.js"></script>
   <script src="../js/dashboard-utils.js"></script>
   <script src="../js/dashboard/dashboard-core.js"></script>
+  <script src="../js/dashboard/dashboard-ops-status.js"></script>
   <script src="../js/dashboard/dashboard-markers.js"></script>
   <script src="../js/dashboard/dashboard-hotspots.js"></script>
   <script src="../js/dashboard/dashboard-tools.js"></script>
