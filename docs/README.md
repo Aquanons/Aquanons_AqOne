@@ -100,7 +100,7 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Archived completed plans | [`archive/plans/`](archive/plans/) |
 | Reference guides | [`guides/`](guides/) |
 | Hybrid transport decision and technical architecture spec | `55`, `56` |
-| Draft plans not yet started | `66` (stagnant mode) |
+| Draft plans not yet started | `67` (stagnant mode) |
 | Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 

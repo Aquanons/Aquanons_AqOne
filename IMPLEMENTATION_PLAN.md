@@ -13,7 +13,7 @@ Per [`AGENTS.md`](AGENTS.md) and [`docs/README.md`](docs/README.md), only one pl
 
 | Status | Plan | Purpose |
 |---|---|---|
-| DRAFT | [`docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`](docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md) | Let a fisher declare a stationary period so silence doesn't raise an overdue alert |
+| DRAFT | [`docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`](docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md) | Let a fisher declare a stationary period so silence doesn't raise an overdue alert |
 
 ## Completed and Archived Plans
 

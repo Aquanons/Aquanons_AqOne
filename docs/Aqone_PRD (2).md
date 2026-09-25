@@ -220,7 +220,7 @@ trajectory escalates to a scored alert on the PCG console.
    one spot on purpose (anchoring, longlining) declares a duration from the
    app. Silence-based overdue scoring is held off until that time runs out,
    then the ladder resumes. An SOS always overrides it. See
-   `docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`.
+   `docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`.
 
 **This is unsupervised anomaly detection over a learned behavioural baseline** — it requires no labelled disaster dataset, only ordinary usage, which the network generates from day one.
 

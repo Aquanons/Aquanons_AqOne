@@ -33,6 +33,10 @@ The non-Critical rows of `62D` F1 (H5, H14, H17, H19, L6, L10, M4, M15, N1) stay
 `docs/65` (fisher friction) runs after this plan's Phase 5 (Len, 2026-09-25T18:00:00+08:00).
 With D3 the pod stays an open network, so Phase 6 here no longer touches `docs/65` Phase 5's Wi-Fi channel.
 
+Two team docs merged on 2026-09-25 shape the LoRa nodes, and this plan follows them:
+- PR #81: stationary buoys and pods carry no barometer; squall alerts come from the PAGASA weather API (`docs/55`, `docs/56`, PRD Section 5.1). No phase here adds a pressure sensor or pressure frame, and the pod's optional hardware is GPS, battery and motion events, which Phase 7 matches.
+- PR #80: `docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md` (draft, renumbered from 66 to avoid clashing with this plan). It adds a phone-to-pod request and a field in the LoRa `STATUS` payload. Its open question 2 asks whether the pod button can declare stagnant mode; Phase 7 here must keep the 3 s hold meaning SOS and nothing else, so any stagnant gesture on the button is designed with Phase 7, not after it.
+
 ## Where each Critical stands today (2026-09-25)
 
 | ID | Finding | Done so far | Left | Phase | Outcome |

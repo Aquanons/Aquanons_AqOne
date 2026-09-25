@@ -1,4 +1,4 @@
-# 66 — Stagnant Mode Implementation Plan
+# 67 — Stagnant Mode Implementation Plan
 
 **Status:** DRAFT
 **Owner:** Team Aquanons (backend: Lenard, gateway: Arnold, pod firmware: Daniel, mobile: Jade/Doreen Kay, dashboard: Jade)
