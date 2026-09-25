@@ -10,13 +10,13 @@
 
 ### 1.1 Objective & Policy
 The prospective shadow observation protocol evaluates whether the integrated AqOne AI services produce useful, calibrated guidance without contaminating operational rescue authority:
-- **Zero Future Leakage:** All inference features (barometric pressure traces, vessel buoy contacts, coastal wind/wave data) are computed strictly from observations timestamped at or before the decision cutoff ($T_{\text{decision}}$).
+- **Zero Future Leakage:** All inference features (PAGASA advisories, vessel buoy contacts, coastal wind/wave data) are computed strictly from observations timestamped at or before the decision cutoff ($T_{\text{decision}}$).
 - **Shadow Mode Non-Interference:** Shadow outputs are logged for verification and dashboard display under the explicit `SHADOW / ADVISORY` posture; they do not trigger automated dispatch, override official PAGASA warnings, or replace MDRRMO standard operating procedures.
 - **Disjoint Provenance:** Operational field events, controlled drills, and synthetic test cases are tagged with mutually exclusive provenance flags (`is_synthetic`, `is_drill`, `source`). They are evaluated in separate reporting strata and never merged into aggregate accuracy scores.
 
 ### 1.2 Observed Stratification
 During shadow observation across the New Washington and Batan Bay maritime areas:
-1. **Natural Weather Sequences:** Uninterrupted background pressure series and marine forecasts are monitored to measure false-alert rates and baseline stability during calm and monsoon conditions.
+1. **Natural Weather Sequences:** Uninterrupted PAGASA advisory history and marine forecasts are monitored to measure false-alert rates and baseline stability during calm and monsoon conditions.
 2. **Missing & Degraded Inputs:** Sensor outages (e.g., disconnected buoy, lost GPS fix) are handled by explicit quality abstention (`ArrayQuality(ok=False)` in squall nowcasting; `support_lost_at` in drift forcing) rather than fabricated calm baselines.
 3. **Delayed Packets:** Store-and-forward mesh delays preserve the physical datum ($T_{\text{fix}}$) without advancing data timestamps to arrival time.
 
@@ -85,7 +85,7 @@ Localized UI strings (English, Tagalog, and Aklanon per `docs/22_LOCALIZATION_PL
 | Component | Model Version | Method & Implementation | Input Data Sources | Physical Domain | Forecast Horizon | Operational Claims & Benchmarks | Remaining Uncertainties & Non-Claims |
 |---|---|---|---|---|---|---|---|
 | **Marine Hazard Assessment** | `aqone-hazard-v2` | GBDT + Conservative Threshold Floor (`app/ai/hazard.py`) | Open-Meteo marine models, ERA5 reanalysis, local bathymetry | New Washington & Batan Bay ($11.5^\circ\text{--}11.8^\circ\text{N}$, $122.3^\circ\text{--}122.6^\circ\text{E}$) | 0 to 48 hours | Identifies exceedance of sea-state/wind safety limits for small craft. | Historical proxy calibration; does not guarantee individual hull seaworthiness or micro-channel wave chop. |
-| **Squall Nowcasting** | `aqone-squall-v2` | Spatial Barometric Rate & Front Vector Estimation (`app/ai/squall.py`) | Buoy network barometric pressure arrays (min. 3 buoys, 5-min cadence) | Buoy array footprint ($\sim 10\text{ km}$ coastal baseline) | 15 to 90 minutes | Detects sudden pressure drops ($\ge 0.5\text{ hPa}$) and front arrival vectors. | Requires active multi-buoy telemetry; does not predict localized convective squalls originating outside the buoy network. |
+| **Squall Alerts** | PAGASA weather API relay (not a model) | PAGASA thunderstorm, rainfall and wind advisories | PAGASA weather API; Open-Meteo marine data | PAGASA forecast areas covering the fishing grounds | PAGASA's advisory lead | Relays PAGASA advisories covering the fishing grounds as RETURN NOW. | No buoy barometer; the earlier `aqone-squall-v2` pressure model belongs to a dropped design. Cannot flag a squall PAGASA does not flag. |
 | **Trip Anomaly & Overdue Review** | `trip-profile-v2` | Causal Empirical Quantile Profiling (`app/ai/trip_profile.py`, `anomaly_service.py`) | Consecutive buoy contact timestamps, voluntary trip declarations | New Washington port to coastal fishing zones | 0 to 12 hours post-contact | Highlights vessels exceeding $Q_{90}$ typical duration for dispatcher verification. | Silence alone does not establish distress; gateway outages create contact uncertainty. Responders must verify before dispatch. |
 | **Physical Drift Simulation** | `aqone-drift-v2` | Monte Carlo Leeway + Coastal Stranding Boundaries (`app/ai/drift.py`) | High-res shoreline boundary polygon, buoy current observations, GFS/ECMWF wind | Navigable coastal water polygon of Batan Bay / Port | 0.5 to 6.0 hours (live); up to 12h (assumption-conditioned) | Predicts conditional containment distribution; stops particles at land boundaries. | Particles do not represent deep-keel dynamics; extended forecasts without live current models carry assumption disclaimers. |
 | **Time-Aligned Searchretasking** | `aqone-search-v2` | Trajectory-Specific Negative Search Likelihood (`app/ai/search.py`) | Timed search sector bounding boxes, responder visual sweep records | Active incident drift grid | Time of search execution | Attenuates prior probability mass within searched footprint *at search time*. | Strictly advisory recommendation; does not account for asset transit fuel, sea-state searcher fatigue, or non-visual sensors. |
@@ -102,8 +102,7 @@ Localized UI strings (English, Tagalog, and Aklanon per `docs/22_LOCALIZATION_PL
 To prevent model degradation, silent drift, or invalid operational reliance over time:
 
 1. **Buoy Sensor Quality Assurance:**
-   - Barometric sensors must be calibrated annually against a regional meteorological standard.
-   - Any buoy reporting drift exceeding $\pm 1.5\text{ hPa}$ from the array median in calm conditions must be flagged for maintenance and excluded from squall nowcasts.
+   - Buoys carry no barometer. Squall alerts depend on the PAGASA weather API; a PAGASA feed older than its freshness threshold must be shown as stale, never as calm.
 2. **Current Field Support Auditing:**
    - Observed current vectors must be renewed at least every 60 minutes.
    - If buoy current telemetry is unavailable for $> 120$ minutes, drift calculations automatically mark `support_lost_at` and degrade output confidence.

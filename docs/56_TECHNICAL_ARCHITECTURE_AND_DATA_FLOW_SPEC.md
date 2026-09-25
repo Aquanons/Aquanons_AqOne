@@ -28,11 +28,11 @@ The system architecture organizes all components into six sequential lifecycle p
 └─────────────────┘   └─────────────┘   └───────────┘   └─────────────────────┘   └─────────────────────────┘   └────────────────────────┘
 ```
 
-1. **Source and Data:** The physical, user, or environmental point of origin (fisherman button press, handset sensors, marine barometers, meteorological feeds, or user catch logs).
+1. **Source and Data:** The physical, user, or environmental point of origin (fisherman button press, handset sensors, the PAGASA weather API and other meteorological feeds, or user catch logs).
 2. **Edge Device:** Local vessel and shore hardware responsible for local caching, store-and-forward queueing, cryptographic signing, and radio transmission (mobile handset, Heltec V3 ESP32-S3 boat pod, stationary relay buoys).
 3. **Transport:** The physical communication channels (short-range WiFi SoftAP 2.4 GHz, long-range LoRa 915 MHz binary frames, and secure HTTPS over cellular/fiber internet).
 4. **Ingress and Storage:** The backend intake layer (FastAPI), HMAC/API-key validation, idempotent deduplication, PostgreSQL append-only event logging, and state projection.
-5. **Processing and Decision:** Business logic, predictive AI decision support (squall nowcasting, localized danger-zone scoring, trip anomaly detection, leeway drift modeling), and official emergency precedence enforcement.
+5. **Processing and Decision:** Business logic, PAGASA-sourced squall alerts, predictive AI decision support (localized danger-zone scoring, trip anomaly detection, leeway drift modeling), and official emergency precedence enforcement.
 6. **Output and Human Action:** Operator and end-user surfaces (MDRRMO live dashboard feed, mobile outbox reconciliation, LGU/BFAR aggregated heatmaps, and search-and-rescue dispatch coordination).
 
 ---
@@ -79,14 +79,14 @@ The emergency SOS pathway is the core safety spine of AqOne. It is designed to b
 
 ### Lane 2: Environmental Warning Data Flow
 
-Provides localized marine hazard intelligence and squall nowcasting based on coastal barometer telemetry and open weather feeds.
+Provides localized marine hazard intelligence and squall alerts based on the PAGASA weather API and open marine forecasts. Aqone operates no barometers; buoys and pods carry no pressure sensor.
 
 ```
-[Buoy/Pod Barometer + Marine Forecasts] ──► [Normalization & Ingest] ──► [Quality & Freshness Gate]
+[PAGASA Weather API + Marine Forecasts] ──► [Normalization & Ingest] ──► [Quality & Freshness Gate]
                                                                                  │
                                                   ┌──────────────────────────────┴──────────────────────────────┐
                                                   ▼                                                             ▼
-                                      [Squall Nowcasting Model]                                     [Danger-Zone GBDT Model]
+                                      [PAGASA Squall Advisories]                                    [Danger-Zone GBDT Model]
                                                   └──────────────────────────────┬──────────────────────────────┘
                                                                                  ▼
                                                                      [Combine Model Evidence]
@@ -104,10 +104,10 @@ Provides localized marine hazard intelligence and squall nowcasting based on coa
 ```
 
 #### Detailed Execution Steps:
-1. **Inputs:** Buoy-mounted barometers (BMP280/MS5611), boat pod telemetry, PAGASA bulletins, and Open-Meteo marine wave/wind models.
+1. **Inputs:** The PAGASA weather API (thunderstorm advisories, rainfall and wind warnings, forecasts), boat pod telemetry, and Open-Meteo marine wave/wind models. No buoy or pod barometer.
 2. **Quality Gate:** Data without valid timestamps or failing freshness thresholds (<3 hours) is discarded or marked degraded. The system refuses to declare conditions "safe" in the absence of valid data.
 3. **Predictive Processing:**
-   - *Squall Nowcaster:* Evaluates 1-hour and 3-hour barometric pressure tendencies ($\Delta P / \Delta t$) alongside wind gust ratios.
+   - *Squall alerts:* Relays PAGASA thunderstorm and wind advisories that cover the fishing grounds as RETURN NOW. This is an advisory relay, not a local forecast: lead time and resolution are PAGASA's.
    - *Danger-Zone GBDT:* Evaluates bathymetry, swell direction, and coastline topography to assign localized risk tiers.
 4. **Precedence Policy:** If PAGASA or MDRRMO issues an active gale warning, tropical cyclone wind signal, or sea travel advisory, that official determination **strictly overrides** any statistical model output.
 5. **Dissemination:** Published advisories are cached in PostgreSQL and rendered on the MDRRMO operations dashboard and cached to mobile handsets before vessels depart cell range.

@@ -1,5 +1,13 @@
 # Squall Nowcasting — Implementation Plan
 
+**Status:** SUPERSEDED — the pressure-array nowcast is replaced by PAGASA weather API squall alerts (PRD §5.1).
+
+> **Note (2026-09-25): barometer dropped.** The buoy barometer is no longer part of the
+> architecture; squall alerts now come from the PAGASA weather API (PRD §5.1).
+> References below to barometers, pressure readings or the pressure-based squall model
+> describe that retired design and the code it left behind (`backend/app/ai/squall.py`,
+> `barometric_readings`, `/api/v1/pressure-events`), which stays until it is removed.
+
 ## Purpose and delivery rule
 
 Turn the existing synthetic squall demonstration into a truthful,

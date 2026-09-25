@@ -92,7 +92,7 @@ If $t_{\text{received}} > t_{\text{onset}}$, the delivered lead is negative ($L_
 
 Per decision register item D8:
 - **Minimum actionable lead for bancas to seek sheltered anchorage or beach:** $\ge 30\text{ minutes}$.
-- **Warning horizon of physical squall nowcasting (pressure microbarometer tendency):** $15\text{ to }45\text{ minutes}$.
+- **Warning horizon of squall alerts (PAGASA weather API advisories):** set by PAGASA's advisory lead; to be measured from logged advisory issue times against observed onset.
 
 ### 4.3 Honest Opportunity Constraint & Carried Bridge Threshold
 

@@ -32,7 +32,7 @@ AqOne addresses these problems through one field infrastructure with two bounded
 |---|---|---|
 | Communication beyond cellular coverage | Phone-to-boat-pod WiFi, direct pod-to-shore LoRa, and optional stationary-buoy relay | Fishers and families |
 | Faster distress reporting | Manual SOS, last-known position, and confidence-scored overdue alerts | MDRRMO and PCG |
-| Localized hazardous-weather warning | Barometric and motion observations fused with official weather data | Fishers and responders |
+| Localized hazardous-weather warning | PAGASA weather API advisories relayed past cellular coverage, with buoy motion as a separate advisory | Fishers and responders |
 | Smaller, prioritized search area | OpenDrift/Leeway probability field with local observations and responder updates | MDRRMO and PCG |
 | Fuel and time lost searching for fish | Probabilistic hotspot heatmap using voluntary catch and environmental data | Fishers |
 | Delayed recognition of localized catch decline | Interpretable rolling-baseline flags for human review | BFAR and LGU fisheries offices |
@@ -134,7 +134,7 @@ The boat-pod reference node includes:
 The stationary sensor/relay buoy includes the relevant subset of:
 
 1. **Mesh relay:** stores and forwards packets toward the gateway using bounded hop counts and duplicate suppression.
-2. **Environmental station:** records pressure, motion, location, radio quality, and device health.
+2. **Environmental station:** records motion, location, radio quality, and device health. It carries no barometer; weather comes from the PAGASA weather API.
 3. **Edge alert source:** emits low-bandwidth hazard and infrastructure events even when raw telemetry cannot immediately reach the backend.
 
 Stationary-buoy motion indicates **conditions at the buoy's fixed location**, not
@@ -200,18 +200,20 @@ The operations platform distinguishes:
 - **Acknowledged:** seen and accepted by an authorized responder; and
 - **Resolved:** closed with a reason and audit record.
 
-### 5.2 Localized squall nowcasting
+### 5.2 Squall alerts from PAGASA
 
-The nowcasting pipeline combines stationary-buoy pressure sequences,
-position/time, motion observations, official PAGASA warnings, and available wind
-or sea-state products. It estimates the probability and expected lead time of a
-hazardous localized squall for defined zones.
+Squall alerts come from the PAGASA weather API: thunderstorm advisories,
+rainfall and wind warnings, and forecasts for the fishing grounds, with
+Open-Meteo wind and sea-state products as a secondary feed. AqOne operates no
+barometers and does not run its own pressure-based nowcast; the earlier
+stationary-buoy pressure array has been dropped. The value AqOne adds is
+delivery: getting the warning to a boat with no cellular signal.
 
-Development starts with transparent baselines such as pressure-tendency thresholds and forecast persistence. More complex spatiotemporal models are adopted only if they improve time-separated and location-separated validation. Warnings are geographically targeted and may use severity levels such as `Advisory`, `Prepare to Return`, and `Return Now`. Official PAGASA warnings remain clearly attributed and are never visually presented as AqOne predictions.
+Warnings are geographically targeted and may use severity levels such as `Advisory`, `Prepare to Return`, and `Return Now`. Official PAGASA warnings remain clearly attributed and are never visually presented as AqOne predictions.
 
 ### 5.3 Buoy-observed wave hazards
 
-The IMU provides a separate evidence stream from barometric nowcasting:
+The IMU provides a separate evidence stream from the PAGASA squall alerts:
 
 - an oscillatory high-amplitude signature may indicate a dangerous-wave zone;
 - sustained extreme motion or tilt may indicate capsizing-risk conditions at the buoy location; and
@@ -414,7 +416,7 @@ Integration does not mean attempting every model at once. The 24-month program u
 6. **Fleet-density versus fixed-node density:** The core path depends on pod and gateway coverage. Relay-buoy density matters only where direct links fail or fixed sensing justifies it; vessel density matters for shared-pod availability and trip-history quality.
 7. **Direct current sensing versus inferred current:** GNSS/IMU mooring behavior is treated as a research proxy requiring validation, not a direct measurement.
 8. **WiFi/BLE ambiguity:** WiFi is the primary phone-to-boat-pod path because the phone lacks LoRa. BLE is limited to provisioning or validated short-range fallback.
-9. **One AI label for unlike problems:** Squall nowcasting, trip anomaly, physical drift, hotspot prediction, and catch-decline analysis are separate models with separate baselines and evaluation criteria.
+9. **One AI label for unlike problems:** Squall alerts (a PAGASA relay, not a model), trip anomaly, physical drift, hotspot prediction, and catch-decline analysis are separate models with separate baselines and evaluation criteria.
 10. **Automatic restriction language:** AqOne may display an official restriction after BFAR/LGU declares it; model output alone is only a review flag.
 
 ## 13. Explicit non-goals for the initial integrated program

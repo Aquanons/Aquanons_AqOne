@@ -83,13 +83,13 @@ Most of these require the fisher to buy and carry dedicated hardware. **Aqone ke
        SOS button, GPS                            |
                                                   v
      [ OPTIONAL STATIONARY SENSOR / RELAY BUOYS ]
-             barometer, GPS, optional relay       |
+             GPS, optional relay                  |
                                                   v
                          Tall shoreline gateway
                     (coastal barangay, BFAR station)
                         |
-                 Aqone backend
-        (squall model · trip anomaly · drift model)
+                 Aqone backend  <──── PAGASA weather API
+        (squall alerts · trip anomaly · drift model)
                         |
          PCG / BFAR operations console
 ```
@@ -117,8 +117,7 @@ has independent value.
 | Component | Purpose |
 |---|---|
 | LoRa radio | Fixed sensor telemetry and optional relay toward shore |
-| GPS / surveyed position | Stable location for the environmental array |
-| Barometer | Local pressure, feeding squall nowcasting |
+| GPS / surveyed position | Stable location for relay and current observations |
 | Current sensing | Optional mooring-line or current-meter measurement |
 | Solar + battery | Autonomous operation |
 
@@ -153,29 +152,33 @@ Critically, ordinary use *is* the safety data: every routine check-in builds the
 
 ## 5. AI components
 
-Three models, mapped to the three phases of a maritime incident. Each consumes
-data produced by the Aqone hybrid radio network, with fixed environmental data
-coming specifically from stationary sensor buoys.
+Three components, mapped to the three phases of a maritime incident. Trip
+anomaly and drift consume data produced by the Aqone hybrid radio network.
+Squall warnings consume official PAGASA weather data; the buoys carry no
+barometer.
 
 ---
 
-### 5.1 Before — Squall nowcasting
+### 5.1 Before — Squall alerts (PAGASA weather API)
 
 **Problem.** Sudden localized convective squalls are a leading killer of small boats. They develop and strike faster than regional forecast products resolve, and PAGASA has no dense offshore observation network over municipal waters.
 
-**Approach.** Every stationary sensor buoy reports barometric pressure at a
-**surveyed, fixed position** on a continuous schedule. This is a proper
-meteorological observation array — fixed stations producing clean time series,
-which is exactly what atmospheric nowcasting requires and what moving boat pods
-could not deliver as cleanly. A model trained on the spatiotemporal pressure
-field — sharp localized drops, gradient steepening, propagation direction and
-speed across the array — predicts squall onset and issues a **RETURN NOW**
-alert, delivered through the radio network and to phones when they connect to a
-boat pod or fixed node.
+**Approach.** The backend pulls official weather data from the **PAGASA
+weather API** — thunderstorm advisories, rainfall and wind warnings, and
+forecasts covering New Washington and the Aklan coast — with Open-Meteo marine
+wind/wave data as a secondary feed. When an advisory covers the fishing grounds,
+the backend issues a **RETURN NOW** alert, delivered through the radio network
+and to phones when they connect to a boat pod or fixed node. Aqone does not
+operate its own pressure sensors: the buoys carry no barometer, and the earlier
+buoy-barometer array design has been dropped.
 
-**Model.** Spatiotemporal forecasting over a fixed sensor graph (graph neural network or convolutional-recurrent hybrid), predicting onset probability and arrival time at 30–90 minute lead.
+**What this is and is not.** This is an advisory relay: it gets PAGASA's
+warning to a boat that has no signal. It is not an independent local forecast,
+so its lead time and spatial resolution are PAGASA's, not better. A squall that
+PAGASA does not flag, Aqone will not flag.
 
-**Cold start.** Bootstrapped from reanalysis data and physics-derived synthetic pressure fields; refined against observed outcomes once the array is live.
+**Open question.** PAGASA API access, rate limits, update cadence and terms of
+use must be confirmed with PAGASA before this is described as live.
 
 **Delivery under intermittent connectivity.** Alerts propagate through the
 LoRa network to the shore gateway and optional relay buoys. A boat pod can
@@ -183,7 +186,9 @@ receive relevant downstream status when it has a shore path; stationary buoys
 can also carry a physical alert — light or audible signal — for a boat in visual
 range.
 
-**Why nobody else can build it.** The training data is produced by the hardware array. Without instrumented buoys offshore, these observations do not exist.
+**Why it matters anyway.** PAGASA's warnings already exist; what is missing is
+delivery to a boat beyond cellular coverage. Aqone's radio path is that
+delivery.
 
 ---
 
@@ -250,12 +255,13 @@ The standard test: remove the AI — does the product still work?
 
 | Component | Without AI |
 |---|---|
-| Squall nowcasting | **Impossible.** No model, no forecast. The pressure readings are just numbers. |
+| Squall alerts | **Still works — not an AI component.** Squall alerts relay PAGASA warnings; the value is delivery beyond cellular coverage, not a model. |
 | Trip anomaly detection | **Impossible.** Contact logs without a learned baseline are a database nobody reads. A fixed timeout would drown the PCG in false alarms. |
 | Drift prediction | **Impossible.** A last-known position with no drift model is a dot on a map that was wrong an hour ago. |
 
 The hybrid radio network degrades gracefully. If fixed sensor buoys are offline,
-the AI loses fresh local environmental observations; if a relay is offline, a
+drift loses fresh local current observations; if the PAGASA feed is stale,
+squall alerts say so rather than reporting calm; if a relay is offline, a
 boat pod may still reach the tall gateway directly. The transport layer remains
 useful for manual SOS, while model outputs become older or less complete rather
 than being presented as live certainty.
@@ -312,9 +318,9 @@ observation). The roster aggregates these into a common operating picture.
 
 - Strap-on boat safety pods: physical SOS button, GPS, local WiFi, LoRa, flash-backed queue, battery, and waterproof enclosure
 - LoRa transport from boat pods to a tall shoreline gateway, with optional relay buoys
-- Stationary buoy instrumentation: GPS, barometer, optional current sensing, solar power
+- Stationary buoy instrumentation: GPS, optional current sensing, solar power (no barometer)
 - Phone app: opportunistic messaging, weather sync, manual SOS
-- Squall nowcasting with RETURN NOW alerts, including buoy-side physical signalling
+- Squall alerts relayed from the PAGASA weather API as RETURN NOW, including buoy-side physical signalling
 - Learned trip profiles and overdue/anomaly detection with confidence scoring
 - Drift prediction producing a probability density and 50/75/95% search contours,
   with Bayesian re-tasking on negative search results (§5.3(c))
@@ -360,7 +366,8 @@ Aqone does not replace the PCG, VHF radio, or EPIRB. It fills the gap beneath th
 4. How many shared pods are needed per partner fleet, and what charging/checkout process keeps them on boats?
 5. What is the PCG's operational threshold — what confidence level justifies dispatching an asset?
 6. Can BFAR's FishR / FishCore registration serve as the app distribution and vessel-identity channel?
-7. What is the real municipal fisher fatality baseline? No comprehensive public dataset exists — establishing it may be a contribution in itself.
+7. What PAGASA API access, rate limits, update cadence and terms of use apply to squall alerts?
+8. What is the real municipal fisher fatality baseline? No comprehensive public dataset exists — establishing it may be a contribution in itself.
 
 ---
 

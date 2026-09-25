@@ -1,5 +1,11 @@
 # Implementation Plan: AqOne AI Safety Remediation for Gemini 3.8
 
+> **Note (2026-09-25): barometer dropped.** The buoy barometer is no longer part of the
+> architecture; squall alerts now come from the PAGASA weather API (PRD §5.1).
+> References below to barometers, pressure readings or the pressure-based squall model
+> describe that retired design and the code it left behind (`backend/app/ai/squall.py`,
+> `barometric_readings`, `/api/v1/pressure-events`), which stays until it is removed.
+
 > **Status:** BLOCKED (header corrected 2026-09-25). Software for Phases 1 to 5 was committed on 2026-09-15 and 2026-09-16 (`0efc64a` warnings, `d2bae9e` drift, `59ced0d` search, `89d1684` calibration and replay, `570ad41` field protocols and handoff) and recorded in `docs/08_DEMO_AND_STATUS.md`. The 2026-09-16 review (`docs/audits/GEMINI_AI_SAFETY_REMEDIATION_REVIEW_2026-09-16.md`) returned "changes required": it found the claim that all five phases are complete unsupported, and its findings have not been fixed or re-verified since. Phase 5 physical collection also waits on hardware, permits and funding. Next step: re-check each review finding against current `master`.
 > **Target Branch:** Proposed `codex/ai-safety-remediation`; create from the inspected working state only when execution is authorized and local changes are protected.
 > **Test Command:** Backend: `python -m pytest -q` in `backend`; mobile: `flutter test` in `mobile`; web: `node --test web/test/*.test.js` at repository root.

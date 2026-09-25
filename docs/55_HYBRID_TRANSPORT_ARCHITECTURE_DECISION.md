@@ -45,8 +45,8 @@ preserving the benefits of fixed offshore instrumentation.
 
 | Node | Primary responsibility | Optional responsibility |
 |---|---|---|
-| Boat safety pod | Phone WiFi, physical SOS, flash-backed queue, direct LoRa | GPS, battery, pressure, motion events |
-| Stationary sensor buoy | Fixed-position pressure and environmental telemetry | LoRa relay, physical warning indicator |
+| Boat safety pod | Phone WiFi, physical SOS, flash-backed queue, direct LoRa | GPS, battery, motion events |
+| Stationary sensor buoy | Fixed-position current and environmental telemetry (no barometer; weather comes from the PAGASA weather API) | LoRa relay, physical warning indicator |
 | Stationary relay buoy | Extend LoRa coverage into measured dead zones | Fixed sensors and warning cache |
 | Shore gateway | Tall LoRa endpoint, acknowledgements, backend HTTPS | Second gateway for redundancy |
 
