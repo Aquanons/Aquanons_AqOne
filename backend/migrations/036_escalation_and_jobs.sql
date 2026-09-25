@@ -1,0 +1,6 @@
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS scheduler_runs (
+  job TEXT PRIMARY KEY,
+  last_run_at TIMESTAMPTZ NOT NULL
+);

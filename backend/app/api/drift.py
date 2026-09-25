@@ -455,6 +455,7 @@ async def _sos_case_inputs(
     receipt_at = row['created_at']
     datum_source = 'receipt_time'
     delay_seconds = 0.0
+    clock_suspect = False
 
     if override_datum_at is not None:
         datum_at = override_datum_at
@@ -482,16 +483,18 @@ async def _sos_case_inputs(
                 try:
                     client_dt = datetime.fromtimestamp(client_ts, tz=UTC)
                     # Handset transmission time is distinct from an authenticated GNSS fix
-                    if client_dt <= receipt_at + timedelta(minutes=5):
+                    if receipt_at - timedelta(hours=24) <= client_dt <= receipt_at + timedelta(minutes=5):
                         datum_at = client_dt
                         datum_source = 'client_send'
                         delay_seconds = max(0.0, (receipt_at - client_dt).total_seconds())
                     else:
                         datum_at = receipt_at
                         datum_source = 'receipt_time'
+                        clock_suspect = True
                 except (ValueError, OverflowError, OSError):
                     datum_at = receipt_at
                     datum_source = 'receipt_time'
+                    clock_suspect = True
             else:
                 datum_at = receipt_at
                 datum_source = 'receipt_time'
@@ -501,6 +504,7 @@ async def _sos_case_inputs(
         'receipt_at': receipt_at.isoformat(),
         'datum_source': datum_source,
         'delay_seconds': delay_seconds,
+        'clock_suspect': clock_suspect,
     }
     try:
         fix_acc = row['fix_accuracy_m']
@@ -550,6 +554,7 @@ async def _anomaly_case_inputs(
         'receipt_at': observed_at.isoformat(),
         'datum_source': 'responder_override' if override_datum_at else 'buoy_contact',
         'delay_seconds': 0.0,
+        'clock_suspect': False,
     }
     return row['vessel_id'], float(position['latitude']), float(position['longitude']), datum_at, datum_meta
 
@@ -623,6 +628,7 @@ async def open_case(body: OpenCaseRequest, user: dict = require_responder_roles)
         'insufficiency_reason': assessment.reason,
         'scenario': body.scenario,
         'datum_meta': datum_meta,
+        'clock_suspect': datum_meta['clock_suspect'],
     }
 
 

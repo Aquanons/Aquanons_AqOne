@@ -24,10 +24,8 @@ from app.ai.trip_profile import (
     build_profiles_from_contacts,
     score_trip,
 )
-from app.api.sos import (
-    SosIn,
-    _delivery_state,
-)
+from app.api.sos import SosIn
+from app.incidents.delivery import delivery_state
 
 
 def _calm_weather(lat: float, lon: float, at: datetime) -> WeatherSnapshot:
@@ -63,7 +61,7 @@ def test_unavailable_ai_does_not_prevent_manual_sos_or_delivery_states():
         'acknowledged_at': None,
         'resolved_at': None,
     }
-    assert _delivery_state(mock_row_relayed) == 'relayed'
+    assert delivery_state(mock_row_relayed) == 'relayed'
 
     mock_row_delivered = {
         'delivered_direct': True,
@@ -71,7 +69,7 @@ def test_unavailable_ai_does_not_prevent_manual_sos_or_delivery_states():
         'acknowledged_at': None,
         'resolved_at': None,
     }
-    assert _delivery_state(mock_row_delivered) == 'delivered'
+    assert delivery_state(mock_row_delivered) == 'delivered'
 
     mock_row_ack = {
         'delivered_direct': True,
@@ -79,7 +77,7 @@ def test_unavailable_ai_does_not_prevent_manual_sos_or_delivery_states():
         'acknowledged_at': datetime.now(UTC),
         'resolved_at': None,
     }
-    assert _delivery_state(mock_row_ack) == 'acknowledged'
+    assert delivery_state(mock_row_ack) == 'acknowledged'
 
 
 # ---------------------------------------------------------------------------

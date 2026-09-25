@@ -12,6 +12,9 @@ but its header already carries TS, the same epoch second the phone records as
 client_ts. Both routes therefore share a key for free.
 """
 
+import asyncio
+
+import asyncpg
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -30,6 +33,40 @@ def _payload(**overrides):
     }
     base.update(overrides)
     return base
+
+
+def _stored_text(probe_db, vessel_id, column):
+    async def fetch():
+        conn = await asyncpg.connect(probe_db)
+        try:
+            return await conn.fetchval(
+                f'SELECT {column} FROM sos_events WHERE vessel_id = $1 ORDER BY id DESC LIMIT 1',
+                vessel_id,
+            )
+        finally:
+            await conn.close()
+    return asyncio.run(fetch())
+
+
+def test_sos_note_truncated_on_char_boundary(probe_db):
+    note = '\u00f1' * 35
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post('/api/sos', json=_payload(vessel_id='VNOTE', client_ts=1900000001, note=note))
+    stored = _stored_text(probe_db, 'VNOTE', 'note')
+    assert response.status_code == 200
+    assert len(stored.encode('utf-8')) <= 64
+    assert stored.encode('utf-8').decode('utf-8') == stored
+
+
+def test_sos_boat_truncated_to_32_bytes(probe_db):
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post(
+            '/api/sos',
+            json=_payload(vessel_id='VBOAT', client_ts=1900000002, boat='\u00f1' * 20),
+        )
+    stored = _stored_text(probe_db, 'VBOAT', 'boat')
+    assert response.status_code == 200
+    assert len(stored.encode('utf-8')) <= 32
 
 
 def test_ingest_is_reachable_without_a_token(monkeypatch):
@@ -99,20 +136,20 @@ def test_vessel_id_at_the_exact_limit_is_accepted(monkeypatch):
     assert response.status_code == 503
 
 
-def test_oversized_boat_name_is_rejected(monkeypatch):
+def test_oversized_boat_name_is_truncated(monkeypatch):
     monkeypatch.delenv('DATABASE_URL', raising=False)
     body = _payload(boat='B' * 33)
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.post('/api/sos', json=body)
-    assert response.status_code == 422
+    assert response.status_code == 503
 
 
-def test_oversized_note_is_rejected(monkeypatch):
+def test_oversized_note_is_truncated(monkeypatch):
     monkeypatch.delenv('DATABASE_URL', raising=False)
     body = _payload(note='n' * 65)
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.post('/api/sos', json=body)
-    assert response.status_code == 422
+    assert response.status_code == 503
 
 
 def test_note_containing_html_is_accepted_and_preserved(monkeypatch):
@@ -257,7 +294,8 @@ def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
             self.statements.append((query, args))
             return {
                 'id': 7, 'was_inserted': True, 'vessel_id': args[0], 'client_ts': args[1],
-                'delivered_direct': False, 'delivered_via_buoy': True, 'acknowledged_at': None,
+                'nonce': args[2], 'delivered_direct': False, 'delivered_via_buoy': True,
+                'acknowledged_at': None,
             }
         def acquire(self):
             return self
@@ -301,7 +339,8 @@ def test_buoy_sos_without_gateway_key_drops_buoy_provenance(monkeypatch):
             self.statements.append((query, args))
             return {
                 'id': 7, 'was_inserted': True, 'vessel_id': args[0], 'client_ts': args[1],
-                'delivered_direct': args[11], 'delivered_via_buoy': args[12], 'acknowledged_at': None,
+                'nonce': args[2], 'delivered_direct': args[12], 'delivered_via_buoy': args[13],
+                'acknowledged_at': None,
             }
 
         def acquire(self):
@@ -328,9 +367,9 @@ def test_buoy_sos_without_gateway_key_drops_buoy_provenance(monkeypatch):
     queries = [q for q, _ in pool.statements]
     assert not any('INSERT INTO buoys' in q for q in queries)
     sos_call = next(call for call in pool.statements if 'INSERT INTO sos_events' in call[0])
-    assert sos_call[1][8] is None
-    assert sos_call[1][11] is True
-    assert sos_call[1][12] is False
+    assert sos_call[1][9] is None
+    assert sos_call[1][12] is True
+    assert sos_call[1][13] is False
 
 
 def test_shore_gateway_wire_payload_validates(monkeypatch):

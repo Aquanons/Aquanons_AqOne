@@ -1,5 +1,5 @@
 databases:
-  # aqone-db created 2026-09-15 (free plan, Singapore)
+  # Rotation steps: docs/runbooks/RENDER_FREE_DB_ROTATION.md
   - name: aqone-db
     plan: free
     databaseName: aqone
@@ -34,3 +34,11 @@ services:
         generateValue: true
       - key: JWT_EXPIRY_HOURS
         value: "168"
+      - key: SEMAPHORE_API_KEY
+        sync: false
+      - key: ONCALL_SMS_NUMBERS
+        sync: false
+      - key: SEMAPHORE_SENDER_NAME
+        sync: false
+      - key: DB_EXPIRES_AT
+        sync: false

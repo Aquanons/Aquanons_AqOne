@@ -399,9 +399,10 @@ def test_c7_drift_model_failure_preserves_database_case_and_manual_sos(pool, mon
                 'id': sos_id,
                 'vessel_id': vessel_id,
                 'client_ts': client_ts,
+                'nonce': args[2],
                 'was_inserted': True,
-                'delivered_direct': args[11],
-                'delivered_via_buoy': args[12],
+                'delivered_direct': args[12],
+                'delivered_via_buoy': args[13],
                 'acknowledged_at': None,
             }
             pool.sos_events[sos_id] = rec
@@ -514,4 +515,3 @@ def test_canonical_field_eval_manifest_validates_cleanly():
     assert validated['manifest_version'] == '1.0.0'
     assert len(validated['records']) >= 3
     assert all('raw_evidence_sha256' in rec for rec in validated['records'])
-

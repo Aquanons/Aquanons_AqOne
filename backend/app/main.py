@@ -23,6 +23,7 @@ from app.api.hotspots import router as hotspots_router
 from app.api.mesh import router as mesh_router
 from app.api.metrics import router as metrics_router
 from app.api.ops_audit import router as ops_audit_router
+from app.api.ops_status import router as ops_status_router
 from app.api.pressure_events import router as pressure_events_router
 from app.api.public import router as public_router
 from app.api.sea_condition import router as sea_condition_router
@@ -32,6 +33,7 @@ from app.api.sos import router as sos_ingest_router
 from app.api.squall import router as squall_router
 from app.api.trips import router as trips_router
 from app.api.vessel_auth import router as vessel_auth_router
+from app.api.vessel_profile import confirm_router as vessel_confirmation_router
 from app.api.vessel_profile import router as vessel_profile_router
 from app.auth import require_user
 from app.db import get_pool, shutdown_db, startup_db
@@ -40,10 +42,17 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     await startup_db()
-    yield
-    await shutdown_db()
+    from app import scheduler
+
+    if os.environ.get('AQONE_SCHEDULER') != '0':
+        await scheduler.start(app.state)
+    try:
+        yield
+    finally:
+        await scheduler.stop()
+        await shutdown_db()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -56,8 +65,7 @@ app = FastAPI(lifespan=lifespan)
 # (itself gated by ADMIN_SETUP_KEY) and /api/me, which authenticates itself.
 app.include_router(auth_router)
 
-# The mesh chat relay is unauthenticated - the hub and fishermen have no accounts.
-# It carries public messages only (name, text, origin) on a fixed schema the hub validates.
+# Mesh chat accepts anonymous app posts and assigns origins from credentials.
 app.include_router(mesh_router)
 
 # SOS ingest is intentionally unauthenticated - see app/api/sos.py. A handset in
@@ -70,6 +78,7 @@ app.include_router(sos_ingest_router)
 # identity as the call itself. The read side (GET /api/sos/active) stays
 # protected. See app/api/vessel_profile.py.
 app.include_router(vessel_profile_router)
+app.include_router(vessel_confirmation_router)
 
 # Catch logging now sits behind a vessel-bound device credential rather than a
 # dispatcher token. Keeping it off the blanket operator dependency here lets
@@ -132,6 +141,7 @@ app.include_router(public_advisories_router)
 # carries its own require_responder_roles/require_admin_role guard
 # (app/api/ops_audit.py), same self-guarded pattern as advisories_router.
 app.include_router(ops_audit_router)
+app.include_router(ops_status_router)
 
 # Everything else requires a valid bearer token. Declaring it here rather than
 # on each route means a newly added endpoint is protected by default - the safe

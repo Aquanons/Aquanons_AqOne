@@ -52,6 +52,12 @@ def km_per_deg_lon(lat: float) -> float:
     return 111.320 * math.cos(math.radians(lat))
 
 
+def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    north_km = (lat2 - lat1) * KM_PER_DEG_LAT
+    east_km = (lon2 - lon1) * km_per_deg_lon((lat1 + lat2) / 2)
+    return math.hypot(north_km, east_km)
+
+
 # Ring of (lat, lon) covering Batan Bay and the open Sibuyan Sea north of it,
 # out to roughly 15 km offshore. Ordered anticlockwise starting at the
 # south-west corner of the bay.

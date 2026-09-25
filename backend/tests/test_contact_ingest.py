@@ -137,7 +137,10 @@ class _FakePool:
 
     async def fetchrow(self, query: str, *args):
         if 'INSERT INTO buoy_contacts' in query:
-            event_id, buoy_id, vessel_id, trip_id, _observed_at, _lat, _lon, _source, _is_synthetic = args
+            (
+                event_id, buoy_id, vessel_id, trip_id, _observed_at, _lat, _lon,
+                _source, _is_synthetic, _contact_via,
+            ) = args
             if buoy_id not in self.known_buoys:
                 raise asyncpg.ForeignKeyViolationError('unknown buoy_id')
             if event_id in self.contacts:

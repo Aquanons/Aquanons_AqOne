@@ -58,7 +58,7 @@ def test_register_upserts_into_vessels(monkeypatch):
             self.args = None
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return None
             self.query = query
             self.args = args
@@ -102,7 +102,7 @@ def test_register_rejects_overwrite_of_non_blank_identity_without_auth(monkeypat
 
     class _ExistingPool:
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'NW-001',
                     'skipper_name': 'Original Skipper', 'license_type': 'motorized',
@@ -139,7 +139,7 @@ def test_register_allows_overwrite_with_vessel_auth(monkeypatch):
             self.updated = False
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'NW-001',
                     'skipper_name': 'Original Skipper', 'license_type': 'motorized',
@@ -185,7 +185,7 @@ def test_register_allows_filling_blanks_without_auth(monkeypatch):
             self.updated = False
 
         async def fetchrow(self, query, *args):
-            if 'SELECT id, boat_name' in query:
+            if 'FROM vessels v' in query:
                 return {
                     'id': 'V001', 'boat_name': 'V001',  # skeleton boat_name is id
                     'skipper_name': None, 'license_type': 'none',
