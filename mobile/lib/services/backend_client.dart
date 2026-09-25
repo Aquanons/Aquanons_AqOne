@@ -88,6 +88,14 @@ class RemoteSos {
   }
 }
 
+class VesselAuthException implements Exception {
+  const VesselAuthException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'VesselAuthException: $message';
+}
+
 class VesselDeviceCredential {
   const VesselDeviceCredential({
     required this.token,
@@ -181,39 +189,39 @@ class BackendClient {
     required String pairingCode,
     String deviceLabel = 'Fisher handset',
   }) async {
-    try {
-      final response = await _send(
-        _request(
-          'POST',
-          EndpointGuard.backend(_baseUrl, '/api/vessel-auth/enroll'),
-          headers: const <String, String>{
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(<String, Object?>{
-            'vessel_id': vesselId,
-            'pairing_code': pairingCode,
-            'device_label': deviceLabel,
-          }),
-        ),
-      ).timeout(AqOneConfig.backendTimeout);
-      if (response.statusCode != 200) {
-        return null;
-      }
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-      final credential = VesselDeviceCredential.fromJson(decoded);
-      if (credential == null) {
-        return null;
-      }
-      await _persistVesselBearerToken(credential.token);
-      await _credentials?.writeDeviceId('${credential.deviceId}');
-      return credential;
-    } catch (_) {
+    final response = await _send(
+      _request(
+        'POST',
+        EndpointGuard.backend(_baseUrl, '/api/vessel-auth/enroll'),
+        headers: const <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, Object?>{
+          'vessel_id': vesselId,
+          'pairing_code': pairingCode,
+          'device_label': deviceLabel,
+        }),
+      ),
+    ).timeout(AqOneConfig.backendTimeout);
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      throw const VesselAuthException('Invalid pairing code');
+    }
+    if (response.statusCode != 200) {
       return null;
     }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      return null;
+    }
+    final credential = VesselDeviceCredential.fromJson(decoded);
+    if (credential == null) {
+      return null;
+    }
+    await _persistVesselBearerToken(credential.token);
+    await _credentials?.writeDeviceId('${credential.deviceId}');
+    return credential;
   }
+
 
   Future<VesselDeviceCredential?> refreshVesselCredential() async {
     if (!hasVesselCredential) {

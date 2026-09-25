@@ -41,6 +41,7 @@ class VentureFeeds {
             );
 
   final BackendClient _backend;
+  BackendClient get backend => _backend;
   final BuoyClient? _buoy;
   final http.Client _weatherClient;
   final ForecastProvider _forecast;

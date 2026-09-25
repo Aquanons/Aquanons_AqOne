@@ -245,5 +245,11 @@
   "sosStandDownConfirmTitle": "Kanselahon ro pagsagip?",
   "sosStandDownConfirmBody": "Kakanselahon ro pagsagip. Obrahon eang raya kung eowas eon ro tanan.",
   "sosStandDownUndo": "I-undo - kinahangean ko pa it bulig",
-  "sosNoEtaYet": "Ginaayos eon ro bulig - uwa pa it oras it pag-abot."
+  "sosNoEtaYet": "Ginaayos eon ro bulig - uwa pa it oras it pag-abot.",
+  "enrolTitle": "Ibutang ro code halin sa MDRRMO",
+  "enrolVerified": "Naberipika it MDRRMO.",
+  "enrolCodeInvalid": "Kariro o expire eon ro code. Magpangayo it bag-o sa MDRRMO.",
+  "enrolNeedsInternet": "Kinahangean it internet ro pagpa-enrol. Liwata kon may signal eon.",
+  "profileShoreContactName": "Kontak sa baybay",
+  "profileShoreContactPhone": "Telepono it kontak sa baybay"
 }

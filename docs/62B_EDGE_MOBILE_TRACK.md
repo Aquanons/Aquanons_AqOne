@@ -228,11 +228,11 @@ Checkpoint message: `feat(mobile): confirmed stand-down with undo and honest clo
 
 Requirements: EC-H10 (phone), EC-M13, EC-M2, EC-M6 (phone)
 Merge after: M4, and B5 for token refresh grace
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `test/enrolment_page_test.dart`:
     - a valid code calls `enrollVesselDevice` and shows `enrolVerified`
     - a 401 shows `enrolCodeInvalid`
@@ -242,25 +242,25 @@ State: Not started
     - `vessel id exists from first launch`
   - `test/backend_client_vessel_auth_test.dart`: `refresh is attempted on start when a credential exists`.
   - `test/backup_rules_test.dart`: parses `android/app/src/main/res/xml/backup_rules.xml` and `data_extraction_rules.xml`, and asserts that only the `aqone_identity_backup` shared-prefs file is included.
-- [ ] Create `lib/ui/enrolment_page.dart` ("Enter the code from MDRRMO"), reachable from the profile page.
+- [x] Create `lib/ui/enrolment_page.dart` ("Enter the code from MDRRMO"), reachable from the profile page.
   It uses the existing `BackendClient.enrollVesselDevice` and `SecureCredentialStore`.
-- [ ] On app start with internet, call `/api/vessel-auth/refresh` when a credential exists.
-- [ ] `IdentityStore`:
+- [x] On app start with internet, call `/api/vessel-auth/refresh` when a credential exists.
+- [x] `IdentityStore`:
   - The vessel ID is generated at first launch, before onboarding.
   - `isComplete` is no longer required to raise an SOS.
   - Write the plaintext vessel ID (not the encrypted profile) into a `SharedPreferences` file named `aqone_identity_backup`.
   - On first launch, restore the vessel ID from that file if it exists.
   - The vessel ID is not secret: it travels in clear over LoRa.
-- [ ] `AndroidManifest.xml`:
+- [x] `AndroidManifest.xml`:
   - `android:allowBackup="true"`
   - `android:fullBackupContent="@xml/backup_rules"` and `android:dataExtractionRules="@xml/data_extraction_rules"`, both including only `aqone_identity_backup`
-- [ ] `SosService.raiseSos` needs only the vessel ID; the boat name may be empty.
+- [x] `SosService.raiseSos` needs only the vessel ID; the boat name may be empty.
   Put the SOS button widget on `home_page.dart` too, reusing the venture page's widget (extract it if needed).
-- [ ] The profile page gains `shore_contact_name` and `shore_contact_phone` (strings `profileShoreContactName` and `profileShoreContactPhone`), sent by `registerVesselProfile`.
+- [x] The profile page gains `shore_contact_name` and `shore_contact_phone` (strings `profileShoreContactName` and `profileShoreContactPhone`), sent by `registerVesselProfile`.
 
 ### Verification
 
-- [ ] Gate commands green, with red and green runs recorded.
+- [x] Gate commands green, with red and green runs recorded.
 - [ ] Device test (recorded): install, note the vessel ID, uninstall with backup on, reinstall.
   The same vessel ID comes back.
 

@@ -96,4 +96,23 @@ Row counts and IDs only; never data, URLs or credentials.
 - `flutter test`: passed (302 passed)
 - `flutter test test_security_probes`: passed (6 passed)
 
+## Phase M5: Identity - enrolment, SOS before setup, and recoverable vessel identity (2026-09-25)
+
+### Red run
+- Command: `flutter test test/enrolment_page_test.dart test/backend_client_vessel_auth_test.dart test/backup_rules_test.dart test/sos_service_test.dart`
+- Output: failed to compile and tests failed (missing `lib/ui/enrolment_page.dart`, `VesselAuthException`, `backup_rules.xml`, `vessel id exists from first launch`, `SOS without boat name is raised with vessel id only`).
+
+### Green run
+- Command: `flutter test test/enrolment_page_test.dart test/backend_client_vessel_auth_test.dart test/backup_rules_test.dart test/sos_service_test.dart test/widget_test.dart`
+- Output: All tests passed (46 passed).
+
+### Gate results
+- `flutter gen-l10n`: passed (0 errors)
+- `flutter analyze`: passed (0 issues found)
+- `flutter test`: passed (311 passed)
+- `flutter test test_security_probes`: passed (6 passed)
+
+### Manual / Device checks
+- `Pending - Len: install, note the vessel ID, uninstall with backup on, reinstall. The same vessel ID comes back.`
+
 

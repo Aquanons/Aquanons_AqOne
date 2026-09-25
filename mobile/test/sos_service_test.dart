@@ -968,7 +968,43 @@ void main() {
     );
     expect(awaitingOld.any((r) => r.localId == record.localId), isFalse);
   });
+
+  test('vessel id exists from first launch', () async {
+    final identityStore = IdentityStore(db);
+    final identity = await identityStore.read();
+    expect(identity, isNotNull);
+    expect(identity!.vesselId, isNotEmpty);
+    expect(identity.boat, isEmpty);
+  });
+
+  test('SOS without boat name is raised with vessel id only', () async {
+    final identityStore = IdentityStore(db);
+    final initial = await identityStore.read();
+    expect(initial?.boat, anyOf(isNull, isEmpty));
+
+    final buoy = BuoyClient(
+      baseUrl: 'http://192.168.4.1',
+      client: MockClient((_) async => throw const FormatException('no buoy')),
+    );
+    final backend = BackendClient(
+      client: _FakeBackendClient((_) => _direct(200)),
+    );
+    final service = SosService(
+      outbox: outbox,
+      identity: identityStore,
+      buoy: buoy,
+      backend: backend,
+      location: LocationService(),
+    );
+
+    final record = await service.raiseSos();
+    expect(record.vesselId, isNotEmpty);
+    expect(record.boat, isEmpty);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    service.dispose();
+  });
 }
+
 
 class _FakeLocationService extends LocationService {
   _FakeLocationService({this.fixQueue = const []});

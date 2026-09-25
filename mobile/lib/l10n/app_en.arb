@@ -1140,5 +1140,29 @@
   "sosNoEtaYet": "Help is being arranged - no arrival time yet.",
   "@sosNoEtaYet": {
     "description": "Shown in responder ETA dialog when acknowledged without an arrival time."
+  },
+  "enrolTitle": "Enter the code from MDRRMO",
+  "@enrolTitle": {
+    "description": "Title of the MDRRMO device enrolment screen."
+  },
+  "enrolVerified": "Verified by MDRRMO.",
+  "@enrolVerified": {
+    "description": "Success message when device is successfully enrolled with MDRRMO."
+  },
+  "enrolCodeInvalid": "That code is wrong or expired. Ask MDRRMO for a new one.",
+  "@enrolCodeInvalid": {
+    "description": "Error message when enrolment code is invalid or expired."
+  },
+  "enrolNeedsInternet": "Enrolment needs internet. Try again when you have signal.",
+  "@enrolNeedsInternet": {
+    "description": "Error message when enrolling without internet connectivity."
+  },
+  "profileShoreContactName": "Contact on shore",
+  "@profileShoreContactName": {
+    "description": "Label for shore contact name field in profile."
+  },
+  "profileShoreContactPhone": "Shore contact's phone",
+  "@profileShoreContactPhone": {
+    "description": "Label for shore contact phone field in profile."
   }
 }

@@ -232,6 +232,7 @@ class _AqOneAppState extends State<AqOneApp> {
       final String? token = await _secureStore.readVesselToken();
       if (!_secureRestoreTimedOut && token != null) {
         _backend.setVesselBearerToken(token);
+        unawaited(_backend.refreshVesselCredential());
       }
     } catch (_) {
       // No keystore, or a platform that refused. The app stays usable and

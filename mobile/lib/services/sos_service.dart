@@ -11,6 +11,7 @@ import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
 import '../models/text_clamp.dart';
+import '../models/trust_tier.dart';
 import 'backend_client.dart';
 import 'buoy_client.dart';
 import 'location_service.dart';
@@ -80,7 +81,8 @@ class SosService {
 
   Future<SosRecord> raiseSos({String? note}) async {
     final identity = await _identity.read();
-    if (identity == null || !identity.isComplete) {
+    final vesselId = identity?.vesselId;
+    if (vesselId == null || vesselId.isEmpty) {
       throw StateError('Vessel identity is not set up.');
     }
 
@@ -88,11 +90,11 @@ class SosService {
     final fix = await _location.currentFix();
     final record = SosRecord(
       localId: _newLocalId(),
-      vesselId: identity.vesselId,
-      boat: identity.boat,
+      vesselId: vesselId,
+      boat: identity?.boat ?? '',
       clientTs: DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000,
       state: DeliveryState.saved,
-      trustTier: identity.trustTier,
+      trustTier: identity?.trustTier ?? TrustTier.selfDeclared,
       lat: fix?.lat,
       lon: fix?.lon,
       note: _clampNote(note),

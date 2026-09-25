@@ -23,6 +23,7 @@ import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
 import '../services/venture_feeds.dart';
 import 'chathubb.dart';
+import 'widgets/action_pill.dart';
 import 'widgets/compass_dial.dart';
 import 'widgets/offline_map_banner.dart';
 import 'widgets/squall_banner.dart';
@@ -353,7 +354,7 @@ class _VenturePageState extends State<VenturePage> {
       barrierColor: Colors.black87,
       transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (ctx, __, ___) =>
-          const _SosCountdownScreen(duration: _sosCountdown),
+          const SosCountdownScreen(duration: _sosCountdown),
     );
     return result ?? false;
   }
@@ -857,7 +858,7 @@ class _VenturePageState extends State<VenturePage> {
           ),
         ),
         const SizedBox(height: 14),
-        _ActionPill(
+        ActionPill(
           icon: Icons.warning_rounded,
           label: 'SOS',
           color: _danger,
@@ -1115,98 +1116,22 @@ class _RoundButton extends StatelessWidget {
   }
 }
 
-/// Fixed footprint for every primary action pill on the venture map.
-///
-/// All primary actions are this wide and this tall. Uniform size is
-/// the point: it makes the rail a predictable set of targets rather than a
-/// ragged column whose widths shift as soon as someone lands a fish with a
-/// long name, and it leaves colour as the one thing that tells them apart.
-const double _kActionPillWidth = 176;
-const double _kActionPillHeight = 50;
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool isDark;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    final display = enabled
-        ? color
-        : (isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8));
-    return SizedBox(
-      width: _kActionPillWidth,
-      height: _kActionPillHeight,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_kActionPillHeight / 2),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: display.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: onTap,
-          icon: Icon(icon, size: 20, color: Colors.white),
-          label: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.3,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: display,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            // Zero minimum: the SizedBox above owns the size, so the three
-            // pills stay identical no matter how long their labels are.
-            minimumSize: Size.zero,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_kActionPillHeight / 2),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Full-screen "sending SOS in N…" countdown with a slide-to-cancel bar.
 ///
 /// Deliberately not a plain [AlertDialog]: this has to be impossible to
 /// dismiss by accident (no tap-outside, no back-gesture - see [PopScope]
 /// below) while still being trivially easy to cancel on purpose via the
 /// slide, which is a large, deliberate, hard-to-trigger-by-accident gesture.
-class _SosCountdownScreen extends StatefulWidget {
-  const _SosCountdownScreen({required this.duration});
+class SosCountdownScreen extends StatefulWidget {
+  const SosCountdownScreen({super.key, required this.duration});
 
   final Duration duration;
 
   @override
-  State<_SosCountdownScreen> createState() => _SosCountdownScreenState();
+  State<SosCountdownScreen> createState() => _SosCountdownScreenState();
 }
 
-class _SosCountdownScreenState extends State<_SosCountdownScreen> {
+class _SosCountdownScreenState extends State<SosCountdownScreen> {
   static const Duration _tick = Duration(milliseconds: 100);
 
   late Duration _remaining = widget.duration;

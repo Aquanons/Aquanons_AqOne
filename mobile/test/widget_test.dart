@@ -12,7 +12,10 @@ import 'package:aqone/services/backend_client.dart';
 import 'package:aqone/services/buoy_client.dart';
 import 'package:aqone/services/location_service.dart';
 import 'package:aqone/services/sos_service.dart';
+import 'package:aqone/services/venture_feeds.dart';
+import 'package:aqone/ui/home_page.dart';
 import 'package:aqone/ui/venture_page.dart';
+import 'package:aqone/ui/widgets/action_pill.dart';
 import 'package:aqone/ui/widgets/responder_eta_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -34,6 +37,21 @@ Widget _host(Widget child, {Locale locale = const Locale('en')}) {
       ...kFallbackDelegates,
     ],
     home: Scaffold(body: SingleChildScrollView(child: child)),
+  );
+}
+
+Widget _hostPage(Widget page, {Locale locale = const Locale('en')}) {
+  return MaterialApp(
+    locale: locale,
+    supportedLocales: kSupportedLocales,
+    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      ...kFallbackDelegates,
+    ],
+    home: page,
   );
 }
 
@@ -432,6 +450,23 @@ void main() {
 
       expect(find.text(t.sosNoEtaYet), findsOneWidget);
     });
+
+    testWidgets('HomePage displays SOS action pill', (tester) async {
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(ActionPill), findsOneWidget);
+      expect(find.text('SOS'), findsOneWidget);
+    });
   });
 }
 
@@ -447,4 +482,7 @@ class _DummySosService extends SosService {
 
   @override
   void start() {}
+
+  @override
+  Future<List<SosRecord>> history() async => const <SosRecord>[];
 }

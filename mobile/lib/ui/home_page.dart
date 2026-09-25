@@ -19,8 +19,11 @@ import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
 import '../services/location_service.dart';
+import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/venture_feeds.dart';
+import 'venture_page.dart';
+import 'widgets/action_pill.dart';
 import 'widgets/advisory_card.dart';
 import 'widgets/buoy_status_card.dart';
 import 'widgets/delivery_state_tile.dart';
@@ -96,6 +99,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// Retrieval timestamp for the forecast on screen.
   DateTime? _forecastFetchedAt;
 
+  bool _isSendingSos = false;
+  final SosAlarm _sosAlarm = SosAlarm();
+  static const Duration _sosCountdown = Duration(seconds: 5);
+
   @visibleForTesting
   ForecastOutlook? get forecastOutlook => _forecastOutlook;
 
@@ -151,6 +158,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _seaTimer?.cancel();
     _forecastTimer?.cancel();
     _changes?.cancel();
+    unawaited(_sosAlarm.dispose());
     super.dispose();
   }
 
@@ -269,12 +277,127 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _pollBuoy();
   }
 
+  Future<void> _handleSosTap() async {
+    if (_isSendingSos) {
+      return;
+    }
+
+    setState(() => _isSendingSos = true);
+    unawaited(_sosAlarm.start());
+
+    final shouldSend = await _runSosCountdown();
+    if (!mounted) {
+      return;
+    }
+
+    if (!shouldSend) {
+      unawaited(_sosAlarm.stop());
+      setState(() => _isSendingSos = false);
+      _snack(AppLocalizations.of(context).sosCancelledNothingSent);
+      return;
+    }
+
+    try {
+      final record = await widget.service.raiseSos();
+      if (!mounted) {
+        return;
+      }
+      await _loadRecords();
+      await _showEmergencyDetailsSheet(record);
+    } on StateError {
+      if (mounted) {
+        _snack(AppLocalizations.of(context).sosSetupBoatRequired);
+      }
+    } finally {
+      unawaited(_sosAlarm.stop());
+      if (mounted) {
+        setState(() => _isSendingSos = false);
+      }
+    }
+  }
+
+  Future<bool> _runSosCountdown() async {
+    final result = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      transitionDuration: const Duration(milliseconds: 150),
+      pageBuilder: (ctx, __, ___) =>
+          const SosCountdownScreen(duration: _sosCountdown),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _showEmergencyDetailsSheet(SosRecord record) async {
+    if (!mounted) {
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => EmergencyDetailsSheet(
+        boat: widget.identity.boat,
+        onSubmitNote: (note) async {
+          try {
+            await widget.service.amendNote(record.localId, note);
+            if (mounted) {
+              await _loadRecords();
+            }
+          } catch (_) {
+            // Best-effort per amendNote()'s own contract - the note is
+            // already saved locally regardless of whether this succeeded.
+          }
+        },
+        onStandDown: () async {
+          await widget.service.standDown(record.localId);
+          if (!mounted) return;
+          final t = AppLocalizations.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(minutes: 2),
+              content: Text(t.standDownTitle),
+              action: SnackBarAction(
+                label: t.sosStandDownUndo,
+                onPressed: () {
+                  widget.service.replyToSos(record.localId, 1);
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    unawaited(_sosAlarm.stop());
+  }
+
+  void _snack(String message) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
     final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: palette.canvas,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: widget.bottomInset),
+        child: ActionPill(
+          icon: Icons.warning_rounded,
+          label: 'SOS',
+          color: const Color(0xFFDC2626),
+          isDark: Theme.of(context).brightness == Brightness.dark,
+          onTap: _isSendingSos ? null : _handleSosTap,
+        ),
+      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

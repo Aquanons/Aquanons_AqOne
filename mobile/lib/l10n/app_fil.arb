@@ -140,5 +140,11 @@
   "sosStandDownConfirmTitle": "Kanselahin ang pagsagip?",
   "sosStandDownConfirmBody": "Kakanselahin ang pagsagip. Gawin lamang ito kung ligtas na ang lahat.",
   "sosStandDownUndo": "I-undo - kailangan ko pa rin ng tulong",
-  "sosNoEtaYet": "Inaayos na ang tulong - wala pang oras ng pagdating."
+  "sosNoEtaYet": "Inaayos na ang tulong - wala pang oras ng pagdating.",
+  "enrolTitle": "Ipasok ang code mula sa MDRRMO",
+  "enrolVerified": "Naberipika ng MDRRMO.",
+  "enrolCodeInvalid": "Mali o paso na ang code na iyon. Humingi ng bago sa MDRRMO.",
+  "enrolNeedsInternet": "Kailangan ng internet para sa pagpapatala. Subukan muli kapag may signal.",
+  "profileShoreContactName": "Kontak sa pampang",
+  "profileShoreContactPhone": "Telepono ng kontak sa pampang"
 }

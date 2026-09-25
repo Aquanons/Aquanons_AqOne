@@ -470,6 +470,7 @@ HomePage(
         ProfilePage(
           identityStore: widget.identityStore,
           identity: widget.identity,
+          backendClient: widget.feeds.backend,
           themeMode: widget.themeMode,
           onThemeModeChanged: widget.onThemeModeChanged,
           localeController: widget.localeController,

@@ -43,6 +43,7 @@ dependencies:
   # project resolved.
   web_socket_channel: ^3.0.1
   shared_preferences: ^2.3.2
+  shared_preferences_android: ^2.4.27
   network_info_plus: ^8.2.1
 
   # Profile picture upload (camera / gallery).
