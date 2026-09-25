@@ -9,6 +9,8 @@ stationary navigational buoys remain optional fixed sensor and relay nodes.
 
 Built by **Team Aquanons** for AI Fest 2026.
 
+[Watch the AqOne promotional video](Assets/PromotionalVid.mp4)
+
 ## Current status
 
 **Current competition focus:** Phase 1, the manual SOS and responder handshake.
