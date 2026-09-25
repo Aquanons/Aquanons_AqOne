@@ -748,7 +748,7 @@ async def _apply_fisher_reply(conn: Any, row: Any, reply: int) -> Any:
            SET fisher_reply = $2::SMALLINT,
                fisher_replied_at = NOW(),
                resolved_at = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN NOW() ELSE NULL END,
-               resolution_code = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN 'safe_confirmed' ELSE NULL END,
+               resolution_code = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN $5 ELSE NULL END,
                reopened_at = CASE WHEN $4::BOOLEAN THEN NOW() ELSE reopened_at END,
                reopened_by = CASE WHEN $4::BOOLEAN THEN 'fisher' ELSE reopened_by END,
                version = version + 1
@@ -760,6 +760,7 @@ async def _apply_fisher_reply(conn: Any, row: Any, reply: int) -> Any:
         reply,
         REPLY_SAFE_NOW,
         reopen,
+        ResolutionCode.STOOD_DOWN_BY_FISHER.value,
     )
     if reopen:
         await record_audit_event(

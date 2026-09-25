@@ -102,7 +102,29 @@ Gates: ruff clean; backend 568 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F5 - A fisher's SAFE_NOW closes the call as `stood_down_by_fisher`
 
-Not started.
+Red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py::test_safe_now_reply_stores_stood_down_by_fisher`
+
+```text
+FAILED tests/test_edge_lifecycle_pg.py::test_safe_now_reply_stores_stood_down_by_fisher
+AssertionError: assert 'safe_confirmed' == 'stood_down_by_fisher'
+1 failed in 3.52s
+```
+
+Implementation check: the named PostgreSQL test passes after parameterizing the stored resolution code.
+Guard red run: `python -m pytest -q -p no:cacheprovider tests/test_responder_loop.py::test_safe_now_resolves_and_removes_the_event_from_the_active_feed`
+
+```text
+FAILED tests/test_responder_loop.py::test_safe_now_resolves_and_removes_the_event_from_the_active_feed
+assert reply.status_code == 200
+E assert 500 == 200
+1 failed in 2.72s
+```
+
+The fake pool unpacks exactly four SQL parameters, while the fix supplies five. Revision 2 explicitly allows updating this fake branch.
+
+Green runs: `python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py::test_safe_now_reply_stores_stood_down_by_fisher tests/test_responder_loop.py`: 16 passed.
+
+Gates: ruff clean; backend 569 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F6 - `many_calls_same_vessel` fires at two open calls
 
@@ -126,4 +148,5 @@ Not started.
 
 ## Pending - Len
 
+- Amend the approved F5 file list in `docs/63_EDGE_REVIEW_FIXES.md` to include `backend/tests/test_responder_loop.py`, then resume F5. The named fix test passes, but the existing fake-pool guard needs updating for the required fifth SQL parameter.
 - `pio run -d firmware -e shore`, then flash the shore and confirm a dashboard chat line reaches a boat. PlatformIO is not installed in this environment.

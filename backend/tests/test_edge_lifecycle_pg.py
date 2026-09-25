@@ -267,6 +267,24 @@ def test_still_in_danger_reopen_is_audited(probe_db):
     assert audit['action'] == 'sos.reopen'
 
 
+def test_safe_now_reply_stores_stood_down_by_fisher(probe_db):
+    local_id = 'safe-now-stand-down'
+    event = _seed(probe_db, local_id)
+    with TestClient(app) as client:
+        response = client.post(f'/api/sos/reply/{local_id}', json={'reply': 2})
+        ack = client.get(f'/api/sos/ack/{local_id}')
+
+    assert response.status_code == 200
+    assert ack.status_code == 200
+    stored = _sql(
+        probe_db,
+        'SELECT resolution_code FROM sos_events WHERE id = $1',
+        event['id'],
+    )
+    assert stored['resolution_code'] == 'stood_down_by_fisher'
+    assert ack.json()['event']['resolution_code'] == 'stood_down_by_fisher'
+
+
 def test_still_in_danger_after_window_stays_resolved(probe_db):
     device_event = _seed(probe_db, 'reply-device-expired')
     _seed(probe_db, 'reply-expired')

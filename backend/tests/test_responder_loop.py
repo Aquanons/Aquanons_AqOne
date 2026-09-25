@@ -173,21 +173,15 @@ class _FakePool:
             return event
 
         if 'UPDATE sos_events' in query and 'SET fisher_reply' in query:
-            event_id, reply, safe_now, still_in_danger = args
+            event_id, reply, safe_now, reopen, safe_now_code = args
             event = self.sos_events.get(int(event_id))
             if event is None:
                 return None
-            if event['resolved_at'] is not None and not (
-                reply == still_in_danger and datetime.now(UTC) - event['resolved_at'] <= timedelta(hours=2)
-            ):
-                return event
             event['fisher_reply'] = reply
             event['fisher_replied_at'] = datetime.now(UTC)
-            if reply == safe_now:
-                event['resolved_at'] = datetime.now(UTC)
-                event['resolution_code'] = 'safe_confirmed'
-            elif reply == still_in_danger:
-                event['resolved_at'] = None
+            event['resolved_at'] = datetime.now(UTC) if reply == safe_now else None
+            event['resolution_code'] = safe_now_code if reply == safe_now else None
+            if reopen:
                 event['reopened_at'] = datetime.now(UTC)
                 event['reopened_by'] = 'fisher'
             event['version'] += 1
