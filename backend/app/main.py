@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     from app import scheduler
 
     if os.environ.get('AQONE_SCHEDULER') != '0':
-        await scheduler.start(app.state)
+        await scheduler.start()
     try:
         yield
     finally:

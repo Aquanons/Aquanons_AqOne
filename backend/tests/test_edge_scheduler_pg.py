@@ -4,9 +4,10 @@ from datetime import UTC, datetime, timedelta
 import asyncpg
 from fastapi.testclient import TestClient
 
+from app import scheduler
 from app.auth import create_token
 from app.main import app
-from app.scheduler import run_escalation_job, run_job_once
+from app.scheduler import ANOMALY_JOB, ESCALATION_JOB, run_escalation_job, run_job_once
 
 
 def _headers():
@@ -99,3 +100,39 @@ def test_ops_status_reports_database_expiry_and_sms_configuration(probe_db, monk
     assert body['db_expires_at'] == expiry
     assert body['db_days_left'] == 20
     assert 'scheduler_last_run' in body
+
+
+def test_ops_status_scheduler_keys_match_contract(probe_db, monkeypatch):
+    async def check():
+        pool = await asyncpg.create_pool(probe_db)
+        monkeypatch.setattr(scheduler, 'get_pool', lambda: pool)
+        try:
+            async def no_op():
+                return None
+
+            assert await scheduler.run_job_once(ESCALATION_JOB, no_op)
+            assert await scheduler.run_job_once(ANOMALY_JOB, no_op)
+        finally:
+            await pool.close()
+
+    asyncio.run(check())
+    with TestClient(app) as client:
+        response = client.get('/api/ops/status', headers=_headers())
+    assert response.status_code == 200
+    assert set(response.json()['scheduler_last_run']) == {'escalation', 'anomaly'}
+
+
+def test_scheduler_starts_the_contract_jobs(monkeypatch):
+    async def check():
+        job_ids = []
+
+        async def record(job_id, interval, fn):
+            job_ids.append(job_id)
+
+        monkeypatch.setattr(scheduler, '_run_periodically', record)
+        await scheduler.start()
+        await asyncio.sleep(0)
+        await scheduler.stop()
+        assert set(job_ids) == {'escalation', 'anomaly'}
+
+    asyncio.run(check())

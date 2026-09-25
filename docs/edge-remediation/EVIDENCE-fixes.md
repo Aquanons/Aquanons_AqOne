@@ -142,7 +142,17 @@ Gates: ruff clean; backend 570 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F7 - Scheduler reports the contract's job names
 
-Not started.
+Red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_scheduler_pg.py::test_ops_status_scheduler_keys_match_contract tests/test_edge_scheduler_pg.py::test_scheduler_starts_the_contract_jobs`
+
+```text
+ERROR collecting tests/test_edge_scheduler_pg.py
+ImportError: cannot import name 'ANOMALY_JOB' from 'app.scheduler'
+1 error in 3.16s
+```
+
+Green run: the two named scheduler tests passed: 2 passed.
+
+Gates: ruff clean; backend 572 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical. An initial ruff check caught import ordering in the new test; imports were reordered before the full gates.
 
 ## F8 - A failed escalation SMS is retried
 

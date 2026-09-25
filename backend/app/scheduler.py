@@ -13,6 +13,8 @@ from app.notify import send_sms
 
 logger = logging.getLogger(__name__)
 _tasks: list[asyncio.Task] = []
+ESCALATION_JOB = 'escalation'
+ANOMALY_JOB = 'anomaly'
 
 
 async def run_job_once(job_id: str, fn: Callable[[], Awaitable[object]]) -> bool:
@@ -92,11 +94,11 @@ async def _run_periodically(job_id: str, interval: float, fn: Callable[[], Await
         await asyncio.sleep(interval)
 
 
-async def start(_app_state=None) -> None:
+async def start() -> None:
     global _tasks
     _tasks = [
-        asyncio.create_task(_run_periodically('sos-escalation', 30, run_escalation_job)),
-        asyncio.create_task(_run_periodically('anomaly-evaluation', 300, _evaluation_job)),
+        asyncio.create_task(_run_periodically(ESCALATION_JOB, 30, run_escalation_job)),
+        asyncio.create_task(_run_periodically(ANOMALY_JOB, 300, _evaluation_job)),
     ]
 
 
