@@ -1,6 +1,6 @@
 # Implementation Plan: AqOne Before, During, and After Safety Intelligence
 
-> **Status:** Planning complete; no implementation phase started.  
+> **Status:** SUPERSEDED (header corrected 2026-09-25). Phases 1 to 5 were executed and committed (`0f880a4`, `cd1d1c8`, `759587a`, `fa4f74e`, then Phase 5 in `docs/45_AI_PROSPECTIVE_EVALUATION_AND_CLAIMS.md`; see the phase table near the end). The post-execution re-audit (`docs/audits/AI_LAYER_DATA_CORRECTNESS_REAUDIT_2026-09-15.md`) did not uphold the completion claims, and the follow-up work moved to `docs/AI_SAFETY_REMEDIATION_IMPLEMENTATION_PLAN_GEMINI_3_8.md`. The earlier header line "Planning complete; no implementation phase started" described the plan before execution.  
 > **Target Branch:** Proposed `codex/ai-accuracy`; create only when execution is authorized, after inspecting existing changes.  
 > **Test Command:** Backend: `python -m pytest -q` from `backend`; mobile: `flutter test` from `mobile`; web: `node --test web/test/*.test.js` from the repository root.  
 > **Lint/Check Command:** Backend: `python -m ruff check .`; mobile: `flutter analyze`; web: `node --check` for changed JavaScript; documentation: `git diff --check`.  
