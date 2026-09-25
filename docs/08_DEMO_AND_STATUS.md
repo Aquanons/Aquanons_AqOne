@@ -5,6 +5,44 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-25 - Status check on `master` (`2528f30`)
+
+A full re-run of every software gate on the current `master`, plus a catch-up of work since the last README check on 2026-09-19.
+Environment: Windows 11, Python 3.11, Flutter stable, Node.js 22; no PostgreSQL URL set, so the Postgres-backed backend tests skipped.
+
+**Results:**
+- Live: `GET /health/ready` returned `{"status":"ok","commit":"2528f30..."}`, so Render serves the current `master`.
+  `/api/ops/status`, `/api/mesh/chat`, `/api/sos/downlink` and `/api/sos/active` all return 401 without a credential.
+- Backend: `ruff check .` clean; **519 passed, 59 skipped, 1 xfailed** without a database (573 passed with one, recorded in the entry below on `1b56c6b`; no backend code has changed since).
+- Mobile: `flutter analyze` 0 issues; **318 passed**; security probes 6 passed.
+- Web: **175 passed**; every `.js` file passes `node --check`.
+- Firmware: the two `AqOneLoam.h` copies are byte-identical.
+  PlatformIO is not installed on this machine, so the sketches were not rebuilt.
+  The last firmware change (`71d5ad7`, the shore sends its key on chat calls) has not been compiled anywhere; it is covered only by a source test (`tests/test_firmware_security.py`).
+  Every recorded clean build of both sketches predates it (see `docs/security-audit/REMEDIATION-EVIDENCE.md`).
+
+**Fixed during the check:**
+- `mobile/test/sos_alarm_test.dart` failed intermittently in the full suite.
+  It built a real `AudioPlayer`, whose constructor starts an async platform `create` that fails in the test host; the unhandled error landed on whichever test was running.
+  The test now reads the static `SosAlarm.alarmContext`, and the test-only `audioContext` getter is gone.
+- `backend/.env.example` now lists `SEMAPHORE_API_KEY`, `ONCALL_SMS_NUMBERS`, `SEMAPHORE_SENDER_NAME` and `DB_EXPIRES_AT`, and says which routes `GATEWAY_API_KEY` guards.
+
+**Work since 2026-09-19 not recorded elsewhere in this file:**
+- 2026-09-21 to 09-22, bench sessions on a pod and a shore board (`loratest` branch, PRs #66-#68).
+  The commit messages report a pod SOS crossing LoRa to the shore gateway and landing on the backend, and the gateway polling the downlink with HTTP 200.
+  They also record the faults found on the return leg and fixed: acknowledgements read from a dispatcher-only route (now `GET /api/sos/downlink` with `GATEWAY_API_KEY`), the SOS `seq` mismatch between buoy and handset, stale calls overwriting a vessel's current one, and Cloudflare's chunked responses parsing as an empty feed on the board.
+  No dated run log, RSSI table or photo was kept, the return leg reaching a handset is not reported, and the firmware has changed since (security remediation and edge fixes), so the current build has not been run on hardware.
+- 2026-09-23: registration badge on the SOS feed and drawer, gapless SOS alarm, live buoy WiFi screen on the handset, incident status reports, and a Resolved Incidents panel on the dashboard (PRs #69-#75).
+- 2026-09-24: `/health/ready` reports the deployed commit; free-tier Render database rotation runbook (`docs/runbooks/RENDER_FREE_DB_ROTATION.md`) with its Phase 0a dump and restore rehearsal.
+- Security audit remediation (SEC-32) removed the tracked debug-signed APK; no APK is in the repository now.
+
+**Still open (unchanged by this check):**
+- Shore gateway reflash, so mesh chat and the ETA downlink work with the current backend.
+- Bench re-run of the current firmware: one SOS and one warning over LoRa, HTTPS to Render after NTP sync.
+- Phone in airplane mode to pod to shore to dashboard, on real devices.
+- The docs/62 Phase I walkthrough, device tests and browser checks.
+- Outdoor range - no metres measured.
+
 ## 2026-09-25 - Edge-case remediation merged and deployed
 
 Recorded per `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/archive/plans/63_EDGE_REVIEW_FIXES.md`.
@@ -977,12 +1015,14 @@ drifted from reality; here it's maintained as you build.
 | Capability | Status | Notes |
 |---|---|---|
 | SOS over direct LoRa, phone offline | ⬜ | Phone → boat pod → tall shore gateway. The core claim. Update the moment it works. |
-| Signed frames + replay protection | ⬜ | |
-| Store-and-forward at boat pod | ⬜ | |
+| Pod SOS → shore gateway → backend (bench) | 🟡 | Reported working in bench sessions 2026-09-21/22 (commit messages on PRs #66-#68), with no dated run log; the current firmware build has not been run on hardware |
+| Acknowledgement and ETA back down the mesh | 🟡 | `GET /api/sos/downlink` and the gateway relay are built and were bench-debugged 2026-09-21/22; never seen reaching a handset; needs the shore reflash |
+| Signed frames + replay protection | ⬜ | HMAC frames and a seen-set are in `AqOneLoam.h` and the build refuses the example key; one shared key, per-source keys deferred; not demonstrated on hardware |
+| Store-and-forward at boat pod | ⬜ | Flash-backed queue is in the pod sketch; the power-cycle test has not been run |
 | Optional multi-hop relay (3+ nodes) | ⬜ | Stationary relay buoy; likely bench-only — say so |
 | Stationary buoy hazard sensing | ⬜ | Fixed barometer/current observations; do not claim hardware data before field validation |
 | Dashboard live feed + acknowledge | 🟡 | Software verified by automated tests (2026-09-25); the docs/62 Phase I end-to-end walkthrough has not been run |
-| Deployed backend, healthcheck green | ✅ | `https://aqone-backend.onrender.com/health/ready` returned `ok` with commit `9630553`, 2026-09-25 |
+| Deployed backend, healthcheck green | ✅ | `https://aqone-backend.onrender.com/health/ready` returned `ok` with commit `2528f30` (current `master`), 2026-09-25 |
 | Range measured on water | ⬜ | Record the metres |
 | AI hotspot model | ❌ **Not built** | Deliberate — circular target, no data |
 | Catch-decline detection | ❌ **Not built** | Deliberate — out of scope |

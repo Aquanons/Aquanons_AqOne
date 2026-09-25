@@ -29,7 +29,7 @@ services:
       # boats, and nothing in the backend logs says why - so it is declared
       # here rather than left to be remembered. Copy the generated value from
       # the Render dashboard into GATEWAY_API_KEY in
-      # firmware/shore/AqOneShore/AqOneShore.ino.
+      # firmware/shore/AqOneShore/AqOneSecrets.h.
       - key: GATEWAY_API_KEY
         generateValue: true
       - key: JWT_EXPIRY_HOURS

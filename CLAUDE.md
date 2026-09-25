@@ -172,7 +172,7 @@ Defined in `docs/06_DELIVERY_STATES.md`.
 - Drift output is a probability distribution, not a location guarantee.
 - The phone never needs cellular signal; it works in airplane mode.
 - Two boards with different radio settings behave exactly like two boards out of range: no error, no log line, nothing arrives.
-- `LOAM_KEY` in firmware: **anyone with this repository can inject a distress call into the mesh** until you change it.
+- `LOAM_KEY` lives in the gitignored `AqOneSecrets.h` and the build refuses the example value, but every board shares one key: **whoever holds it can inject a distress call into the mesh**.
 - No range has been measured outdoors yet — every RF figure is modelled.
 
 ## Localization
@@ -234,7 +234,7 @@ Before completing any change:
 - No secrets in the repo. Use `.env` locally (gitignored) and platform env vars in deployment.
 - `*.env.example` files are allowed.
 - Update the firmware's `LOAM_KEY` before deploying to production.
-- The gateway needs an operator bearer token to push acknowledgements back down the mesh.
+- The shore gateway needs `GATEWAY_API_KEY` (in `AqOneSecrets.h`, matching the backend) to read the acknowledgement, ETA and chat downlinks.
 
 ## Important docs to read first
 

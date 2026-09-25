@@ -27,8 +27,6 @@ class SosAlarm {
     ),
   );
 
-  AudioContext get audioContext => alarmContext;
-
   bool get isRinging => _ringing;
 
   /// Starts the loop. Safe to call repeatedly - a second call while already

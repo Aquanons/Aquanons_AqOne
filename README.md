@@ -15,22 +15,22 @@ Built by **Team Aquanons** for AI Fest 2026.
 
 **Current competition focus:** Phase 1, the manual SOS and responder handshake.
 
-**Last status check:** September 19, 2026.
+**Last status check:** September 25, 2026, on commit `2528f30`.
 
-The active backend is deployed on Render (`https://aqone-backend.onrender.com`), with `/health/ready` verified responsive. The legacy Railway service has been retired.
+The active backend is deployed on Render (`https://aqone-backend.onrender.com`); `/health/ready` reports the deployed commit, and on September 25 it returned `ok` for the current `master`. The legacy Railway service has been retired.
 Obtain current evaluator access from Team Aquanons rather than relying on credentials stored in the repository.
 
 | Area | Status | Evidence and limitation |
 |---|---|---|
-| Mobile pitch build | 🟡 Built and automatically tested | On 2026-09-25 `flutter analyze` reported no issues and 318 tests passed. Physical handset installation, the foreground-service device test and the hardware demonstration remain unverified. |
-| Backend and dashboard software | 🟢 Deployed and verified | Live Render backend deployment responsive at `https://aqone-backend.onrender.com/health/ready` (commit `9630553`, 2026-09-25). |
-| Edge-case remediation | 🟡 Merged and deployed, not walked end to end | PR #79 (2026-09-25): delivery keeps retrying until confirmed, reason-coded resolve with reopen, triage and plausibility flags, SMS escalation, operations status. Tests green; the docs/62 Phase I walkthrough, device tests and browser checks are pending. See `docs/08_DEMO_AND_STATUS.md`. |
-| Phone to boat-pod WiFi | 🟡 Implemented in source | The pod address is `192.168.4.1`. The complete path has not been reverified on a physical handset and pod. |
-| Boat-pod and shore firmware | 🟡 Pod and shore sketches exist, compile clean | SOS, responder ETA and chat cross LoRa; the pod has no internet of its own. Neither sketch has run on hardware. Stationary relay/sensor hardware is not yet validated. |
-| Direct and optional relay LoRa | 🟡 Implemented, unproven | Direct pod-to-shore delivery and TTL flood/seen-set relay logic are written. No outdoor range has been measured — every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
-| Responder acknowledgement and ETA | 🟡 Implemented, needs the gateway key and a reflash | The gateway reads `GET /api/sos/downlink` with `GATEWAY_API_KEY` and pushes the ETA back down the mesh. Since 2026-09-25 mesh chat also needs that key, so the shore gateway must be reflashed with the current `AqOneShore.ino`. |
+| Mobile app | 🟡 Built and automatically tested | On 2026-09-25 `flutter analyze` reported no issues and 318 tests passed. Delivery keeps retrying until the backend confirms it, a foreground service holds a pending SOS, and silent SOS, MDRRMO enrolment and confirmed stand-down are in. No release APK is tracked in the repository, and the device tests (foreground service, silent SOS, reinstall identity) have not been run. |
+| Backend and dashboard software | 🟢 Deployed and verified | Render serves `2528f30`, the current `master` (2026-09-25). Backend 573 tests pass with PostgreSQL and web 175; unauthenticated calls to operator and gateway routes return 401. |
+| Edge-case remediation | 🟡 Merged and deployed, not walked end to end | PR #79 (2026-09-25): reason-coded resolve with undo and reopen, versioned acknowledge, a triage-ordered feed with advisory plausibility flags, SMS escalation of unanswered calls, and an operations status panel. The docs/62 Phase I walkthrough, device tests and browser checks are pending. SMS escalation has no provider credentials yet. |
+| Phone to boat-pod WiFi | 🟡 Implemented in source | The pod address is `192.168.4.1`. The complete path has not been verified on a physical handset and pod. |
+| Boat-pod and shore firmware | 🟡 Bench-tested build is out of date | Bench sessions on 2026-09-21/22 reported a pod SOS crossing LoRa to the shore gateway and landing on the backend, but kept no dated run log. The firmware has changed since (security remediation, edge fixes) and the current build has not been run on hardware. Stationary relay/sensor hardware is not validated. |
+| Direct and optional relay LoRa | 🟡 Implemented, range unmeasured | Direct pod-to-shore delivery and TTL flood/seen-set relay logic are written. No outdoor range has been measured - every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
+| Responder acknowledgement and ETA | 🟡 Built, needs the shore reflash | The gateway reads `GET /api/sos/downlink` with `GATEWAY_API_KEY` and pushes the ETA back down the mesh; the return leg was debugged on the bench but has not been seen reaching a handset. Since 2026-09-25 mesh chat also needs that key, so the shore gateway must be reflashed from `master`. |
 | AI safety features | 🟡 Prototype software exists | No component has been trained and validated on locally collected New Washington data. Synthetic scenarios support most calibration/evaluation; the marine-hazard model uses historical environmental proxy data. Field validation and deployment remain incomplete. |
-| Catch activity features | 🟡 Foundation exists | Offline logging and coarse aggregation exist. The intended BFAR workflow has not been validated. |
+| Catch activity features | 🟡 Foundation exists | Backend catch-log intake and coarse hotspot aggregation exist; the handset has no catch-logging screen yet. The intended BFAR workflow has not been validated. |
 
 The dated evidence ledger is [`docs/08_DEMO_AND_STATUS.md`](docs/08_DEMO_AND_STATUS.md).
 Read its newest dated entry first; older entries record earlier repository states and may no longer describe current behavior.
@@ -169,7 +169,8 @@ Get-ChildItem web/js, web/test -Recurse -Filter *.js | ForEach-Object { node --c
    - **Live Incident & Responder Loop:**
      - Click an incident in the feed or on the map to open the SOS drawer.
      - Click `Acknowledge`: verify modal target is locked, focus traps within modal, and submitting ETA/notes records acknowledgment.
-     - Click `Resolve Case`: verify drawer retires upon case completion without clobbering other incidents.
+     - Click `Resolve`: pick a reason code, confirm, and verify the `Undo` toast; the drawer retires without clobbering other incidents.
+     - Open the Resolved Incidents panel and click `Reopen`: verify the call returns to the live feed.
    - **Audit & Timeline:**
      - Open the Audit panel (`web/html/dashboard.html`).
      - Submit a query; page through results or click `Export CSV/JSON` $\rightarrow$ confirm export and pagination strictly retain the submitted filter snapshot.
@@ -196,8 +197,8 @@ flutter build apk --release \
   --dart-define=BACKEND_BASE_URL=https://aqone-backend.onrender.com
 ```
 
-The bundled [`mobile/AqOne.apk`](mobile/AqOne.apk) predates the September 5 pitch build.
-Do not present it as the current verified source build.
+No APK is tracked in the repository.
+Release builds refuse to fall back to debug signing, so a release APK needs the release keystore (`mobile/README.md`); ask Len for a current signed build.
 
 ## Firmware
 
@@ -218,14 +219,15 @@ order and the hardware limitations are in
 
 Before flashing:
 
-- Replace local uplink credentials with values supplied outside version control.
-- Change `LOAM_KEY`. Until you do, anyone with this repository can inject a
-  distress call into the mesh.
+- Copy `AqOneSecrets.h.example` to `AqOneSecrets.h` next to each `.ino`: both need `LOAM_KEY`, and the shore also needs the uplink WiFi and `GATEWAY_API_KEY`.
+  That file is gitignored.
+- The build refuses the example `LOAM_KEY`, so set a random one.
+  Every board shares that one key: whoever holds it can inject a distress call into the mesh.
 - Confirm `LORA_FREQ_MHZ` matches the band your boards and antennas were built
   for. The repository's own docs disagree on this and it is still an open item.
 - Point the firmware at a verified backend.
-- The dispatcher's acknowledgement needs an operator credential on the gateway;
-  without one, SOS and chat still work and the return path does not.
+- The shore gateway needs `GATEWAY_API_KEY` to match the backend's value.
+  Without it SOS uplink still works, but the acknowledgement, ETA and chat downlinks do not.
 - Do not claim a LoRa range. The mesh is implemented; no range has been measured.
 
 ## AI and data

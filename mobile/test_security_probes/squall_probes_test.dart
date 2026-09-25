@@ -1,4 +1,3 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:aqone/models/squall_watch.dart';
 import 'package:aqone/services/sos_alarm.dart';
 import 'package:aqone/services/squall_alarm.dart';
@@ -7,9 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 class _CountingAlarm implements SosAlarm {
   int starts = 0;
   bool _ringing = false;
-
-  @override
-  AudioContext get audioContext => SosAlarm.alarmContext;
 
   @override
   bool get isRinging => _ringing;
