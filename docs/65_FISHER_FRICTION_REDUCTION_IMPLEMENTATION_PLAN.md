@@ -1,6 +1,6 @@
 # Implementation Plan: Fisher friction reduction (handset UX)
 
-**Status:** APPROVED - Revision 2; queued behind `docs/66` (failing Phase 1 tests parked on local branch `ux/fisher-friction`)
+**Status:** APPROVED - Revision 2; Phase 1 handed to Luna (mobile only, beside plan 66); merge after review and not during RSTW
 **Owner:** Lenard (plan, review), Jade (Flutter), Doreen Kay (UX, term study, field session)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
@@ -12,7 +12,7 @@ Feature spec and revision: `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` Revision 
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
 Len's chat approval, 2026-09-25T17:00:00+08:00: recommendations accepted for D2, D3, D5 and D6; the team picks the terms itself (D1); joining the pod Wi-Fi happens inside the app (D4); the field session with fishermen and the MDRRMO is after the RSTW pitch, date to be set by Len.
 Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may push phases straight to `master`)
-Implementer: Antigravity (Gemini) from the root `HANDOFF.md`; reviewer: Claude Code.
+Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed by `docs/fisher-ux/HANDOFF-luna-phase-1.md` (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
 
 Success condition: the five jobs in spec 64 Section 1 meet their targets in the field session (Phase 0b).
 Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
