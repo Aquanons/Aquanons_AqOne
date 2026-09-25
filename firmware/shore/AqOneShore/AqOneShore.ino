@@ -331,6 +331,7 @@ bool postChat(const char* sender, const char* text) {
   WiFiClientSecure client;
   HTTPClient https;
   if (!httpsBegin(client, https, String(BACKEND_HOST) + "/api/mesh/chat")) return false;
+  https.addHeader("X-Api-Key", GATEWAY_API_KEY);
   https.addHeader("Content-Type", "application/json");
   https.setTimeout(10000);
 
@@ -643,6 +644,7 @@ void pollChat() {
   HTTPClient https;
   String url = String(BACKEND_HOST) + "/api/mesh/chat?limit=10&since_id=" + String(lastChatId);
   if (!httpsBegin(client, https, url)) return;
+  https.addHeader("X-Api-Key", GATEWAY_API_KEY);
   https.setTimeout(10000);
   // HTTP/1.0, so the response cannot come back chunked.
   //
