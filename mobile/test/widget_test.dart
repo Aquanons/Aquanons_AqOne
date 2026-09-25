@@ -15,7 +15,7 @@ import 'package:aqone/services/sos_alarm.dart';
 import 'package:aqone/services/sos_service.dart';
 import 'package:aqone/services/venture_feeds.dart';
 import 'package:aqone/ui/home_page.dart';
-import 'package:aqone/ui/venture_page.dart';
+import 'package:aqone/ui/sos_flow.dart';
 import 'package:aqone/ui/widgets/action_pill.dart';
 import 'package:aqone/ui/widgets/responder_eta_dialog.dart';
 import 'package:flutter/material.dart';
@@ -346,10 +346,13 @@ void main() {
       final t = await AppLocalizations.delegate.load(const Locale('en'));
       var stoodDown = false;
 
+      final record = ValueNotifier<SosRecord>(_record());
+      addTearDown(record.dispose);
+
       await tester.pumpWidget(
         _host(
           EmergencyDetailsSheet(
-            boat: 'BG-123',
+            record: record,
             onSubmitNote: (_) async {},
             onStandDown: () async {
               stoodDown = true;
@@ -492,7 +495,9 @@ void main() {
       expect(alarm.startCalled, isFalse);
     });
 
-    testWidgets('holding SOS for 3 seconds sends silently', (tester) async {
+    // docs/64 FFR-02 (finding F2): a long, hard press from a panicking user
+    // must not quietly switch the siren off.
+    testWidgets('holding SOS behaves exactly like a tap', (tester) async {
       SharedPreferences.setMockInitialValues({'silent_sos': false});
       final alarm = _TrackingSosAlarm();
       await tester.pumpWidget(
@@ -510,11 +515,13 @@ void main() {
 
       final gesture =
           await tester.startGesture(tester.getCenter(find.text('SOS')));
-      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(seconds: 4));
       await gesture.up();
       await tester.pump();
+      await tester.pump();
 
-      expect(alarm.startCalled, isFalse);
+      expect(alarm.startCalled, isTrue);
+      expect(find.byType(SosCountdownScreen), findsOneWidget);
     });
   });
 }

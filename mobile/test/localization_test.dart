@@ -221,18 +221,16 @@ void main() {
       }
     });
 
-    test('no bare Text literal remains in venture_page.dart or home_page.dart',
-        () {
-      final ventureContent =
-          File('lib/ui/venture_page.dart').readAsStringSync();
-      final homeContent = File('lib/ui/home_page.dart').readAsStringSync();
-
+    test('no bare Text literal remains on the SOS screens', () {
       final bareTextRegex = RegExp(r"Text\(\s*'");
-
-      expect(bareTextRegex.hasMatch(ventureContent), isFalse,
-          reason: 'venture_page.dart contains bare Text(\' literals');
-      expect(bareTextRegex.hasMatch(homeContent), isFalse,
-          reason: 'home_page.dart contains bare Text(\' literals');
+      for (final path in <String>[
+        'lib/ui/venture_page.dart',
+        'lib/ui/home_page.dart',
+        'lib/ui/sos_flow.dart',
+      ]) {
+        expect(bareTextRegex.hasMatch(File(path).readAsStringSync()), isFalse,
+            reason: '$path contains bare Text(\' literals');
+      }
     });
   });
 }
