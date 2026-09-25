@@ -216,6 +216,11 @@ of travel. From this event stream:
 queued at the serving pod and any reachable fixed nodes. Continued silence
 combined with adverse conditions, an unusual last heading, or a seaward
 trajectory escalates to a scored alert on the PCG console.
+4. **Stagnant mode.** [Roadmap — not implemented] A fisher who will stay in
+   one spot on purpose (anchoring, longlining) declares a duration from the
+   app. Silence-based overdue scoring is held off until that time runs out,
+   then the ladder resumes. An SOS always overrides it. See
+   `docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`.
 
 **This is unsupervised anomaly detection over a learned behavioural baseline** — it requires no labelled disaster dataset, only ordinary usage, which the network generates from day one.
 

@@ -9,6 +9,12 @@ Per [`AGENTS.md`](AGENTS.md) and [`docs/README.md`](docs/README.md), only one pl
 |---|---|---|
 | ACTIVE | [`docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
 
+## Draft Plans
+
+| Status | Plan | Purpose |
+|---|---|---|
+| DRAFT | [`docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`](docs/66_STAGNANT_MODE_IMPLEMENTATION_PLAN.md) | Let a fisher declare a stationary period so silence doesn't raise an overdue alert |
+
 ## Completed and Archived Plans
 
 Archived implementation plans are stored in [`docs/archive/plans/`](docs/archive/plans/):
