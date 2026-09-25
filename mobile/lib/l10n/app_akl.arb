@@ -251,5 +251,22 @@
   "enrolCodeInvalid": "Kariro o expire eon ro code. Magpangayo it bag-o sa MDRRMO.",
   "enrolNeedsInternet": "Kinahangean it internet ro pagpa-enrol. Liwata kon may signal eon.",
   "profileShoreContactName": "Kontak sa baybay",
-  "profileShoreContactPhone": "Telepono it kontak sa baybay"
+  "profileShoreContactPhone": "Telepono it kontak sa baybay",
+  "settingsSilentSos": "Mahipon nga SOS",
+  "settingsSilentSosDescription": "Magpadaea it SOS nga owa't sirena o tunog. Pwede man nimo pugngan ro SOS button it 3 segundo.",
+  "sosStoodDown": "Ginbawi ro SOS.",
+  "sosNoneSentYet": "Owa pa it napadaea nga SOS.",
+  "homeYourMessages": "Imo mga mensahe",
+  "actionClose": "Sirahe",
+  "sosSendingTitle": "Ginapadaea ro SOS",
+  "sosSendingSubtitle": "Ginaalerto ro MDRRMO gamit ro imo posisyon.",
+  "sosSlideToCancel": "I-slide para kanselahon",
+  "sosAutoSendNotice": "Pabay-i eang ag awtomatiko nga igapadaea ro SOS.",
+  "sosSentForBoat": "Napadaea ro SOS para sa {boat}",
+  "sosWhatsWrongNotice": "Ano ro natabo? Gina-update kara ro panan-awan it MDRRMO - opsyonal, napadaea eon ro alerto.",
+  "sosSendUpdate": "Ipaabot ro update",
+  "sosSentByMistake": "Napadaea nga bukon it hungod?",
+  "sosSlideToStandDown": "I-slide para bawion ro saklolo",
+  "locatingLabel": "Ginatultol ro lokasyon…",
+  "safetyWeatherLoadFailed": "Owa ma-load ro tiyempo, gani indi masuri."
 }

@@ -22,6 +22,8 @@ import '../services/location_service.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/venture_feeds.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'venture_page.dart';
 import 'widgets/action_pill.dart';
 import 'widgets/advisory_card.dart';
@@ -44,12 +46,14 @@ class HomePage extends StatefulWidget {
     this.squall = SquallWatch.unavailable,
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
+    this.sosAlarm,
   });
 
   final SosService service;
   final VesselIdentity identity;
   final VentureFeeds feeds;
   final LocationService location;
+  final SosAlarm? sosAlarm;
 
   /// Space reserved for the shell's floating dock, so the last card is not
   /// hidden underneath it.
@@ -100,7 +104,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   DateTime? _forecastFetchedAt;
 
   bool _isSendingSos = false;
-  final SosAlarm _sosAlarm = SosAlarm();
+  late final SosAlarm _sosAlarm;
   static const Duration _sosCountdown = Duration(seconds: 5);
 
   @visibleForTesting
@@ -109,6 +113,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    _sosAlarm = widget.sosAlarm ?? SosAlarm();
     WidgetsBinding.instance.addObserver(this);
     _changes = widget.service.changes.listen((_) => _loadRecords());
     widget.service.start();
@@ -277,13 +282,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _pollBuoy();
   }
 
-  Future<void> _handleSosTap() async {
+  Future<void> _handleSosTap({bool silent = false}) async {
     if (_isSendingSos) {
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final isSilent = silent || (prefs.getBool('silent_sos') ?? false);
+
     setState(() => _isSendingSos = true);
-    unawaited(_sosAlarm.start());
+    if (!isSilent) {
+      unawaited(_sosAlarm.start());
+    }
 
     final shouldSend = await _runSosCountdown();
     if (!mounted) {
@@ -358,7 +368,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(minutes: 2),
-              content: Text(t.standDownTitle),
+              content: Text(t.sosStoodDown),
               action: SnackBarAction(
                 label: t.sosStandDownUndo,
                 onPressed: () {
@@ -395,7 +405,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           label: 'SOS',
           color: const Color(0xFFDC2626),
           isDark: Theme.of(context).brightness == Brightness.dark,
-          onTap: _isSendingSos ? null : _handleSosTap,
+          onTap: _isSendingSos ? null : () => _handleSosTap(),
+          onHold: _isSendingSos ? null : () => _handleSosTap(silent: true),
         ),
       ),
       body: SafeArea(
@@ -441,14 +452,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           'assets/images/aqoneLogo2.png',
                           height: 24,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Text(
-                            'AqOne',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: palette.primaryText,
-                            ),
-                          ),
+                          errorBuilder: (_, __, ___) {
+                            const appBrand = 'AqOne';
+                            return Text(
+                              appBrand,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: palette.primaryText,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -556,7 +570,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
               const SizedBox(height: AqSpace.screen),
               Text(
-                'Your messages',
+                t.homeYourMessages,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -568,7 +582,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AqSpace.xl),
                   child: Text(
-                    'No SOS sent yet.',
+                    t.sosNoneSentYet,
                     style: TextStyle(fontSize: 14, color: palette.dimText),
                   ),
                 )

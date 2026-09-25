@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aqone/l10n/app_localizations.dart';
 
 import '../core/locale_controller.dart';
@@ -82,10 +83,12 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _shoreContactName;
   late TextEditingController _shoreContactPhone;
   late LicenseType _licenseType;
+  bool _silentSos = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSilentSos();
     _name = TextEditingController(text: widget.identity.skipperName);
     _boat = TextEditingController(text: widget.identity.boat);
     _license = TextEditingController(text: widget.identity.licenseNumber);
@@ -95,6 +98,19 @@ class _ProfilePageState extends State<ProfilePage> {
     _shoreContactPhone =
         TextEditingController(text: widget.identity.shoreContactPhone);
     _licenseType = widget.identity.licenseType;
+  }
+
+  Future<void> _loadSilentSos() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() => _silentSos = prefs.getBool('silent_sos') ?? false);
+    }
+  }
+
+  Future<void> _onSilentSosChanged(bool value) async {
+    setState(() => _silentSos = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('silent_sos', value);
   }
 
   @override
@@ -504,6 +520,10 @@ class _ProfilePageState extends State<ProfilePage> {
               onChanged: (dark) => widget.onThemeModeChanged?.call(
                 dark ? ThemeMode.dark : ThemeMode.light,
               ),
+            ),
+            _SilentSosSwitchTile(
+              enabled: _silentSos,
+              onChanged: _onSilentSosChanged,
             ),
             if (widget.localeController != null)
               LanguageSettingTile(controller: widget.localeController!),
@@ -993,6 +1013,72 @@ class _ThemeSwitchTile extends StatelessWidget {
               ),
               Switch(
                 value: dark,
+                onChanged: onChanged,
+                activeTrackColor: palette.active,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SilentSosSwitchTile extends StatelessWidget {
+  const _SilentSosSwitchTile({
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AqPalette.of(context);
+    final t = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AqSpace.xs),
+      child: Material(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(AqRadius.standard),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                enabled ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                size: 20,
+                color: palette.secondaryText,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      t.settingsSilentSos,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: palette.primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      t.settingsSilentSosDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.dimText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const Key('silent_sos_switch'),
+                value: enabled,
                 onChanged: onChanged,
                 activeTrackColor: palette.active,
               ),

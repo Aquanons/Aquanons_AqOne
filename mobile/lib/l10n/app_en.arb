@@ -1164,5 +1164,80 @@
   "profileShoreContactPhone": "Shore contact's phone",
   "@profileShoreContactPhone": {
     "description": "Label for shore contact phone field in profile."
+  },
+  "settingsSilentSos": "Silent SOS",
+  "@settingsSilentSos": {
+    "description": "Label for settings toggle to send SOS silently."
+  },
+  "settingsSilentSosDescription": "Send an SOS with no siren or sound. You can also hold the SOS button for 3 seconds.",
+  "@settingsSilentSosDescription": {
+    "description": "Description for silent SOS settings toggle."
+  },
+  "sosStoodDown": "SOS stood down.",
+  "@sosStoodDown": {
+    "description": "Message shown when an SOS has been stood down."
+  },
+  "sosNoneSentYet": "No SOS sent yet.",
+  "@sosNoneSentYet": {
+    "description": "Notice shown in message history when no SOS has been sent yet."
+  },
+  "homeYourMessages": "Your messages",
+  "@homeYourMessages": {
+    "description": "Section heading for SOS message history on home page."
+  },
+  "actionClose": "Close",
+  "@actionClose": {
+    "description": "Button to close dialog or bottom sheet."
+  },
+  "sosSendingTitle": "Sending SOS",
+  "@sosSendingTitle": {
+    "description": "Title on full-screen countdown screen when sending SOS."
+  },
+  "sosSendingSubtitle": "Alerting the MDRRMO with your position.",
+  "@sosSendingSubtitle": {
+    "description": "Subtitle on countdown screen explaining that MDRRMO is being alerted."
+  },
+  "sosSlideToCancel": "Slide to cancel",
+  "@sosSlideToCancel": {
+    "description": "Label on slider control to cancel SOS countdown."
+  },
+  "sosAutoSendNotice": "Do nothing and the SOS sends automatically.",
+  "@sosAutoSendNotice": {
+    "description": "Instruction on countdown screen that SOS dispatches automatically when timer expires."
+  },
+  "sosSentForBoat": "SOS sent for {boat}",
+  "@sosSentForBoat": {
+    "description": "Heading on emergency details sheet showing vessel name.",
+    "placeholders": {
+      "boat": {
+        "type": "String",
+        "example": "M/B Elena"
+      }
+    }
+  },
+  "sosWhatsWrongNotice": "What's wrong? This updates what the MDRRMO sees - optional, the alert has already gone out.",
+  "@sosWhatsWrongNotice": {
+    "description": "Explanation on emergency details sheet that note is optional and alert has dispatched."
+  },
+  "sosSendUpdate": "Send update",
+  "@sosSendUpdate": {
+    "description": "Button label to submit updated details for an active SOS."
+  },
+  "sosSentByMistake": "Sent by mistake?",
+  "@sosSentByMistake": {
+    "description": "Section title above stand down option on emergency details sheet."
+  },
+  "sosSlideToStandDown": "Slide to stand down",
+  "@sosSlideToStandDown": {
+    "description": "Label on slider control to stand down SOS on emergency details sheet."
+  },
+  "locatingLabel": "Locating…",
+  "@locatingLabel": {
+    "description": "Label shown on map while acquiring GPS fix."
+  },
+  "safetyWeatherLoadFailed": "Weather could not be loaded, so this cannot be assessed.",
+  "@safetyWeatherLoadFailed": {
+    "description": "Message shown when weather data could not be fetched for safety assessment."
   }
 }
+

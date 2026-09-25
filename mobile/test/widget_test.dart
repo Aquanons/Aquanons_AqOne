@@ -11,6 +11,7 @@ import 'package:aqone/data/outbox_store.dart';
 import 'package:aqone/services/backend_client.dart';
 import 'package:aqone/services/buoy_client.dart';
 import 'package:aqone/services/location_service.dart';
+import 'package:aqone/services/sos_alarm.dart';
 import 'package:aqone/services/sos_service.dart';
 import 'package:aqone/services/venture_feeds.dart';
 import 'package:aqone/ui/home_page.dart';
@@ -20,6 +21,7 @@ import 'package:aqone/ui/widgets/responder_eta_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Widgets under test now read their copy from AppLocalizations, so the host
 /// has to carry the delegates. Defaults to English: these tests assert the
@@ -467,7 +469,69 @@ void main() {
       expect(find.byType(ActionPill), findsOneWidget);
       expect(find.text('SOS'), findsOneWidget);
     });
+
+    testWidgets('silent SOS starts no alarm', (tester) async {
+      SharedPreferences.setMockInitialValues({'silent_sos': true});
+      final alarm = _TrackingSosAlarm();
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+            sosAlarm: alarm,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('SOS'));
+      await tester.pump();
+
+      expect(alarm.startCalled, isFalse);
+    });
+
+    testWidgets('holding SOS for 3 seconds sends silently', (tester) async {
+      SharedPreferences.setMockInitialValues({'silent_sos': false});
+      final alarm = _TrackingSosAlarm();
+      await tester.pumpWidget(
+        _hostPage(
+          HomePage(
+            service: _DummySosService(),
+            identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+            feeds: VentureFeeds(backend: BackendClient()),
+            location: LocationService(),
+            sosAlarm: alarm,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('SOS')));
+      await tester.pump(const Duration(seconds: 3));
+      await gesture.up();
+      await tester.pump();
+
+      expect(alarm.startCalled, isFalse);
+    });
   });
+}
+
+class _TrackingSosAlarm extends SosAlarm {
+  bool startCalled = false;
+
+  @override
+  Future<void> start() async {
+    startCalled = true;
+  }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 class _DummySosService extends SosService {

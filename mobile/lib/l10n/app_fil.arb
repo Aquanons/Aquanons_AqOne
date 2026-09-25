@@ -146,5 +146,22 @@
   "enrolCodeInvalid": "Mali o paso na ang code na iyon. Humingi ng bago sa MDRRMO.",
   "enrolNeedsInternet": "Kailangan ng internet para sa pagpapatala. Subukan muli kapag may signal.",
   "profileShoreContactName": "Kontak sa pampang",
-  "profileShoreContactPhone": "Telepono ng kontak sa pampang"
+  "profileShoreContactPhone": "Telepono ng kontak sa pampang",
+  "settingsSilentSos": "Tahimik na SOS",
+  "settingsSilentSosDescription": "Magpadala ng SOS nang walang sirena o tunog. Maaari mo ring pindutin nang matagal ang SOS nang 3 segundo.",
+  "sosStoodDown": "Binawi ang SOS.",
+  "sosNoneSentYet": "Wala pang naipapadalang SOS.",
+  "homeYourMessages": "Iyong mga mensahe",
+  "actionClose": "Isara",
+  "sosSendingTitle": "Ipinapadala ang SOS",
+  "sosSendingSubtitle": "Inaalerto ang MDRRMO gamit ang iyong posisyon.",
+  "sosSlideToCancel": "I-slide para kanselahin",
+  "sosAutoSendNotice": "Huwag gumalaw at awtomatikong ipapadala ang SOS.",
+  "sosSentForBoat": "Naipadala ang SOS para sa {boat}",
+  "sosWhatsWrongNotice": "Anong nangyari? Ina-update nito ang nakikita ng MDRRMO - opsyonal, naipadala na ang alerto.",
+  "sosSendUpdate": "Ipadala ang update",
+  "sosSentByMistake": "Naipadala nang hindi sinasadya?",
+  "sosSlideToStandDown": "I-slide para bawiin ang saklolo",
+  "locatingLabel": "Hinahanap ang lokasyon…",
+  "safetyWeatherLoadFailed": "Hindi ma-load ang panahon, kaya hindi ito masuri."
 }

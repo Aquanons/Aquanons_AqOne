@@ -275,23 +275,23 @@ Checkpoint message: `feat(mobile): MDRRMO enrolment, SOS before setup, and recov
 
 Requirements: EC-H22 (silent part), EC-L4, EC-L1
 Merge after: M5
-State: Not started
+State: Done
 
 ### Tasks
 
-- [ ] Write red tests:
+- [x] Write red tests:
   - `test/widget_test.dart`: `silent SOS starts no alarm` (toggle on), and `holding SOS for 3 seconds sends silently`.
   - `test/sos_alarm_test.dart`: the alarm player is configured with `AndroidUsageType.alarm` and `AndroidContentType.sonification`.
   - `test/localization_test.dart`: the new keys exist in all three ARB files, and no bare `Text('` literal remains in `venture_page.dart` or `home_page.dart` (grep-style test).
-- [ ] Add a settings toggle `silentSos` (profile page, string `settingsSilentSos` with its description), stored in preferences.
-- [ ] The SOS button: a 3 s hold raises a silent SOS.
+- [x] Add a settings toggle `silentSos` (profile page, string `settingsSilentSos` with its description), stored in preferences.
+- [x] The SOS button: a 3 s hold raises a silent SOS.
   `raiseSos` itself is unchanged; the UI skips `SosAlarm.start()`.
-- [ ] `sos_alarm.dart`: `setAudioContext(AudioContext(android: AudioContextAndroid(usageType: AndroidUsageType.alarm, contentType: AndroidContentType.sonification)))` before playing.
-- [ ] Move the English literals found in docs/60 L1 (`venture_page.dart:391` "SOS stood down.", `home_page.dart:448` "No SOS sent yet.", and any others the grep finds on the SOS path) into ARB keys.
+- [x] `sos_alarm.dart`: `setAudioContext(AudioContext(android: AudioContextAndroid(usageType: AndroidUsageType.alarm, contentType: AndroidContentType.sonification)))` before playing.
+- [x] Move the English literals found in docs/60 L1 (`venture_page.dart:391` "SOS stood down.", `home_page.dart:448` "No SOS sent yet.", and any others the grep finds on the SOS path) into ARB keys.
 
 ### Verification
 
-Gate commands green, with red and green runs recorded.
+- [x] Gate commands green, with red and green runs recorded.
 
 ### Review and checkpoint
 

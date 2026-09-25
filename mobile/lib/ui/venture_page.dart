@@ -5,6 +5,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/config.dart';
 import '../data/checklist_store.dart';
@@ -77,6 +78,7 @@ class VenturePage extends StatefulWidget {
     this.squall = SquallWatch.unavailable,
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
+    this.sosAlarm,
   });
 
   final VesselIdentity identity;
@@ -84,6 +86,7 @@ class VenturePage extends StatefulWidget {
   final ChecklistStore checklist;
   final VentureFeeds feeds;
   final LocationService location;
+  final SosAlarm? sosAlarm;
 
   /// Space reserved for the shell's floating dock. The map stays full-bleed
   /// behind it; only the controls are lifted clear so they never get covered.
@@ -151,7 +154,7 @@ class _VenturePageState extends State<VenturePage> {
 
   SosRecord? _latestSos;
   bool _isSendingSos = false;
-  final SosAlarm _sosAlarm = SosAlarm();
+  late final SosAlarm _sosAlarm;
 
   /// True while a hazard dialog is on screen, so a second alert arriving from
   /// the same poll cannot stack a dialog on top of the first.
@@ -161,6 +164,7 @@ class _VenturePageState extends State<VenturePage> {
   @override
   void initState() {
     super.initState();
+    _sosAlarm = widget.sosAlarm ?? SosAlarm();
     widget.location.warmUp();
     _sosSub = widget.sos.changes.listen((_) => _refreshSosStatus());
     _initTileProvider();
@@ -303,13 +307,18 @@ class _VenturePageState extends State<VenturePage> {
   /// Only once the countdown runs out (uninterrupted) does anything actually
   /// go to the MDRRMO; the "what's wrong?" detail is gathered afterwards,
   /// while the alert is already in flight.
-  Future<void> _handleSosTap() async {
+  Future<void> _handleSosTap({bool silent = false}) async {
     if (_isSendingSos) {
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final isSilent = silent || (prefs.getBool('silent_sos') ?? false);
+
     setState(() => _isSendingSos = true);
-    unawaited(_sosAlarm.start());
+    if (!isSilent) {
+      unawaited(_sosAlarm.start());
+    }
 
     final shouldSend = await _runSosCountdown();
     if (!mounted) {
@@ -394,7 +403,7 @@ class _VenturePageState extends State<VenturePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(minutes: 2),
-              content: Text(t.standDownTitle),
+              content: Text(t.sosStoodDown),
               action: SnackBarAction(
                 label: t.sosStandDownUndo,
                 onPressed: () {
@@ -423,6 +432,7 @@ class _VenturePageState extends State<VenturePage> {
     _hazardDialogOpen = true;
     final kind = _hazardQueue.removeAt(0);
     final count = _hazards[kind]?.length ?? 0;
+    final t = AppLocalizations.of(context);
 
     await showDialog<void>(
       context: context,
@@ -451,7 +461,7 @@ class _VenturePageState extends State<VenturePage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Dismiss',
+              t.gotItButton,
               style: TextStyle(
                 color: kind.color,
                 fontWeight: FontWeight.bold,
@@ -524,7 +534,7 @@ class _VenturePageState extends State<VenturePage> {
           children: <Widget>[
             Text(
               weather == null
-                  ? 'Weather could not be loaded, so this cannot be assessed.'
+                  ? t.safetyWeatherLoadFailed
                   : '${weather.condition.label(t)} · '
                       '${weather.temperature.toStringAsFixed(0)}°C · '
                       'wind ${weather.windSpeed.toStringAsFixed(0)} km/h',
@@ -757,6 +767,7 @@ class _VenturePageState extends State<VenturePage> {
     final label = _weatherFailed
         ? t.weatherUnavailable
         : weather?.condition.label(t) ?? 'Loading…';
+    final tempDisplay = '${weather?.temperature.toStringAsFixed(0) ?? '--'}°C';
     final icon = weather?.condition.icon ?? Icons.wb_sunny_rounded;
 
     return GestureDetector(
@@ -802,7 +813,7 @@ class _VenturePageState extends State<VenturePage> {
             ),
             const SizedBox(width: 10),
             Text(
-              '${weather?.temperature.toStringAsFixed(0) ?? '--'}°C',
+              tempDisplay,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -863,7 +874,8 @@ class _VenturePageState extends State<VenturePage> {
           label: 'SOS',
           color: _danger,
           isDark: isDark,
-          onTap: _isSendingSos ? null : _handleSosTap,
+          onTap: _isSendingSos ? null : () => _handleSosTap(),
+          onHold: _isSendingSos ? null : () => _handleSosTap(silent: true),
         ),
       ],
     );
@@ -893,6 +905,7 @@ class _VenturePageState extends State<VenturePage> {
             : standDownPending
                 ? t.standDownPendingTitle
                 : state.title(t);
+    final sosTitle = 'SOS: $title';
     final description = resolvedByMDRRMO
         ? t.resolvedDescription
         : standDown
@@ -940,7 +953,7 @@ class _VenturePageState extends State<VenturePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'SOS: $title',
+                  sosTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -1011,6 +1024,7 @@ class _VenturePageState extends State<VenturePage> {
   }
 
   Widget _buildLocatingPill(bool isDark) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -1036,7 +1050,7 @@ class _VenturePageState extends State<VenturePage> {
           ),
           const SizedBox(width: 8),
           Text(
-            'Locating…',
+            t.locatingLabel,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -1168,11 +1182,13 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final fraction = 1 -
         (_remaining.inMilliseconds / widget.duration.inMilliseconds)
             .clamp(0.0, 1.0);
     final secondsLeft =
         (_remaining.inMilliseconds / 1000).ceil().clamp(1, 99);
+    final secondsDisplay = '$secondsLeft';
 
     return PopScope(
       // No back-gesture, no back-button dismissal - the only way out of this
@@ -1192,19 +1208,19 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
                   size: 60,
                 ),
                 const SizedBox(height: 18),
-                const Text(
-                  'Sending SOS',
-                  style: TextStyle(
+                Text(
+                  t.sosSendingTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Alerting the MDRRMO with your position.',
+                Text(
+                  t.sosSendingSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -1225,7 +1241,7 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
                         ),
                       ),
                       Text(
-                        '$secondsLeft',
+                        secondsDisplay,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 42,
@@ -1237,17 +1253,17 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
                 ),
                 const Spacer(),
                 _SlideToAction(
-                  label: 'Slide to cancel',
+                  label: t.sosSlideToCancel,
                   icon: Icons.close_rounded,
                   accentColor: Colors.white,
                   thumbIconColor: const Color(0xFF7A0E0E),
                   onConfirmed: () => _finish(false),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Do nothing and the SOS sends automatically.',
+                Text(
+                  t.sosAutoSendNotice,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
@@ -1395,7 +1411,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'SOS sent for ${widget.boat}',
+                      t.sosSentForBoat(widget.boat),
                       style: TextStyle(
                         color: fg,
                         fontWeight: FontWeight.w800,
@@ -1407,8 +1423,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                "What's wrong? This updates what the MDRRMO sees - optional, "
-                'the alert has already gone out.',
+                t.sosWhatsWrongNotice,
                 style: TextStyle(color: dim, fontSize: 12.5, height: 1.35),
               ),
               const SizedBox(height: 14),
@@ -1455,7 +1470,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
                     ),
                   ),
                   child: Text(
-                    _selected == null ? 'Close' : 'Send update',
+                    _selected == null ? t.actionClose : t.sosSendUpdate,
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -1464,7 +1479,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
               Divider(color: dim.withValues(alpha: 0.25)),
               const SizedBox(height: 8),
               Text(
-                'Sent by mistake?',
+                t.sosSentByMistake,
                 style: TextStyle(
                   color: fg,
                   fontWeight: FontWeight.w700,
@@ -1473,7 +1488,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
               ),
               const SizedBox(height: 8),
               _SlideToAction(
-                label: _standingDown ? 'Standing down…' : 'Slide to stand down',
+                label: _standingDown ? t.standDownTitle : t.sosSlideToStandDown,
                 icon: Icons.undo_rounded,
                 accentColor: _danger,
                 onConfirmed: _submitting || _standingDown ? null : _standDown,

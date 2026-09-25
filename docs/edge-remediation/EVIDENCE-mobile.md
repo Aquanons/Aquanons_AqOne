@@ -115,4 +115,28 @@ Row counts and IDs only; never data, URLs or credentials.
 ### Manual / Device checks
 - `Pending - Len: install, note the vessel ID, uninstall with backup on, reinstall. The same vessel ID comes back.`
 
+## Phase M6: Silent SOS, alarm stream siren, and localised SOS flow (2026-09-25)
+
+### Red run
+- Command: `flutter test test/sos_alarm_test.dart test/localization_test.dart test/widget_test.dart`
+- Output:
+  - `test/sos_alarm_test.dart`: failed to compile (missing `audioContext` getter on `SosAlarm`, missing `player` parameter).
+  - `test/localization_test.dart`: failed (missing keys `settingsSilentSos`, `settingsSilentSosDescription`, `sosStoodDown`, `sosNoneSentYet` across ARB files; bare `Text('` literals found in `home_page.dart` and `venture_page.dart`).
+  - `test/widget_test.dart`: failed to compile (missing `sosAlarm` parameter on `HomePage`).
+
+### Green run
+- Command: `flutter test test/sos_alarm_test.dart test/localization_test.dart test/widget_test.dart`
+- Output: All tests passed (32 passed).
+
+### Gate results
+- `flutter gen-l10n`: passed (0 errors)
+- `flutter analyze`: passed (0 issues found)
+- `flutter test`: passed (316 passed)
+- `flutter test test_security_probes`: passed (6 passed)
+
+### Manual / Device checks
+- `Pending - Len: on device, toggle silent SOS on in settings, trigger SOS; alarm siren stays silent while countdown and dispatch proceed.`
+- `Pending - Len: on device, with silent SOS off, hold SOS button for 3 seconds; countdown and dispatch proceed silently without siren.`
+
+
 
