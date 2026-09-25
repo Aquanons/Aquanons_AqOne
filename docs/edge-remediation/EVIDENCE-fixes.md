@@ -178,9 +178,16 @@ Gates: ruff clean; backend 574 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F10 - Over-engineering cuts
 
-Not started.
+No behavior change; existing tests are the guards. Applied matching-helper consolidation, shared coordinate-conflict SQL, removal of the duplicate handset filter, SMS-number parsing helper and semaphore removal, lifecycle helper inlining, mobile byte-limit alias removal, and default closure-code branch removal.
+
+The explicitly listed lifecycle unit tests for `can_reopen` and `resolution_code_from` were removed; their behavior remains covered by the lifecycle PostgreSQL tests.
+
+Two cuts were reverted after existing guards failed, as required by Section 5:
+- Removing the `utf8ByteLength` fallback failed `ack modal captures target and prevents background case switching` with `TypeError: utf8ByteLength is not a function`; the runtime harness does not provide the core namespace helper.
+- Dropping `event.pod_id` failed `SOS display labels stay neutral and follow the event fields`: expected `Relayed by pod P-4 - sender not verified`, got `Relayed by pod unknown - sender not verified`.
+
+Gates: ruff clean; backend 572 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical. The backend test count is two lower because F10 explicitly removed the two helper-specific unit tests.
 
 ## Pending - Len
 
-- Amend the approved F5 file list in `docs/63_EDGE_REVIEW_FIXES.md` to include `backend/tests/test_responder_loop.py`, then resume F5. The named fix test passes, but the existing fake-pool guard needs updating for the required fifth SQL parameter.
 - `pio run -d firmware -e shore`, then flash the shore and confirm a dashboard chat line reaches a boat. PlatformIO is not installed in this environment.

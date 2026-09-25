@@ -203,8 +203,6 @@ class AqOneConfig {
   static const int maxVesselIdLength = 32;
   static const int maxBoatBytes = 32;
   static const int maxNoteBytes = 64;
-  static const int maxBoatLength = maxBoatBytes;
-  static const int maxNoteLength = maxNoteBytes;
 
   static const int maxSpotNoteLength = 240;
   static const int maxNameLength = 64;

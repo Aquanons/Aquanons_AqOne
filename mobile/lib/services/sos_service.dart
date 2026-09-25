@@ -541,51 +541,26 @@ class SosService {
     final claimedEvents = <RemoteSos>{};
     final matches = <SosRecord, RemoteSos>{};
 
-    for (final record in records) {
-      for (final event in remote) {
-        if (!claimedEvents.contains(event) &&
-            event.localId != null &&
-            event.localId!.isNotEmpty &&
-            event.localId == record.localId) {
-          matches[record] = event;
-          claimedEvents.add(event);
-          break;
+    void claim(bool Function(SosRecord, RemoteSos) matchesBy) {
+      for (final record in records) {
+        if (matches.containsKey(record)) continue;
+        for (final event in remote) {
+          if (!claimedEvents.contains(event) && matchesBy(record, event)) {
+            matches[record] = event;
+            claimedEvents.add(event);
+            break;
+          }
         }
       }
     }
 
-    for (final record in records) {
-      if (matches.containsKey(record) || record.nonce == null) {
-        continue;
-      }
-      for (final event in remote) {
-        if (!claimedEvents.contains(event) &&
-            event.nonce != null &&
-            event.nonce == record.nonce) {
-          matches[record] = event;
-          claimedEvents.add(event);
-          break;
-        }
-      }
-    }
-
-    for (final record in records) {
-      if (matches.containsKey(record) || record.seq == null) {
-        continue;
-      }
-      for (final event in remote) {
-        if (!claimedEvents.contains(event) &&
-            event.seq != null &&
-            event.seq == record.seq &&
-            (event.nonce == null ||
-                record.nonce == null ||
-                event.nonce == record.nonce)) {
-          matches[record] = event;
-          claimedEvents.add(event);
-          break;
-        }
-      }
-    }
+    claim((record, event) =>
+        event.localId != null && event.localId!.isNotEmpty && event.localId == record.localId);
+    claim((record, event) => record.nonce != null && event.nonce == record.nonce);
+    claim((record, event) =>
+        record.seq != null &&
+        event.seq == record.seq &&
+        (event.nonce == null || record.nonce == null || event.nonce == record.nonce));
 
     for (final entry in matches.entries) {
       final record = entry.key;

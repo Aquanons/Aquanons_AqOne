@@ -1447,7 +1447,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: _custom,
-                  maxLength: AqOneConfig.maxNoteLength,
+                  maxLength: AqOneConfig.maxNoteBytes,
                   textCapitalization: TextCapitalization.sentences,
                   enabled: !_submitting && !_standingDown,
                   decoration: InputDecoration(

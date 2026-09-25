@@ -14,15 +14,7 @@ class ResolutionCode(StrEnum):
 REOPEN_WINDOW = timedelta(hours=2)
 
 
-def resolution_code_from(raw: str | ResolutionCode | None) -> ResolutionCode:
-    return ResolutionCode(raw) if raw is not None else ResolutionCode.UNSPECIFIED
-
-
-def can_reopen(resolved_at: datetime | None) -> bool:
-    return resolved_at is not None
-
-
 def fisher_reply_reopens(resolved_at: datetime | None, reply: int, now: datetime) -> bool:
-    if not can_reopen(resolved_at) or reply != 1:
+    if resolved_at is None or reply != 1:
         return False
     return timedelta(0) <= now - resolved_at <= REOPEN_WINDOW

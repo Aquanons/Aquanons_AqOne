@@ -15,7 +15,7 @@ from app.db import get_pool
 from app.geo import SHORE_STATIONS, distance_km
 from app.incidents.delivery import delivery_state
 from app.incidents.downlink import OPEN_WINDOW, RESOLVED_WINDOW, select_downlink
-from app.incidents.lifecycle import ResolutionCode, can_reopen, fisher_reply_reopens, resolution_code_from
+from app.incidents.lifecycle import ResolutionCode, fisher_reply_reopens
 from app.incidents.plausibility import PlausibilityContext
 from app.incidents.plausibility import flags as plausibility_flags
 from app.incidents.text import truncate_utf8
@@ -555,6 +555,11 @@ async def _upsert_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> A
         if payload.nonce is not None
         else 'ON CONFLICT (vessel_id, client_ts) WHERE nonce IS NULL'
     )
+    position_conflict = f'''sos_events.alt_latitude IS NULL
+             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
+             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
+             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
+               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})'''
     # ponytail: this box is about 1 km at 11 degrees N; use haversine if operations move far from the equator.
     row = await conn.fetchrow(
         f'''
@@ -567,19 +572,9 @@ async def _upsert_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> A
         {conflict} DO UPDATE SET
           latitude = COALESCE(sos_events.latitude, EXCLUDED.latitude),
           longitude = COALESCE(sos_events.longitude, EXCLUDED.longitude),
-          alt_latitude = CASE
-            WHEN sos_events.alt_latitude IS NULL
-             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
-             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
-             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
-               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})
+          alt_latitude = CASE WHEN {position_conflict}
             THEN EXCLUDED.latitude ELSE sos_events.alt_latitude END,
-          alt_longitude = CASE
-            WHEN sos_events.alt_latitude IS NULL
-             AND sos_events.latitude IS NOT NULL AND EXCLUDED.latitude IS NOT NULL
-             AND sos_events.longitude IS NOT NULL AND EXCLUDED.longitude IS NOT NULL
-             AND (abs(sos_events.latitude - EXCLUDED.latitude) > {CONFLICT_DEGREES}
-               OR abs(sos_events.longitude - EXCLUDED.longitude) > {CONFLICT_DEGREES})
+          alt_longitude = CASE WHEN {position_conflict}
             THEN EXCLUDED.longitude ELSE sos_events.alt_longitude END,
           note = COALESCE(NULLIF(sos_events.note, ''), EXCLUDED.note),
           local_id = COALESCE(sos_events.local_id, EXCLUDED.local_id),
@@ -642,7 +637,7 @@ async def resolve_sos(
             event_id,
             user.get('email') or 'unknown',
             body.reason,
-            resolution_code_from(body.reason_code).value,
+            (ResolutionCode(body.reason_code) if body.reason_code is not None else ResolutionCode.UNSPECIFIED).value,
         )
         # resolved_reason is free text and never logged (docs/41 Phase 2).
         await record_audit_event(
@@ -685,7 +680,7 @@ async def reopen_sos(
             raise HTTPException(status_code=404, detail='no such SOS event')
         if body.expected_version is not None and body.expected_version != prior['version']:
             return _version_conflict(prior)
-        if not can_reopen(prior['resolved_at']):
+        if prior['resolved_at'] is None:
             return {'ok': True, 'id': event_id, 'outcome': 'no_change', 'version': prior['version']}
         row = await conn.fetchrow(
             '''

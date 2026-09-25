@@ -116,9 +116,9 @@ class ChatService extends ChangeNotifier {
     ]) {
       final String trimmed = candidate.trim();
       if (trimmed.isNotEmpty) {
-        return trimmed.length <= AqOneConfig.maxBoatLength
+        return trimmed.length <= AqOneConfig.maxBoatBytes
             ? trimmed
-            : trimmed.substring(0, AqOneConfig.maxBoatLength);
+            : trimmed.substring(0, AqOneConfig.maxBoatBytes);
       }
     }
     return 'Fisher';

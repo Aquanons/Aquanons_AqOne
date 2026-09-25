@@ -9,10 +9,6 @@ String closureMessage(AppLocalizations l, String? code) {
       return l.sosClosedByMdrrmo;
     case 'duplicate':
       return l.sosClosedDuplicate;
-    case 'closed_unconfirmed':
-    case 'unspecified':
-    case null:
-    case '':
     default:
       return l.sosClosedUnconfirmed;
   }

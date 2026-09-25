@@ -102,8 +102,6 @@ def _group_latest_trips(rows: list[dict[str, object]]) -> list[tuple[str, str, l
     for row in rows:
         if row.get('latitude') is None or row.get('longitude') is None:
             continue
-        if row.get('contact_via', 'buoy') == 'handset':
-            continue
         key = (str(row['vessel_id']), str(row['trip_id']))
         grouped.setdefault(key, []).append(
             ContactPoint(

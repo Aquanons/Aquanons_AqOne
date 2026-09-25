@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import os
 from enum import StrEnum
 
 import httpx
 
 SEMAPHORE_URL = 'https://api.semaphore.co/api/v4/messages'
-_SEND_LIMIT = asyncio.Semaphore(1)
 
 
 class NotifyResult(StrEnum):
@@ -16,14 +14,17 @@ class NotifyResult(StrEnum):
     FAILED = 'failed'
 
 
+def _oncall_numbers() -> list[str]:
+    return [number.strip() for number in os.environ.get('ONCALL_SMS_NUMBERS', '').split(',') if number.strip()]
+
+
 def sms_configured() -> bool:
-    numbers = [number.strip() for number in os.environ.get('ONCALL_SMS_NUMBERS', '').split(',') if number.strip()]
-    return bool(os.environ.get('SEMAPHORE_API_KEY', '').strip() and numbers)
+    return bool(os.environ.get('SEMAPHORE_API_KEY', '').strip() and _oncall_numbers())
 
 
 async def send_sms(text: str) -> NotifyResult:
     api_key = os.environ.get('SEMAPHORE_API_KEY', '').strip()
-    numbers = [number.strip() for number in os.environ.get('ONCALL_SMS_NUMBERS', '').split(',') if number.strip()]
+    numbers = _oncall_numbers()
     if not api_key or not numbers:
         return NotifyResult.NOT_CONFIGURED
     data = {'apikey': api_key, 'message': text}
@@ -31,7 +32,7 @@ async def send_sms(text: str) -> NotifyResult:
     if sender_name:
         data['sendername'] = sender_name
     try:
-        async with _SEND_LIMIT, httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             for number in numbers:
                 response = await client.post(SEMAPHORE_URL, data={**data, 'number': number})
                 response.raise_for_status()
