@@ -454,6 +454,7 @@ def test_reopen_returns_a_resolved_incident_to_the_active_feed(monkeypatch):
     with TestClient(app, raise_server_exceptions=False) as client:
         reopened = client.post('/api/sos/3/reopen', headers=_operator_headers())
         assert reopened.status_code == 200
+        assert reopened.json()['outcome'] == 'updated'
         assert reopened.json()['resolved_at'] is None
 
         missing = client.post('/api/sos/999/reopen', headers=_operator_headers())
@@ -461,7 +462,8 @@ def test_reopen_returns_a_resolved_incident_to_the_active_feed(monkeypatch):
 
     with TestClient(app, raise_server_exceptions=False) as client:
         still_active = client.post('/api/sos/3/reopen', headers=_operator_headers())
-        assert still_active.status_code == 409
+        assert still_active.status_code == 200
+        assert still_active.json()['outcome'] == 'no_change'
 
     assert [e['action'] for e in pool.audit_events] == ['sos.reopen']
 
