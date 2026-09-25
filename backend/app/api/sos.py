@@ -243,7 +243,7 @@ def _event_json(row: Any, server_time: datetime | None = None) -> dict[str, obje
 def _version_conflict(row: Any) -> JSONResponse:
     return JSONResponse(
         status_code=409,
-        content={'detail': 'version_conflict', 'event': _event_json(row)},
+        content={'detail': 'version_conflict', 'current': _event_json(row)},
     )
 
 

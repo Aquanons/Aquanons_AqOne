@@ -32,7 +32,21 @@ Gates: ruff clean; backend 560 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F2 - Version conflicts return `current`
 
-Not started.
+Red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_acknowledge tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_resolve tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_reopen`
+
+```text
+FAILED tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_acknowledge
+FAILED tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_resolve
+FAILED tests/test_edge_lifecycle_pg.py::test_version_conflict_body_carries_current_for_reopen
+AssertionError: 409 body must expose the event under current
+3 failed in 19.57s
+```
+
+Green run: all three named tests and `test_ack_with_stale_version_conflicts` passed (4 passed).
+
+Guard: `web/test/dashboard-incidents.test.js` test `409 displays the current answer and waits for another confirmation` passed in the full web suite.
+
+Gates: ruff clean; backend 563 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 deferred failures; mobile analyze clean, 316 passed, security probes 6 passed; web 171 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F3 - Anomaly monitoring is fleet-wide and top level
 

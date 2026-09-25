@@ -126,7 +126,71 @@ def test_ack_with_stale_version_conflicts(probe_db):
     assert first.status_code == 200
     assert stale.status_code == 409
     assert stale.json()['detail'] == 'version_conflict'
-    assert stale.json()['event']['version'] == 1
+    assert stale.json()['current']['version'] == 1
+
+
+def test_version_conflict_body_carries_current_for_acknowledge(probe_db):
+    event = _seed(probe_db)
+    _sql(probe_db, 'UPDATE sos_events SET version = 1 WHERE id = $1', event['id'])
+    with TestClient(app) as client:
+        response = client.post(
+            f"/api/sos/{event['id']}/acknowledge",
+            headers=_operator_headers(),
+            json={'expected_version': 0},
+        )
+    assert response.status_code == 409
+    body = response.json()
+    assert body['detail'] == 'version_conflict'
+    current = body.get('current')
+    assert current is not None, '409 body must expose the event under current'
+    assert current['id'] == event['id']
+    assert current['version'] == _sql(
+        probe_db, 'SELECT version FROM sos_events WHERE id = $1', event['id'],
+    )['version']
+
+
+def test_version_conflict_body_carries_current_for_resolve(probe_db):
+    event = _seed(probe_db)
+    _sql(probe_db, 'UPDATE sos_events SET version = 1 WHERE id = $1', event['id'])
+    with TestClient(app) as client:
+        response = client.post(
+            f"/api/sos/{event['id']}/resolve",
+            headers=_operator_headers(),
+            json={'expected_version': 0},
+        )
+    assert response.status_code == 409
+    body = response.json()
+    assert body['detail'] == 'version_conflict'
+    current = body.get('current')
+    assert current is not None, '409 body must expose the event under current'
+    assert current['id'] == event['id']
+    assert current['version'] == _sql(
+        probe_db, 'SELECT version FROM sos_events WHERE id = $1', event['id'],
+    )['version']
+
+
+def test_version_conflict_body_carries_current_for_reopen(probe_db):
+    event = _seed(probe_db)
+    _sql(
+        probe_db,
+        'UPDATE sos_events SET resolved_at = NOW(), version = 1 WHERE id = $1',
+        event['id'],
+    )
+    with TestClient(app) as client:
+        response = client.post(
+            f"/api/sos/{event['id']}/reopen",
+            headers=_operator_headers(),
+            json={'expected_version': 0},
+        )
+    assert response.status_code == 409
+    body = response.json()
+    assert body['detail'] == 'version_conflict'
+    current = body.get('current')
+    assert current is not None, '409 body must expose the event under current'
+    assert current['id'] == event['id']
+    assert current['version'] == _sql(
+        probe_db, 'SELECT version FROM sos_events WHERE id = $1', event['id'],
+    )['version']
 
 
 def test_transport_merge_does_not_bump_version(probe_db):
