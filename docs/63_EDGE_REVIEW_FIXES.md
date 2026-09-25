@@ -1,7 +1,7 @@
 # Implementation Plan: Edge-case review fixes
 
 Created: 2026-09-25T09:00:00+08:00
-Revision: 1
+Revision: 2 (2026-09-25: F5 may also edit the responder-loop fake pool; see F5)
 Status: Approved (Len, in chat, 2026-09-25)
 **Execution mode:** auto
 Implementer: GPT Luna.
@@ -226,6 +226,31 @@ Commit: `fix(sos): only a real reopen marks a call reopened, and it is audited`
 - `test_safe_now_reply_stores_stood_down_by_fisher`: an open event; reply `2`; assert `resolution_code == 'stood_down_by_fisher'` in the row and in `GET /api/sos/ack/{local_id}`.
 
 **Change** - `backend/app/api/sos.py`: use `ResolutionCode.STOOD_DOWN_BY_FISHER.value`, passed as a parameter rather than a SQL literal.
+
+**Also allowed in F5 (Revision 2)** - `backend/tests/test_responder_loop.py`, the `_FakePool.fetchrow` branch for `UPDATE sos_events ... SET fisher_reply` only.
+Its guard test `test_safe_now_resolves_and_removes_the_event_from_the_active_feed` breaks because the fake unpacks four SQL parameters and F5 adds a fifth.
+The fake also still re-implements the two-hour reopen rule and names its fourth parameter `still_in_danger`, which F4 turned into the `reopen` boolean.
+Make the fake mirror the real SQL exactly and decide nothing itself:
+
+```python
+event_id, reply, safe_now, reopen, safe_now_code = args
+event = self.sos_events.get(int(event_id))
+if event is None:
+    return None
+event['fisher_reply'] = reply
+event['fisher_replied_at'] = datetime.now(UTC)
+event['resolved_at'] = datetime.now(UTC) if reply == safe_now else None
+event['resolution_code'] = safe_now_code if reply == safe_now else None
+if reopen:
+    event['reopened_at'] = datetime.now(UTC)
+    event['reopened_by'] = 'fisher'
+event['version'] += 1
+return event
+```
+
+The "already resolved and not reopening" early return stays in `_apply_fisher_reply`, which runs before the SQL, so the fake must not repeat it.
+Remove any import in that test file that this leaves unused (ruff will say).
+Every other test in `test_responder_loop.py` must stay green unchanged.
 
 Commit: `fix(sos): a fisher stand-down closes the call as stood_down_by_fisher`
 
