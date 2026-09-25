@@ -742,15 +742,15 @@ async def _apply_fisher_reply(conn: Any, row: Any, reply: int) -> Any:
     reopen = fisher_reply_reopens(row['resolved_at'], reply, now)
     if row['resolved_at'] is not None and not reopen:
         return row
-    return await conn.fetchrow(
+    updated = await conn.fetchrow(
         '''
         UPDATE sos_events
            SET fisher_reply = $2::SMALLINT,
                fisher_replied_at = NOW(),
                resolved_at = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN NOW() ELSE NULL END,
                resolution_code = CASE WHEN $2::SMALLINT = $3::SMALLINT THEN 'safe_confirmed' ELSE NULL END,
-               reopened_at = CASE WHEN $2::SMALLINT = $4::SMALLINT THEN NOW() ELSE reopened_at END,
-               reopened_by = CASE WHEN $2::SMALLINT = $4::SMALLINT THEN 'fisher' ELSE reopened_by END,
+               reopened_at = CASE WHEN $4::BOOLEAN THEN NOW() ELSE reopened_at END,
+               reopened_by = CASE WHEN $4::BOOLEAN THEN 'fisher' ELSE reopened_by END,
                version = version + 1
          WHERE id = $1
         RETURNING id, fisher_reply, fisher_replied_at, resolved_at, resolution_code,
@@ -759,8 +759,20 @@ async def _apply_fisher_reply(conn: Any, row: Any, reply: int) -> Any:
         row['id'],
         reply,
         REPLY_SAFE_NOW,
-        REPLY_STILL_IN_DANGER,
+        reopen,
     )
+    if reopen:
+        await record_audit_event(
+            conn,
+            actor=None,
+            action='sos.reopen',
+            resource_type='sos_event',
+            resource_id=row['id'],
+            outcome='updated',
+            metadata={'reopened_by': 'fisher'},
+            is_demo=row['is_synthetic'],
+        )
+    return updated
 
 
 @router.post('/{event_id}/reply')

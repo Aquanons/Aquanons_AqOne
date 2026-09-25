@@ -638,7 +638,8 @@ class SosService {
           : null;
 
       final isReopened = remoteReopened != null &&
-          (localResolved == null || remoteReopened.isAfter(localResolved)) &&
+          localResolved != null &&
+          remoteReopened.isAfter(localResolved) &&
           (remoteResolved == null || remoteReopened.isAfter(remoteResolved));
 
       if (isReopened) {

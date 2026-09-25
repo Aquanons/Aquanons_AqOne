@@ -222,6 +222,51 @@ def test_still_in_danger_reopens_within_two_hours(probe_db):
     assert local_reply.json()['resolved_at'] is None
 
 
+def test_still_in_danger_on_open_incident_does_not_mark_reopened(probe_db):
+    local_id = 'reply-open-no-reopen'
+    event = _seed(probe_db, local_id)
+    with TestClient(app) as client:
+        response = client.post(f'/api/sos/reply/{local_id}', json={'reply': 1})
+
+    assert response.status_code == 200
+    row = _sql(
+        probe_db,
+        'SELECT fisher_reply, reopened_at, reopened_by FROM sos_events WHERE id = $1',
+        event['id'],
+    )
+    assert row['fisher_reply'] == 1
+    assert row['reopened_at'] is None
+    assert row['reopened_by'] is None
+
+
+def test_still_in_danger_reopen_is_audited(probe_db):
+    local_id = 'reply-resolved-reopen-audit'
+    event = _seed(probe_db, local_id)
+    _sql(
+        probe_db,
+        "UPDATE sos_events SET resolved_at = NOW() - INTERVAL '30 minutes' WHERE id = $1",
+        event['id'],
+    )
+    with TestClient(app) as client:
+        response = client.post(f'/api/sos/reply/{local_id}', json={'reply': 1})
+
+    assert response.status_code == 200
+    row = _sql(
+        probe_db,
+        'SELECT reopened_at, reopened_by FROM sos_events WHERE id = $1',
+        event['id'],
+    )
+    assert row['reopened_by'] == 'fisher'
+    assert row['reopened_at'] is not None
+    audit = _sql(
+        probe_db,
+        'SELECT action FROM operations_audit_events WHERE resource_id = $1',
+        str(event['id']),
+    )
+    assert audit is not None
+    assert audit['action'] == 'sos.reopen'
+
+
 def test_still_in_danger_after_window_stays_resolved(probe_db):
     device_event = _seed(probe_db, 'reply-device-expired')
     _seed(probe_db, 'reply-expired')

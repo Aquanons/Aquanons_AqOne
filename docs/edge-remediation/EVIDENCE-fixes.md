@@ -78,7 +78,27 @@ Gates: ruff clean; backend 566 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F4 - A fisher reply marks a call reopened only when it really reopens
 
-Not started.
+Backend red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_lifecycle_pg.py::test_still_in_danger_on_open_incident_does_not_mark_reopened tests/test_edge_lifecycle_pg.py::test_still_in_danger_reopen_is_audited`
+
+```text
+FAILED tests/test_edge_lifecycle_pg.py::test_still_in_danger_on_open_incident_does_not_mark_reopened
+AssertionError: expected reopened_at IS NULL; the open incident received a reopened_at timestamp
+FAILED tests/test_edge_lifecycle_pg.py::test_still_in_danger_reopen_is_audited
+AssertionError: expected an operations_audit_events row; no audit row was found
+2 failed in 4.38s
+```
+
+Mobile red run: `flutter test test/sos_service_test.dart`
+
+```text
+fisher reply survives reconcile when the incident was never closed: Expected <1>, Actual <null>
+a reopen clears a closed record once, not on every reconcile: Expected <1>, Actual <null>
+Both named tests failed; the other 20 tests in sos_service_test.dart passed.
+```
+
+Green runs: the two new backend tests plus the existing reopen-window guards: 4 passed; `flutter test test/sos_service_test.dart`: 22 passed.
+
+Gates: ruff clean; backend 568 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 deferred failures; mobile analyze clean, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F5 - A fisher's SAFE_NOW closes the call as `stood_down_by_fisher`
 

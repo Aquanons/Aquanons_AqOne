@@ -969,6 +969,83 @@ void main() {
     expect(awaitingOld.any((r) => r.localId == record.localId), isFalse);
   });
 
+  test('fisher reply survives reconcile when the incident was never closed',
+      () async {
+    final record = _record('local-reply-open');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.delivered);
+    await outbox.saveResponder(record.localId, remoteId: '7');
+    await outbox.saveFisherReply(record.localId, 1, synced: true);
+
+    final reopenedAt = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(minutes: 1))
+        .toIso8601String();
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') return _direct(200);
+        if (request.url.path == '/api/sos/ack/local-reply-open') {
+          return ackEnvelope(
+            'local-reply-open',
+            serverTime: DateTime.now().toUtc().toIso8601String(),
+            fisherReply: 1,
+            reopenedAt: reopenedAt,
+          );
+        }
+        return _direct(200);
+      }),
+    );
+    final service = buildService(buoy: noBuoy(), backend: backend);
+
+    await service.reconcile();
+    await service.reconcile();
+
+    final updated = await outbox.byLocalId(record.localId);
+    expect(updated!.fisherReply, 1);
+  });
+
+  test('a reopen clears a closed record once, not on every reconcile',
+      () async {
+    final record = _record('local-reply-reopened-once');
+    await outbox.insert(record);
+    await outbox.advance(record.localId, DeliveryState.delivered);
+    final resolvedAt = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(minutes: 30));
+    await outbox.saveResponder(
+      record.localId,
+      remoteId: '7',
+      resolvedAt: resolvedAt.toIso8601String(),
+    );
+
+    final reopenedAt = resolvedAt
+        .add(const Duration(minutes: 1))
+        .toIso8601String();
+    final backend = BackendClient(
+      client: _FakeBackendClient((request) async {
+        if (request.url.path == '/healthz') return _direct(200);
+        if (request.url.path == '/api/sos/ack/local-reply-reopened-once') {
+          return ackEnvelope(
+            'local-reply-reopened-once',
+            serverTime: DateTime.now().toUtc().toIso8601String(),
+            reopenedAt: reopenedAt,
+          );
+        }
+        return _direct(200);
+      }),
+    );
+    final service = buildService(buoy: noBuoy(), backend: backend);
+
+    await service.reconcile();
+    var updated = await outbox.byLocalId(record.localId);
+    expect(updated!.resolvedAt, isNull);
+    await outbox.saveFisherReply(record.localId, 1);
+
+    await service.reconcile();
+    updated = await outbox.byLocalId(record.localId);
+    expect(updated!.fisherReply, 1);
+  });
+
   test('vessel id exists from first launch', () async {
     final identityStore = IdentityStore(db);
     final identity = await identityStore.read();
@@ -1019,5 +1096,4 @@ class _FakeLocationService extends LocationService {
     return null;
   }
 }
-
 
