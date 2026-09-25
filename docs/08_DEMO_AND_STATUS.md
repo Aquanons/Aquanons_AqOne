@@ -83,7 +83,8 @@ Still open: the bench hardware check (flash both boards, send one SOS and one wa
 The primary field node is now a **shared strap-on boat safety pod**: local WiFi
 to the phone, physical SOS button, flash-backed queue, GPS, and LoRa direct to a
 tall shoreline gateway. Stationary navigational buoys remain in scope for fixed
-barometer/current observations and optional LoRa relay coverage, not as the
+current observations and optional LoRa relay coverage (no barometer; squall
+alerts come from the PAGASA weather API), not as the
 default way to surround every boat with WiFi.
 
 This is an architecture decision, not a claim of field validation. The next
@@ -1020,7 +1021,7 @@ drifted from reality; here it's maintained as you build.
 | Signed frames + replay protection | ⬜ | HMAC frames and a seen-set are in `AqOneLoam.h` and the build refuses the example key; one shared key, per-source keys deferred; not demonstrated on hardware |
 | Store-and-forward at boat pod | ⬜ | Flash-backed queue is in the pod sketch; the power-cycle test has not been run |
 | Optional multi-hop relay (3+ nodes) | ⬜ | Stationary relay buoy; likely bench-only — say so |
-| Stationary buoy hazard sensing | ⬜ | Fixed barometer/current observations; do not claim hardware data before field validation |
+| Stationary buoy hazard sensing | ⬜ | Fixed current observations; no barometer (squall alerts come from the PAGASA weather API); do not claim hardware data before field validation |
 | Dashboard live feed + acknowledge | 🟡 | Software verified by automated tests (2026-09-25); the docs/62 Phase I end-to-end walkthrough has not been run |
 | Deployed backend, healthcheck green | ✅ | `https://aqone-backend.onrender.com/health/ready` returned `ok` with commit `2528f30` (current `master`), 2026-09-25 |
 | Range measured on water | ⬜ | Record the metres |

@@ -23,7 +23,7 @@ Predictive accuracy and decision-support reliability in AqOne cannot be validate
 
 | Domain | Observed Target | Operational Definition | Independent Truth Source | Ground Truth Adjudicator |
 |---|---|---|---|---|
-| **Weather / Squall** | Severe Convective Front | Sustained wind $> 25\text{ knots}$ or peak gust $> 34\text{ knots}$ with pressure drop $> 1.5\text{ hPa} / 30\text{ min}$ | Reference Ultrasonic Anemometer + Shore Microbarometer (PAGASA Kalibo cross-check) | Independent meteorologist / MDRRMO safety officer |
+| **Weather / Squall** | Severe Convective Front | Sustained wind $> 25\text{ knots}$ or peak gust $> 34\text{ knots}$ | Reference Ultrasonic Anemometer + PAGASA Kalibo station observations | Independent meteorologist / MDRRMO safety officer |
 | **Vessel Trip** | Trip Completion | Vessel safely docked/beached and crew confirmed safe | Time-stamped shore observation, VHF call, or direct handset check-in | Landing site monitor / Port safety inspector |
 | **Vessel Trip** | Overdue / Unresolved | Expected return elapsed by $> 60\text{ min}$ with zero communication | Time-stamped responder review log, verification phone call to family | Designated MDRRMO duty dispatcher |
 | **Drift** | Object Trajectory | Geodetic position $(u, v, t)$ of drifting target | High-rate GNSS raw logging (1 Hz logged locally on drifter unit) | Research hydrographer / Truth custodian |

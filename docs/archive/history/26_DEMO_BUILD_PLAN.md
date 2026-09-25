@@ -1,5 +1,11 @@
 # 26 — Demo Build Plan
 
+> **Note (2026-09-25): barometer dropped.** The buoy barometer is no longer part of the
+> architecture; squall alerts now come from the PAGASA weather API (PRD §5.1).
+> References below to barometers, pressure readings or the pressure-based squall model
+> describe that retired design and the code it left behind (`backend/app/ai/squall.py`,
+> `barometric_readings`, `/api/v1/pressure-events`), which stays until it is removed.
+
 **Status:** SUPERSEDED (archived 2026-09-25). The scenario engine it proposed was built through the demo phases of `docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md` and `docs/40_DRIFT_PREDICTION_SEARCH_RETASKING_IMPLEMENTATION_PLAN.md` (`backend/app/demo/`); the current pitch plan is `docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`.
 
 **Problem.** The system is reactive to conditions that do not occur on demand.

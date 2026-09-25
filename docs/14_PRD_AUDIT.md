@@ -91,7 +91,7 @@ installed at all.
 | §5.2 trip anomaly | learned per-vessel profiles, 4-stage escalation ladder, itemised factor breakdown |
 | §5.3 drift | 3 object classes with distinct leeway, 50/75/95% contours, calibrated uncertainty |
 | §7 hotspot removed | only two matches remain, both in a code comment |
-| §4.2 buoy instrumentation | GPS, barometer, current sensing, two radios, mesh chained to shore |
+| §4.2 buoy instrumentation | GPS, current sensing, two radios, mesh chained to shore (barometer since dropped for the PAGASA weather API) |
 
 ---
 

@@ -614,7 +614,12 @@ To protect operator privacy, user accounts are never disclosed to anonymous clie
 The response returns `set_by_label` (`users.full_name` when set, otherwise `"MDRRMO"`).
 The fields `set_by_user_id` and `set_by_name` are excluded from the public response.
 
-## Squall nowcast — **implemented**
+## Squall nowcast — **implemented, retired design**
+
+> **Retired design.** The buoy-barometer array has been dropped from the
+> architecture; squall alerts now come from the PAGASA weather API (PRD §5.1).
+> No field hardware sends pressure readings. This pressure-model response still exists in the
+> backend until it is removed; do not build new firmware or clients against it.
 
 ### `GET /api/public/squall`
 
@@ -670,7 +675,7 @@ reading this backend has ever seen — never a fabricated calm baseline.
 |---|---|
 | `source` | `"live"` or `"synthetic"` — which table this response was computed from. Never mixed. |
 | `calibration` | Always `"synthetic"` today: the *model* is trained on simulated pressure fields regardless of the input's `source`. Not a PAGASA warning — the handset must keep saying so. |
-| `observed_at` | The newest real pressure reading this backend has seen, across every buoy, whether or not the array currently qualifies. `null` only when there has never been any reading at all. |
+| `observed_at` | The newest real pressure reading this backend has seen (none are expected now that buoys carry no barometer), across every buoy, whether or not the array currently qualifies. `null` only when there has never been any reading at all. |
 | `generated_at` | Server clock time this response was computed — always present, used to derive `data_age_seconds` rather than trusting a client clock. |
 | `data_age_seconds` | `generated_at - observed_at`, or `null` if `observed_at` is `null`. |
 | `status_reason` | Why `level` is `"unknown"` (or why the model didn't run). `null` whenever `level` is `clear`/`watch`/`return_now` — a successful evaluation needs no explanation. |

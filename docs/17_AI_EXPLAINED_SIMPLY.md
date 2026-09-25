@@ -20,28 +20,27 @@ That's it. Everything below is just detail.
 
 ---
 
-## 1. Squall nowcasting — the early warning
+## 1. Squall alerts — the early warning
 
 **Question it answers:** is bad weather about to arrive?
 
-**How it works, plainly:** Before a squall hits, air pressure drops. Our buoys
-each have a barometer. If pressure starts falling across several buoys in a
-pattern that looks like an approaching storm, we send a **RETURN NOW** alert.
+**How it works, plainly:** PAGASA, the national weather agency, already issues
+thunderstorm and wind warnings. We pull them from the PAGASA weather API, and
+when one covers the fishing grounds we send a **RETURN NOW** alert through the
+radio network to boats that have no phone signal.
 
-Think of it like people at a bus stop — if the person at the far end of the
-street starts running, you know something's coming before you can see it.
+Our buoys do not have a barometer. We don't make our own forecast; we carry
+PAGASA's forecast to people who otherwise wouldn't hear it.
 
-**Data in:** pressure readings from each buoy, every 5 minutes.
+**Data in:** PAGASA advisories and forecasts, plus Open-Meteo wind and wave data.
 
-**Data out:** a warning, plus roughly how much lead time we think there is.
+**Data out:** a RETURN NOW warning, credited to PAGASA.
 
-**Where it lives:** `backend/app/ai/squall.py`
+**What kind of AI:** none. This part is a relay, not a model.
 
-**What kind of AI:** a trained classifier (logistic regression). It has actually
-learned what "pressure drop that becomes a squall" looks like, versus normal
-pressure wobble.
-
-**Honest caveat:** trained on simulated storms, not real ones.
+**Honest caveat:** our warning is only as early and as local as PAGASA's. The
+older pressure model in `backend/app/ai/squall.py` belonged to a buoy-barometer
+design that has been dropped.
 
 ---
 

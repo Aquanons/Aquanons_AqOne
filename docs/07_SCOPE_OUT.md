@@ -73,8 +73,9 @@ than taken on trust.
 - **Boat-mounted safety pods and hybrid transport.** The original decision to
   avoid boat hardware is amended. A pod provides local phone WiFi, a physical
   SOS path, flash-backed queueing, and direct LoRa to a tall shoreline gateway.
-  Stationary navigational buoys remain valuable for fixed-position pressure and
-  environmental data, optional LoRa relay coverage, and redundancy. See
+  Stationary navigational buoys remain valuable for fixed-position current and
+  environmental data (no barometer; squall alerts come from the PAGASA weather
+  API), optional LoRa relay coverage, and redundancy. See
   `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`.
 
 - **Float-plan / "did not return" logic.** This is now a core AI component -

@@ -171,7 +171,12 @@ gateway does not need to branch on it.
 Errors: `401` bad/missing API key; `422` malformed body (bad/future timestamp,
 empty/oversized id, missing/invalid `source`); `400` unknown `buoy_id`.
 
-## Pressure events (buoy barometric telemetry)
+## Pressure events — retired
+
+> **Retired design.** The buoy-barometer array has been dropped from the
+> architecture; squall alerts now come from the PAGASA weather API (PRD §5.1).
+> No field hardware sends pressure readings. This endpoint still exists in the
+> backend until it is removed; do not build new firmware or clients against it.
 
 The trusted-telemetry contract squall nowcasting is gated on
 (`docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md` Phase 1). Squall

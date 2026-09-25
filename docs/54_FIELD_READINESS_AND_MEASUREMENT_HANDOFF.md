@@ -53,7 +53,7 @@ The following physical instruments and field arrangements described in research 
 - **Safety Criticality:** High sensitivity to short-period steep wave chop ($> 1.0\text{ m}$) and sudden squall wind escalations ($> 22\text{ knots}$).
 
 ### 2.3 Independent Event Taxonomy
-1. **Natural Squall Wind Event:** Sustained wind $> 25\text{ knots}$ or peak gust $> 34\text{ knots}$ verified by PAGASA Kalibo or shore anemometer, accompanied by barometric rate drop.
+1. **Natural Squall Wind Event:** Sustained wind $> 25\text{ knots}$ or peak gust $> 34\text{ knots}$ verified by PAGASA Kalibo or shore anemometer.
 2. **Normal Trip Baseline:** Consented vessel trip departing from designated landing port, returning within declared deadline, with crew safety independently confirmed by dock inspector.
 3. **Overdue / Missed-Deadline Event:** Registered trip exceeding declared expected return time by $> 60\text{ minutes}$ with zero buoy contact, initiating dispatcher shore verification.
 4. **Controlled Drift Target:** 1:1 scale unpowered banca hull surrogate ballasted to $0.4\text{ m}$ draft with onboard 1 Hz GNSS logging, monitored by dedicated safety craft.
@@ -66,9 +66,9 @@ Before unblinded inspection of field evaluation data, the following decision cri
 
 | Protocol | Procedure / Scope | Baseline Comparison | Decision Rule & Acceptance Threshold |
 |---|---|---|---|
-| **F1** | Collocated sensor commissioning (barometer, wind, current, GNSS). | PAGASA Kalibo station / calibrated lab standard. | Barometer zero-offset $\le \pm 0.3\text{ hPa}$; clock synchronization error $\le \pm 5.0\text{ s}$ across mesh; raw IMU motion never labeled as calibrated wave height. |
+| **F1** | Collocated sensor commissioning (wind, current, GNSS; no barometer). | PAGASA Kalibo station / calibrated lab standard. | Clock synchronization error $\le \pm 5.0\text{ s}$ across mesh; raw IMU motion never labeled as calibrated wave height. |
 | **F2** | Handset WiFi opportunity and blind interval logging on transiting bancas. | Direct continuous cellular connection (theoretical ceiling). | Empirical contact window $\ge 60\text{ s}$ per encounter; raw issue, arrival, and display timestamps logged; expired warnings rejected. |
-| **F3** | Prospective weather onset recording and matched non-event periods. | Transparent single-sensor pressure drop baseline ($\Delta P \ge 0.5\text{ hPa} / 30\text{ min}$). | Composed decision must achieve higher precision at matched recall than simple threshold baseline; false alarms reported per exposure hour. |
+| **F3** | Prospective weather onset recording and matched non-event periods. | PAGASA advisory issue time as the baseline. | Composed decision must achieve higher precision at matched recall than simple threshold baseline; false alarms reported per exposure hour. |
 | **F4** | Rehearsed delayed return and normal trip monitoring under consented safety protocol. | Fixed 12-hour expiration rule (legacy baseline). | Zero dropped open trips; overdue trips scored as overdue with low confidence under outage; no false escalation of confirmed safe returns. |
 | **F5** | Supervised recoverable drifter track with independent GNSS logger. | Independent circular expansion envelope ($A = \pi (V_{\max} \cdot t)^2$). | Live drift contour must achieve $\ge 80\%$ containment within supported horizon with area reduction factor $\ge 2.0$ vs unconstrained envelope. |
 | **F6** | Blinded search trials on recoverable targets with documented sweep footprints. | Prior-only geographic cell ranking. | Time-aligned likelihood update attenuates prior mass within searched area at search time; zero or negative $p_d$ leaves prior unchanged. |
@@ -107,7 +107,7 @@ The repository maintains an illustrative, verified field evaluation manifest at:
 | Capability | Current Verified Evidence | Physical Field Status | Authorized Operational Claim Boundary |
 |---|---|---|---|
 | **Manual Distress Signaling (SOS)** | Automated API & relay tests pass (`test_sos_ingest.py`, `test_responder_loop.py`, `test_c7`). | Hardware prototype bench-verified; outdoor LoRa range tests pending. | **Operational Core:** SOS intake and acknowledgment operate independently of all AI services. |
-| **Squall Nowcasting** | Mathematical invariants verified; synthetic bundle promotion capped at `watch` (`test_c1`, `test_c2`). | Array pressure sensors pending in-water buoy deployment. | **Advisory / Watch Only:** Cannot trigger automated evacuation (`return_now`); displays uncalibrated research notice. |
+| **Squall Alerts** | Buoy-barometer model dropped; squall alerts to be sourced from the PAGASA weather API. | PAGASA API access and terms to be confirmed. | **Advisory / Watch Only:** Cannot trigger automated evacuation (`return_now`); displays uncalibrated research notice. |
 | **Trip Anomaly Scoring** | Causal profiling verified; overdue trips with zero contacts remain reviewable (`test_c5`, `test_c6`). | Consented vessel tracking pending municipal pilot registration. | **Decision Aid:** Highlights overdue obligations for human dispatcher telephone/radio verification. |
 | **Physical Drift Modeling** | Coastline stranding, supported horizons, and negative search likelihood verified (`test_c8`, `test_search.py`). | In-water surrogate drifter trials pending field deployment. | **Conditional Simulation:** Advisory search sectors for responder review; flagged as unforced leeway envelope if live telemetry lost. |
 

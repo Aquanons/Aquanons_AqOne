@@ -71,7 +71,7 @@ The models and the scripts that score them.
 | File | What it is |
 |---|---|
 | `drift.py` | Drift prediction. Where does someone in the water end up? **Biggest single model file (500 lines).** |
-| `squall.py` | Storm nowcasting from buoy pressure. The trained classifier lives here. |
+| `squall.py` | Storm nowcasting from buoy pressure. Belongs to the retired buoy-barometer design; squall alerts now come from the PAGASA weather API. |
 | `trip_profile.py` | Learns each boat's habits, flags overdue vessels. |
 | `search.py` | Bayesian re-tasking — "we searched here and found nothing," update the map. |
 | `current_field.py` | Turns real buoy current readings into a current map the drift model can use. Falls back to simulated data when there are no readings. |
@@ -98,7 +98,7 @@ Every URL the mobile app or dashboard can call. These files are thin on purpose.
 | `vessel_profile.py` | A boat's declared owner identity, and the responder "Confirm vessel" route. |
 | `vessel_auth.py` | Pairing codes, device enrolment and token refresh for handsets. |
 | `ops_status.py` | Gateway last-heard, SMS configured, database expiry, scheduler last run. |
-| `contacts.py`, `pressure_events.py`, `current_events.py` | Buoy telemetry from the gateway. |
+| `contacts.py`, `pressure_events.py`, `current_events.py` | Buoy telemetry from the gateway. `pressure_events.py` is retired: buoys carry no barometer. |
 | `drift.py` | Search maps, incident list, recording a searched sector. |
 | `squall.py` | Current storm status, per-buoy status, retraining. |
 | `anomaly.py`, `anomaly_cases.py` | Overdue vessels, the fleet-wide "monitoring" flag, and the trip-check review queue. |

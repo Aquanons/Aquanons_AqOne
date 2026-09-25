@@ -19,7 +19,6 @@ The pilot operating domain covers 11.60°N to 11.75°N, 122.40°E to 122.55°E, 
 
 | Measurement | Instrument Class | Deployment Location | Coordinates | Mounting / Elevation | Reference Standard |
 |---|---|---|---|---|---|
-| **Atmospheric Pressure** | Calibrated digital resonant microbarometer | MDRRMO Coastal Command Station (Shore Gateway) | 11.6582°N, 122.4331°E | Mast mount, 12 m MSL, ventilated static pressure port | WMO No. 8 Chapter 3; calibrated against PAGASA Roxas/Kalibo barometric reference (±0.1 hPa precision) |
 | **Surface Wind (10m)** | Ultrasonic 2-axis anemometer | Shore Gateway Tower | 11.6582°N, 122.4331°E | Top of tower, 10 m AGL, unobstructed 360° | WMO No. 8 Chapter 5; 10 Hz acquisition, 1-minute vector average, 3-second gust maximum |
 | **Ocean Current Vector** | Bottom-mounted 600 kHz Acoustic Doppler Current Profiler (ADCP) | Batan Channel Throat (Core shipping lane) | 11.6740°N, 122.4790°E | Moored seabed pod at 14 m depth; upward-looking | True north alignment via fluxgate compass + magnetic declination (+1.2°E); 0.5 m bin resolution from 1.0 m to 12.0 m depth |
 | **Ocean Waves (Directional)** | Calibrated directional wave buoy (spectral) | New Washington Outer Shoal | 11.7210°N, 122.4550°E | Surface compliant mooring in 18 m depth | WMO Guide to Wave Analysis No. 702; 20-minute burst processing: $H_s, T_p, T_z, \theta_{mean}$ |
@@ -30,10 +29,9 @@ The pilot operating domain covers 11.60°N to 11.75°N, 122.40°E to 122.55°E, 
 
 ## 2. Sensor Commissioning and Calibration Standards
 
-### 2.1 Buoy Barometric Pressure (BMP390 / SX1262 Telemetry)
-- **Zero-Point Offset:** Prior to anchoring, each buoy's barometric sensor is placed in a baro-chamber alongside the reference microbarometer across 950–1040 hPa. The linear offset ($\Delta P$) is burned into persistent EEPROM/Preferences.
-- **Dynamic Response & Aliasing:** Pressure is sampled at 1 Hz, filtered with a 30-second moving average to eliminate swell-induced hydrostatic/aerodynamic wave pumping, and transmitted at 1-minute intervals.
-- **Reject Threshold:** Measurements with $|dP/dt| > 8.0 \text{ hPa} / 5 \text{ min}$ without corresponding wind escalation are flagged as water ingress or mechanical shock.
+### 2.1 Squall Data Source (PAGASA Weather API)
+- Buoys carry no barometer; there is no pressure sensor to commission.
+- Squall alerts are sourced from the PAGASA weather API. Commissioning checks that advisories for the New Washington fishing grounds arrive, are timestamped, and are shown as stale once past the freshness threshold.
 
 ### 2.2 Wave Estimation from Buoy Motion
 - **Qualification Rule:** Raw 6-axis IMU acceleration without wave-tank or reference wave-buoy calibration is strictly classified as `uncalibrated_motion`.

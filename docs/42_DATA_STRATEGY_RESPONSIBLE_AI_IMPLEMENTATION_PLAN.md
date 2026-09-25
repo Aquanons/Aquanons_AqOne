@@ -36,7 +36,7 @@ record it and stop instead of inventing consent or a safe retention period.
 
 - Synthetic operational rows usually carry `is_synthetic = TRUE`, and the
   README/disclosures describe the separation.  However, source and freshness
-  are not a complete shared provenance contract across contacts, pressure,
+  are not a complete shared provenance contract across contacts, (retired) pressure,
   currents, incidents, model outputs, and evaluation results.
 - The squall, anomaly, and drift implementations currently depend heavily on
   synthetic data or fallbacks.  The public squall route can still expose old
@@ -96,7 +96,7 @@ The completed strategy must enforce all of these:
    data subjects; source/provenance; live/synthetic/external/manual state;
    sensitivity; lawful/consent basis; permitted roles; transformations;
    retention/deletion status; sharing/export rule; and linked code/migration.
-   Include SOS, trip contacts, barometric/current readings, incidents/search
+   Include SOS, trip contacts, current readings, PAGASA weather data, incidents/search
    grids, advisories, raw catch logs, hotspot cells, authentication/device
    records, audit events, model artifacts, and evaluation artifacts.
 3. Create one data-flow map that shows safety and fisheries branches separately.
