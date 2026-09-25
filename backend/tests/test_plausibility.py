@@ -43,6 +43,11 @@ def test_flags_three_open_calls_for_one_vessel():
     assert 'many_calls_same_vessel' in flags(_event(), context)
 
 
+def test_many_calls_flag_at_two_open_calls():
+    assert 'many_calls_same_vessel' in flags(_event(), PlausibilityContext(open_calls_for_vessel=2))
+    assert 'many_calls_same_vessel' not in flags(_event(), PlausibilityContext(open_calls_for_vessel=1))
+
+
 def test_flags_alternative_position_conflict():
     assert 'position_conflict' in flags(_event(alt_latitude=11.66, alt_longitude=122.51), PlausibilityContext())
 

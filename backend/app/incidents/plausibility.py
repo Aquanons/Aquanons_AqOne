@@ -46,7 +46,7 @@ def flags(event: Any, context: PlausibilityContext) -> list[str]:
         and distance_km(latitude, longitude, context.contact_latitude, context.contact_longitude) > 20
     ):
         result.append('position_jump')
-    if context.open_calls_for_vessel >= 3:
+    if context.open_calls_for_vessel > 1:
         result.append('many_calls_same_vessel')
     if event['alt_latitude'] is not None or event['alt_longitude'] is not None:
         result.append('position_conflict')

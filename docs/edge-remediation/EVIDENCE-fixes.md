@@ -128,7 +128,17 @@ Gates: ruff clean; backend 569 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F6 - `many_calls_same_vessel` fires at two open calls
 
-Not started.
+Red run: `python -m pytest -q -p no:cacheprovider tests/test_plausibility.py::test_many_calls_flag_at_two_open_calls`
+
+```text
+FAILED tests/test_plausibility.py::test_many_calls_flag_at_two_open_calls
+AssertionError: assert 'many_calls_same_vessel' in []
+1 failed in 0.48s
+```
+
+Green run: `python -m pytest -q -p no:cacheprovider tests/test_plausibility.py`: 8 passed.
+
+Gates: ruff clean; backend 570 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F7 - Scheduler reports the contract's job names
 
