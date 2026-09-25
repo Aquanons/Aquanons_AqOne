@@ -58,8 +58,11 @@ def _determine_last_contact_at(
             return rep if isinstance(rep, datetime) else datetime.fromisoformat(str(rep))
     return as_of
 
-# A 72-hour last-at-sea window keeps overnight silence observable while
-# eventually ageing out trips from prior days.
+# How long after a vessel's last at-sea contact its latest trip stays
+# eligible. Was 12 h (decided 2026-08-29, docs/08); raised to 72 h for
+# EC-H9 so a boat silent overnight is still evaluated instead of dropping
+# out. Trips from earlier days still age out, so the wall-clock re-alert
+# flaw found in docs/31 stays fixed.
 OPEN_TRIP_FRESHNESS_WINDOW = timedelta(hours=72)
 
 

@@ -170,7 +170,11 @@ Gates: ruff clean; backend 574 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F9 - Line endings and rationale comments in `sos.py` and `anomaly_service.py`
 
-Not started.
+No behavior change; no red test applies.
+
+Gates: ruff clean; backend 574 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
+
+`backend/app/api/sos.py` has 864 CRLF line endings and 0 bare LF line endings, verified from file bytes because the `file` utility is unavailable in PowerShell. Its `git diff master --ignore-cr-at-eol --stat` remained `374 insertions(+), 264 deletions(-)` across line-ending conversion. Restored the specified downlink docstring, SEC-06 comments, and `OPEN_TRIP_FRESHNESS_WINDOW` rationale.
 
 ## F10 - Over-engineering cuts
 

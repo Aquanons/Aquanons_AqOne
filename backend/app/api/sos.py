@@ -148,6 +148,9 @@ async def ingest_sos(
     Always returns the same event id, so a client retrying - or both transports
     succeeding - is safe.
     """
+    # SEC-06: Store trust_tier='self_declared' unless the request carries a valid
+    # vessel device bearer for the same vessel_id; then allow phone_verified.
+    # Never accept confirmed_by_responder from ingest.
     trust_tier = 'self_declared'
     if (
         vessel_device is not None
@@ -156,6 +159,9 @@ async def ingest_sos(
     ):
         trust_tier = 'phone_verified'
 
+    # SEC-06: Accept source='buoy', buoy_id, src_id, seq only with a valid X-Api-Key.
+    # Without it, store the SOS as a direct delivery and drop the buoy fields,
+    # so no buoy row is auto-registered.
     has_valid_gateway = is_valid_gateway_key(api_key)
     if has_valid_gateway and payload.source == 'buoy':
         provenance = SosProvenance(
@@ -389,7 +395,24 @@ async def recent_sos(_: dict = Depends(require_user)) -> dict[str, object]:
 
 @gateway_router.get('/downlink', dependencies=[Depends(require_gateway_key)])
 async def sos_downlink() -> dict[str, object]:
-    """Return one vessel's latest answer fields without dispatcher data."""
+    """The responder's answer to each live call, for the LoRa shore gateway.
+
+    Deliberately not gateway-key access to /active: /active carries position,
+    the fisher's note and the owner's name, licence and phone, and the gateway
+    key ships in firmware on a mast. This returns only what the gateway is
+    about to broadcast to the boat in clear anyway.
+
+    One row per vessel, its newest call: the gateway downlink and the buoy
+    cache are keyed by vessel, so older calls used to overwrite the newer one
+    and the fisher was told about the oldest.
+
+    delivery_state is collapsed here so firmware never carries a second copy
+    of delivery_state() that only a reflash could correct.
+
+    Resolved calls stay for RESOLVED_WINDOW so a closure between two 45 s polls
+    still goes out; select_downlink caps the feed at DOWNLINK_MAX to fit the
+    gateway and buoy tables.
+    """
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
         rows = await conn.fetch(
