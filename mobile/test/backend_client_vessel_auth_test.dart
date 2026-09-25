@@ -116,4 +116,35 @@ void main() {
       'application/json',
     );
   });
+
+  test('refresh is attempted on start when a credential exists', () async {
+    final client = _FakeClient(
+      (_) => _jsonResponse(
+        200,
+        <String, Object?>{
+          'token': 'refreshed-token',
+          'expires_at': '2026-08-18T05:00:00Z',
+          'device': <String, Object?>{
+            'id': 12,
+            'vessel_id': 'V001',
+            'label': 'Handset A',
+          },
+        },
+      ),
+    );
+    final backend = BackendClient(client: client);
+    backend.setVesselBearerToken('initial-token');
+
+    final refreshed = await backend.refreshVesselCredential();
+
+    expect(refreshed, isNotNull);
+    expect(refreshed?.token, 'refreshed-token');
+    expect(client.calls, 1);
+    expect(client.lastRequest?.url.path, endsWith('/api/vessel-auth/refresh'));
+    expect(
+      client.lastRequest?.headers['Authorization'],
+      'Bearer initial-token',
+    );
+  });
 }
+

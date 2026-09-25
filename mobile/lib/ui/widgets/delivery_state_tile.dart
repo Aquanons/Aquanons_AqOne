@@ -4,6 +4,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/tokens.dart';
+import '../../models/delivery_policy.dart';
 import '../../models/delivery_state.dart';
 import '../../models/sos_record.dart';
 
@@ -83,13 +84,33 @@ class DeliveryStateTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AqSpace.sm),
-          Text(
-            resolved ? t.resolvedDescription : record.state.description(t),
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: palette.secondaryText,
-            ),
+          Builder(
+            builder: (_) {
+              final pastDeadline = record.state == DeliveryState.relayed &&
+                  record.relayedAt != null &&
+                  DateTime.now().toUtc().difference(
+                        DateTime.fromMillisecondsSinceEpoch(
+                          record.relayedAt! * 1000,
+                          isUtc: true,
+                        ),
+                      ) >=
+                      podDeliveryDeadline;
+
+              final description = resolved
+                  ? t.resolvedDescription
+                  : pastDeadline
+                      ? t.sosPodNotConfirmed
+                      : record.state.description(t);
+
+              return Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: palette.secondaryText,
+                ),
+              );
+            },
           ),
           if (resolved)
             Padding(

@@ -39,12 +39,15 @@ class OutboxStore {
     return rows.isEmpty ? null : SosRecord.fromRow(rows.first);
   }
 
-  Future<List<SosRecord>> awaitingRelay() async {
+  Future<List<SosRecord>> awaitingDelivery() async {
     final db = await _db.database;
     final rows = await db.query(
       'outbox',
-      where: 'state = ?',
-      whereArgs: <Object?>[DeliveryState.saved.wire],
+      where: 'state IN (?, ?)',
+      whereArgs: <Object?>[
+        DeliveryState.saved.wire,
+        DeliveryState.relayed.wire,
+      ],
       orderBy: 'client_ts ASC',
     );
     return rows.map(SosRecord.fromRow).toList(growable: false);
@@ -218,6 +221,21 @@ class OutboxStore {
     return true;
   }
 
+  /// Clears resolution and stand-down when an incident is reopened.
+  Future<void> clearResolved(String localId) async {
+    final db = await _db.database;
+    await db.update(
+      'outbox',
+      <String, Object?>{
+        'resolved_at': null,
+        'fisher_reply': null,
+        'fisher_reply_synced': 0,
+      },
+      where: 'local_id = ?',
+      whereArgs: <Object?>[localId],
+    );
+  }
+
   /// Updates the note on an SOS already in the outbox.
   ///
   /// Used by the post-dispatch "what's wrong?" follow-up: the initial send
@@ -231,6 +249,22 @@ class OutboxStore {
       where: 'local_id = ?',
       whereArgs: <Object?>[localId],
     );
+  }
+
+  /// Fills GPS position on an outbox record that was dispatched without a fix.
+  /// Only updates if lat/lon are still null.
+  Future<bool> fillPosition(String localId, double lat, double lon) async {
+    final db = await _db.database;
+    final count = await db.update(
+      'outbox',
+      <String, Object?>{
+        'lat': lat,
+        'lon': lon,
+      },
+      where: 'local_id = ? AND lat IS NULL AND lon IS NULL',
+      whereArgs: <Object?>[localId],
+    );
+    return count > 0;
   }
 
   /// Record the fisher's own reply locally, so the button reflects reality even
@@ -261,6 +295,25 @@ class OutboxStore {
       where: 'local_id = ?',
       whereArgs: <Object?>[localId],
     );
+  }
+
+  Future<void> recordAttempt(String localId, DateTime now) async {
+    final db = await _db.database;
+    final nowSec = now.toUtc().millisecondsSinceEpoch ~/ 1000;
+    await db.rawUpdate(
+      'UPDATE outbox SET attempts = attempts + 1, last_attempt_at = ? WHERE local_id = ?',
+      <Object?>[nowSec, localId],
+    );
+  }
+
+  Future<bool> deleteUnsent(String localId) async {
+    final db = await _db.database;
+    final count = await db.delete(
+      'outbox',
+      where: 'local_id = ? AND state = ?',
+      whereArgs: <Object?>[localId, DeliveryState.saved.wire],
+    );
+    return count > 0;
   }
 
   Future<SosRecord?> recordFailure(String localId, String error) async {

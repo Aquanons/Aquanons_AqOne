@@ -8,6 +8,7 @@ import '../data/identity_store.dart';
 import '../models/license_type.dart';
 import '../models/trust_tier.dart';
 import 'info_page.dart';
+import '../services/sos_foreground.dart';
 import 'widgets/language_picker.dart';
 
 const Color _brandPrimary = Color(0xFF0F69C9);
@@ -128,6 +129,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (!mounted) {
         return;
       }
+      await _requestBatteryOptimizationExemption(t);
+      if (!mounted) {
+        return;
+      }
       widget.onReady();
     } catch (_) {
       // Never strand the user on a dead button: a failed write has to leave
@@ -139,6 +144,31 @@ class _OnboardingPageState extends State<OnboardingPage> {
         _saving = false;
         _error = t.onboardingSaveError;
       });
+    }
+  }
+
+  Future<void> _requestBatteryOptimizationExemption(AppLocalizations t) async {
+    try {
+      final isIgnoring = await SosForeground.isIgnoringBatteryOptimizations();
+      if (!isIgnoring && mounted) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Text(t.safetyNotice),
+            content: Text(t.onboardingBatteryWhy),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(t.actionContinue),
+              ),
+            ],
+          ),
+        );
+        await SosForeground.requestBatteryExemption();
+      }
+    } catch (_) {
+      // Ignored if unsupported on platform or in tests
     }
   }
 

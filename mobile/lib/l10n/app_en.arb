@@ -1070,5 +1070,174 @@
   "standDownPendingDescription": "Stand-down requested. Not sent to MDRRMO yet - will send automatically once you have a connection.",
   "@standDownPendingDescription": {
     "description": "Description on the SOS status card when a stand-down is queued locally awaiting network connectivity."
+  },
+  "sosPodNotConfirmed": "The pod has not confirmed this SOS reached shore yet. Still trying.",
+  "@sosPodNotConfirmed": {
+    "description": "Shown on delivery state tile when a relayed SOS has not reached shore within 10 minutes."
+  },
+  "sosStalePromptTitle": "Unsent SOS from earlier",
+  "@sosStalePromptTitle": {
+    "description": "Title of prompt for an unsent SOS that is older than 12 hours."
+  },
+  "sosStalePromptBody": "An SOS from {age} ago was never sent. Send it now?",
+  "@sosStalePromptBody": {
+    "description": "Body of prompt for an unsent SOS older than 12 hours with age placeholder.",
+    "placeholders": {
+      "age": {
+        "type": "String",
+        "example": "14 hours"
+      }
+    }
+  },
+  "sosStalePromptSend": "Send now",
+  "@sosStalePromptSend": {
+    "description": "Action button to send stale SOS."
+  },
+  "sosStalePromptCancel": "Cancel it",
+  "@sosStalePromptCancel": {
+    "description": "Action button to cancel and delete stale unsent SOS."
+  },
+  "onboardingBatteryWhy": "Allow AqOne to run in the background so an SOS keeps sending when the screen is off.",
+  "@onboardingBatteryWhy": {
+    "description": "Explanation shown when requesting battery-optimisation exemption during onboarding."
+  },
+  "sosPendingNotificationTitle": "SOS still sending",
+  "@sosPendingNotificationTitle": {
+    "description": "Title shown in foreground notification while an SOS call is not yet delivered."
+  },
+  "sosPendingNotificationBody": "AqOne keeps trying until MDRRMO receives it.",
+  "@sosPendingNotificationBody": {
+    "description": "Body shown in foreground notification while an SOS call is not yet delivered."
+  },
+  "sosClosedByMdrrmo": "Closed by MDRRMO.",
+  "@sosClosedByMdrrmo": {
+    "description": "Shown on resolved SOS card when MDRRMO closed the call with confirmation."
+  },
+  "sosClosedUnconfirmed": "MDRRMO closed this call without reaching you. If you still need help, press SOS again.",
+  "@sosClosedUnconfirmed": {
+    "description": "Shown on resolved SOS card when closed unconfirmed or unspecified."
+  },
+  "sosClosedDuplicate": "This call was merged with your other SOS.",
+  "@sosClosedDuplicate": {
+    "description": "Shown on resolved SOS card when closed as duplicate."
+  },
+  "sosReopened": "MDRRMO reopened your call.",
+  "@sosReopened": {
+    "description": "Notice shown when MDRRMO reopens a previously closed SOS."
+  },
+  "sosStandDownConfirmTitle": "Call off the rescue?",
+  "@sosStandDownConfirmTitle": {
+    "description": "Title for confirmation dialog when fisher slides to stand down SOS."
+  },
+  "sosStandDownConfirmBody": "Rescue will be called off. Only do this if everyone is safe.",
+  "@sosStandDownConfirmBody": {
+    "description": "Body for stand down confirmation dialog."
+  },
+  "sosStandDownUndo": "Undo - I still need help",
+  "@sosStandDownUndo": {
+    "description": "Undo button shown for 2 minutes after standing down an SOS."
+  },
+  "sosNoEtaYet": "Help is being arranged - no arrival time yet.",
+  "@sosNoEtaYet": {
+    "description": "Shown in responder ETA dialog when acknowledged without an arrival time."
+  },
+  "enrolTitle": "Enter the code from MDRRMO",
+  "@enrolTitle": {
+    "description": "Title of the MDRRMO device enrolment screen."
+  },
+  "enrolVerified": "Verified by MDRRMO.",
+  "@enrolVerified": {
+    "description": "Success message when device is successfully enrolled with MDRRMO."
+  },
+  "enrolCodeInvalid": "That code is wrong or expired. Ask MDRRMO for a new one.",
+  "@enrolCodeInvalid": {
+    "description": "Error message when enrolment code is invalid or expired."
+  },
+  "enrolNeedsInternet": "Enrolment needs internet. Try again when you have signal.",
+  "@enrolNeedsInternet": {
+    "description": "Error message when enrolling without internet connectivity."
+  },
+  "profileShoreContactName": "Contact on shore",
+  "@profileShoreContactName": {
+    "description": "Label for shore contact name field in profile."
+  },
+  "profileShoreContactPhone": "Shore contact's phone",
+  "@profileShoreContactPhone": {
+    "description": "Label for shore contact phone field in profile."
+  },
+  "settingsSilentSos": "Silent SOS",
+  "@settingsSilentSos": {
+    "description": "Label for settings toggle to send SOS silently."
+  },
+  "settingsSilentSosDescription": "Send an SOS with no siren or sound. You can also hold the SOS button for 3 seconds.",
+  "@settingsSilentSosDescription": {
+    "description": "Description for silent SOS settings toggle."
+  },
+  "sosStoodDown": "SOS stood down.",
+  "@sosStoodDown": {
+    "description": "Message shown when an SOS has been stood down."
+  },
+  "sosNoneSentYet": "No SOS sent yet.",
+  "@sosNoneSentYet": {
+    "description": "Notice shown in message history when no SOS has been sent yet."
+  },
+  "homeYourMessages": "Your messages",
+  "@homeYourMessages": {
+    "description": "Section heading for SOS message history on home page."
+  },
+  "actionClose": "Close",
+  "@actionClose": {
+    "description": "Button to close dialog or bottom sheet."
+  },
+  "sosSendingTitle": "Sending SOS",
+  "@sosSendingTitle": {
+    "description": "Title on full-screen countdown screen when sending SOS."
+  },
+  "sosSendingSubtitle": "Alerting the MDRRMO with your position.",
+  "@sosSendingSubtitle": {
+    "description": "Subtitle on countdown screen explaining that MDRRMO is being alerted."
+  },
+  "sosSlideToCancel": "Slide to cancel",
+  "@sosSlideToCancel": {
+    "description": "Label on slider control to cancel SOS countdown."
+  },
+  "sosAutoSendNotice": "Do nothing and the SOS sends automatically.",
+  "@sosAutoSendNotice": {
+    "description": "Instruction on countdown screen that SOS dispatches automatically when timer expires."
+  },
+  "sosSentForBoat": "SOS sent for {boat}",
+  "@sosSentForBoat": {
+    "description": "Heading on emergency details sheet showing vessel name.",
+    "placeholders": {
+      "boat": {
+        "type": "String",
+        "example": "M/B Elena"
+      }
+    }
+  },
+  "sosWhatsWrongNotice": "What's wrong? This updates what the MDRRMO sees - optional, the alert has already gone out.",
+  "@sosWhatsWrongNotice": {
+    "description": "Explanation on emergency details sheet that note is optional and alert has dispatched."
+  },
+  "sosSendUpdate": "Send update",
+  "@sosSendUpdate": {
+    "description": "Button label to submit updated details for an active SOS."
+  },
+  "sosSentByMistake": "Sent by mistake?",
+  "@sosSentByMistake": {
+    "description": "Section title above stand down option on emergency details sheet."
+  },
+  "sosSlideToStandDown": "Slide to stand down",
+  "@sosSlideToStandDown": {
+    "description": "Label on slider control to stand down SOS on emergency details sheet."
+  },
+  "locatingLabel": "Locating…",
+  "@locatingLabel": {
+    "description": "Label shown on map while acquiring GPS fix."
+  },
+  "safetyWeatherLoadFailed": "Weather could not be loaded, so this cannot be assessed.",
+  "@safetyWeatherLoadFailed": {
+    "description": "Message shown when weather data could not be fetched for safety assessment."
   }
 }
+

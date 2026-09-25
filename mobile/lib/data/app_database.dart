@@ -23,7 +23,7 @@ class AppDatabase {
     final path = _overridePath ?? await defaultDatabasePath('aqone_outbox.db');
     return openDatabase(
       path,
-      version: 14,
+      version: 15,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onUpgrade: (db, oldVersion, newVersion) async {
         // Each step is wrapped in try/catch so a partially-applied migration
@@ -105,6 +105,16 @@ if (oldVersion < 12) {
             );
           } catch (_) {}
         }
+        if (oldVersion < 15) {
+          try {
+            await db.execute('ALTER TABLE outbox ADD COLUMN nonce INTEGER');
+          } catch (_) {}
+          try {
+            await db.execute(
+              'ALTER TABLE outbox ADD COLUMN last_attempt_at INTEGER',
+            );
+          } catch (_) {}
+        }
       },
       onCreate: (db, version) async {
         await db.execute('''
@@ -146,7 +156,9 @@ if (oldVersion < 12) {
             fisher_reply_synced INTEGER NOT NULL DEFAULT 0,
             -- When the MDRRMO resolved the incident (ISO string). Null until
             -- then; set by reconcile the first time the backend reports it.
-            resolved_at      TEXT
+            resolved_at      TEXT,
+            nonce            INTEGER,
+            last_attempt_at  INTEGER
           )
         ''');
         await db.execute(

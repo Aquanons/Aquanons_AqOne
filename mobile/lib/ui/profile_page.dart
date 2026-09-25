@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aqone/l10n/app_localizations.dart';
 
 import '../core/locale_controller.dart';
@@ -13,7 +15,9 @@ import '../core/validators.dart';
 import '../data/identity_store.dart';
 import '../models/license_type.dart';
 import '../models/trust_tier.dart';
+import '../services/backend_client.dart';
 import 'avatar_crop_page.dart';
+import 'enrolment_page.dart';
 import 'info_page.dart';
 import 'widgets/language_picker.dart';
 
@@ -31,6 +35,7 @@ class ProfilePage extends StatefulWidget {
     super.key,
     required this.identityStore,
     required this.identity,
+    this.backendClient,
     required this.themeMode,
     this.onThemeModeChanged,
     this.localeController,
@@ -42,6 +47,7 @@ class ProfilePage extends StatefulWidget {
 
   final IdentityStore identityStore;
   final VesselIdentity identity;
+  final BackendClient? backendClient;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode>? onThemeModeChanged;
 
@@ -74,16 +80,37 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _boat;
   late TextEditingController _license;
   late TextEditingController _phone;
+  late TextEditingController _shoreContactName;
+  late TextEditingController _shoreContactPhone;
   late LicenseType _licenseType;
+  bool _silentSos = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSilentSos();
     _name = TextEditingController(text: widget.identity.skipperName);
     _boat = TextEditingController(text: widget.identity.boat);
     _license = TextEditingController(text: widget.identity.licenseNumber);
     _phone = TextEditingController(text: widget.identity.phone);
+    _shoreContactName =
+        TextEditingController(text: widget.identity.shoreContactName);
+    _shoreContactPhone =
+        TextEditingController(text: widget.identity.shoreContactPhone);
     _licenseType = widget.identity.licenseType;
+  }
+
+  Future<void> _loadSilentSos() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() => _silentSos = prefs.getBool('silent_sos') ?? false);
+    }
+  }
+
+  Future<void> _onSilentSosChanged(bool value) async {
+    setState(() => _silentSos = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('silent_sos', value);
   }
 
   @override
@@ -92,6 +119,8 @@ class _ProfilePageState extends State<ProfilePage> {
     _boat.dispose();
     _license.dispose();
     _phone.dispose();
+    _shoreContactName.dispose();
+    _shoreContactPhone.dispose();
     super.dispose();
   }
 
@@ -102,6 +131,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _boat.text = widget.identity.boat;
       _license.text = widget.identity.licenseNumber;
       _phone.text = widget.identity.phone;
+      _shoreContactName.text = widget.identity.shoreContactName;
+      _shoreContactPhone.text = widget.identity.shoreContactPhone;
       _licenseType = widget.identity.licenseType;
     });
   }
@@ -121,7 +152,12 @@ class _ProfilePageState extends State<ProfilePage> {
         licenseType: _licenseType,
         licenseNumber: _license.text,
         phone: _phone.text,
+        shoreContactName: _shoreContactName.text,
+        shoreContactPhone: _shoreContactPhone.text,
       );
+      if (widget.backendClient != null) {
+        unawaited(widget.backendClient!.registerVesselProfile(updated));
+      }
       if (!mounted) return;
       widget.onIdentityUpdated(updated);
       setState(() => _editing = false);
@@ -485,8 +521,26 @@ class _ProfilePageState extends State<ProfilePage> {
                 dark ? ThemeMode.dark : ThemeMode.light,
               ),
             ),
+            _SilentSosSwitchTile(
+              enabled: _silentSos,
+              onChanged: _onSilentSosChanged,
+            ),
             if (widget.localeController != null)
               LanguageSettingTile(controller: widget.localeController!),
+            _SettingsTile(
+              icon: Icons.verified_user_outlined,
+              label: t.enrolTitle,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => EnrolmentPage(
+                      backendClient: widget.backendClient ?? BackendClient(),
+                      vesselId: identity.vesselId,
+                    ),
+                  ),
+                );
+              },
+            ),
             _SettingsTile(
               icon: Icons.info_outline_rounded,
               label: t.aboutAqOne,
@@ -566,7 +620,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: <Widget>[
           _InfoRow(
             label: t.fieldFullName,
-            value: identity.skipperName.isNotEmpty ? identity.skipperName : '—',
+            value: identity.skipperName.isNotEmpty ? identity.skipperName : '-',
           ),
           const SizedBox(height: AqSpace.md),
           _InfoRow(label: t.profileBoatName, value: identity.boat),
@@ -585,7 +639,21 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: AqSpace.md),
           _InfoRow(
             label: t.fieldMobileNumber,
-            value: identity.phone.isNotEmpty ? identity.phone : '—',
+            value: identity.phone.isNotEmpty ? identity.phone : '-',
+          ),
+          const SizedBox(height: AqSpace.md),
+          _InfoRow(
+            label: t.profileShoreContactName,
+            value: identity.shoreContactName.isNotEmpty
+                ? identity.shoreContactName
+                : '-',
+          ),
+          const SizedBox(height: AqSpace.md),
+          _InfoRow(
+            label: t.profileShoreContactPhone,
+            value: identity.shoreContactPhone.isNotEmpty
+                ? identity.shoreContactPhone
+                : '-',
           ),
           const SizedBox(height: AqSpace.md),
           _InfoRow(label: t.profileVesselId, value: identity.vesselId),
@@ -693,11 +761,35 @@ class _ProfilePageState extends State<ProfilePage> {
                   controller: _phone,
                   maxLength: 20,
                   keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
+                  textInputAction: TextInputAction.next,
                   style: const TextStyle(color: _authText, fontSize: 15),
                   decoration: _decoration(
                       t.fieldMobileNumber, Icons.phone_iphone_rounded),
                   validator: (value) => Validators.phone(value, t),
+                ),
+                const SizedBox(height: AqSpace.sm),
+                TextFormField(
+                  controller: _shoreContactName,
+                  maxLength: 64,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  style: const TextStyle(color: _authText, fontSize: 15),
+                  decoration: _decoration(
+                    t.profileShoreContactName,
+                    Icons.contact_phone_outlined,
+                  ),
+                ),
+                const SizedBox(height: AqSpace.sm),
+                TextFormField(
+                  controller: _shoreContactPhone,
+                  maxLength: 20,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.done,
+                  style: const TextStyle(color: _authText, fontSize: 15),
+                  decoration: _decoration(
+                    t.profileShoreContactPhone,
+                    Icons.phone_outlined,
+                  ),
                 ),
               ],
             ),
@@ -921,6 +1013,72 @@ class _ThemeSwitchTile extends StatelessWidget {
               ),
               Switch(
                 value: dark,
+                onChanged: onChanged,
+                activeTrackColor: palette.active,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SilentSosSwitchTile extends StatelessWidget {
+  const _SilentSosSwitchTile({
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AqPalette.of(context);
+    final t = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AqSpace.xs),
+      child: Material(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(AqRadius.standard),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                enabled ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                size: 20,
+                color: palette.secondaryText,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      t.settingsSilentSos,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: palette.primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      t.settingsSilentSosDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.dimText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                key: const Key('silent_sos_switch'),
+                value: enabled,
                 onChanged: onChanged,
                 activeTrackColor: palette.active,
               ),

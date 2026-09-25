@@ -5,6 +5,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/config.dart';
 import '../data/checklist_store.dart';
@@ -23,6 +24,7 @@ import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
 import '../services/venture_feeds.dart';
 import 'chathubb.dart';
+import 'widgets/action_pill.dart';
 import 'widgets/compass_dial.dart';
 import 'widgets/offline_map_banner.dart';
 import 'widgets/squall_banner.dart';
@@ -76,6 +78,7 @@ class VenturePage extends StatefulWidget {
     this.squall = SquallWatch.unavailable,
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
+    this.sosAlarm,
   });
 
   final VesselIdentity identity;
@@ -83,6 +86,7 @@ class VenturePage extends StatefulWidget {
   final ChecklistStore checklist;
   final VentureFeeds feeds;
   final LocationService location;
+  final SosAlarm? sosAlarm;
 
   /// Space reserved for the shell's floating dock. The map stays full-bleed
   /// behind it; only the controls are lifted clear so they never get covered.
@@ -150,7 +154,7 @@ class _VenturePageState extends State<VenturePage> {
 
   SosRecord? _latestSos;
   bool _isSendingSos = false;
-  final SosAlarm _sosAlarm = SosAlarm();
+  late final SosAlarm _sosAlarm;
 
   /// True while a hazard dialog is on screen, so a second alert arriving from
   /// the same poll cannot stack a dialog on top of the first.
@@ -160,6 +164,8 @@ class _VenturePageState extends State<VenturePage> {
   @override
   void initState() {
     super.initState();
+    _sosAlarm = widget.sosAlarm ?? SosAlarm();
+    widget.location.warmUp();
     _sosSub = widget.sos.changes.listen((_) => _refreshSosStatus());
     _initTileProvider();
     _compassSub = _compass.readings.listen((CompassReading reading) {
@@ -301,13 +307,18 @@ class _VenturePageState extends State<VenturePage> {
   /// Only once the countdown runs out (uninterrupted) does anything actually
   /// go to the MDRRMO; the "what's wrong?" detail is gathered afterwards,
   /// while the alert is already in flight.
-  Future<void> _handleSosTap() async {
+  Future<void> _handleSosTap({bool silent = false}) async {
     if (_isSendingSos) {
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final isSilent = silent || (prefs.getBool('silent_sos') ?? false);
+
     setState(() => _isSendingSos = true);
-    unawaited(_sosAlarm.start());
+    if (!isSilent) {
+      unawaited(_sosAlarm.start());
+    }
 
     final shouldSend = await _runSosCountdown();
     if (!mounted) {
@@ -352,7 +363,7 @@ class _VenturePageState extends State<VenturePage> {
       barrierColor: Colors.black87,
       transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (ctx, __, ___) =>
-          const _SosCountdownScreen(duration: _sosCountdown),
+          const SosCountdownScreen(duration: _sosCountdown),
     );
     return result ?? false;
   }
@@ -372,7 +383,7 @@ class _VenturePageState extends State<VenturePage> {
       enableDrag: false,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _EmergencyDetailsSheet(
+      builder: (ctx) => EmergencyDetailsSheet(
         boat: widget.identity.boat,
         onSubmitNote: (note) async {
           try {
@@ -387,9 +398,20 @@ class _VenturePageState extends State<VenturePage> {
         },
         onStandDown: () async {
           await widget.sos.standDown(record.localId);
-          if (mounted) {
-            _snack('SOS stood down.');
-          }
+          if (!mounted) return;
+          final t = AppLocalizations.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(minutes: 2),
+              content: Text(t.sosStoodDown),
+              action: SnackBarAction(
+                label: t.sosStandDownUndo,
+                onPressed: () {
+                  widget.sos.replyToSos(record.localId, 1);
+                },
+              ),
+            ),
+          );
         },
       ),
     );
@@ -410,6 +432,7 @@ class _VenturePageState extends State<VenturePage> {
     _hazardDialogOpen = true;
     final kind = _hazardQueue.removeAt(0);
     final count = _hazards[kind]?.length ?? 0;
+    final t = AppLocalizations.of(context);
 
     await showDialog<void>(
       context: context,
@@ -438,7 +461,7 @@ class _VenturePageState extends State<VenturePage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Dismiss',
+              t.gotItButton,
               style: TextStyle(
                 color: kind.color,
                 fontWeight: FontWeight.bold,
@@ -511,7 +534,7 @@ class _VenturePageState extends State<VenturePage> {
           children: <Widget>[
             Text(
               weather == null
-                  ? 'Weather could not be loaded, so this cannot be assessed.'
+                  ? t.safetyWeatherLoadFailed
                   : '${weather.condition.label(t)} · '
                       '${weather.temperature.toStringAsFixed(0)}°C · '
                       'wind ${weather.windSpeed.toStringAsFixed(0)} km/h',
@@ -744,6 +767,7 @@ class _VenturePageState extends State<VenturePage> {
     final label = _weatherFailed
         ? t.weatherUnavailable
         : weather?.condition.label(t) ?? 'Loading…';
+    final tempDisplay = '${weather?.temperature.toStringAsFixed(0) ?? '--'}°C';
     final icon = weather?.condition.icon ?? Icons.wb_sunny_rounded;
 
     return GestureDetector(
@@ -789,7 +813,7 @@ class _VenturePageState extends State<VenturePage> {
             ),
             const SizedBox(width: 10),
             Text(
-              '${weather?.temperature.toStringAsFixed(0) ?? '--'}°C',
+              tempDisplay,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -845,12 +869,13 @@ class _VenturePageState extends State<VenturePage> {
           ),
         ),
         const SizedBox(height: 14),
-        _ActionPill(
+        ActionPill(
           icon: Icons.warning_rounded,
           label: 'SOS',
           color: _danger,
           isDark: isDark,
-          onTap: _isSendingSos ? null : _handleSosTap,
+          onTap: _isSendingSos ? null : () => _handleSosTap(),
+          onHold: _isSendingSos ? null : () => _handleSosTap(silent: true),
         ),
       ],
     );
@@ -880,6 +905,7 @@ class _VenturePageState extends State<VenturePage> {
             : standDownPending
                 ? t.standDownPendingTitle
                 : state.title(t);
+    final sosTitle = 'SOS: $title';
     final description = resolvedByMDRRMO
         ? t.resolvedDescription
         : standDown
@@ -927,7 +953,7 @@ class _VenturePageState extends State<VenturePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'SOS: $title',
+                  sosTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -998,6 +1024,7 @@ class _VenturePageState extends State<VenturePage> {
   }
 
   Widget _buildLocatingPill(bool isDark) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -1023,7 +1050,7 @@ class _VenturePageState extends State<VenturePage> {
           ),
           const SizedBox(width: 8),
           Text(
-            'Locating…',
+            t.locatingLabel,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -1103,98 +1130,22 @@ class _RoundButton extends StatelessWidget {
   }
 }
 
-/// Fixed footprint for every primary action pill on the venture map.
-///
-/// All primary actions are this wide and this tall. Uniform size is
-/// the point: it makes the rail a predictable set of targets rather than a
-/// ragged column whose widths shift as soon as someone lands a fish with a
-/// long name, and it leaves colour as the one thing that tells them apart.
-const double _kActionPillWidth = 176;
-const double _kActionPillHeight = 50;
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool isDark;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    final display = enabled
-        ? color
-        : (isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8));
-    return SizedBox(
-      width: _kActionPillWidth,
-      height: _kActionPillHeight,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_kActionPillHeight / 2),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: display.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: onTap,
-          icon: Icon(icon, size: 20, color: Colors.white),
-          label: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.3,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: display,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            // Zero minimum: the SizedBox above owns the size, so the three
-            // pills stay identical no matter how long their labels are.
-            minimumSize: Size.zero,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_kActionPillHeight / 2),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Full-screen "sending SOS in N…" countdown with a slide-to-cancel bar.
 ///
 /// Deliberately not a plain [AlertDialog]: this has to be impossible to
 /// dismiss by accident (no tap-outside, no back-gesture - see [PopScope]
 /// below) while still being trivially easy to cancel on purpose via the
 /// slide, which is a large, deliberate, hard-to-trigger-by-accident gesture.
-class _SosCountdownScreen extends StatefulWidget {
-  const _SosCountdownScreen({required this.duration});
+class SosCountdownScreen extends StatefulWidget {
+  const SosCountdownScreen({super.key, required this.duration});
 
   final Duration duration;
 
   @override
-  State<_SosCountdownScreen> createState() => _SosCountdownScreenState();
+  State<SosCountdownScreen> createState() => _SosCountdownScreenState();
 }
 
-class _SosCountdownScreenState extends State<_SosCountdownScreen> {
+class _SosCountdownScreenState extends State<SosCountdownScreen> {
   static const Duration _tick = Duration(milliseconds: 100);
 
   late Duration _remaining = widget.duration;
@@ -1231,11 +1182,13 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final fraction = 1 -
         (_remaining.inMilliseconds / widget.duration.inMilliseconds)
             .clamp(0.0, 1.0);
     final secondsLeft =
         (_remaining.inMilliseconds / 1000).ceil().clamp(1, 99);
+    final secondsDisplay = '$secondsLeft';
 
     return PopScope(
       // No back-gesture, no back-button dismissal - the only way out of this
@@ -1255,19 +1208,19 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
                   size: 60,
                 ),
                 const SizedBox(height: 18),
-                const Text(
-                  'Sending SOS',
-                  style: TextStyle(
+                Text(
+                  t.sosSendingTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Alerting the MDRRMO with your position.',
+                Text(
+                  t.sosSendingSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -1288,7 +1241,7 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
                         ),
                       ),
                       Text(
-                        '$secondsLeft',
+                        secondsDisplay,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 42,
@@ -1300,17 +1253,17 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
                 ),
                 const Spacer(),
                 _SlideToAction(
-                  label: 'Slide to cancel',
+                  label: t.sosSlideToCancel,
                   icon: Icons.close_rounded,
                   accentColor: Colors.white,
                   thumbIconColor: const Color(0xFF7A0E0E),
                   onConfirmed: () => _finish(false),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Do nothing and the SOS sends automatically.',
+                Text(
+                  t.sosAutoSendNotice,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
@@ -1325,8 +1278,10 @@ class _SosCountdownScreenState extends State<_SosCountdownScreen> {
 /// (updating the note already on file at the MDRRMO) or stand the alert
 /// down if it went out by mistake - both remain available at once, they are
 /// not mutually exclusive steps.
-class _EmergencyDetailsSheet extends StatefulWidget {
-  const _EmergencyDetailsSheet({
+@visibleForTesting
+class EmergencyDetailsSheet extends StatefulWidget {
+  const EmergencyDetailsSheet({
+    super.key,
     required this.boat,
     required this.onSubmitNote,
     required this.onStandDown,
@@ -1337,11 +1292,11 @@ class _EmergencyDetailsSheet extends StatefulWidget {
   final Future<void> Function() onStandDown;
 
   @override
-  State<_EmergencyDetailsSheet> createState() =>
+  State<EmergencyDetailsSheet> createState() =>
       _EmergencyDetailsSheetState();
 }
 
-class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
+class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
   _EmergencyType? _selected;
   final TextEditingController _custom = TextEditingController();
   bool _submitting = false;
@@ -1377,6 +1332,29 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
   }
 
   Future<void> _standDown() async {
+    final t = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.sosStandDownConfirmTitle),
+        content: Text(t.sosStandDownConfirmBody),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.actionCancel),
+          ),
+          FilledButton(
+            key: const Key('confirm_stand_down'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: _danger),
+            child: Text(t.standDownTitle),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() => _standingDown = true);
     await widget.onStandDown();
     if (mounted) {
@@ -1433,7 +1411,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'SOS sent for ${widget.boat}',
+                      t.sosSentForBoat(widget.boat),
                       style: TextStyle(
                         color: fg,
                         fontWeight: FontWeight.w800,
@@ -1445,8 +1423,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                "What's wrong? This updates what the MDRRMO sees - optional, "
-                'the alert has already gone out.',
+                t.sosWhatsWrongNotice,
                 style: TextStyle(color: dim, fontSize: 12.5, height: 1.35),
               ),
               const SizedBox(height: 14),
@@ -1493,7 +1470,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
                     ),
                   ),
                   child: Text(
-                    _selected == null ? 'Close' : 'Send update',
+                    _selected == null ? t.actionClose : t.sosSendUpdate,
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -1502,7 +1479,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
               Divider(color: dim.withValues(alpha: 0.25)),
               const SizedBox(height: 8),
               Text(
-                'Sent by mistake?',
+                t.sosSentByMistake,
                 style: TextStyle(
                   color: fg,
                   fontWeight: FontWeight.w700,
@@ -1511,7 +1488,7 @@ class _EmergencyDetailsSheetState extends State<_EmergencyDetailsSheet> {
               ),
               const SizedBox(height: 8),
               _SlideToAction(
-                label: _standingDown ? 'Standing down…' : 'Slide to stand down',
+                label: _standingDown ? t.standDownTitle : t.sosSlideToStandDown,
                 icon: Icons.undo_rounded,
                 accentColor: _danger,
                 onConfirmed: _submitting || _standingDown ? null : _standDown,
@@ -1580,6 +1557,12 @@ class _SlideToActionState extends State<_SlideToAction> {
         _dragging = false;
       });
       widget.onConfirmed!();
+      if (mounted) {
+        setState(() {
+          _confirmed = false;
+          _fraction = 0;
+        });
+      }
     } else {
       setState(() {
         _dragging = false;

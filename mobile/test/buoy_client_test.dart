@@ -286,5 +286,22 @@ void main() {
       expect(events.single.responderStatusLabel, 'Delayed - still coming');
       expect(events.single.etaAt, '2026-08-15T08:40:00+00:00');
     });
+
+    test('malformed UTF-8 body does not throw', () async {
+      final client = BuoyClient(
+        baseUrl: 'http://192.168.4.1',
+        client: MockClient((request) async {
+          return http.Response.bytes(
+            const [0xFF, 0xFE, 0xFD],
+            200,
+          );
+        }),
+      );
+
+      await expectLater(
+        client.status(),
+        throwsA(isA<BuoyInvalidResponse>()),
+      );
+    });
   });
 }

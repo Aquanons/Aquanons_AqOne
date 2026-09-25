@@ -7,6 +7,7 @@ import '../core/config.dart';
 import '../core/locale_controller.dart';
 import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
+import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
@@ -134,6 +135,7 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     _sosChanges = widget.sos.changes.listen((_) => _checkForAcknowledgement());
     _checkForAcknowledgement();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkStaleSos());
     if (!AqOneConfig.pitchMode) {
       _loadSquall();
       _squallTimer = Timer.periodic(
@@ -211,8 +213,81 @@ class _AppShellState extends State<AppShell> {
   void dispose() {
     _sosChanges?.cancel();
     _squallTimer?.cancel();
+    _staleSosTimer?.cancel();
     _squallAlarm.dispose();
     super.dispose();
+  }
+
+  Timer? _staleSosTimer;
+
+  Future<void> _checkStaleSos() async {
+    final records = await widget.sos.history();
+    if (!mounted) {
+      return;
+    }
+    final now = DateTime.now();
+    final staleRecords = records.where((r) => isStale(r, now)).toList();
+    if (staleRecords.isEmpty) {
+      return;
+    }
+    final stale = staleRecords.first;
+    final ageDuration = now.toUtc().difference(stale.createdAt.toUtc());
+    final hours = ageDuration.inHours;
+    final ageStr = hours <= 1 ? '$hours hour' : '$hours hours';
+    final t = AppLocalizations.of(context);
+
+    bool dialogClosed = false;
+    void doSend() {
+      if (dialogClosed) return;
+      dialogClosed = true;
+      _staleSosTimer?.cancel();
+      _staleSosTimer = null;
+      if (Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      widget.sos.retryPending();
+    }
+
+    void doCancel() {
+      if (dialogClosed) return;
+      dialogClosed = true;
+      _staleSosTimer?.cancel();
+      _staleSosTimer = null;
+      if (Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      widget.sos.deleteUnsent(stale.localId);
+    }
+
+    _staleSosTimer = Timer(const Duration(seconds: 60), () {
+      if (mounted && !dialogClosed) {
+        doSend();
+      }
+    });
+
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(t.sosStalePromptTitle),
+        content: Text(t.sosStalePromptBody(ageStr)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: doCancel,
+            child: Text(t.sosStalePromptCancel),
+          ),
+          ElevatedButton(
+            onPressed: doSend,
+            child: Text(t.sosStalePromptSend),
+          ),
+        ],
+      ),
+    ).then((_) {
+      dialogClosed = true;
+      _staleSosTimer?.cancel();
+      _staleSosTimer = null;
+    });
   }
 
   Future<void> _checkForAcknowledgement() async {
@@ -395,6 +470,7 @@ HomePage(
         ProfilePage(
           identityStore: widget.identityStore,
           identity: widget.identity,
+          backendClient: widget.feeds.backend,
           themeMode: widget.themeMode,
           onThemeModeChanged: widget.onThemeModeChanged,
           localeController: widget.localeController,

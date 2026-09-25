@@ -32,6 +32,8 @@ class SosRecord {
     this.fisherReply,
     this.fisherReplySynced = false,
     this.resolvedAt,
+    this.lastAttemptAt,
+    this.nonce,
   });
 
   final String localId;
@@ -39,6 +41,8 @@ class SosRecord {
   final String boat;
   final int clientTs;
   final DeliveryState state;
+  final int? lastAttemptAt;
+  final int? nonce;
 
   /// How corroborated the sending vessel was when this SOS was raised.
   ///
@@ -137,6 +141,8 @@ class SosRecord {
     int? acknowledgedAt,
     String? ackedBy,
     String? remoteId,
+    int? lastAttemptAt,
+    int? nonce,
   }) {
     return SosRecord(
       localId: localId,
@@ -161,6 +167,8 @@ class SosRecord {
       acknowledgedAt: acknowledgedAt ?? this.acknowledgedAt,
       ackedBy: ackedBy ?? this.ackedBy,
       remoteId: remoteId ?? this.remoteId,
+      lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
+      nonce: nonce ?? this.nonce,
       // Carried through unchanged. copyWith feeds save(), and dropping these
       // would blank a live ETA in memory every time the delivery state moved.
       // toRow() deliberately does not write them, so saveResponder stays the
@@ -194,6 +202,8 @@ class SosRecord {
         'delivered_at': deliveredAt,
         'acknowledged_at': acknowledgedAt,
         'acked_by': ackedBy,
+        'last_attempt_at': lastAttemptAt,
+        'nonce': nonce,
       };
 
   static SosRecord fromRow(Map<String, Object?> row) => SosRecord(
@@ -228,6 +238,8 @@ class SosRecord {
         fisherReplySynced:
             ((row['fisher_reply_synced'] as num?)?.toInt() ?? 0) != 0,
         resolvedAt: row['resolved_at'] as String?,
+        lastAttemptAt: (row['last_attempt_at'] as num?)?.toInt(),
+        nonce: (row['nonce'] as num?)?.toInt(),
       );
 
   Map<String, Object?> toBuoyPayload() {
@@ -242,6 +254,9 @@ class SosRecord {
       // distress call.
       'trust_tier': trustTier.wire,
     };
+    if (nonce != null) {
+      payload['nonce'] = nonce;
+    }
     if (lat != null) {
       payload['lat'] = lat;
     }

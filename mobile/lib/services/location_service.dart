@@ -58,6 +58,12 @@ class LocationResult {
 }
 
 class LocationService {
+  /// Pre-warms the GPS subsystem asynchronously without blocking the caller.
+  /// Called when the venture page opens and when a trip starts.
+  void warmUp() {
+    locate().ignore();
+  }
+
   /// Best-effort fix. Returns null for any failure.
   ///
   /// Kept for callers that only care whether a position exists.

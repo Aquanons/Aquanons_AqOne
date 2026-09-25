@@ -19,6 +19,7 @@ import 'data/outbox_store.dart';
 import 'services/backend_client.dart';
 import 'services/buoy_client.dart';
 import 'services/location_service.dart';
+import 'services/sos_foreground.dart';
 import 'services/sos_service.dart';
 import 'services/venture_feeds.dart';
 import 'ui/app_shell.dart';
@@ -26,6 +27,7 @@ import 'ui/onboarding_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SosForeground.init();
   try {
     AqOneConfig.validateEndpoints();
   } catch (error, stack) {
@@ -125,6 +127,7 @@ class _AqOneAppState extends State<AqOneApp> {
   late final VentureFeeds _feeds;
   late final LocationService _location;
   late final BackendClient _backend;
+  late final SosForeground _foreground;
 
   VesselIdentity? _identity;
   bool _loading = true;
@@ -159,6 +162,13 @@ class _AqOneAppState extends State<AqOneApp> {
       buoy: buoyClient,
       snapshots: MapSnapshotStore(_db),
     );
+    _foreground = SosForeground(
+      outbox: OutboxStore(_db),
+      sosService: _service,
+      titleResolver: () => _activeL10n().sosPendingNotificationTitle,
+      bodyResolver: () => _activeL10n().sosPendingNotificationBody,
+    );
+    _foreground.startListening();
     // Keystore before the rest of restore, so a returning skipper's profile
     // decrypts on first read rather than showing blanks for a frame.
     _restoreSecureStateWithTimeout().whenComplete(_restore);
@@ -167,15 +177,29 @@ class _AqOneAppState extends State<AqOneApp> {
   static const Duration _secureRestoreTimeout = Duration(seconds: 2);
   bool _secureRestoreTimedOut = false;
 
+  AppLocalizations _activeL10n() {
+    final code = _locale?.locale?.languageCode ?? 'en';
+    try {
+      return lookupAppLocalizations(Locale(code));
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('en'));
+    }
+  }
+
   void _onLocaleChanged() {
     if (mounted) {
       setState(() {});
+      _foreground.updateNotification(
+        title: _activeL10n().sosPendingNotificationTitle,
+        body: _activeL10n().sosPendingNotificationBody,
+      );
     }
   }
 
   @override
   void dispose() {
     _locale?.removeListener(_onLocaleChanged);
+    _foreground.dispose();
     _service.dispose();
     _feeds.close();
     _backend.close();
@@ -208,6 +232,7 @@ class _AqOneAppState extends State<AqOneApp> {
       final String? token = await _secureStore.readVesselToken();
       if (!_secureRestoreTimedOut && token != null) {
         _backend.setVesselBearerToken(token);
+        unawaited(_backend.refreshVesselCredential());
       }
     } catch (_) {
       // No keystore, or a platform that refused. The app stays usable and
