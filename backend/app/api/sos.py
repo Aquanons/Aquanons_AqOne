@@ -619,7 +619,7 @@ async def reopen_sos(
         if prior is None:
             raise HTTPException(status_code=404, detail='no such SOS event')
         if prior['resolved_at'] is None:
-            raise HTTPException(status_code=409, detail='SOS event is not resolved')
+            return {'ok': True, 'id': event_id, 'outcome': 'no_change', 'resolved_at': None}
         row = await conn.fetchrow(
             '''
             UPDATE sos_events
@@ -640,7 +640,7 @@ async def reopen_sos(
             outcome='updated',
             is_demo=row['is_synthetic'],
         )
-    return {'ok': True, 'id': row['id'], 'resolved_at': None}
+    return {'ok': True, 'id': row['id'], 'outcome': 'updated', 'resolved_at': None}
 
 
 @router.get('/vessel/{vessel_id}')

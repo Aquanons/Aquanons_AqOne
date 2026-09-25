@@ -332,6 +332,15 @@ after it already applied returns the same result rather than erroring;
 `acknowledge` is additionally re-callable with a new `responder_status` to
 report progress, which is a real transition each time, not a duplicate.
 
+### `POST /api/sos/{id}/reopen`
+
+Operator-authenticated, responder roles. Clears `resolved_at`/`resolved_by`/
+`resolved_reason`, returning the incident to `GET /api/sos/active` on the
+next poll, and records an audited `sos.reopen` event. Reopening an already
+open incident returns 200 with `outcome: "no_change"` rather than erroring;
+unknown ids 404. (The versioned lifecycle in `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`
+E5.2 extends this with `expected_version` and `resolution_code`.)
+
 ### `GET /api/v1/sos/stream` — SSE live feed
 
 Server-Sent Events, `text/event-stream`. On connect the server sends the
