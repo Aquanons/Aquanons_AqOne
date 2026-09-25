@@ -610,12 +610,6 @@
     });
   }
 
-  function anomalyRows(payload) {
-    if (Array.isArray(payload)) return payload;
-    if (!payload || typeof payload !== 'object') return [];
-    return payload.cases || payload.rows || payload.events || payload.items || [];
-  }
-
   let lastRiskMonitoring = 'active';
   let lastRiskMonitoringReason = null;
 
@@ -962,10 +956,14 @@
 
     aiFetchJson('/api/ai/anomaly/active')
       .then(function (payload) {
+        if (!payload || !Array.isArray(payload.rows)) {
+          renderRiskFeed(null, 'offline');
+          return;
+        }
         lastRiskSuccessMs = Date.now();
-        lastKnownRiskRows = anomalyRows(payload);
-        lastRiskMonitoring = payload && payload.monitoring || 'active';
-        lastRiskMonitoringReason = payload && payload.monitoring_reason || null;
+        lastKnownRiskRows = payload.rows;
+        lastRiskMonitoring = payload.monitoring || 'active';
+        lastRiskMonitoringReason = payload.monitoring_reason || null;
         renderRiskFeed(lastKnownRiskRows, 'live', lastRiskMonitoring, lastRiskMonitoringReason);
       })
       .catch(function (err) {
@@ -1010,11 +1008,11 @@
       var incidentsResult = results[1];
       var squallResult = results[2];
 
-      if (riskResult.status === 'fulfilled') {
+      if (riskResult.status === 'fulfilled' && riskResult.value && Array.isArray(riskResult.value.rows)) {
         lastRiskSuccessMs = Date.now();
-        lastKnownRiskRows = anomalyRows(riskResult.value);
-        lastRiskMonitoring = riskResult.value && riskResult.value.monitoring || 'active';
-        lastRiskMonitoringReason = riskResult.value && riskResult.value.monitoring_reason || null;
+        lastKnownRiskRows = riskResult.value.rows;
+        lastRiskMonitoring = riskResult.value.monitoring || 'active';
+        lastRiskMonitoringReason = riskResult.value.monitoring_reason || null;
         renderRiskFeed(lastKnownRiskRows, 'live', lastRiskMonitoring, lastRiskMonitoringReason);
       } else {
         renderRiskFeed(null, 'offline');

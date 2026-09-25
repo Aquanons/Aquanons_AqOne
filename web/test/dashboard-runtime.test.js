@@ -691,6 +691,59 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
     assert.ok(riskList.innerHTML.includes('&lt;img src=x&gt;V-999'), 'vessel_id was safely escaped');
   });
 
+  async function renderAnomalyPayload(payload) {
+    const riskList = createStubElement('div', 'ai-risk-list');
+    const driftSelect = createStubElement('select', 'ai-drift-select');
+    driftSelect.options = [];
+    const ns = {
+      ready: true,
+      escapeHtml: escapeHtml,
+      authFetch: (url) => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(url.endsWith('/api/ai/anomaly/active')
+          ? payload
+          : url.endsWith('/api/ai/squall/current')
+            ? { level: 'unknown', detections: [] }
+            : [])
+      }),
+      squallStatusHtml: () => '',
+      aiStatusClass: () => 'status-normal'
+    };
+    const { window, document } = createDOMContext({
+      'ai-risk-list': riskList,
+      'ai-drift-select': driftSelect
+    }, ns);
+    const layerGroup = () => ({
+      addTo() { return this; },
+      clearLayers() {},
+      addLayer() {},
+      getLayers() { return []; },
+      getBounds() { return { isValid: () => false }; }
+    });
+    const fakeL = { layerGroup, featureGroup: layerGroup };
+    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-ai-ops.js'), 'utf8');
+    const context = vm.createContext(Object.assign({}, window, { window, document, L: fakeL, AqOneDashboard: ns }));
+    vm.runInContext(code, context);
+    await new Promise(resolve => setImmediate(resolve));
+    return riskList;
+  }
+
+  await t.test('anomaly feed renders Not monitoring for an empty unavailable payload', async () => {
+    const riskList = await renderAnomalyPayload({
+      rows: [],
+      monitoring: 'unavailable',
+      monitoring_reason: 'No live vessel contact in the last 30 minutes.'
+    });
+    assert.ok(riskList.innerHTML.includes('Not monitoring - no live contact source'));
+  });
+
+  await t.test('anomaly feed ignores a bare list', async () => {
+    const riskList = await renderAnomalyPayload([]);
+    assert.ok(riskList.innerHTML.includes('ai-unavailable-state'));
+    assert.ok(riskList.innerHTML.includes('Vessel risk feed unavailable'));
+    assert.ok(!riskList.innerHTML.includes('No active vessel risk rows available.'));
+  });
+
   await t.test('squall watch handles detection with geometry and calls getBounds on featureGroup', () => {
     let fitBoundsCalled = false;
     let getBoundsCalled = false;

@@ -50,7 +50,31 @@ Gates: ruff clean; backend 563 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F3 - Anomaly monitoring is fleet-wide and top level
 
-Not started.
+Backend red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_monitoring_pg.py tests/test_anomaly_active_readonly.py::test_active_never_writes`
+
+```text
+FAILED tests/test_edge_monitoring_pg.py::test_active_is_unavailable_without_live_contacts
+FAILED tests/test_edge_monitoring_pg.py::test_active_is_available_with_a_recent_buoy_contact
+FAILED tests/test_edge_monitoring_pg.py::test_handset_contacts_alone_leave_monitoring_unavailable
+FAILED tests/test_edge_monitoring_pg.py::test_stale_contacts_leave_monitoring_unavailable
+FAILED tests/test_anomaly_active_readonly.py::test_active_never_writes
+AssertionError: active anomaly response must include top-level monitoring metadata
+5 failed in 6.95s
+```
+
+Web red run: `node --test web/test/dashboard-runtime.test.js`
+
+```text
+anomaly feed renders Not monitoring for an empty unavailable payload: passed
+anomaly feed ignores a bare list: failed
+AssertionError: assert.ok(riskList.innerHTML.includes('ai-unavailable-state'))
+```
+
+Existing tests updated: removed `test_monitoring_unavailable_without_contacts`, whose assertion encoded the per-row rule; `test_active_never_writes` now reads `response.json()['rows']` and keeps its read-only assertion.
+
+Green runs: backend monitoring and active-readonly tests: 7 passed; web runtime tests: 40 passed, including both anomaly feed cases.
+
+Gates: ruff clean; backend 566 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 deferred failures; mobile analyze clean, 316 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F4 - A fisher reply marks a call reopened only when it really reopens
 

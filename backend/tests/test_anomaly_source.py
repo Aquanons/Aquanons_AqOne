@@ -24,7 +24,6 @@ import pytest
 from pydantic import ValidationError
 
 from app.ai import anomaly_service
-from app.api import anomaly as anomaly_api
 from app.api.contacts import ContactEventIn
 
 
@@ -153,19 +152,6 @@ def test_handset_contacts_never_raise_overdue_alone():
     )
     assert len(result) == 1
     assert result[0]['status'] not in {'overdue', 'alert'}
-
-
-def test_monitoring_unavailable_without_contacts():
-    as_of = datetime.now(UTC)
-    row = {
-        'vessel_id': 'V-NO-CONTACT', 'trip_id': 'T1', 'score': 0.4, 'status': 'watch',
-        'factors': [], 'expected_next_buoy_id': None, 'expected_window_start': as_of,
-        'expected_window_end': as_of, 'observed_at': as_of,
-        'last_contact_at': as_of - timedelta(minutes=31), 'is_synthetic': False,
-    }
-    result = anomaly_api._score_response(row, now=as_of)
-    assert result['monitoring'] == 'unavailable'
-    assert result['monitoring_reason']
 
 
 def _fleet_rows() -> list[dict[str, object]]:
