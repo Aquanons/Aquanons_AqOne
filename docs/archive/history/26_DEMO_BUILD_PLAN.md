@@ -1,5 +1,7 @@
 # 26 — Demo Build Plan
 
+**Status:** SUPERSEDED (archived 2026-09-25). The scenario engine it proposed was built through the demo phases of `docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md` and `docs/40_DRIFT_PREDICTION_SEARCH_RETASKING_IMPLEMENTATION_PLAN.md` (`backend/app/demo/`); the current pitch plan is `docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`.
+
 **Problem.** The system is reactive to conditions that do not occur on demand.
 Without a real pressure collapse over the buoy array there is no squall
 nowcast, no RETURN NOW, no danger-zone escalation; without a real distress

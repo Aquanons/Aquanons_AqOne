@@ -20,12 +20,13 @@ Obtain current evaluator access from Team Aquanons rather than relying on creden
 
 | Area | Status | Evidence and limitation |
 |---|---|---|
-| Mobile pitch build | 🟡 Built and automatically tested | The September 5 build recorded `flutter analyze` with no issues and 184 passing tests. Physical handset installation and the hardware demonstration remain unverified. |
-| Backend and dashboard software | 🟢 Deployed and verified | Live Render backend deployment responsive at `https://aqone-backend.onrender.com/health/ready`. |
+| Mobile pitch build | 🟡 Built and automatically tested | On 2026-09-25 `flutter analyze` reported no issues and 318 tests passed. Physical handset installation, the foreground-service device test and the hardware demonstration remain unverified. |
+| Backend and dashboard software | 🟢 Deployed and verified | Live Render backend deployment responsive at `https://aqone-backend.onrender.com/health/ready` (commit `9630553`, 2026-09-25). |
+| Edge-case remediation | 🟡 Merged and deployed, not walked end to end | PR #79 (2026-09-25): delivery keeps retrying until confirmed, reason-coded resolve with reopen, triage and plausibility flags, SMS escalation, operations status. Tests green; the docs/62 Phase I walkthrough, device tests and browser checks are pending. See `docs/08_DEMO_AND_STATUS.md`. |
 | Phone to boat-pod WiFi | 🟡 Implemented in source | The pod address is `192.168.4.1`. The complete path has not been reverified on a physical handset and pod. |
 | Boat-pod and shore firmware | 🟡 Pod and shore sketches exist, compile clean | SOS, responder ETA and chat cross LoRa; the pod has no internet of its own. Neither sketch has run on hardware. Stationary relay/sensor hardware is not yet validated. |
 | Direct and optional relay LoRa | 🟡 Implemented, unproven | Direct pod-to-shore delivery and TTL flood/seen-set relay logic are written. No outdoor range has been measured — every figure in `docs/33_LORA_RF_BUDGET.md` is modelled. |
-| Responder acknowledgement and ETA | 🟡 Implemented, needs a credential | The gateway reads `GET /api/sos/active` and pushes the ETA back down the mesh. That endpoint needs an operator bearer token, which must be configured before this path works. |
+| Responder acknowledgement and ETA | 🟡 Implemented, needs the gateway key and a reflash | The gateway reads `GET /api/sos/downlink` with `GATEWAY_API_KEY` and pushes the ETA back down the mesh. Since 2026-09-25 mesh chat also needs that key, so the shore gateway must be reflashed with the current `AqOneShore.ino`. |
 | AI safety features | 🟡 Prototype software exists | No component has been trained and validated on locally collected New Washington data. Synthetic scenarios support most calibration/evaluation; the marine-hazard model uses historical environmental proxy data. Field validation and deployment remain incomplete. |
 | Catch activity features | 🟡 Foundation exists | Offline logging and coarse aggregation exist. The intended BFAR workflow has not been validated. |
 

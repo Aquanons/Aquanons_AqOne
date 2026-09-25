@@ -8,7 +8,7 @@ Owns: `web/**`.
 Approved: with the master plan, Revision 1, 2026-09-24.
 Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-web.md`.
-State: W1-W4 code and automated tests complete; browser checks pending (auto mode)
+State: W1-W4 done and merged - PR #79 (`9630553`, 2026-09-25); browser checks pending; red runs for W2-W4 were not recorded
 
 ## Rules for this track
 

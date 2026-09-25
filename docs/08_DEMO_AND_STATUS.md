@@ -5,6 +5,41 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-25 - Edge-case remediation merged and deployed
+
+Recorded per `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` and `docs/archive/plans/63_EDGE_REVIEW_FIXES.md`.
+PR #79 merged `edge/fixes` into `master` as `9630553`; Render served that commit on `/health/ready` about 45 s later.
+Environment: Windows 11, Python 3.11, PostgreSQL 18.4 (throwaway cluster for the Postgres-backed tests), Flutter stable, Node.js 22.
+
+**What landed:**
+- Backend B1-B7: resolution codes, versions and reopen; incident nonce and byte-safe text; downlink capped at 12 with gateway last-seen; triage-ordered `/api/sos/active` with advisory plausibility flags and late-call marking; credential-based chat origin, device-bound profiles and responder confirmation; scheduler with SMS escalation and `/api/ops/status`; fleet-wide anomaly monitoring and a drift clock check. Migrations 032-037.
+- Mobile M1-M6: keeps trying the direct path until the backend confirms `delivered`; foreground service while an SOS is pending; incident nonce and late GPS fill; confirmed stand-down with undo and localised closure text; MDRRMO enrolment, SOS before setup and recoverable identity; silent SOS and alarm-stream siren.
+- Web W1-W4: alarm for calls already waiting at page load; reason-code resolve with undo and versioned acknowledge; triage view with flags, late badges and flood banner; positive-only trust badges, operations status and session refresh.
+- Review fixes F1-F10 (GPT Luna, failing test first for each): gateway key on chat calls, 409 `current`, fleet-wide monitoring, real-reopen-only with audit, `stood_down_by_fisher`, many-calls at two, contract job names, SMS retry, CRLF and rationale restored, over-engineering cuts.
+- Jade's #77 and #78: licence-type allowlist, Reopen button in the Resolved panel, Escape closes the resolve dialog.
+
+**Verification results (on `1b56c6b`, the merged head):**
+- Backend: `ruff check app tests` clean; **573 passed, 5 skipped, 1 xfailed** with `AQONE_PROBE_PG_ADMIN_URL` set.
+- Security probes: 11 passed, 3 failed - the deferred hotspot-cohort (x2) and per-source LoRa key probes, unchanged from `master`.
+- Mobile: `flutter analyze` 0 issues; **318 passed**; security probes 6 passed.
+- Web: **175 passed**; every `.js` file passes `node --check`.
+- Live: `/api/ops/status`, `/api/mesh/chat`, `/api/ai/anomaly/active`, `/api/sos/{id}/reopen` and `/api/sos/downlink` all return 401 without a credential.
+
+**Honest status - not yet done:**
+- **Shore gateway reflash.** `GET /api/mesh/chat` now needs `X-Api-Key`; only this build of `AqOneShore.ino` sends it, so chat to the boats is down until the gateway is reflashed (`pio run -d firmware -e shore -t upload`) and a dashboard chat line is seen on a boat.
+- Phase I walkthrough (docs/62 Section 7): the end-to-end steps on a local stack and on Render have not been run.
+- Device tests (`docs/edge-remediation/EVIDENCE-mobile.md`) and browser checks (`docs/edge-remediation/EVIDENCE-web.md`) are pending.
+- SMS escalation runs and is audited, but no provider credentials are set, so the dashboard shows "SMS escalation not configured".
+- Firmware Track F (`docs/62D_EDGE_FIRMWARE_TRACK.md`), B8 and M7 stay gated.
+
+Evidence files: `docs/edge-remediation/EVIDENCE-backend.md`, `EVIDENCE-mobile.md`, `EVIDENCE-web.md`, `EVIDENCE-fixes.md`, `EVIDENCE-ops.md`.
+
+## 2026-09-24 - Security audit remediation merged
+
+Recorded per `docs/archive/plans/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md` (Phases 0-8, complete).
+Evidence and the probe results are in `docs/security-audit/REMEDIATION-EVIDENCE.md` and `docs/security-audit/VALIDATION-RESULTS.md`.
+Still open: the bench hardware check (flash both boards, send one SOS and one warning, confirm TLS to Render after NTP sync), and rotating `GATEWAY_API_KEY` and the uplink WiFi password (SEC-33).
+
 ## 2026-09-17 — Hybrid transport architecture decision
 
 The primary field node is now a **shared strap-on boat safety pod**: local WiFi
@@ -946,14 +981,16 @@ drifted from reality; here it's maintained as you build.
 | Store-and-forward at boat pod | ⬜ | |
 | Optional multi-hop relay (3+ nodes) | ⬜ | Stationary relay buoy; likely bench-only — say so |
 | Stationary buoy hazard sensing | ⬜ | Fixed barometer/current observations; do not claim hardware data before field validation |
-| Dashboard live feed + acknowledge | ⬜ | |
-| Deployed backend, healthcheck green | ⬜ | |
+| Dashboard live feed + acknowledge | 🟡 | Software verified by automated tests (2026-09-25); the docs/62 Phase I end-to-end walkthrough has not been run |
+| Deployed backend, healthcheck green | ✅ | `https://aqone-backend.onrender.com/health/ready` returned `ok` with commit `9630553`, 2026-09-25 |
 | Range measured on water | ⬜ | Record the metres |
 | AI hotspot model | ❌ **Not built** | Deliberate — circular target, no data |
 | Catch-decline detection | ❌ **Not built** | Deliberate — out of scope |
-| Catch logging / photos | ❌ **Not built** | Deliberate |
+| Catch logging | 🟡 | Backend routes exist (`/api/catch-logs`); no handset screen yet |
+| Catch photos | ❌ **Not built** | Deliberate (`docs/07_SCOPE_OUT.md`) |
 | Push notifications | ❌ **Not built** | Roadmap |
-| Aklanon localisation | ❌ **Not built** | Roadmap |
+| Aklanon localisation | 🟡 | `app_akl.arb` drafts exist and are unreviewed (`docs/22_LOCALIZATION_PLAN.md`) |
+| SMS escalation of unanswered SOS | 🟡 | Built and audited; no provider credentials configured |
 
 Legend: ✅ working & demonstrated · 🟡 partial (explain) · ⬜ not yet · ❌ deliberately out of scope
 

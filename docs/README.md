@@ -81,6 +81,7 @@ Do not delete historical documents. When a plan is verified complete, it may mov
 | Status | Document | Purpose |
 |---|---|---|
 | ACTIVE | [`43_DTI_PITCH_IMPLEMENTATION_PLAN.md`](43_DTI_PITCH_IMPLEMENTATION_PLAN.md) | Focused Phase 1 pitch build and manual SOS handshake |
+| ACTIVE | [`62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`](62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md) | Edge-case remediation: tracks B, M, W merged 2026-09-25; Phase I integration and gated Track F remain |
 
 Add a row here when a document becomes `ACTIVE`.
 Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
@@ -90,7 +91,9 @@ Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
 | Group | Files |
 |---|---|
 | Foundation and shared contracts | `00` to `08` |
-| Earlier planning and implementation records | `11`, `13` to `26`, `29` to `31`, `33`, `34`, `36` to `42`, `46` |
+| Earlier planning and implementation records | `13` to `25`, `29` to `31`, `33`, `34`, `36` to `42` (`11` and `26` are in `archive/history/`; `46` is in `archive/plans/`) |
+| Edge-case remediation | `60` findings, `61` design, `62` plan with tracks `62A` to `62D`, evidence in [`edge-remediation/`](edge-remediation/); `59` and `63` are completed plans in `archive/plans/` |
+| Operations runbooks | [`runbooks/`](runbooks/) |
 | Dated audits and verification | [`audits/`](audits/) |
 | Current pitch plan | `43` |
 | Visual design guide | `47` |

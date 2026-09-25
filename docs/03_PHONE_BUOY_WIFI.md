@@ -172,11 +172,12 @@ Phone  ──►  Boat pod        GET /v1/status
 Phone  ◄──  Boat pod        200 {"v":1,"buoy_id":1001,"batt":86,"mesh":"ok","queued":3}
 ```
 
-## Edge-case remediation contract (frozen 2026-09-24)
+## Edge-case remediation contract
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Section 3.9).
-Each item is the target shape that the named phase builds against.
-Until that phase merges, the sections above describe what is deployed; after it merges, Claude folds the item into the section above during Phase I.
+Frozen 2026-09-24.
+E3.1 (the phone sends `nonce`) and E3.2 (`accepted` means queued only) are live in the handset since PR #79 (`9630553`, 2026-09-25).
+E3.3 is pod firmware and is **not built yet**: it waits for Track F (`docs/62D_EDGE_FIRMWARE_TRACK.md`), which is gated on build step 2.
 This doc is known to be stale in places (see `docs/21_WEEK1_CONTRACT_FIXTURES.md`, which is ground-truthed against the firmware); these additions do not change that.
 
 ### E3.1 Handoff nonce (Track M phase M3; pod behaviour in Track F phase F1)

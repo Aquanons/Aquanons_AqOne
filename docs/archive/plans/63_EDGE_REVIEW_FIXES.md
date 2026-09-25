@@ -2,7 +2,7 @@
 
 Created: 2026-09-25T09:00:00+08:00
 Revision: 2 (2026-09-25: F5 may also edit the responder-loop fake pool; see F5)
-Status: Approved (Len, in chat, 2026-09-25)
+Status: COMPLETE (archived 2026-09-25). F1 to F10 executed by GPT Luna tests first, reviewed by Claude, merged to master in PR #79 (`9630553`). Evidence: `docs/edge-remediation/EVIDENCE-fixes.md`. Two F10 web cuts were reverted because existing tests pin them (see the evidence file).
 **Execution mode:** auto
 Implementer: GPT Luna.
 Reviewer: Claude Code.

@@ -8,7 +8,7 @@ Owns: `mobile/**`.
 Approved: with the master plan, Revision 1, 2026-09-24.
 Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-mobile.md`.
-State: In progress (auto mode)
+State: M1-M6 done and merged - PR #79 (`9630553`, 2026-09-25); device tests pending Len (see the evidence file); M7 gated
 
 ## Rules for this track
 

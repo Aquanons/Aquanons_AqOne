@@ -8,7 +8,7 @@ Owns: `backend/**`, `render.yaml`.
 Approved: with the master plan, Revision 1, 2026-09-24.
 Len's chat approval, 2026-09-25T00:05:00+08:00: tracks B, M and W run in `auto` mode - agents continue through their phases without per-phase sign-off, under master plan Section 4.1.
 Evidence: `docs/edge-remediation/EVIDENCE-backend.md`.
-State: In progress (auto mode)
+State: B1-B7 done and merged - PR #79 (`9630553`, 2026-09-25); B8 gated on Track F4
 
 ## Rules for this track
 

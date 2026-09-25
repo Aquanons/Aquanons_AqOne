@@ -1,4 +1,6 @@
-# dashboard.js modularization — implementation plan for Luna
+# dashboard.js modularization - implementation plan for Luna
+
+**Status:** COMPLETE (archived 2026-09-25). `web/js/dashboard.js` is split into `web/js/dashboard/*.js`, loaded as plain scripts from `web/html/dashboard.html`.
 
 ## Context
 

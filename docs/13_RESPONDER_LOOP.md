@@ -89,9 +89,10 @@ assets to another incident.
 
 ---
 
-## Resolution codes (frozen 2026-09-24)
+## Resolution codes
 
-Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track B phase B1, Track M phase M4 and Track W phase W2.
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track B phase B1, Track M phase M4 and Track W phase W2. Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
+The radio `rc` value is reserved but not yet sent: that is Track F.
 A resolved incident carries one `resolution_code` (`docs/05` E5.1).
 This table is the one place that says what each code means and what the boat is told.
 The backend sends only the code; the phone maps it to localised text (never an enum field), and the dashboard shows the English label.

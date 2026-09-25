@@ -263,10 +263,12 @@ A5 01 01 03 00 01 00 01 00 01 00 01 00 2A 00 00 00 00 05 00 00 22
 <8-byte SIG>
 ```
 
-## Edge-case remediation contract (frozen 2026-09-24)
+## Edge-case remediation contract
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Section 3.9).
 Phase 0 reserves field names and fixes the text rule only.
+**Firmware status (2026-09-25): not built.** `nc`, `rc` and the byte-safe UTF-8 copy land with Track F phase F1 (`docs/62D_EDGE_FIRMWARE_TRACK.md`), gated on build step 2.
+The backend and handset already truncate on character boundaries (PR #79).
 Relay, clock, node-ID and key rules are written by Track F's own contract step (docs/62D Phase F0) when that track opens.
 
 ### E2.1 Reserved payload fields (Track F phase F1)

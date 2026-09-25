@@ -18,7 +18,7 @@ public read surface (`docs/05_PUBLIC_API.md`).
 
 - `HTTPS` only. Plain HTTP is refused by the backend.
 - Base URL is a platform env var on the gateway, e.g.
-  `https://incredible-liberation-production-aad7.up.railway.app`.
+  `https://aqone-backend.onrender.com`.
 - Auth: header `X-Api-Key: <gateway api key>` on every request. Keys are
   issued per gateway and revoked in the backend admin console.
 
@@ -332,9 +332,7 @@ this feed holds resolved incidents for `DOWNLINK_RESOLVED_WINDOW_HOURS`
 (6 h). The gateway polls on a 45 s cycle, so an incident acknowledged and then
 resolved between two polls would otherwise leave the mesh without the closure
 ever going out, and the handset would count down an ETA for a rescue that had
-already finished. Capped at 100 events, newest first.
-
-**Changing:** the cap, selection and order become those in "E4.3" below (Track B phase B3).
+already finished. At most 12 events, in the priority order set out in "E4.3" below; synthetic rows are never sent.
 
 Errors: `401` missing or wrong `X-Api-Key` - including a valid operator bearer
 token or demo key, neither of which substitutes for it.
@@ -391,7 +389,7 @@ However, provenance claims are strictly gated:
 - This prevents untrusted callers from forging mesh delivery states or injecting unregistered buoy rows into the database.
 - Trust tier: incoming `trust_tier` is stored as `self_declared` unless verified by a bound vessel device token (`phone_verified`).
 - The value `confirmed_by_responder` is never accepted from ingest.
-- **Changing:** the incident nonce, byte-safe truncation and position-conflict rules in "E4.1" below (Track B phase B2).
+- The incident nonce, byte-safe truncation and position-conflict rules are in "E4.1" below.
 
 
 ## Dedupe and ordering
@@ -409,11 +407,13 @@ verify api key → resolve ids → dedupe (src_ext_id, seq)
 → append event log → upsert sos_events projection → SSE push (05_PUBLIC_API.md)
 ```
 
-## Edge-case remediation contract (frozen 2026-09-24)
+## Edge-case remediation contract
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Sections 3.1, 3.6 and 3.8).
-Each item is the target shape that the named phase builds against.
-Until that phase merges, the sections above describe what is deployed; after it merges, Claude folds the item into the section above during Phase I.
+Frozen 2026-09-24; implemented by Track B phases B2, B3, B5 and B7 and the review fixes in `docs/archive/plans/63_EDGE_REVIEW_FIXES.md`.
+Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
+These sections are the current contract; the sections above point here where they changed.
+The shore gateway sends its `X-Api-Key` on chat calls only from this build (F1), so a gateway flashed earlier cannot read chat until it is reflashed.
 Findings are the `EC-` IDs in `docs/60_EXTREME_EDGE_CASE_REPORT.md`.
 
 ### E4.1 SOS ingest: incident nonce, safe text, position conflict (Track B phase B2)

@@ -13,7 +13,7 @@ Out of scope: ingest (`docs/04_INGEST_API.md`) and the radio hops.
 
 ## Transport
 
-- HTTPS. Base URL is `https://aihackathon2026aquanonsaqone-production.up.railway.app`.
+- HTTPS. Base URL is `https://aqone-backend.onrender.com`.
 - Dashboard requests are authenticated by API key (`X-Api-Key`); the mobile
   app's safety feeds remain unauthenticated, but per-vessel normal-operation
   reads and writes now require a vessel-device bearer token issued by the
@@ -90,9 +90,7 @@ Rules:
 
 ### `POST /api/vessel-auth/refresh`
 
-**Changing:** a 30-day grace after expiry, in "E5.3" below.
-
-Requires the current vessel-device bearer token. Returns a fresh token for the
+Requires the vessel-device bearer token; since 2026-09-25 it also accepts one up to 30 days past expiry if the device is not revoked (E5.3 below). Returns a fresh token for the
 same device/vessel pair and the new expiry time.
 
 ### `POST /api/vessel-auth/devices/{device_id}/revoke`
@@ -219,15 +217,16 @@ definition of done).
 
 ### `GET /api/sos/active` — dashboard poll (what the dashboard actually uses)
 
-**Changing:** the response shape, triage order and new fields, in "E5.4" below.
+**Updated 2026-09-25 (edge-case remediation):** the response is `{events, total, flood}` in triage order, with new per-event fields; see E5.4 below.
 
 Operator-authenticated (bearer token, `require_user`). The dashboard polls
 this rather than the SSE feed below (`web/js/dashboard/dashboard-live-sos.js`).
 
-Returns **every unresolved SOS event**, newest first - including one a
+Returns unresolved SOS events in triage order (E5.4) - including ones a
 dispatcher has already acknowledged.
-The feed is untruncated (no arbitrary row limit), guaranteeing that an influx of
-simultaneous incidents cannot crowd genuine active calls out of the dispatcher view.
+`limit` defaults to 200 and `total` counts every unresolved incident, so the
+dashboard shows "+N more" rather than silently dropping calls; `flood` marks a
+burst of calls from unknown vessels.
 An acknowledged event stays in this feed
 until a dispatcher calls `POST /api/sos/{id}/resolve` or the fisher replies
 `SAFE_NOW` (`POST /api/sos/{id}/reply`, `docs/13_RESPONDER_LOOP.md`); dropping
@@ -259,7 +258,8 @@ or what the fisher's last report on it was.
 
 ### `POST /api/vessel-profile` - declare a vessel's owner identity
 
-**Changing:** shore contact fields, device-only writes for enrolled vessels, and `set_by`, in "E5.5" below.
+**Updated 2026-09-25 (edge-case remediation):** shore contact fields, device-only writes once a vessel has an enrolled device, and per-field `set_by`; see E5.5 below.
+`license_type` outside `boatr`, `fishr`, `cfvgl` and `none` is stored as `none`, so a hand-typed value can never produce a badge.
 
 Unauthenticated for initial registration, for the same reason SOS ingest is (`POST /api/sos`): a
 fisherman at sea has no account to hold, and this is the same self-declared
@@ -317,7 +317,7 @@ beyond them is rejected with 422 before any DB write.
 
 ### `POST /api/sos/{id}/acknowledge` and `POST /api/sos/{id}/resolve`
 
-**Changing:** `expected_version`, the 40-byte note, `reason_code` and a new `/reopen` route, in "E5.2" below.
+**Updated 2026-09-25 (edge-case remediation):** both accept `expected_version` (409 `version_conflict` with `current`), `responder_note` is limited to 40 UTF-8 bytes, `resolve` takes a `reason_code`, and `POST /api/sos/{id}/reopen` undoes a resolve; see E5.2 below.
 
 Operator-authenticated, responder roles (`mdrrmo` / `lgu` / `admin` — see
 [Roles](#roles)). `acknowledge` accepts `eta_minutes` (converted
@@ -404,11 +404,10 @@ place of the credentialed vessel feed when it has no device credential
 
 ### `GET /api/sos/vessel/{vessel_id}`
 
-**Changing:** every unresolved incident plus the newest 20 resolved, in "E5.5" below.
-
-Returns that vessel's SOS rows, newest first. The app matches by
-`(local_id, seq)` to mark a message `acknowledged` when an MDRRMO responder
-has acked it.
+Returns every unresolved incident for that vessel plus its newest 20 resolved
+ones, newest first (E5.5). The app matches a row to its outbox record by
+`local_id`, then `nonce`, then `seq`, to mark a message `acknowledged` when an
+MDRRMO responder has acked it.
 
 Requires a vessel-device bearer token. The token's vessel must match the path
 vessel id; the backend queries by the verified token vessel, not by trusting
@@ -416,7 +415,7 @@ the path as ownership.
 
 ### `POST /api/sos/{event_id}/reply`
 
-**Changing:** `STILL_IN_DANGER` within 2 h of a resolve reopens the incident, in "E5.2" below. This applies to `POST /api/sos/reply/{local_id}` too.
+**Updated 2026-09-25 (edge-case remediation):** `STILL_IN_DANGER` within 2 h of a resolve reopens the incident (audited, `reopened_by = "fisher"`), and `SAFE_NOW` closes it as `stood_down_by_fisher`; see E5.2 below. Both apply to `POST /api/sos/reply/{local_id}` too.
 
 The fisher's reply to a responder acknowledgement.
 
@@ -471,12 +470,12 @@ belongs to that token's vessel.
 
 ### `POST /api/mesh/chat`
 
-**Changing:** credential-based `origin`, reserved names and rate limits, in "E5.6" below.
-
 Relays one chat line from a handset (via the Heltec WiFi hub, or straight
 from the phone when it has internet) into the durable store the MDRRMO
-dashboard and other handsets read from. Unauthenticated — fishermen have no
-account, and neither does the hub.
+dashboard and other handsets read from. Anonymous posts are accepted -
+fishermen have no account - but `origin` now comes from the caller's
+credential, reserved sender names are refused and each sender is rate-limited
+(E5.6 below).
 
 This is **nearby-boat group messaging**, not private or family messaging.
 `sender`, `text`, and `origin` are public group-chat metadata delivered to
@@ -504,9 +503,8 @@ the line queued for retry rather than drop it.
 
 ### `GET /api/mesh/chat?since_id=`
 
-**Changing:** reading requires a credential, in "E5.6" below.
-
-Returns ordered nearby-group messages, unauthenticated. `since_id` (default
+Returns ordered nearby-group messages to a caller holding the gateway key, an
+operator session or a vessel device bearer; without one it is 401 (E5.6). `since_id` (default
 `0`) returns messages with `id > since_id` in ascending order — "the next N
 after since_id" — so a hub or handset that was offline catches up in order
 instead of skipping a gap. Omitting `since_id` returns the most recent
@@ -903,10 +901,9 @@ responder role (`mdrrmo` / `lgu` / `admin` — see [Roles](#roles)).
 
 ### `GET /api/ai/anomaly/active`
 
-**Changing:** `monitoring`, `monitoring_reason` and the `check_needed` status, in "E5.7" below.
-
 Read-only. Never triggers evaluation or writes — dashboard polling cannot
-rebuild the underlying tables. Each row carries `source` (`live` \|
+rebuild the underlying tables. The response is `{rows, monitoring,
+monitoring_reason}` (E5.7 below); each row carries `source` (`live` \|
 `synthetic`), `evaluated_at`, and `data_age_seconds` alongside the score, so
 the dashboard can say plainly how current a result is.
 
@@ -1266,11 +1263,12 @@ Requires either:
 Anonymous callers receive HTTP 401.
 Non-responder operators or mismatching vessel devices receive HTTP 403.
 
-## Edge-case remediation contract (frozen 2026-09-24)
+## Edge-case remediation contract
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Sections 3.2 to 3.7).
-Each item is the target shape that the named phase builds against.
-Until that phase merges, the sections above describe what is deployed; after it merges, Claude folds the item into the section above during Phase I.
+Frozen 2026-09-24; implemented by Track B phases B1 to B7, the dashboard (W1 to W4), the handset (M1 to M6) and the review fixes in `docs/archive/plans/63_EDGE_REVIEW_FIXES.md`.
+Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
+These sections are the current contract; the endpoint sections above point here where they changed.
 Findings are the `EC-` IDs in `docs/60_EXTREME_EDGE_CASE_REPORT.md`.
 Gateway-facing parts (ingest nonce, contact device tag, downlink, gateway chat) are in `docs/04_INGEST_API.md` Sections E4.1 to E4.4.
 
@@ -1460,7 +1458,7 @@ Without one it returns 401.
 
 **Anomaly (B7, EC-H6 to EC-H9, EC-H16).**
 
-- `GET /api/ai/anomaly/active` changes from a bare list to an object (amended 2026-09-25 after review, docs/63 F3):
+- `GET /api/ai/anomaly/active` changes from a bare list to an object (amended 2026-09-25 after review, `docs/archive/plans/63_EDGE_REVIEW_FIXES.md` F3):
 
   ```json
   { "rows": [], "monitoring": "unavailable", "monitoring_reason": "No live vessel contact in the last 30 minutes." }

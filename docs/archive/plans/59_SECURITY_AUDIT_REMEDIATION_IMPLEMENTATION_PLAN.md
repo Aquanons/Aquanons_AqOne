@@ -3,7 +3,7 @@
 Created: 2026-09-23T13:00:00+08:00
 Updated: 2026-09-24T13:05:00+08:00
 Revision: 4
-Status: Approved
+Status: COMPLETE (archived 2026-09-25). Phases 0 to 8 merged to master; evidence in `docs/security-audit/REMEDIATION-EVIDENCE.md`. The two hardware checks for Daniel (bench flash, TLS to Render after NTP sync) remain open and are tracked in `docs/08_DEMO_AND_STATUS.md`.
 **Execution mode:** hard-stop
 Feature spec and revision: `docs/security-audit/validation-results.json` run `20260923T1233` (verdicts re-checked by Claude against the raw JUnit/JSONL), `docs/security-audit/PROBES.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`

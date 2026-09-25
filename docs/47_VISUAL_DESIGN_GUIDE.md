@@ -595,9 +595,9 @@ Toasts:
 - Critical overlays pulse sparingly; standard data markers should remain static.
 - Every data layer visible to a user needs a matching legend entry.
 
-### 6.8 Trust badges and plausibility tags (frozen 2026-09-24)
+### 6.8 Trust badges and plausibility tags
 
-Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track W phases W3 and W4.
+Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0; built in Track W phases W3 and W4. Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
 These rules override 6.6 wherever they overlap.
 
 **Trust badges are positive only (EC-H10).**

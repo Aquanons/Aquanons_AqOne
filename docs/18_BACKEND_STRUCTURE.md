@@ -3,6 +3,9 @@
 For the team. Companion to `17_AI_EXPLAINED_SIMPLY.md`, which covers what the AI
 *does*. This one covers where everything *lives*.
 
+Updated 2026-09-25 for the edge-case remediation (PR #79): the new
+`app/incidents/` policy layer, the scheduler, SMS escalation and operations status.
+
 ---
 
 ## The one idea that makes the whole folder make sense
@@ -25,13 +28,39 @@ server or a database. That's why the test suite runs in 14 seconds.
 
 ---
 
-## The three layers
+## The four layers
 
 ```
 app/ai/          ← the thinking          (the models)
+app/incidents/   ← the rules             (pure SOS policy: no web, no database)
 app/api/         ← the doors             (the URLs the app + dashboard call)
-everything else  ← the plumbing          (database, startup, auth, geography)
+everything else  ← the plumbing          (database, startup, auth, geography, jobs)
 ```
+
+`app/incidents/` is the same idea as `app/ai/`, applied to the SOS rules
+themselves: which incidents go down the radio, what order the dispatcher sees,
+when a fisher's reply reopens a call. The functions there take plain values and
+return plain values, so they are tested without a server or a database.
+`tests/test_incidents_is_pure.py` fails if any of them imports `fastapi`,
+`asyncpg`, `httpx` or `app.db`.
+
+---
+
+## `app/incidents/` - the rules
+
+| File | What it decides |
+|---|---|
+| `lifecycle.py` | Resolution codes (`rescued`, `stood_down_by_fisher`, ...) and the 2-hour window in which a fisher's "still in danger" reopens a closed call. |
+| `delivery.py` | The four delivery states (`docs/06_DELIVERY_STATES.md`) from the stored flags. |
+| `downlink.py` | Which 12 incidents the shore gateway sends back down the radio, and in what order. |
+| `triage.py` | The dispatcher's order (waiting before answered, corroborated before not) and flood detection. |
+| `plausibility.py` | Advisory flags such as `position_on_land`; they never block or reorder a call. |
+| `escalation.py` | Which unanswered calls are due for an SMS, and the message text. |
+| `trust.py` | Whether a vessel counts as verified. |
+| `text.py` | Cutting text to a byte limit without splitting a character. |
+
+`app/mesh/chat_policy.py` does the same for mesh chat: reserved sender names and
+the per-sender rate limit.
 
 ---
 
@@ -55,8 +84,6 @@ The models and the scripts that score them.
 cards — you run them manually to measure how well each model performs, and they
 write the results to `models/eval_results.json`.
 
-> **Right now that file doesn't exist**, which is why the dashboard's SAR tab is
-> empty. Someone needs to run those three scripts against the deployed database.
 
 ---
 
@@ -66,12 +93,21 @@ Every URL the mobile app or dashboard can call. These files are thin on purpose.
 
 | File | What it handles |
 |---|---|
-| `sos.py` | **The most important file in the backend.** Receiving SOS, de-duplicating, the live feed, acknowledging with an ETA, the fisherman's reply. 358 lines. |
+| `sos.py` | **The most important file in the backend.** Receiving SOS, de-duplicating (by incident nonce, or `client_ts` for old phones), the triage-ordered live feed, acknowledge / resolve / reopen with version checks, the radio downlink, and the fisherman's reply. About 860 lines. |
+| `mesh.py` | Nearby-boat chat. Anyone may post; who you are decides the `origin`. Reading needs a credential. |
+| `vessel_profile.py` | A boat's declared owner identity, and the responder "Confirm vessel" route. |
+| `vessel_auth.py` | Pairing codes, device enrolment and token refresh for handsets. |
+| `ops_status.py` | Gateway last-heard, SMS configured, database expiry, scheduler last run. |
+| `contacts.py`, `pressure_events.py`, `current_events.py` | Buoy telemetry from the gateway. |
 | `drift.py` | Search maps, incident list, recording a searched sector. |
 | `squall.py` | Current storm status, per-buoy status, retraining. |
-| `anomaly.py` | Overdue vessels, per-vessel status. |
-| `auth.py` | Login, and admin account creation. |
+| `anomaly.py`, `anomaly_cases.py` | Overdue vessels, the fleet-wide "monitoring" flag, and the trip-check review queue. |
+| `advisories.py`, `public.py` | Official warnings and the unauthenticated safety feeds for the app. |
+| `auth.py` | Login, logout, token refresh, and admin account creation. |
 | `sea_condition.py` | The MDRRMO's human "Safe to Go Out / Not Advised" declaration. **Not AI** — a person sets this. |
+| `catch.py`, `trips.py`, `hotspots.py` | Catch logs, vessel trips, and the catch-activity heatmap. |
+| `ops_audit.py` | The append-only operations audit log and its admin export. |
+| `demo.py` | Demo-only routes, off unless `DEMO_MODE` is set. |
 | `metrics.py` | Serves the eval numbers. Returns 404 rather than fake numbers when they don't exist. |
 
 ---
@@ -83,7 +119,11 @@ Every URL the mobile app or dashboard can call. These files are thin on purpose.
 | `app/main.py` | **Start here if you're lost.** Wires every door onto the app and sets which ones need a login. |
 | `app/db.py` | Opens the database connection pool at startup, closes it at shutdown. |
 | `app/auth.py` | Password hashing and login tokens. The security guts. |
-| `app/geo.py` | **The single source of truth for "where is New Washington."** The water polygon, shore stations, and the "is this point at sea?" check. If a boat ever appears on land, the bug is here. |
+| `app/geo.py` | **The single source of truth for "where is New Washington."** The water polygon, shore stations, the "is this point at sea?" check and `distance_km`. If a boat ever appears on land, the bug is here. |
+| `app/audit.py` | Writes one row to the operations audit log inside the caller's transaction. |
+| `app/scheduler.py` | Background jobs started with the app: SOS escalation every 30 s and anomaly evaluation every 5 min. A Postgres advisory lock keeps two copies of the app from running the same job twice. Set `AQONE_SCHEDULER=0` to switch it off. |
+| `app/notify.py` | Sends the escalation SMS through Semaphore. With no `SEMAPHORE_API_KEY` or `ONCALL_SMS_NUMBERS` it reports "not configured" instead of failing. |
+| `app/demo/` | The demo scenario engine (synthetic squall and drift). |
 | `app/simulation/generator.py` | Makes all the fake data — buoys, weather, boats, trips. **The biggest file in the backend at 1,254 lines.** |
 | `migrate.py` | Runs the database migrations in order on every deploy. |
 
@@ -105,12 +145,22 @@ edit an old one** — always add a new numbered file.
 | `007_sos_ingest.sql` | The de-duplication keys |
 | `008_responder_loop.sql` | ETA, responder status, fisherman's reply |
 | `009_search_sectors.sql` | Searched sectors, for the Bayesian update |
+| `010` to `031` | Advisories, mesh chat, catch logs, device credentials, buoy contacts and pressure/current telemetry, anomaly and drift cases, the operations audit log, vessel trips and identity profiles, operator token versions (read the file names in `migrations/`) |
+| `032_incident_lifecycle.sql` | Incident `version`, `resolution_code`, reopen columns |
+| `033_sos_nonce.sql` | Incident nonce and the two de-duplication keys; the conflicting second position |
+| `034_gateway_status.sql` | When the shore gateway last polled |
+| `035_vessel_identity_provenance.sql` | Who set each profile field, shore contact, responder confirmation |
+| `036_escalation_and_jobs.sql` | `escalated_at` and the scheduler's last-run table |
+| `037_contact_via_and_welfare_time.sql` | Which device made a buoy contact; when a trip's welfare was last updated |
 
 ---
 
-## `tests/` — 70 tests, all passing
+## `tests/` - run them all before you push
 
-Run with `pytest` from inside `backend/`. Takes about 14 seconds.
+Run `python -m pytest -q` from inside `backend/` (about 570 tests on 2026-09-25).
+The `test_edge_*_pg.py` files and the security probes need a throwaway Postgres:
+set `AQONE_PROBE_PG_ADMIN_URL` (see `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`
+Section 4.1); without it they are skipped, not failed.
 
 The useful thing to know: `test_geo.py` and `test_mesh.py` are the ones that stop
 boats appearing on land and buoys drifting out of radio range of each other.
@@ -125,7 +175,7 @@ Those two catch the embarrassing bugs.
 | `requirements.txt` | What gets installed in production |
 | `requirements-dev.txt` | Test tools only — not shipped |
 | `pyproject.toml` | Linter settings |
-| `.env.example` | Which environment variables you need. **No real secrets** — those live in Railway. |
+| `.env.example` | Which environment variables you need. **No real secrets** - those live in Render's environment settings. |
 
 ---
 
@@ -138,15 +188,13 @@ Those two catch the embarrassing bugs.
 | Fix a boat showing up on land | `app/geo.py` |
 | Change the fake demo data | `app/simulation/generator.py` |
 | Add a database column | New file in `migrations/` — never edit an old one |
-| See why the SAR tab is empty | Run the `*_eval.py` scripts |
+| Change an SOS rule (ordering, reopen window, radio cap) | `app/incidents/` |
+| Refresh the model performance numbers | Run the `*_eval.py` scripts |
 | Understand the SOS flow | `app/api/sos.py` |
 
 ---
 
-## Two known gaps
+## Known gap
 
 **`coverage.py` is orphaned.** It works and has tests, but nothing calls it —
 no URL, nothing on the dashboard. It's a library waiting to be plugged in.
-
-**`eval_results.json` doesn't exist.** Until someone runs the eval scripts, the
-dashboard has no performance numbers to show.

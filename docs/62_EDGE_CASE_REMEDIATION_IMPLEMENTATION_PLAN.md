@@ -1,9 +1,9 @@
 # Implementation Plan: Edge case remediation (master)
 
 Created: 2026-09-24T10:00:00+08:00
-Updated: 2026-09-25T00:05:00+08:00
+Updated: 2026-09-25T13:00:00+08:00
 Revision: 1
-Status: Approved
+Status: ACTIVE - tracks B (B1-B7), M (M1-M6) and W (W1-W4) plus the review fixes (`docs/archive/plans/63_EDGE_REVIEW_FIXES.md`) merged to `master` in PR #79 (`9630553`, 2026-09-25) and live on Render. Open: Phase I integration walkthrough, Phase 0a (UptimeRobot, NTC inquiry), and the gated B8, M7 and Track F.
 **Execution mode:** auto (tracks B, M and W; Section 4.1)
 Feature spec and revision: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (approved 2026-09-24, with Len's decisions in its header), findings in `docs/60_EXTREME_EDGE_CASE_REPORT.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`, `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`
@@ -472,7 +472,7 @@ Checkpoint message: `docs(contracts): freeze edge-case remediation contracts`
 ## 7. Phase I: Integration and field readiness (Claude and Len, after B7, M6 and W4 merge)
 
 Requirements: end-to-end confirmation of every P1 row
-State: Awaiting approval
+State: Not started - unblocked 2026-09-25 (B7, M6 and W4 merged in PR #79)
 
 ### Tasks
 

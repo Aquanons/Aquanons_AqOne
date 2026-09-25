@@ -51,7 +51,9 @@ everything else  ← the plumbing          (database, startup, auth, geography)
 
 ### Backend structure
 
-- **`app/api/sos.py`** — the most important file. Receiving SOS, de-duplicating, the live feed, acknowledging with ETA (358 lines).
+- **`app/api/sos.py`** - the most important file. Receiving SOS, de-duplicating (incident nonce), the triage-ordered live feed, acknowledge / resolve / reopen with version checks, the radio downlink (about 860 lines).
+- **`app/incidents/`** - pure SOS policy (lifecycle, triage, downlink, plausibility, escalation, trust); no FastAPI, asyncpg, httpx or `app.db` imports, enforced by `tests/test_incidents_is_pure.py`.
+- **`app/scheduler.py`** and **`app/notify.py`** - background SOS escalation (SMS via Semaphore) and anomaly evaluation.
 - **`app/ai/drift.py`** — drift prediction (500 lines). Where does someone in the water end up?
 - **`app/ai/squall.py`** — storm nowcasting from buoy pressure. The trained classifier lives here.
 - **`app/ai/trip_profile.py`** — learns each boat's habits, flags overdue vessels.

@@ -116,11 +116,13 @@ this is the migration order, biggest first:
 are SQL and log strings — **do not translate those.** The inventory
 number is a ceiling, not a target.
 
-### 5.1 New keys for the edge-case remediation (frozen 2026-09-24)
+### 5.1 New keys for the edge-case remediation
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 from the Track M phase list (`docs/62B_EDGE_MOBILE_TRACK.md`).
 Each key goes in `app_en.arb` with an `@key` description, with unreviewed drafts in `app_fil.arb` and `app_akl.arb` (Section 7).
 The English below is the intended meaning; Doreen Kay owns the final wording.
+All keys shipped in Track M phases M1 to M6. Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
+The `fil` and `akl` values are unreviewed drafts (Section 7).
 
 | Key | Phase | English (draft) | Honesty note |
 | --- | --- | --- | --- |

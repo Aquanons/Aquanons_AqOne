@@ -77,10 +77,10 @@ The dashboard and backend remain English-only.
 - The boat pod's ack payload carries the `seq` the phone records so later
   reconciliation can match rows.
 
-## Edge-case remediation contract (frozen 2026-09-24)
+## Edge-case remediation contract
 
 Frozen by `docs/62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md` Phase 0 (Section 3.10).
-It lands with Track M phase M1 (`relayed`) and Track B phase B1 (reopen).
+Implemented by Track M phase M1 (`relayed`) and Track B phase B1 (reopen). Merged to `master` in PR #79 (`9630553`) on 2026-09-25 and live on Render.
 
 - **`relayed` is not terminal (EC-C3).**
   A pod's `accepted: true` only means the call is queued on the pod (`docs/03` E3.2).

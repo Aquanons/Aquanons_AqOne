@@ -278,7 +278,7 @@ Evidence: `AqOneShore.ino:158-222`, `:899-929`.
 Phase 2 of the security fix (SEC-06) drops `buoy_id`, `src_id` and `seq` from any SOS without a gateway key, and the shore adds that header only in Phase 5.
 Offline phones match acknowledgements by seq alone, so every mesh SOS becomes unmatchable and the dashboard labels it “direct internet”.
 The plan notes no gateway is deployed yet; the gap opens the day one is.
-Evidence: `sos.py:158-174`; `AqOneShore.ino:179-181`; `docs/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md:176`, `:264`.
+Evidence: `sos.py:158-174`; `AqOneShore.ino:179-181`; `docs/archive/plans/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md:176`, `:264`.
 
 **H14. A typhoon warning is broadcast once; pods that miss it never get it.**
 The shore sends each warning one time and skips it on later polls while it is unchanged.
@@ -348,7 +348,7 @@ Evidence: `sos.py:457`; `AqOneShore.ino:360-363`.
 **M2. A reinstall gives the phone a new vessel identity.**
 The vessel ID is generated on the phone and app backup is off, so reinstalling creates a new vessel, and so does the planned switch to release signing (SEC-32).
 Any open SOS is orphaned with no way to stand it down or reply, the anomaly profile starts cold, and the old vessel lingers on the backend.
-Evidence: `identity_store.dart:233-268`, `:339-346`; `AndroidManifest.xml:39`; `docs/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md:287`.
+Evidence: `identity_store.dart:233-268`, `:339-346`; `AndroidManifest.xml:39`; `docs/archive/plans/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md:287`.
 
 **M3. Phones and boats don’t map one to one.**
 Two phones on one boat create two vessels and two incidents for one emergency.

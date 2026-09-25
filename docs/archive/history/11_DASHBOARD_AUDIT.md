@@ -1,5 +1,7 @@
 # 11 — Dashboard Audit (master branch)
 
+**Status:** SUPERSEDED (archived 2026-09-25). It audits the single-file `web/js/dashboard.js`, which was later split into `web/js/dashboard/*.js` (`docs/archive/plans/46_DASHBOARD_JS_MODULARIZATION_IMPLEMENTATION_PLAN.md`). Kept as history only.
+
 Audit of `web/` on `master`. Files: `html/dashboard.html` (846 lines),
 `js/dashboard.js` (2,915), `css/dashboard.css` (4,287).
 
