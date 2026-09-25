@@ -156,7 +156,17 @@ Gates: ruff clean; backend 572 passed, 5 skipped, 1 xfailed; backend security pr
 
 ## F8 - A failed escalation SMS is retried
 
-Not started.
+Red run: `python -m pytest -q -p no:cacheprovider tests/test_edge_scheduler_pg.py::test_failed_sms_is_retried_on_the_next_run tests/test_edge_scheduler_pg.py::test_unconfigured_sms_is_not_retried`
+
+```text
+FAILED tests/test_edge_scheduler_pg.py::test_failed_sms_is_retried_on_the_next_run
+AssertionError: assert ['failed'] == ['failed', 'sent']
+1 failed, 1 passed in 4.49s
+```
+
+Green run: `python -m pytest -q -p no:cacheprovider tests/test_edge_scheduler_pg.py`: 7 passed.
+
+Gates: ruff clean; backend 574 passed, 5 skipped, 1 xfailed; backend security probes 11 passed and the same 3 baseline failures; mobile gen-l10n passed, analyze 0 issues, 318 passed, security probes 6 passed; web 173 passed and JavaScript syntax checks clean; `AqOneLoam.h` copies identical.
 
 ## F9 - Line endings and rationale comments in `sos.py` and `anomaly_service.py`
 

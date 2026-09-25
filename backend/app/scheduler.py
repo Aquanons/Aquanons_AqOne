@@ -9,7 +9,7 @@ from app.ai.anomaly_service import demo_evaluation_enabled, evaluate_and_persist
 from app.audit import record_audit_event
 from app.db import get_pool
 from app.incidents.escalation import ESCALATE_AFTER, due_for_escalation, escalation_text
-from app.notify import send_sms
+from app.notify import NotifyResult, send_sms
 
 logger = logging.getLogger(__name__)
 _tasks: list[asyncio.Task] = []
@@ -63,6 +63,8 @@ async def run_escalation_job() -> int:
                 continue
         result = await send_sms(escalation_text(event))
         async with pool.acquire() as conn, conn.transaction():
+            if result is NotifyResult.FAILED:
+                await conn.execute('UPDATE sos_events SET escalated_at = NULL WHERE id = $1', event['id'])
             await record_audit_event(
                 conn,
                 actor=None,

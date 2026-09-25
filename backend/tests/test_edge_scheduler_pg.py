@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app import scheduler
 from app.auth import create_token
 from app.main import app
+from app.notify import NotifyResult
 from app.scheduler import ANOMALY_JOB, ESCALATION_JOB, run_escalation_job, run_job_once
 
 
@@ -136,3 +137,88 @@ def test_scheduler_starts_the_contract_jobs(monkeypatch):
         assert set(job_ids) == {'escalation', 'anomaly'}
 
     asyncio.run(check())
+
+
+def test_failed_sms_is_retried_on_the_next_run(probe_db, monkeypatch):
+    async def seed():
+        conn = await asyncpg.connect(probe_db)
+        try:
+            await conn.execute("INSERT INTO vessels (id, boat_name) VALUES ('ESC-RETRY', 'Bangka Retry')")
+            return await conn.fetchval('''
+                INSERT INTO sos_events (vessel_id, client_ts, created_at, latitude, longitude)
+                VALUES ('ESC-RETRY', 1, $1, 11.7, 122.3) RETURNING id
+            ''', datetime.now(UTC) - timedelta(minutes=3))
+        finally:
+            await conn.close()
+
+    event_id = asyncio.run(seed())
+    results = iter([NotifyResult.FAILED, NotifyResult.SENT])
+    calls = []
+
+    async def send_sms(text):
+        calls.append(text)
+        return next(results)
+
+    async def check():
+        pool = await asyncpg.create_pool(probe_db)
+        monkeypatch.setattr(scheduler, 'get_pool', lambda: pool)
+        monkeypatch.setattr(scheduler, 'send_sms', send_sms)
+        try:
+            await scheduler.run_escalation_job()
+            await scheduler.run_escalation_job()
+            async with pool.acquire() as conn:
+                event = await conn.fetchrow('SELECT escalated_at FROM sos_events WHERE id = $1', event_id)
+                audits = await conn.fetchrow(
+                    "SELECT array_agg(outcome ORDER BY id) AS outcomes FROM operations_audit_events "
+                    "WHERE action = 'sos.escalate' AND resource_id = $1",
+                    str(event_id),
+                )
+                assert event['escalated_at'] is not None
+                assert audits['outcomes'] == ['failed', 'sent']
+        finally:
+            await pool.close()
+
+    asyncio.run(check())
+    assert len(calls) == 2
+
+
+def test_unconfigured_sms_is_not_retried(probe_db, monkeypatch):
+    async def seed():
+        conn = await asyncpg.connect(probe_db)
+        try:
+            await conn.execute("INSERT INTO vessels (id, boat_name) VALUES ('ESC-NOCONFIG', 'Bangka No Config')")
+            return await conn.fetchval('''
+                INSERT INTO sos_events (vessel_id, client_ts, created_at, latitude, longitude)
+                VALUES ('ESC-NOCONFIG', 1, $1, 11.7, 122.3) RETURNING id
+            ''', datetime.now(UTC) - timedelta(minutes=3))
+        finally:
+            await conn.close()
+
+    event_id = asyncio.run(seed())
+    calls = []
+
+    async def send_sms(text):
+        calls.append(text)
+        return NotifyResult.NOT_CONFIGURED
+
+    async def check():
+        pool = await asyncpg.create_pool(probe_db)
+        monkeypatch.setattr(scheduler, 'get_pool', lambda: pool)
+        monkeypatch.setattr(scheduler, 'send_sms', send_sms)
+        try:
+            await scheduler.run_escalation_job()
+            await scheduler.run_escalation_job()
+            async with pool.acquire() as conn:
+                event = await conn.fetchrow('SELECT escalated_at FROM sos_events WHERE id = $1', event_id)
+                audits = await conn.fetchrow(
+                    "SELECT array_agg(outcome ORDER BY id) AS outcomes FROM operations_audit_events "
+                    "WHERE action = 'sos.escalate' AND resource_id = $1",
+                    str(event_id),
+                )
+                assert event['escalated_at'] is not None
+                assert audits['outcomes'] == ['not_configured']
+        finally:
+            await pool.close()
+
+    asyncio.run(check())
+    assert len(calls) == 1
