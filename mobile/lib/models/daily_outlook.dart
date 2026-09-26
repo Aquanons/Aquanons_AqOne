@@ -57,17 +57,21 @@ enum RiskSource {
   device,
 }
 
-/// What raised a device-scored verdict.
+/// What raised a device-scored verdict. [measured] kinds carry a number.
 enum RiskFactorKind {
-  gusts,
-  wind,
-  swell,
-  rainMm,
+  gusts(measured: true),
+  wind(measured: true),
+  swell(measured: true),
+  rainMm(measured: true),
   severeThunderstorm,
   thunderstorm,
   heavyRain,
   rain,
-  poorVisibility,
+  poorVisibility;
+
+  const RiskFactorKind({this.measured = false});
+
+  final bool measured;
 }
 
 /// One reason behind a device-scored verdict, kept as data rather than a
@@ -91,10 +95,11 @@ class RiskFactor {
     final List<String> parts = raw.split(':');
     final RiskFactorKind? kind =
         RiskFactorKind.values.where((k) => k.name == parts.first).firstOrNull;
-    if (kind == null) {
+    final num? value = parts.length > 1 ? num.tryParse(parts[1]) : null;
+    if (kind == null || (kind.measured && value == null)) {
       return null;
     }
-    return RiskFactor(kind, parts.length > 1 ? num.tryParse(parts[1]) : null);
+    return RiskFactor(kind, value);
   }
 }
 
@@ -216,14 +221,6 @@ class DailyOutlook {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
-  }
-
-  /// Two-letter-ish weekday for the chip. 'Today' is handled by the widget.
-  String get shortWeekday {
-    const List<String> names = <String>[
-      'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
-    ];
-    return names[(date.weekday - 1).clamp(0, 6)];
   }
 
   DailyOutlook copyWith({RiskAssessment? risk, double? waveM}) {

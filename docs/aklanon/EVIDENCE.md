@@ -45,3 +45,13 @@ Baseline on `886c3df`: `flutter analyze` clean, `flutter test` 379 passed.
 - `flutter analyze`: No issues found.
 - `flutter test`: 392 passed.
 - Left English on purpose: exception `reason`/`toString` text (diagnostics only), wire values (`All`, `Fisher handset`, sea-condition aliases, MDRRMO notes), Android notification channel names, and backend-generated text (`responder_status_label`, backend risk `reason`), which `docs/22` §10 defers to a backend contract change.
+
+## Phase 5: Dates, chrome and walkthrough (2026-09-26)
+
+- Red first: in `akl` the forecast chip showed "Mon"-style English and the advisory date "30 Sep"; both tests failed before the change.
+- `dateLocaleFor` formats `akl` dates with `fil` symbols; `DailyOutlook.shortWeekday` and the hand-typed month table are gone (`DateFormat('E')`, `DateFormat('d MMM')`).
+- A damaged cached forecast reason (`gusts` with no number, an unknown kind) is dropped instead of crashing the chip.
+- `flutter analyze`: No issues found.
+- `flutter test`: 393 passed.
+- A debug APK built (`flutter build apk --debug`, 1512 s).
+- **Not done: the emulator walkthrough.** Claude Code stopped the emulator and the build shell because the machine ran critically low on memory (the emulator on software rendering held about 1.3 GB and most of the CPU while Gradle built). It was not restarted without Len's go-ahead.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../core/l10n_fallback.dart';
 import '../../data/welcome_advisory.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/advisory.dart';
@@ -105,7 +107,7 @@ class AdvisoryCard extends StatelessWidget {
               ),
               if (advisory.publishDate != null)
                 Text(
-                  _shortDate(advisory.publishDate!),
+                  _shortDate(context, advisory.publishDate!),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white54 : const Color(0xFF64748B),
@@ -179,7 +181,9 @@ class AdvisoryCard extends StatelessWidget {
           if (advisory.expirationDate != null) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              t.advisoryInForceUntil(_shortDate(advisory.expirationDate!)),
+              t.advisoryInForceUntil(
+                _shortDate(context, advisory.expirationDate!),
+              ),
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
@@ -218,23 +222,10 @@ class AdvisoryCard extends StatelessWidget {
     );
   }
 
-  static String _shortDate(DateTime value) {
-    const months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${value.day} ${months[value.month - 1]}';
-  }
+
+  static String _shortDate(BuildContext context, DateTime value) =>
+      DateFormat('d MMM', dateLocaleFor(Localizations.localeOf(context)))
+          .format(value);
 }
 
 /// Advisory photo, from the bundle or the network.

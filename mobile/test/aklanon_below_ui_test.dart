@@ -11,6 +11,7 @@ import 'package:aqone/ui/widgets/advisory_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 
 /// Plan 70 AKL-04: models and services hand the UI data, never English
 /// sentences, so every line below reaches the fisher in Aklanon.
@@ -72,6 +73,13 @@ void main() {
         DailyOutlook.fromCacheJson(scored.toCacheJson());
     expect(restored!.risk.reasonText(akl), scored.risk.reasonText(akl));
     expect(restored.risk.reasonText(akl), contains('kilat'));
+  });
+
+  test('a damaged cached reason is dropped, not crashed on', () {
+    expect(RiskFactor.fromWire('gusts'), isNull);
+    expect(RiskFactor.fromWire('tsunami'), isNull);
+    expect(RiskFactor.fromWire('swell:2.1')!.value, 2.1);
+    expect(RiskFactor.fromWire('rain')!.kind, RiskFactorKind.rain);
   });
 
   test('a backend verdict keeps its own text', () {
@@ -140,5 +148,20 @@ void main() {
     )));
     expect(find.text(akl.advisoryAllAreas), findsOneWidget);
     expect(find.text(akl.advisoryPriorityWarning.toUpperCase()), findsOneWidget);
+
+    // Plan 70 AKL-06: month names come from `fil` date symbols.
+    final DateTime until = DateTime(2026, 9, 30);
+    await tester.pumpWidget(card(Advisory(
+      title: 'Gale warning',
+      description: '',
+      priority: AdvisoryPriority.warning,
+      municipality: 'All',
+      expirationDate: until,
+    )));
+    expect(
+      find.text(akl.advisoryInForceUntil(DateFormat('d MMM', 'fil').format(until))),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Sep'), findsNothing);
   });
 }

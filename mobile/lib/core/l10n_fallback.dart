@@ -41,6 +41,14 @@ const List<LocalizationsDelegate<dynamic>> kFallbackDelegates =
 
 const Locale _chromeLocale = Locale('fil');
 
+/// The `intl` locale for formatting dates in [locale].
+///
+/// `intl` has no Aklanon date symbols. The day and month names are the same
+/// Spanish-derived words in Aklanon and Tagalog (Lunes, Enero), so `akl`
+/// formats with `fil` (docs/22 §4.2).
+String dateLocaleFor(Locale locale) =>
+    locale.languageCode == 'akl' ? _chromeLocale.languageCode : locale.languageCode;
+
 class _FallbackMaterialDelegate
     extends LocalizationsDelegate<MaterialLocalizations> {
   const _FallbackMaterialDelegate();

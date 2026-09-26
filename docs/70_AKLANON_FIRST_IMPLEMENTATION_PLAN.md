@@ -1,6 +1,6 @@
 # Implementation Plan: Aklanon first (handset)
 
-**Status:** APPROVED - Revision 2; Phase 1 next
+**Status:** APPROVED - Revision 2; Phases 1-4 complete, Phase 5 code complete, walkthrough and Len's proofread open
 **Owner:** Lenard (approval, Aklanon proofreading), Claude (implementation and tests)
 **Created:** 2026-09-26T13:30:00+08:00
 **Updated:** 2026-09-26T13:50:00+08:00
@@ -183,18 +183,18 @@ Continue automatically to the next phase (auto).
 ## Phase 5: Last English values, chrome and dates, walkthrough
 
 Requirements: AKL-05, AKL-06, AKL-08
-State: Awaiting approval
+State: Code complete - 2026-09-26; the emulator walkthrough is blocked (see evidence)
 
 ### Tasks
 
-- [ ] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
+- [x] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
 - [x] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; done in Phase 3. `deliveryMetaBuoy` stays "Buoy", the word the rest of the Aklanon file uses, and joins the allowlist.
 - [x] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); done in Phase 1.
-- [ ] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
+- [x] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
 
 ### Verification
 
-- [ ] Standard mobile gate.
+- [x] Standard mobile gate.
 - [ ] Emulator walkthrough, fresh install, device in English: onboarding, Home, SOS countdown, post-SOS sheet, pod screen, Venture, advisories, forecast, chat, profile, About/Help/Privacy/Terms.
   No English except `AqOne`, `SOS`, `MDRRMO`, `LoRa`, `GPS`, `PAGASA`, buoy ids, and the Aquanons welcome photo caption.
   Screenshots in `docs/aklanon/`.
@@ -202,7 +202,7 @@ State: Awaiting approval
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1, plus: tick plan 65 Phase 2's two moved tasks as "done in plan 70", add a dated `docs/08` entry, and add this plan to `docs/SPEC_INDEX.md` and `docs/README.md`.
+- [ ] Same four gates as Phase 1. Done early: plan 65 Phase 2's moved tasks point here, the dated `docs/08` entry, and the `docs/SPEC_INDEX.md` and `docs/README.md` rows.
 
 Checkpoint message: `feat(mobile): Aklanon dates, chrome and the last English labels`
 Stop for Len (plan complete).
