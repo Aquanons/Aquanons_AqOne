@@ -1,6 +1,6 @@
 # What needs to be done
 
-**Snapshot:** 2026-09-26 12:30 +08:00, checkout `master` at `897e8de`.
+**Snapshot:** 2026-09-26 12:30 +08:00, source checkout `master` at `897e8de`, before this report was published.
 
 This is the fast handoff for teammates and coding agents.
 Use `AGENTS.md` for repository rules, `HANDOFF.md` for the current baton, the latest dated entry in `docs/08_DEMO_AND_STATUS.md` for observed results, and each active plan for exact acceptance criteria.
@@ -10,11 +10,12 @@ To get oriented, ask: "Read `WHAT_NEEDS_TO_BE_DONE.md` and tell me the next acti
 
 ## Current checkout and caveats
 
-- `master` and `origin/master` are at `897e8de`; tracked files were clean before this report was added.
+- At scan start, `master` and `origin/master` were at `897e8de`; this report was later published on `master` as a documentation-only change.
+- Tracked files were clean before this report was added.
 - Worktree `../AqOne-fisher-ux` is also at `897e8de`.
-- Worktree `../AqOne-fleet-watch` is on `feat/fleet-watch` at `10f320a`, one commit behind `master`; its Phase 2 work is complete, but use current `master` when starting new work.
+- Worktree `../AqOne-fleet-watch` was on `feat/fleet-watch` at `10f320a` when scanned; its Phase 2 work is complete, but use current `master` when starting new work.
 - `AqOne_Story_and_Data_Flow.md` is an existing untracked file and is not part of this task; do not stage it.
-- The prior `HANDOFF.md` checkout evidence was stale when this report was created; it has now been refreshed to `897e8de` while keeping the Plan 66 shore test as the baton.
+- The prior `HANDOFF.md` checkout evidence was stale when this report was created; it has now been refreshed to match the scan baseline (`897e8de`) while keeping the Plan 66 shore test as the baton.
 - Deployment revision claims disagree: the root README says `2528f30`, while the handoff records `/health/ready` at `a0f8284`. Check `/health/ready` before claiming which commit is deployed or using it for a demo.
 - `docs/README.md` lists four plans as ACTIVE while also saying only one implementation plan may be ACTIVE. Follow the phase gates below and the plan documents, not that rule as a scheduling decision.
 
