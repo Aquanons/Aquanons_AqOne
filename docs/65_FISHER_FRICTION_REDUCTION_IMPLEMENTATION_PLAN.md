@@ -167,6 +167,7 @@ Depends on: Phase 0a terms
 - [ ] `grep -rnE "Text\('[A-Za-z]" mobile/lib/ui` returns nothing outside the allowlist.
 - [ ] Emulator walkthrough in `fil` and `akl`: Home, SOS countdown, post-SOS sheet and pod screen show no English except "SOS" and "AqOne"; screenshots in `docs/fisher-ux/PHASE_2_VERIFICATION.md`.
 - [ ] A Tagalog and an Aklanon reader on the team review the SOS-path strings; corrections are applied or listed as open.
+- [ ] At 200% text on a 360 x 640 phone, no dock label breaks inside a word (Phase 3 screenshots `docs/fisher-ux/phase-3/home-*.png` show "Advisor-ies" and "Ventur-e mode"; the shorter glossary labels should fix it).
 - [ ] Standard mobile gate passes.
 
 ### Review and checkpoint
@@ -225,6 +226,7 @@ State: Approved (D3: yes)
 - [ ] Reorder Home: full-width SOS button (at least 96 dp) or the active SOS status card; one pod line with a "Connect" action (opens the Phase 5 screen once it exists, today's pod screen until then); one "Safe to go out today?" answer from the MDRRMO sea condition and squall watch; one advisory line; "More weather" opens the existing `WeatherCard`; "My SOS calls" opens the history list.
 - [ ] Squall banner and its acknowledge button keep their place above everything else when a squall is showing.
 - [ ] The floating SOS pill no longer covers the last "My SOS calls" card (seen in `docs/edge-remediation/critical/c3-relayed.png`); the full-width button above removes the floating pill, and the history list keeps bottom padding for the dock.
+  At 200% text it also covers the sea-condition card on Home (`docs/fisher-ux/phase-3/home-light.png`).
 - [ ] Countdown: add a large "Cancel - do not send" button beside the slide.
 - [ ] Calling off: replace the slide in `EmergencyDetailsSheet` with a normal danger button that opens the existing confirm dialog; delete `_SlideToAction` if nothing else uses it; update the "stand-down needs confirmation" test in `widget_test.dart` from a drag to a tap.
 
@@ -275,6 +277,7 @@ Failing tests: written 2026-09-26 on local branch `ux/p4b-tests` (`f454e24`): `m
 - [ ] Widget test at `TextScaler.linear(2.0)` on 360 x 640, light and dark, with an active SOS and a squall watch at the same time: no overflow, full text of both headline rows present.
 - [ ] Existing squall alert, pitch-mode and offline-map age tests still pass or are moved to the ranking test with the same assertions.
 - [ ] Emulator screenshots of four cases (calm, squall watch, active SOS plus RETURN NOW, old map) in `docs/fisher-ux/PHASE_4B_VERIFICATION.md`.
+- [ ] At 200% text on a 360 x 640 phone, the card, the locating pill, the OSM attribution and the SOS button do not overlap (in `docs/fisher-ux/phase-3/at-sea-*.png` the stacked banners reach the bottom and the SOS pill sits under the attribution and the SOS button).
 - [ ] Standard mobile gate passes.
 
 ### Review and checkpoint
