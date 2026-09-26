@@ -930,14 +930,17 @@ One eval-style test per change in `backend/tests/test_trip_profile.py`: 23:30 an
    - The per-pod passphrase ends both SOS hitchhiking on a neighbour's pod (M7) and look-alike pods (C12).
    - Android 9 and older fall back to today's behaviour.
    - This needs about 60 lines of Kotlin behind a platform channel; there is no plugin.
+   - Amended: plan 66 D3 (2026-09-25) dropped the per-pod passphrase and QR pairing, and docs/64 Section 2.5 (plan 65 Phase 5) joins the open pod network from inside the app, binding the whole app process while connected, a recorded ceiling compared with binding only the pod sockets.
 4. **Silent SOS (H22).**
    - A settings toggle, "Silent SOS", and a gesture (hold the SOS button for 3 s) both send with no sound or vibration.
    - A duress cancel (a cancel gesture that looks normal but sends a `duress` flag) needs an MDRRMO procedure first, so it is roadmap.
+   - Amended 2026-09-26 by `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` FFR-02 (plan 65 Phase 1, `7826488`): the 3 s hold was removed because a panicking fisher who presses hard got a silent SOS without knowing it; the settings toggle remains. A quick silent path for H22 is open decision D8 in docs/64.
 5. **Alarm stream (L4).**
    `audioplayers` is configured with `AudioContext(android: AudioContextAndroid(usageType: AndroidUsageType.alarm, contentType: AndroidContentType.sonification))`.
 6. **Wet hands (L5).**
    The countdown cancel becomes "hold 2 s to cancel", which ghost touches cannot trigger and which works through a pouch.
    This is a UI/UX call for Doreen Kay and needs a wet-screen test.
+   Amended 2026-09-25 by docs/64 D3: plan 65 Phase 4 adds a large tap-to-cancel button beside the slide instead; the wet-screen test still applies.
 7. **Localisation (L1).**
    Move `venture_page.dart:391`, `home_page.dart:448` and the rest of the literals the report found into `app_en.arb`, then `fil` and `akl` drafts.
 

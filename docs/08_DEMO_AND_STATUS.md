@@ -5,6 +5,25 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-26 - Fisher friction reduction: plan 65 Phases 1 and 3 on `master`
+
+Outside feedback said the handset may be too hard for fishermen with little smartphone experience.
+Spec [`64_FISHER_FRICTION_REDUCTION_SPEC.md`](64_FISHER_FRICTION_REDUCTION_SPEC.md) turns that into findings and requirements; plan [`65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`](65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md) delivers them in phases, implemented by Luna and reviewed by Claude.
+Environment: Windows 11, Flutter stable; evidence in [`fisher-ux/`](fisher-ux/).
+
+**On `master`:**
+- Phase 1 (`7826488`): the post-SOS sheet shows the real state (it said "SOS sent" with a green check while the SOS was still only on the phone), a long press on SOS behaves like a tap, and one `FisherSosSituation` model and one SOS flow replace the copies.
+- Countdown fix (`dd9fc7d`): the SOS countdown could freeze at "1" and send nothing (seen once on 2026-09-25); it now closes only itself, and a quick double tap opens one countdown.
+- Phase 3 (`186e231`): text and status icons meet contrast minimums in both themes, no text is below 12 sp, Home shows an SOS status card that is never cut short, and the bottom bar has four labelled destinations.
+- Gate on `master` after the merges: `flutter analyze` no issues, `flutter test` 379 passed.
+
+**Not verified:**
+- On a device: the countdown double tap (Len), the silent-SOS setting, and a release APK (the signing key is not on the build machine; debug builds work).
+- At 200% text on a 360 x 640 phone, dock labels break inside words, the floating SOS button covers the sea-condition card, and on At sea the stacked banners push the SOS status under the map credit; plan 65 Phases 2, 4 and 4b own these.
+- Removing the long-press silent SOS also removed docs/61's quick silent path for a robbery at sea (H22); open decision D8 in docs/64.
+
+**Next:** Phase 2 (fisher wording) once the team's term study (Phase 0a) is done; the field session with fishermen and the MDRRMO is after RSTW.
+
 ## 2026-09-25 - Plan 66 Phase 1: evidence for C3, C6, C7 and the backend half of C9
 
 Checks against the deployed backend (`a0f8284`); details and screenshots in [`edge-remediation/EVIDENCE-critical.md`](edge-remediation/EVIDENCE-critical.md).

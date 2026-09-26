@@ -106,9 +106,11 @@ Two defects each produce exactly this state, and both are reproduced by `mobile/
 1. The countdown's `_finish` calls `Navigator.pop`, which closes whatever route is on top; a squall page, ETA dialog or unsent-SOS prompt opened during the 5 seconds is closed instead, and the finished countdown stays on screen.
 2. `handleSosTap` (and the older `_handleSosTap` copies on `master`) sets its sending flag only after awaiting `SharedPreferences`, so a quick double tap opens two countdowns; the first closes the second, and the first is left frozen.
 Which one happened at 22:08 is not known.
-The fix is handed to Luna in `docs/fisher-ux/HANDOFF-luna-countdown-freeze.md` on that branch; the emulator run was not repeated because memory was short.
+Fixed on `master` 2026-09-26 (`dd9fc7d`, reviewed by Claude): the sending flag is set before the first await, and the countdown closes only its own route; both tests pass (brief archived at `docs/archive/history/HANDOFF-luna-countdown-freeze.md`).
+The on-device double-tap check is open (Len); see `docs/fisher-ux/COUNTDOWN_FREEZE_VERIFICATION.md`.
 
 UI defect seen on the way (owner Jade): the floating SOS button covers the text of the second "Your messages" card ("Received by the MDRRMO dashboard" in `c3-relayed.png`).
+Scheduled: plan 65 Phase 4 replaces the floating button with a full-width one.
 
 ## Phase 1 - C6 browser half and C7 (2026-09-25T22:38-22:45+08:00)
 

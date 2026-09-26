@@ -149,7 +149,8 @@ The `fil` and `akl` values are unreviewed drafts (Section 7).
 | `profileShoreContactName` | M5 | "Contact on shore" | |
 | `profileShoreContactPhone` | M5 | "Shore contact's phone" | |
 | `settingsSilentSos` | M6 | "Silent SOS" | |
-| `settingsSilentSosDescription` | M6 | "Send an SOS with no siren or sound. You can also hold the SOS button for 3 seconds." | |
+| `settingsSilentSosDescription` | M6 | "Send an SOS with no siren or sound." | The hold-for-3-seconds sentence was removed with the gesture (plan 65 Phase 1). |
+| `sosSituationNotePrompt` | plan 65 P1 | "What is wrong? Optional. This will be added to your SOS." | Replaces `sosSentForBoat` and `sosWhatsWrongNotice`, which claimed "sent" before the SOS left the phone. |
 | `sosStoodDown` | M6 | "SOS stood down." | Replaces the literal at `venture_page.dart` (docs/60 L1). |
 | `sosNoneSentYet` | M6 | "No SOS sent yet." | Replaces the literal at `home_page.dart` (docs/60 L1). |
 

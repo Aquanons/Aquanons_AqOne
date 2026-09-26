@@ -1,17 +1,18 @@
 # 64 - Fisher friction reduction (handset UX) spec
 
-**Status:** APPROVED - Revision 3
+**Status:** APPROVED - Revision 4
 **Owner:** Lenard (spec), Doreen Kay (UX and field test), Jade (Flutter)
 **Created:** 2026-09-25
-**Updated:** 2026-09-25
+**Updated:** 2026-09-26
 **Related:** `docs/65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`, `docs/06_DELIVERY_STATES.md`, `docs/22_LOCALIZATION_PLAN.md`, `docs/47_VISUAL_DESIGN_GUIDE.md`
 
-Revision: 3
+Revision: 4
 Len's chat approval, 2026-09-25T17:00:00+08:00: go with the recommendations for D2, D3, D5 and D6; the team picks the terms itself (D1); add an in-app way to join the pod Wi-Fi (D4).
 Revision 2 applies exactly those answers (Section 7) and records that the field session with fishermen and the MDRRMO waits until after the RSTW pitch, on a date Len sets.
 Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
 The D2 dates below are superseded by that order; plan 65 carries the current order.
 Revision 3, Len 2026-09-25T23:40:00+08:00: the At sea screen gets one summary card in place of its four top banners (Section 2.6, FFR-14, D7), shaped by a council review recorded in Section 2.6.
+Revision 4, 2026-09-26: finding status after plan 65 Phases 1 and 3 (Section 3.1), and open decision D8 on the silent SOS gesture that Phase 1 removed.
 
 ## 1. Purpose and success
 
@@ -203,6 +204,19 @@ Severity is by effect on J1 to J5.
 | F12 | Low | Terminology drift: docs say "boat pod", the app says "buoy", the SSID is `Aquan`; "MDRRMO" and "rescue centre" are mixed. | `docs/06`, `l10n/app_en.arb` | all |
 | F13 | Medium | The At sea screen stacks up to four differently styled banners over the top of the map (weather capsule, squall banner, offline-map banner, SOS status pill), 8 dp apart; the locating pill is pinned at 90 dp from the top and draws over the second banner; the weather capsule shows a bare English "Loading…". | `ui/venture_page.dart:589-615,646-651,767-770` | J2, J5 |
 
+### 3.1 Status on 2026-09-26
+
+| Finding | Status |
+|---|---|
+| F1, F2, F11 | Fixed by plan 65 Phase 1 (`7826488`): the post-SOS sheet reads its state from `FisherSosSituation`, a long press behaves like a tap, and one SOS flow lives in `mobile/lib/ui/sos_flow.dart` |
+| F5 | Fixed on Home by Phase 3 (`186e231`, `SosStatusCard`); At sea still cuts its SOS line until Phase 4b |
+| F7 | Partly fixed by Phase 3: four labelled destinations at 12 sp or more; the "Venture mode" wording waits for Phase 2 |
+| F8 | Fixed by Phase 3: text tokens reach 4.5:1 in both themes, status icons 3:1, and no text is below 12 sp |
+| F3, F4, F6, F9, F10, F12, F13 | Open: Phases 5, 2, 4, 4, 6, 2 and 4b |
+
+Found while working on Phase 1 and fixed with it (`dd9fc7d`): the SOS countdown could freeze at "1" and send nothing, either because it closed a screen opened above it instead of itself, or because a quick double tap opened two countdowns (`docs/edge-remediation/EVIDENCE-critical.md`).
+Its on-device double-tap check is still open (`docs/fisher-ux/COUNTDOWN_FREEZE_VERIFICATION.md`).
+
 ## 4. Design principles
 
 Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: accessible, flat, high contrast), tightened for this audience.
@@ -257,6 +271,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | D5 | Recorded voice prompts. | Out of this plan; revisit after the field session. |
 | D6 | Remove "Remember me" from enrolment. | Yes: always remember; logout stays in Me behind a confirm. |
 | D7 | Four banners at the top of At sea. | One summary card (Len, 2026-09-25T23:40:00+08:00), designed in Section 2.6 after a council review. The 15-minute linger for a closed or cancelled SOS is a proposed default; Len may change it. |
+| D8 | Phase 1 removed the 3 s hold on SOS (FFR-02). That hold was also the quick silent SOS that `docs/61` D11.4 designed for a robbery at sea (finding H22); only the settings toggle is left, which a fisher under threat cannot reach in time. | Open, Len to decide. Recommendation: a visible "Silence" button on the SOS countdown screen that stops the siren and vibration without cancelling, so a silent SOS stays one deliberate, visible tap away; plan it into Phase 4 with the other countdown controls. |
 
 ## 8. Open questions and readiness
 

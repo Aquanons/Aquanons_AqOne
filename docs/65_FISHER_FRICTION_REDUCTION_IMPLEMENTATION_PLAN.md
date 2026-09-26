@@ -13,7 +13,7 @@ Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `doc
 Len's chat approval, 2026-09-25T17:00:00+08:00: recommendations accepted for D2, D3, D5 and D6; the team picks the terms itself (D1); joining the pod Wi-Fi happens inside the app (D4); the field session with fishermen and the MDRRMO is after the RSTW pitch, date to be set by Len.
 Len, 2026-09-25T23:40:00+08:00: replace the four At sea top banners with one summary card (spec 64 Section 2.6, FFR-14, D7); added as Phase 4b so no later phase number changes.
 Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may push phases straight to `master`)
-Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed by `docs/fisher-ux/HANDOFF-luna-phase-1.md` (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
+Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed per phase (archived briefs: `docs/archive/history/HANDOFF-luna-phase-1.md`, `HANDOFF-luna-countdown-freeze.md`, `HANDOFF-luna-phase-3.md`) (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
 
 Success condition: the five jobs in spec 64 Section 1 meet their targets in the field session (Phase 0b).
 Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
@@ -32,11 +32,10 @@ Order and timing (D2):
 
 | When | Work |
 |---|---|
-| Now | Plan 66 (Critical edge cases) first. Phase 0a here runs in parallel because it is people work and touches no code. |
+| Ongoing | Plan 66 (Critical edge cases) continues on its own gates. Phase 0a here runs in parallel because it is people work and touches no code. |
 | 2026-10-01 to 03 | RSTW pitch; no merges to `master` that change the demo APK |
-| Done 2026-09-26 | Phase 1, merged to `master` |
-| Now (Len, 2026-09-26) | Phase 3, ahead of Phase 2 because it needs no wording from the term study |
-| After Phase 3 | Phases 2, 4, 4b and 5 here, in order (Phase 2 once Phase 0a has the terms) |
+| Done 2026-09-26 | Phase 1 and the frozen-countdown fix, then Phase 3 (moved ahead of Phase 2 by Len because it needs no new wording), all merged to `master` |
+| Next | Phases 2, 4, 4b and 5 here, in order; Phase 2 starts once Phase 0a has the terms |
 | After Phase 5 here | Phase 6 here |
 | Date set by Len, after RSTW | Phase 0b field session, on whatever build is newest |
 
@@ -102,7 +101,7 @@ Checkpoint message: `docs(ux): record field session with fishermen and MDRRMO`
 ## Phase 1: Honest and predictable SOS (no contract change)
 
 Requirements: FFR-01, FFR-02, FFR-03
-State: Complete - merged to `master` 2026-09-26 (`7826488`), with the frozen-countdown fix (`dd9fc7d`, docs/fisher-ux/HANDOFF-luna-countdown-freeze.md); implemented by Luna, reviewed by Claude; 341 tests pass.
+State: Complete - merged to `master` 2026-09-26 (`7826488`), with the frozen-countdown fix (`dd9fc7d`, brief archived at `docs/archive/history/HANDOFF-luna-countdown-freeze.md`); implemented by Luna, reviewed by Claude; 341 tests pass.
 Open: the device double-tap check for the countdown fix (`docs/fisher-ux/COUNTDOWN_FREEZE_VERIFICATION.md`).
 
 Failing tests already in the tree (write code until they pass; do not weaken them):
@@ -185,7 +184,7 @@ Stop for Len's go-ahead (hard-stop).
 Requirements: FFR-04, FFR-08, FFR-11
 Failing tests: written 2026-09-26 on local branch `ux/p3-tests` (`b834687`): `mobile/test/readability_tokens_test.dart` and `mobile/test/readability_screens_test.dart`; cherry-pick onto `ux/fisher-friction` when the phase starts.
 Len, 2026-09-26: Phase 3 runs next, before Phase 2 (it needs no wording from the term study).
-State: Complete - merged to `master` 2026-09-26 (`186e231`); implemented by Luna, reviewed by Claude; 379 tests pass. Brief `docs/fisher-ux/HANDOFF-luna-phase-3.md`.
+State: Complete - merged to `master` 2026-09-26 (`186e231`); implemented by Luna, reviewed by Claude; 379 tests pass. Brief archived at `docs/archive/history/HANDOFF-luna-phase-3.md`.
 
 ### Tasks
 

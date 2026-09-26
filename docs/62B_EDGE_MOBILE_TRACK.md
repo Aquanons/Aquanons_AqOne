@@ -284,7 +284,7 @@ State: Done
   - `test/sos_alarm_test.dart`: the alarm player is configured with `AndroidUsageType.alarm` and `AndroidContentType.sonification`.
   - `test/localization_test.dart`: the new keys exist in all three ARB files, and no bare `Text('` literal remains in `venture_page.dart` or `home_page.dart` (grep-style test).
 - [x] Add a settings toggle `silentSos` (profile page, string `settingsSilentSos` with its description), stored in preferences.
-- [x] The SOS button: a 3 s hold raises a silent SOS.
+- [x] The SOS button: a 3 s hold raises a silent SOS. (Removed 2026-09-26 by plan 65 Phase 1, `7826488`; see docs/64 FFR-02 and D8.)
   `raiseSos` itself is unchanged; the UI skips `SosAlarm.start()`.
 - [x] `sos_alarm.dart`: `setAudioContext(AudioContext(android: AudioContextAndroid(usageType: AndroidUsageType.alarm, contentType: AndroidContentType.sonification)))` before playing.
 - [x] Move the English literals found in docs/60 L1 (`venture_page.dart:391` "SOS stood down.", `home_page.dart:448` "No SOS sent yet.", and any others the grep finds on the SOS path) into ARB keys.

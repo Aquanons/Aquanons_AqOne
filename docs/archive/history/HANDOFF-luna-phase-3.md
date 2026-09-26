@@ -1,6 +1,6 @@
 # Handoff for Luna: fisher friction plan, Phase 3 (readable in the sun)
 
-**Status:** ACTIVE
+**Status:** COMPLETE - merged to `master` 2026-09-26 as `186e231`; archived 2026-09-26 (completed handoff, kept as the delivery record)
 **Owner:** GPT 5.6 Luna (implementer), Claude Code (reviewer), Len (merge)
 **Created:** 2026-09-26
 **Updated:** 2026-09-26

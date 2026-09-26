@@ -2,6 +2,7 @@
 
 > Status: implementation-derived single source of truth  
 > Audited: 2026-08-03  
+> Updated: 2026-09-26 - Flutter tokens, typography floor, SOS status card and mobile dock follow plan 65 Phases 1 and 3; other Flutter rows still describe the 2026-08-03 audit  
 > Frontend surfaces: Flutter fisherman app and static regulator/admin web UI  
 > Scope: visual language and UX behavior only
 
@@ -261,7 +262,7 @@ The implementation does not define a formal modular scale. It uses fixed values 
 | Badge / eyebrow | 8–11px | 7–10px | 700–800 | Uppercase, 0.3–0.8px |
 | Telemetry | 10–13px | 10–13px monospace | 600–700 | 0.3px |
 
-Flutter explicit sizes in use: 8, 9, 10, 10.5, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, and 32px.
+Flutter explicit sizes in use: 12 and up; nothing below 12 sp since plan 65 Phase 3, enforced by `mobile/test/readability_screens_test.dart` and the `fontSize` grep in plan 65.
 
 Web explicit sizes in use: 7, 8, 9, 10, 10.5, 11, 11.5, 12, 13, 13.5, 14, 14.5, 15, 16, 16.5, 18, 20, 21, 22, 23, 24, 26, 32, and 38px, plus 0.75, 0.9, 0.95, 0.98, 1, 1.02, 1.2, and 1.6rem on auth/terms pages.
 
@@ -270,7 +271,7 @@ Web explicit sizes in use: 7, 8, 9, 10, 10.5, 11, 11.5, 12, 13, 13.5, 14, 14.5, 
 - Use sentence case for user-facing titles and actions.
 - Reserve uppercase for compact operational labels, badges, panel headers, and status language.
 - Use weight 700 for actionable labels; 800–900 only for screen titles, critical numeric values, and strong profile identity.
-- Use Slate #64748B/#94A3B8 for metadata, never reduced opacity alone when readability matters.
+- Use the palette tokens for metadata (light #475569 secondary and #5B6574 dim; dark #94A3B8), never reduced opacity alone when readability matters.
 - Use monospace only for coordinates, identifiers, phone numbers, and sensor-like values.
 - Keep body line height between 1.4 and 1.6. Dense dashboard labels may use 1.0–1.3.
 - New screen titles should use 28px/900 in Flutter or 24px/700–800 on web unless constrained by the dense dashboard.
@@ -284,8 +285,8 @@ At widths below 900px, the primary app uses a mobile/tablet stack:
 - Full-width screen content.
 - Scrollable body with 16–24px horizontal padding.
 - 110px bottom content allowance where the floating navigation overlaps.
-- A 78px bottom dock with 24px top corner radii.
-- Home and Settings flank a raised 66px circular Venture action.
+- A bottom dock at least 78px high (it grows with the system text size) with 24px top corner radii.
+- Four labelled destinations: Home, Venture (a raised 66px circular action above its own label), Advisories and Profile.
 
 At 900px and above:
 
@@ -419,7 +420,7 @@ Values such as 5, 7, 9, 11, 13, 22, 26, and 30px are implementation exceptions, 
 | Flutter header/profile avatar | 38 × 38px |
 | Flutter desktop sidebar | 250px wide |
 | Flutter desktop search shell | 48px high |
-| Flutter floating dock | 78px high |
+| Flutter floating dock | 78px minimum, grows with text size |
 | Flutter Venture center action | 66 × 66px |
 | Flutter map utility control | 40–44px square |
 | Flutter profile avatar | 120–125px |
@@ -535,9 +536,8 @@ Flutter desktop:
 Flutter mobile:
 
 - White/#1E293B dock with 24px top radii.
-- Home and Settings use 26px Material icons and 11px labels.
-- Active is #0F69C9 light or #38BDF8 dark.
-- Venture is a raised location action with #5AB6E5 to #1E5B99 gradient.
+- Home, Venture, Advisories and Profile each have a 22px Material icon and a 12sp label (Venture's icon sits in the raised 66px circle).
+- Active is #0F69C9 light or #38BDF8 dark, with heavier weight and a small underline, not colour alone; inactive labels use the palette secondary text.
 
 Web dashboard:
 
@@ -936,7 +936,6 @@ These are documented facts, not new design variants:
 - The profile page repeats form IDs in different tab regions, weakening label association and creating a misleading security-tab presentation.
 - Flutter PWA portrait locking conflicts with its desktop-responsive layouts.
 - Venture uses light OpenStreetMap tiles in dark mode without a dark basemap or filter.
-- Dashboard and Advisories Flutter destinations exist as visual screens but are disabled in the primary Home navigation stack.
 - Advisory metadata and some compact Flutter headers can overflow on narrow screens.
 
 When standardizing, preserve brand identity and semantic meaning first; then consolidate duplicate literals into the canonical token names.
