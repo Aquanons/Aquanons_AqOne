@@ -2,6 +2,7 @@
 
 Instructions for AI coding agents working in this repository. Read this before
 changing anything. The canonical project brief is `docs/00_START_HERE.md`.
+For current work and next actions, read [`WHAT_NEEDS_TO_BE_DONE.md`](WHAT_NEEDS_TO_BE_DONE.md), then confirm the relevant plan and latest evidence before acting.
 
 ## One-line project
 
