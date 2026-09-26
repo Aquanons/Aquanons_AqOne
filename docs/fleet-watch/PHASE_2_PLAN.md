@@ -1,13 +1,14 @@
 # Plan 69 Phase 2 - pure backend policy: detailed implementation plan
 
-**Status:** DRAFT - Revision 1, for Len's review; no code written
+**Status:** APPROVED - Revision 1
 **Owner:** Claude Code (plan, red tests, review), implementer named in the worktree `HANDOFF.md`, Len (merge)
 **Created:** 2026-09-26T10:05:00+08:00
-**Updated:** 2026-09-26T10:05:00+08:00
+**Updated:** 2026-09-26T10:20:00+08:00
 **Related:** `docs/69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md` Phase 2, `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md` Revision 3, `docs/02`, `docs/04`, `docs/05` (fleet-watch sections from `1f2a5bd`)
 
 Len, 2026-09-26: "Go for phase 2, note that we're only creating an implementation plan. Dont modify any code yet."
 This document is that plan.
+Len's chat approval, 2026-09-26T10:18:00+08:00: "Start". Section 9 offered "answers P1 (or accepts the proposal)", so P1 is accepted as proposed: `FLEET_SILENCE_MIN_VESSELS = 3`. P2 stays open until the team supplies the landing-site coordinates (needed before Phase 4).
 It names every module, type, function and test, so the red tests and the implementation can be written from it without further design.
 Nothing under `backend/` changes until Len approves this plan and says to start.
 
@@ -23,7 +24,7 @@ Requirements covered: `docs/68` REQ-001, REQ-002, REQ-003 (the rules only), REQ-
 
 | # | Finding | Proposal | Blocks |
 |---|---|---|---|
-| P1 | **Fleet silence can hide a real emergency in a small fleet.** With the 30% rule alone, 1 missed vessel out of 2 watched is 50%, so that case would be marked low confidence and would not sound the alarm. | Fleet silence also needs at least 3 missed vessels (`FLEET_SILENCE_MIN_VESSELS = 3`). 4 of 10 still triggers it; 1 of 2 does not. | Nothing in Phase 2 (the constant is a parameter); the value needs Len |
+| P1 | **Fleet silence can hide a real emergency in a small fleet.** With the 30% rule alone, 1 missed vessel out of 2 watched is 50%, so that case would be marked low confidence and would not sound the alarm. | Fleet silence also needs at least 3 missed vessels (`FLEET_SILENCE_MIN_VESSELS = 3`). 4 of 10 still triggers it; 1 of 2 does not. | Accepted, Len 2026-09-26T10:18:00+08:00 |
 | P2 | **The harbor zones cannot come from `SHORE_STATIONS`.** `app/geo.py` moves every shore station about 1.7 km west of its real position so it sits on land for `tests/test_geo.py`, and the real landing sites fall inside `WATER_POLYGON`. Zones drawn around those points would miss the real harbors, and every boat moored at home would count as at sea. | A new `HARBOR_ZONES` constant in `app/geo.py`: the real landing sites (at least Dumaguit Port and the Poblacion landing), each a centre and a 500 m radius, from the team's map. Both the backend's "at sea" test and the generated firmware header read it. This amends spec D6's source, not its behaviour. | Phase 4 (backend wiring) and Phase 6 (firmware header) |
 | P3 | Advisory expiry is a date, not a time (`advisories.expiration_date`). | An advisory is active through the end of its expiry date in Manila time (23:59:59+08:00); the adapter converts, the policy only sees a datetime. | Nothing |
 | P4 | A dispatcher raise equal to the advisory tier changes nothing. | A raise must be strictly above the advisory tier when it is made (`cannot_lower` otherwise). If advisories later rise to meet it, the advisory is named as the source and the raise stays on record until it expires. | Nothing |
