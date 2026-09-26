@@ -42,35 +42,6 @@ class BuoyInvalidResponse implements Exception {
   String toString() => 'BuoyInvalidResponse: $reason';
 }
 
-/// Turns a raw transport exception into something a fisher (or the
-/// "Last attempt" line on the SOS status card - see
-/// mobile/lib/ui/widgets/delivery_state_tile.dart) can actually read.
-///
-/// [BuoyUnreachable.reason] used to be `error.toString()` verbatim, which
-/// meant a `SocketException` or `TimeoutException`'s Dart-internal message
-/// text ended up on screen. This is the buoy-side counterpart to
-/// [BackendClient]'s `_describeNetworkError` - matched on message text
-/// rather than exception type for the same reason: `SocketException` /
-/// `HandshakeException` live in `dart:io` and this file must stay
-/// importable on the web build.
-String describeBuoyError(Object error) {
-  final text = error.toString();
-  if (text.contains('TimeoutException')) {
-    return 'no reply from the buoy in time';
-  }
-  if (text.contains('SocketException') ||
-      text.contains('Failed host lookup') ||
-      text.contains('ClientException') ||
-      text.contains('Connection refused') ||
-      text.contains('Network is unreachable')) {
-    return 'buoy not in range';
-  }
-  if (text.contains('HandshakeException') || text.contains('CERTIFICATE')) {
-    return "couldn't establish a secure connection to the buoy";
-  }
-  return 'could not reach the buoy';
-}
-
 class BuoyClient {
   BuoyClient({http.Client? client, String? baseUrl})
       : _client = client ?? http.Client(),
@@ -87,7 +58,7 @@ class BuoyClient {
     try {
       response = await _send(_request('GET', uri)).timeout(AqOneConfig.buoyTimeout);
     } catch (error) {
-      throw BuoyUnreachable(describeBuoyError(error));
+      throw BuoyUnreachable('$error');
     }
 
     if (response.statusCode != 200) {
@@ -115,7 +86,7 @@ class BuoyClient {
       )
           .timeout(AqOneConfig.buoyTimeout);
     } catch (error) {
-      throw BuoyUnreachable(describeBuoyError(error));
+      throw BuoyUnreachable('$error');
     }
 
     if (response.statusCode == 503) {
@@ -159,7 +130,7 @@ class BuoyClient {
     try {
       response = await _send(_request('GET', uri)).timeout(AqOneConfig.buoyTimeout);
     } catch (error) {
-      throw BuoyUnreachable(describeBuoyError(error));
+      throw BuoyUnreachable('$error');
     }
 
     if (response.statusCode != 200) {
@@ -176,7 +147,7 @@ class BuoyClient {
     try {
       response = await _send(_request('GET', uri)).timeout(AqOneConfig.buoyTimeout);
     } catch (error) {
-      throw BuoyUnreachable(describeBuoyError(error));
+      throw BuoyUnreachable('$error');
     }
 
     if (response.statusCode != 200) {

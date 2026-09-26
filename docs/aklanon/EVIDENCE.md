@@ -32,3 +32,16 @@ Baseline on `886c3df`: `flutter analyze` clean, `flutter test` 379 passed.
 - `flutter analyze`: No issues found.
 - `flutter test`: 383 passed.
 - Residual scan of `lib/ui` string literals: only brand names, the Tagalog slogan, the buoy/seq identifier line a responder reads back, the language names in the picker, and the month table that Phase 5 replaces.
+
+## Phase 4: Text below the UI localized (2026-09-26)
+
+- Red first: `test/aklanon_below_ui_test.dart` (9 behavioural tests) failed to compile with 70 errors against the old APIs.
+- 35 new keys (5 SAFETY CRITICAL).
+- `HazardKind`, `AdvisoryPriority`, `LocationFailure` lost their English fields; each has an `...L10n` extension (the repo's `docs/22` §4.1 pattern). Advisory snapshots now store `priority.name`; `fromWire` already accepted it.
+- Device forecast verdicts carry `RiskFactor` data instead of an English sentence; the cache stores them as codes, and a backend verdict keeps its own text.
+- The SOS "Last attempt" value is stored as `DeliveryFailure` codes (`buoy_not_connected,no_internet`); rows written before this change still show their English text.
+- The welcome note and the "All" municipality render from the ARB files.
+- `SosForeground` resolvers are required; the English fallbacks are gone.
+- `flutter analyze`: No issues found.
+- `flutter test`: 392 passed.
+- Left English on purpose: exception `reason`/`toString` text (diagnostics only), wire values (`All`, `Fisher handset`, sea-condition aliases, MDRRMO notes), Android notification channel names, and backend-generated text (`responder_status_label`, backend risk `reason`), which `docs/22` §10 defers to a backend contract change.

@@ -69,8 +69,8 @@ class SosForeground {
   SosForeground({
     required OutboxStore outbox,
     required SosService sosService,
-    String Function()? titleResolver,
-    String Function()? bodyResolver,
+    required String Function() titleResolver,
+    required String Function() bodyResolver,
   })  : _outbox = outbox,
         _sosService = sosService,
         _titleResolver = titleResolver,
@@ -78,8 +78,8 @@ class SosForeground {
 
   final OutboxStore _outbox;
   final SosService _sosService;
-  final String Function()? _titleResolver;
-  final String Function()? _bodyResolver;
+  final String Function() _titleResolver;
+  final String Function() _bodyResolver;
 
   StreamSubscription<void>? _subscription;
   Timer? _pingTimer;
@@ -135,9 +135,8 @@ class SosForeground {
 
   Future<void> _start() async {
     try {
-      final title = _titleResolver?.call() ?? 'SOS still sending';
-      final body = _bodyResolver?.call() ??
-          'AqOne keeps trying until MDRRMO receives it.';
+      final title = _titleResolver();
+      final body = _bodyResolver();
       if (!await FlutterForegroundTask.isRunningService) {
         await FlutterForegroundTask.startService(
           serviceId: 1001,

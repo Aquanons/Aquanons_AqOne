@@ -1606,5 +1606,183 @@
   "infoTermsBody": "Please read this before relying on AqOne.\n\nAqOne is a prototype\n\nThis software was built for a hackathon and has not been certified, independently tested, or approved as marine safety equipment.\n\nIt is not a replacement for safety gear\n\nDo not go to sea relying on this app alone. Carry the flotation, signalling and communication equipment you would normally carry. AqOne is an addition to those, never a substitute.\n\nDelivery is not guaranteed\n\nAn SOS travels by radio between buoys. Radio is affected by weather, distance, obstructions, buoy battery level, and interference. A message may be delayed or may not arrive at all. The app shows you honestly how far your message has reached, and never claims more than it knows.\n\nCoverage is limited\n\nAqOne only works within radio range of a deployed buoy. Outside that range your SOS stays saved on your phone until you come back into range.\n\nResponsible use\n\nSend an SOS only in a genuine emergency. False alarms waste rescue resources and put responders at risk.",
   "@infoTermsBody": {
     "description": "SAFETY CRITICAL. Body of the Safety notice / Terms of Use page."
+  },
+  "hazardWaveTitle": "Dangerous Wave Warning",
+  "@hazardWaveTitle": {
+    "description": "SAFETY CRITICAL. Venture pop-up title for the buoy-derived wave hazard feed. An area advisory, not a report that someone is in trouble."
+  },
+  "hazardCapsizingTitle": "Capsizing Risk Advisory",
+  "@hazardCapsizingTitle": {
+    "description": "SAFETY CRITICAL. Venture pop-up title for the buoy-derived capsizing hazard feed. An area advisory, not a report that someone is in trouble."
+  },
+  "hazardWaveMessage": "{count, plural, =1{Dangerous wave conditions detected at 1 buoy location. Exercise extreme caution.} other{Dangerous wave conditions detected at {count} buoy locations. Exercise extreme caution.}}",
+  "@hazardWaveMessage": {
+    "description": "SAFETY CRITICAL. Venture pop-up body for the wave hazard feed; {count} is the number of buoys reporting it.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hazardCapsizingMessage": "{count, plural, =1{High tilt or motion detected at 1 buoy location. Vessels in these areas may be at risk of capsizing.} other{High tilt or motion detected at {count} buoy locations. Vessels in these areas may be at risk of capsizing.}}",
+  "@hazardCapsizingMessage": {
+    "description": "SAFETY CRITICAL. Venture pop-up body for the capsizing hazard feed; {count} is the number of buoys reporting it.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advisoryPriorityEmergency": "Emergency",
+  "@advisoryPriorityEmergency": {
+    "description": "Advisory priority badge (shown in capitals)."
+  },
+  "advisoryPriorityWarning": "Warning",
+  "@advisoryPriorityWarning": {
+    "description": "Advisory priority badge (shown in capitals)."
+  },
+  "advisoryPriorityInformation": "Information",
+  "@advisoryPriorityInformation": {
+    "description": "Advisory priority badge (shown in capitals)."
+  },
+  "advisoryPriorityCommunity": "Community",
+  "@advisoryPriorityCommunity": {
+    "description": "Advisory priority badge (shown in capitals)."
+  },
+  "advisoryPriorityNotice": "Notice",
+  "@advisoryPriorityNotice": {
+    "description": "Advisory priority badge for an unknown priority (shown in capitals)."
+  },
+  "advisoryAllAreas": "All areas",
+  "@advisoryAllAreas": {
+    "description": "Shown where an advisory names its municipality, when it applies everywhere."
+  },
+  "welcomeAdvisoryTitle": "Welcome to AqOne",
+  "@welcomeAdvisoryTitle": {
+    "description": "Title of the developers' welcome note in the advisories list."
+  },
+  "welcomeAdvisoryBody": "We are the Aquanons - five Information Technology students from Aklan State University. We built AqOne for the fishermen of New Washington, so that a boat in trouble can reach help even where there is no cellular signal.\n\nYour SOS goes out over the buoy network when there is no signal. Weather and sea conditions are here before you leave. Everything you record stays on your phone unless you choose to share it.\n\nThis app is new and we are still learning what you need from it. If something is wrong, confusing, or missing, please tell us - you know these waters and we do not. Salamat gid, and safe trips.",
+  "@welcomeAdvisoryBody": {
+    "description": "Body of the developers' welcome note."
+  },
+  "welcomeAdvisoryByline": "From the AqOne team",
+  "@welcomeAdvisoryByline": {
+    "description": "Byline on the developers' welcome note, shown where official advisories name a municipality."
+  },
+  "riskFactorGusts": "gusts {kph} km/h",
+  "@riskFactorGusts": {
+    "description": "Forecast-day reason: wind gusts. Joined with others into one sentence.",
+    "placeholders": {
+      "kph": {
+        "type": "int"
+      }
+    }
+  },
+  "riskFactorWind": "wind {kph} km/h",
+  "@riskFactorWind": {
+    "description": "Forecast-day reason: mean wind when gusts are unknown.",
+    "placeholders": {
+      "kph": {
+        "type": "int"
+      }
+    }
+  },
+  "riskFactorSwell": "{metres} m swell",
+  "@riskFactorSwell": {
+    "description": "Forecast-day reason: wave height in metres, e.g. \"2.1\".",
+    "placeholders": {
+      "metres": {
+        "type": "String"
+      }
+    }
+  },
+  "riskFactorRainMm": "{mm} mm rain",
+  "@riskFactorRainMm": {
+    "description": "Forecast-day reason: rainfall in millimetres.",
+    "placeholders": {
+      "mm": {
+        "type": "int"
+      }
+    }
+  },
+  "riskFactorSevereThunderstorm": "severe thunderstorms",
+  "@riskFactorSevereThunderstorm": {
+    "description": "Forecast-day reason."
+  },
+  "riskFactorRain": "rain",
+  "@riskFactorRain": {
+    "description": "Forecast-day reason: showers or rain."
+  },
+  "listAnd": "{items} and {last}",
+  "@listAnd": {
+    "description": "Joins the last item of a list, e.g. \"gusts 41 km/h, 2.1 m swell and rain\".",
+    "placeholders": {
+      "items": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "riskNoAdverse": "No adverse conditions forecast",
+  "@riskNoAdverse": {
+    "description": "SAFETY CRITICAL. Forecast-day reason when nothing crossed a threshold. Not a safe-to-sail call."
+  },
+  "riskNoAdverseNoWave": "No adverse conditions forecast (wave data unassessed)",
+  "@riskNoAdverseNoWave": {
+    "description": "SAFETY CRITICAL. Forecast-day reason when nothing crossed a threshold and there was no wave data."
+  },
+  "locationServicesOff": "Turn on location services to place your boat on the map.",
+  "@locationServicesOff": {
+    "description": "Snackbar when the phone's location services are off."
+  },
+  "locationDenied": "AqOne needs location permission to send your position.",
+  "@locationDenied": {
+    "description": "Snackbar when location permission was denied."
+  },
+  "locationBlocked": "Location is blocked. Enable it in your phone settings.",
+  "@locationBlocked": {
+    "description": "Snackbar when location permission was denied permanently."
+  },
+  "locationNoFix": "Could not get a GPS fix. Move to open sky and try again.",
+  "@locationNoFix": {
+    "description": "Snackbar when no GPS fix arrived in time."
+  },
+  "deliveryFailureNoSignal": "the app is not getting a signal",
+  "@deliveryFailureNoSignal": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS. Several parts are joined with \" · \"."
+  },
+  "deliveryFailureNoInternet": "no internet connection",
+  "@deliveryFailureNoInternet": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureInsecure": "couldn't establish a secure connection",
+  "@deliveryFailureInsecure": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureServerError": "the server did not accept it",
+  "@deliveryFailureServerError": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS: the backend answered with an error."
+  },
+  "deliveryFailureUnreachable": "could not reach the server",
+  "@deliveryFailureUnreachable": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureBuoyNotConnected": "not connected to the buoy",
+  "@deliveryFailureBuoyNotConnected": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureNoBuoy": "no buoy in range",
+  "@deliveryFailureNoBuoy": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureBuoyRejected": "the buoy did not accept it",
+  "@deliveryFailureBuoyRejected": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "deliveryFailureBuoyInvalid": "the buoy sent an unreadable reply",
+  "@deliveryFailureBuoyInvalid": {
+    "description": "Part of the \"Last attempt\" line on a saved SOS."
   }
 }

@@ -270,7 +270,7 @@ class _VenturePageState extends State<VenturePage> {
 
     final fix = result.fix;
     if (fix == null) {
-      _snack(result.message);
+      _snack(result.failure.message(AppLocalizations.of(context)));
       // Still show conditions ashore so the screen is not empty.
       if (initial) {
         await _loadWeather(AqOneConfig.aklanLat, AqOneConfig.aklanLon);
@@ -315,7 +315,7 @@ class _VenturePageState extends State<VenturePage> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                kind.title,
+                kind.title(t),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -325,7 +325,7 @@ class _VenturePageState extends State<VenturePage> {
           ],
         ),
         content: Text(
-          kind.message(count),
+          kind.message(t, count),
           style: const TextStyle(fontSize: 14, height: 1.4),
         ),
         actions: <Widget>[

@@ -117,3 +117,43 @@ Earlier drafts that used Tagalog or Cebuano function words (ang, kung, ug, kaysa
 | `chatHint` | Type a message… | Magsulat it mensahe… | |
 | `sosClosedUnconfirmed` | MDRRMO closed this call without reaching you. If you still need help, press SOS again. | Ginsarado it MDRRMO ro tawag nga raya nga uwa ka naabtan. Kon kinahangean mo pa it bulig, pinduton liwat ro SOS. | |
 | `sosStandDownConfirmBody` | Rescue will be called off. Only do this if everyone is safe. | Kakanselahon ro pagsagip. Obrahon eang raya kon eowas eon ro tanan. | |
+## Phase 4: text that models and services used to build (2026-09-26)
+
+| Key | English | Aklanon draft | OK / correction |
+|---|---|---|---|
+| **SAFETY CRITICAL** `hazardWaveTitle` | Dangerous Wave Warning | Babala: Delikado nga Alon | |
+| **SAFETY CRITICAL** `hazardCapsizingTitle` | Capsizing Risk Advisory | Abiso: Peligro nga Mataob | |
+| **SAFETY CRITICAL** `hazardWaveMessage` | {count, plural, =1{Dangerous wave conditions detected at 1 buoy location. Exercise extreme caution.} other{Dangerous wave conditions detected at {count} buoy locations. Exercise extreme caution.}} | {count, plural, =1{May delikado nga alon nga nakita sa 1 ka lugar it buoy. Mag-andam gid.} other{May delikado nga alon nga nakita sa {count} ka lugar it buoy. Mag-andam gid.}} | |
+| **SAFETY CRITICAL** `hazardCapsizingMessage` | {count, plural, =1{High tilt or motion detected at 1 buoy location. Vessels in these areas may be at risk of capsizing.} other{High tilt or motion detected at {count} buoy locations. Vessels in these areas may be at risk of capsizing.}} | {count, plural, =1{Grabe nga pagkiling ukon paghulag ro nakita sa 1 ka lugar it buoy. Ro mga sakayan sa ruyon nga lugar hay posible nga mataob.} other{Grabe nga pagkiling ukon paghulag ro nakita sa {count} ka lugar it buoy. Ro mga sakayan sa ruyon nga lugar hay posible nga mataob.}} | |
+| `advisoryPriorityEmergency` | Emergency | Emerhensya | |
+| `advisoryPriorityWarning` | Warning | Babala | |
+| `advisoryPriorityInformation` | Information | Impormasyon | |
+| `advisoryPriorityCommunity` | Community | Komunidad | |
+| `advisoryPriorityNotice` | Notice | Pahibalo | |
+| `advisoryAllAreas` | All areas | Tanan nga lugar | |
+| `welcomeAdvisoryTitle` | Welcome to AqOne | Maayad nga pag-abot sa AqOne | |
+| `welcomeAdvisoryBody` | We are the Aquanons - five Information Technology students from Aklan State University. We built AqOne for the fishermen of New Washington, so that a boat in trouble can reach help even where there is no cellular signal.<br><br>Your SOS goes out over the buoy network when there is no signal. Weather and sea conditions are here before you leave. Everything you record stays on your phone unless you choose to share it.<br><br>This app is new and we are still learning what you need from it. If something is wrong, confusing, or missing, please tell us - you know these waters and we do not. Salamat gid, and safe trips. | Kami ro Aquanons - lima ka estudyante it Information Technology halin sa Aklan State University. Ginhimo namon ro AqOne para sa mga mananagat it New Washington, agud ro baroto nga may problema hay makapangayo it bulig maskin waeay signal it cellphone.<br><br>Ro imong SOS hay ginapadaea paagi sa network it mga buoy kon waeay signal. Ro panahon ag kahimtangan it dagat hay makita mo diri bag-o ka maglayag. Ro tanan nga imong ginarekord hay sa imong telepono eang, luwas kon ipaambit mo.<br><br>Bag-o pa ining app ag ginatun-an pa namon kon ano ro imong kinahangean. Kon may sala, makalilibog, ukon kulang, palihog isugid kanamon - ikaw ro nakaeam sa ining dagat, bukon kami. Salamat gid, ag maayad nga paglayag. | |
+| `welcomeAdvisoryByline` | From the AqOne team | Halin sa grupo it AqOne | |
+| `riskFactorGusts` | gusts {kph} km/h | bugsok it hangin {kph} km/h | |
+| `riskFactorWind` | wind {kph} km/h | hangin {kph} km/h | |
+| `riskFactorSwell` | {metres} m swell | {metres} m nga alon | |
+| `riskFactorRainMm` | {mm} mm rain | {mm} mm nga ulan | |
+| `riskFactorSevereThunderstorm` | severe thunderstorms | grabe nga uran ag kilat | |
+| `riskFactorRain` | rain | ulan | |
+| `listAnd` | {items} and {last} | {items} ag {last} | |
+| **SAFETY CRITICAL** `riskNoAdverse` | No adverse conditions forecast | Waeay indi maayad nga panahon sa tantiya | |
+| **SAFETY CRITICAL** `riskNoAdverseNoWave` | No adverse conditions forecast (wave data unassessed) | Waeay indi maayad nga panahon sa tantiya (owa nasusi ro alon) | |
+| `locationServicesOff` | Turn on location services to place your boat on the map. | Buksi ro location sa telepono agud makita ro imong baroto sa mapa. | |
+| `locationDenied` | AqOne needs location permission to send your position. | Kinahangean it AqOne ro permiso sa lokasyon agud mapadaea ro imong posisyon. | |
+| `locationBlocked` | Location is blocked. Enable it in your phone settings. | Naka-block ro lokasyon. Buksi ini sa settings it imong telepono. | |
+| `locationNoFix` | Could not get a GPS fix. Move to open sky and try again. | Owa nakakuha it GPS. Magsaylo sa lugar nga kita ro langit ag sulayi liwat. | |
+| `deliveryFailureNoSignal` | the app is not getting a signal | waeay signal ro app | |
+| `deliveryFailureNoInternet` | no internet connection | waeay koneksyon sa internet | |
+| `deliveryFailureInsecure` | couldn't establish a secure connection | indi makahimo it segurado nga koneksyon | |
+| `deliveryFailureServerError` | the server did not accept it | owa ginbaton it server | |
+| `deliveryFailureUnreachable` | could not reach the server | indi maabot ro server | |
+| `deliveryFailureBuoyNotConnected` | not connected to the buoy | owa konektado sa buoy | |
+| `deliveryFailureNoBuoy` | no buoy in range | waeay buoy nga malapit | |
+| `deliveryFailureBuoyRejected` | the buoy did not accept it | owa ginbaton it buoy | |
+| `deliveryFailureBuoyInvalid` | the buoy sent an unreadable reply | indi mabasa ro sabat it buoy | |
+

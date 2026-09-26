@@ -1,3 +1,4 @@
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../core/config.dart';
@@ -40,21 +41,16 @@ class LocationResult {
   final LocationFailure? failure;
 
   bool get isSuccess => fix != null;
+}
 
+extension LocationFailureL10n on LocationFailure? {
   /// Message suitable for a snackbar.
-  String get message {
-    switch (failure) {
-      case LocationFailure.servicesDisabled:
-        return 'Turn on location services to place your boat on the map.';
-      case LocationFailure.denied:
-        return 'AqOne needs location permission to send your position.';
-      case LocationFailure.deniedForever:
-        return 'Location is blocked. Enable it in your phone settings.';
-      case LocationFailure.timeout:
-      case null:
-        return 'Could not get a GPS fix. Move to open sky and try again.';
-    }
-  }
+  String message(AppLocalizations t) => switch (this) {
+        LocationFailure.servicesDisabled => t.locationServicesOff,
+        LocationFailure.denied => t.locationDenied,
+        LocationFailure.deniedForever => t.locationBlocked,
+        LocationFailure.timeout || null => t.locationNoFix,
+      };
 }
 
 class LocationService {

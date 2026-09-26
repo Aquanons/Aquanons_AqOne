@@ -303,7 +303,7 @@ void main() {
       final RiskAssessment risk =
           SafetyScore.assess(day(gust: 12, wave: 3.0, precip: 1));
       expect(risk.level, RiskLevel.danger);
-      expect(risk.reason, contains('swell'));
+      expect(risk.factors.map((f) => f.kind), contains(RiskFactorKind.swell));
     });
 
     test('no usable inputs yields unknown, not green', () {
@@ -313,7 +313,10 @@ void main() {
     test('a thunderstorm without numeric wind/wave preserves danger evidence', () {
       final RiskAssessment risk = SafetyScore.assess(day(code: 95));
       expect(risk.level, RiskLevel.danger);
-      expect(risk.reason?.toLowerCase(), contains('thunderstorm'));
+      expect(
+        risk.factors.map((f) => f.kind),
+        contains(RiskFactorKind.thunderstorm),
+      );
     });
 
     test('a verdict without wave data admits the gap', () {

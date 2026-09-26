@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../core/config.dart';
 import '../data/identity_store.dart';
 import '../data/outbox_store.dart';
+import '../models/delivery_failure.dart';
 import '../models/buoy_contact.dart';
 import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
@@ -277,19 +278,20 @@ class SosService {
     return false;
   }
 
+  /// [DeliveryFailure] codes, not text: the status card words them in the
+  /// fisher's language (plan 70 AKL-04).
   String _failureReason(Object? buoyResult) {
-    final directReason = _backend.lastDirectError ?? 'internet path failed';
+    final direct = _backend.lastDirectFailure ?? DeliveryFailure.unreachable;
     if (buoyResult == null) {
-      return directReason;
+      return DeliveryFailure.encode(<DeliveryFailure>[direct]);
     }
-    final buoyReason = buoyResult is BuoyRejected
-        ? buoyResult.reason
-        : buoyResult is BuoyUnreachable
-            ? 'Not connected to the buoy'
-            : buoyResult is BuoyInvalidResponse
-                ? buoyResult.reason
-                : 'no buoy in range';
-    return '$buoyReason · $directReason';
+    final buoy = switch (buoyResult) {
+      BuoyRejected() => DeliveryFailure.buoyRejected,
+      BuoyUnreachable() => DeliveryFailure.buoyNotConnected,
+      BuoyInvalidResponse() => DeliveryFailure.buoyInvalid,
+      _ => DeliveryFailure.noBuoy,
+    };
+    return DeliveryFailure.encode(<DeliveryFailure>[buoy, direct]);
   }
 
   Future<void> _refreshVesselProfile() async {

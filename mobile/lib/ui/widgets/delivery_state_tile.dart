@@ -4,6 +4,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/tokens.dart';
+import '../../models/delivery_failure.dart';
 import '../../models/delivery_state.dart';
 import '../../models/fisher_sos_situation.dart';
 import '../../models/sos_record.dart';
@@ -114,7 +115,7 @@ class DeliveryStateTile extends StatelessWidget {
           if (record.state == DeliveryState.saved && record.lastError != null)
             _MetaLine(
               label: t.deliveryMetaLastAttempt,
-              value: record.lastError!,
+              value: deliveryFailureText(t, record.lastError!),
               tone: AqColors.warning,
             ),
         ],

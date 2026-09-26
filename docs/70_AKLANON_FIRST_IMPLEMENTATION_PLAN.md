@@ -153,28 +153,29 @@ Continue automatically to the next phase (auto).
 ## Phase 4: Text below the UI localized
 
 Requirements: AKL-04, AKL-08
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red tests for each item below, behavioural (drive the model or service, render in `akl`), not source greps.
-- [ ] `hazard_alert.dart`: drop `title` and `message(count)` from `HazardKind`; `HazardKindL10n` with an ICU plural for the buoy count.
-- [ ] `advisory.dart`: drop `label` from `AdvisoryPriority`; `AdvisoryPriorityL10n`. `venture_feeds.dart` snapshots write `priority.name` instead of `priority.label` (`fromWire` already lower-cases, so old snapshots still parse). The `'All'` municipality default becomes null and the UI shows the localized "All".
-- [ ] `safety_score.dart` and `daily_outlook.dart`: `RiskAssessment.reason` becomes a list of typed reasons (`RiskReason` enum plus the number where there is one); the sentence is built in the UI by `RiskReasonL10n`. Reuse the existing `DeteriorationReason` labels where they match.
-- [ ] `location_service.dart`: `LocationResult.message` moves to `LocationFailureL10n`; `venture_page.dart` resolves it.
-- [ ] SOS "Last attempt": `backend_client.dart` and `sos_service.dart` record short codes (`no_signal`, `no_internet`, `tls`, `unreachable`, `buoy_not_connected`, `no_buoy`, `buoy_rejected`, `buoy_invalid`), joined with `,`, in `last_error`; `delivery_state_tile.dart` maps each code to text and shows an unknown value verbatim (rows written before this change).
-- [ ] `welcome_advisory.dart`: title and body come from ARB keys, resolved in `advisory_card.dart` for the welcome advisory's id.
-- [ ] `sos_foreground.dart` fallbacks: drop the English defaults; the resolvers are always passed.
-- [ ] Add every new key to `docs/aklanon/REVIEW.md`.
+- [x] Red tests for each item below, behavioural (drive the model or service, render in `akl`), not source greps.
+- [x] `hazard_alert.dart`: drop `title` and `message(count)` from `HazardKind`; `HazardKindL10n` with an ICU plural for the buoy count.
+- [x] `advisory.dart`: drop `label` from `AdvisoryPriority`; `AdvisoryPriorityL10n`. `venture_feeds.dart` snapshots write `priority.name` instead of `priority.label` (`fromWire` already lower-cases, so old snapshots still parse). The `'All'` municipality default becomes null and the UI shows the localized "All".
+- [x] `safety_score.dart` and `daily_outlook.dart`: device verdicts carry `RiskAssessment.factors` (`RiskFactorKind` plus the number where there is one, cached as `swell:2.1`-style strings); `reason` stays for the backend's own English text (`docs/22` §10); the sentence is built by `RiskAssessmentL10n.reasonText`. Reuse the existing `DeteriorationReason` labels where they match.
+- [x] `location_service.dart`: `LocationResult.message` moves to `LocationFailureL10n`; `venture_page.dart` resolves it.
+- [x] SOS "Last attempt": `backend_client.dart` and `sos_service.dart` record short codes (`no_signal`, `no_internet`, `tls`, `unreachable`, `buoy_not_connected`, `no_buoy`, `buoy_rejected`, `buoy_invalid`), joined with `,`, in `last_error`; `delivery_state_tile.dart` maps each code to text and shows an unknown value verbatim (rows written before this change).
+- [x] `welcome_advisory.dart`: title and body come from ARB keys, resolved in `advisory_card.dart` for the welcome advisory's id.
+- [x] `sos_foreground.dart` fallbacks: drop the English defaults; the resolvers are always passed.
+- [x] Add every new key to `docs/aklanon/REVIEW.md`.
+- [x] `describeBuoyError` deleted: it only existed to make exception text fisher-readable for the old "Last attempt" line; the exception reason is diagnostics now.
 
 ### Verification
 
-- [ ] Standard mobile gate.
-- [ ] Emulator in `akl`, backend unreachable, no pod: send an SOS; the "Last attempt" line on the status tile is Aklanon.
+- [x] Standard mobile gate.
+- [ ] Emulator in `akl`, backend unreachable, no pod: send an SOS; the "Last attempt" line on the status tile is Aklanon. Folded into the Phase 5 walkthrough; `aklanon_below_ui_test.dart` covers the codes and the legacy rows.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `feat(mobile): models and services return codes, the UI speaks Aklanon`
 Continue automatically to the next phase (auto).

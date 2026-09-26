@@ -32,7 +32,7 @@ class SafetyScore {
 
   static RiskAssessment assess(DailyOutlook day) {
     final List<String> inputs = <String>['open-meteo'];
-    final List<String> reasons = <String>[];
+    final List<RiskFactor> reasons = <RiskFactor>[];
     RiskLevel level = RiskLevel.safe;
 
     void raise(RiskLevel to) {
@@ -46,9 +46,10 @@ class SafetyScore {
     final bool hasExplicitGust = day.gustKph != null;
     final double? gust = day.gustKph ?? day.windKph;
     if (gust != null) {
-      final String windDesc = hasExplicitGust
-          ? 'gusts ${gust.round()} km/h'
-          : 'wind ${gust.round()} km/h';
+      final RiskFactor windDesc = RiskFactor(
+        hasExplicitGust ? RiskFactorKind.gusts : RiskFactorKind.wind,
+        gust.round(),
+      );
       if (gust >= AqOneConfig.dangerGustKph) {
         raise(RiskLevel.danger);
         reasons.add(windDesc);
@@ -63,10 +64,10 @@ class SafetyScore {
       inputs.add('wave');
       if (wave >= AqOneConfig.dangerWaveM) {
         raise(RiskLevel.danger);
-        reasons.add('${wave.toStringAsFixed(1)} m swell');
+        reasons.add(RiskFactor(RiskFactorKind.swell, wave));
       } else if (wave >= AqOneConfig.cautionWaveM) {
         raise(RiskLevel.caution);
-        reasons.add('${wave.toStringAsFixed(1)} m swell');
+        reasons.add(RiskFactor(RiskFactorKind.swell, wave));
       }
     }
 
@@ -74,32 +75,32 @@ class SafetyScore {
     if (precip != null) {
       if (precip >= AqOneConfig.dangerPrecipMm) {
         raise(RiskLevel.danger);
-        reasons.add('${precip.round()} mm rain');
+        reasons.add(RiskFactor(RiskFactorKind.rainMm, precip.round()));
       } else if (precip >= AqOneConfig.cautionPrecipMm) {
         raise(RiskLevel.caution);
-        reasons.add('${precip.round()} mm rain');
+        reasons.add(RiskFactor(RiskFactorKind.rainMm, precip.round()));
       }
     }
 
     switch (day.condition) {
       case WeatherCondition.severeThunderstorm:
         raise(RiskLevel.danger);
-        reasons.add('severe thunderstorms');
+        reasons.add(const RiskFactor(RiskFactorKind.severeThunderstorm));
       case WeatherCondition.thunderstorm:
         raise(RiskLevel.danger);
-        reasons.add('thunderstorms');
+        reasons.add(const RiskFactor(RiskFactorKind.thunderstorm));
       case WeatherCondition.heavyRain:
         raise(RiskLevel.caution);
-        reasons.add('heavy rain');
+        reasons.add(const RiskFactor(RiskFactorKind.heavyRain));
       case WeatherCondition.showers:
       case WeatherCondition.rainy:
         raise(RiskLevel.caution);
-        reasons.add('rain');
+        reasons.add(const RiskFactor(RiskFactorKind.rain));
       case WeatherCondition.foggy:
         // Carried over from the source project as safe, which was wrong: you
         // cannot see another boat, a net marker, or the shore in fog.
         raise(RiskLevel.caution);
-        reasons.add('poor visibility');
+        reasons.add(const RiskFactor(RiskFactorKind.poorVisibility));
       case WeatherCondition.drizzle:
       case WeatherCondition.overcast:
       case WeatherCondition.partlyCloudy:
@@ -116,22 +117,18 @@ class SafetyScore {
           level: level,
           source: RiskSource.device,
           score: _score(gust: gust, wave: wave, precip: precip),
-          reason: _sentence(reasons),
+          factors: reasons,
           inputs: inputs,
         );
       }
       return RiskAssessment.unknown;
     }
 
-    final String defaultReason = wave == null
-        ? 'No adverse conditions forecast (wave data unassessed)'
-        : 'No adverse conditions forecast';
-
     return RiskAssessment(
       level: level,
       source: RiskSource.device,
       score: _score(gust: gust, wave: wave, precip: precip),
-      reason: reasons.isEmpty ? defaultReason : _sentence(reasons),
+      factors: reasons,
       inputs: inputs,
     );
   }
@@ -153,11 +150,4 @@ class SafetyScore {
   }
 
   static double _max(double a, double b) => a > b ? a : b;
-
-  static String _sentence(List<String> parts) {
-    final String joined = parts.length == 1
-        ? parts.first
-        : '${parts.sublist(0, parts.length - 1).join(', ')} and ${parts.last}';
-    return joined[0].toUpperCase() + joined.substring(1);
-  }
 }

@@ -841,12 +841,14 @@ class _DayChip extends StatelessWidget {
     final String high = day.tempMax == null ? '–' : '${day.tempMax!.round()}°';
     final String low = day.tempMin == null ? '' : '${day.tempMin!.round()}°';
 
+    final String? reason = day.risk.reasonText(t);
+
     return Semantics(
       label: '$label, ${day.condition.label(t)}, ${level.label(t)}.'
-          '${day.risk.reason == null ? '' : ' ${day.risk.reason}.'}'
+          '${reason == null ? '' : ' $reason.'}'
           '${isOutlook ? ' ${t.forecastLongRangeSemantics}' : ''}',
       child: Tooltip(
-        message: day.risk.reason ?? level.label(t),
+        message: reason ?? level.label(t),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           decoration: BoxDecoration(

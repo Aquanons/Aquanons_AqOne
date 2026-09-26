@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/welcome_advisory.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/advisory.dart';
 
@@ -32,6 +33,9 @@ class AdvisoryCard extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final priority = advisory.priority;
     final bool official = advisory.isOfficial;
+    // The welcome note is carried by the app, so its text comes from the
+    // ARB files; everything else is published text shown as written.
+    final bool welcome = identical(advisory, WelcomeAdvisory.instance);
 
     // An unofficial notice must not be mistakable for an MDRRMO instruction
     // at a glance, on a phone, in sunlight. A tinted surface and a dashed-
@@ -74,7 +78,7 @@ class AdvisoryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  official ? priority.label.toUpperCase() : t.advisoryAppNotice,
+                  official ? priority.label(t).toUpperCase() : t.advisoryAppNotice,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -86,7 +90,12 @@ class AdvisoryCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  advisory.byline ?? advisory.municipality,
+                  welcome
+                      ? t.welcomeAdvisoryByline
+                      : advisory.byline ??
+                          (advisory.municipality == 'All'
+                              ? t.advisoryAllAreas
+                              : advisory.municipality),
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
@@ -106,7 +115,7 @@ class AdvisoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            advisory.title,
+            welcome ? t.welcomeAdvisoryTitle : advisory.title,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -133,7 +142,7 @@ class AdvisoryCard extends StatelessWidget {
           if (advisory.description.isNotEmpty) ...<Widget>[
             const SizedBox(height: 6),
             Text(
-              advisory.description,
+              welcome ? t.welcomeAdvisoryBody : advisory.description,
               maxLines: maxDescriptionLines,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
