@@ -10,6 +10,13 @@ Offline SOS mesh for small-scale fishermen in New Washington, Aklan: phones hand
 
 Follow the Agent handoff section in `AGENTS.md`: read root `HANDOFF.md` on arrival and update it after every verified step.
 
+## Spec-first workflow
+
+Before coding, follow the Spec-first workflow in `AGENTS.md`.
+Read `docs/SPEC_INDEX.md`, the [Current Register](docs/README.md#current-register), the worktree's `HANDOFF.md` if present, and every applicable approved spec, contract, plan, acceptance criteria, and evidence document.
+Check the worktree and confirm that the register assigns your work and owned paths before editing.
+Use the repository skills in `.agents/skills/` according to the skill-routing table in `AGENTS.md`.
+
 ## Build order — strictly sequential
 
 Do NOT start a step until the previous one demonstrably works. Do NOT skip steps.

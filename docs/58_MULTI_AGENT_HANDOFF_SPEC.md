@@ -3,13 +3,13 @@
 **Status:** ACTIVE
 **Owner:** Lenard
 **Created:** 2026-09-23
-**Updated:** 2026-09-23
+**Updated:** 2026-09-26
 **Related:** `AGENTS.md` (Agent handoff), `.agents/templates/docs/HANDOFF.md`, `.agents/skills/implementation-plan/SKILL.md`
 **Execution mode:** auto
 
 - **Document ID**: `docs/58_MULTI_AGENT_HANDOFF_SPEC.md`, renumbered from 43 in Revision 4 because master already uses 43 for the DTI pitch plan.
-- **Revision**: 5, approved for execution by Len in chat, 2026-09-23.
-- **History**: R1 2026-09-23T07:56+08:00 Antigravity; R2 08:00 Claude Code (Council review); R3 08:14 Claude Code (Q1, Q2, plan, tests), executed by Antigravity; R4 10:30 Claude Code (Part C follow-ups); R5 10:54 Claude Code (Part C rebased onto `origin/master`).
+- **Revision**: 6, approved by Len in chat, 2026-09-26T14:12:13+08:00.
+- **History**: R1 2026-09-23T07:56+08:00 Antigravity; R2 08:00 Claude Code (Council review); R3 08:14 Claude Code (Q1, Q2, plan, tests), executed by Antigravity; R4 10:30 Claude Code (Part C follow-ups); R5 10:54 Claude Code (Part C rebased onto `origin/master`); R6 2026-09-26T14:12:13+08:00 Len approved a committed team-wide work and ownership register plus mandatory spec-first agent guidance.
 - **Tests**: `.agents/tests/test_handoff.py`, `.agents/tests/test_plan_mode.py`
 - **Executor**: Antigravity (Gemini), per root `HANDOFF.md`
 
@@ -43,7 +43,7 @@ The only moving parts are a template, one rule per agent entry point, a gitignor
 
 - No script, CLI, daemon, database, vector store or MCP server.
 - No history log of past handoffs. Git history and the docs are the durable record.
-- No handoff shared between machines or teammates. This is for one developer switching agents on one machine.
+- No per-agent handoff shared between machines or teammates. Each ignored `HANDOFF.md` remains local to one worktree; the committed Current Register records team ownership and status but never carries an agent's baton.
 - No secret redaction logic. The file is never committed, and the rule forbids writing secret values into it.
 - No change to AqOne product code, contracts, or the build order.
 
@@ -66,10 +66,11 @@ The arriving agent treats any file changed after the **Updated** timestamp as un
 
 1. The agent reads `HANDOFF.md` if it exists.
    Claude Code gets it injected automatically; Codex and Antigravity read it because their entry-point rule says so.
-2. If **Status** is `COMPLETED`, the agent treats it as background only and follows the user's new request.
-3. If **Status** is `ACTIVE`, the agent runs `git status` and `git diff --stat`, and compares the result with **Working Tree Evidence**.
-4. The agent reports any mismatch to the user before editing.
-5. The agent continues from **The Baton**, unless the user says otherwise.
+2. Before implementation, the agent reads `docs/SPEC_INDEX.md`, the Current Register in `docs/README.md`, the applicable approved spec, contract, plan and evidence, then runs `git status` and `git diff --stat`.
+3. If the worktree **Status** is `COMPLETED`, the agent treats its baton as background only and follows the user's new request.
+4. If the worktree **Status** is `ACTIVE`, the agent compares Git output with **Working Tree Evidence** and reports a mismatch before editing.
+5. The agent checks team ownership and path overlap in the Current Register, and records a new assignment there before coding when none exists.
+6. The agent continues from **The Baton**, unless the user says otherwise.
 
 ### 3.4 Completion
 
@@ -147,6 +148,29 @@ A Claude Code `SessionStart` hook prints `HANDOFF.md` into context when the file
 
 - AC-15: When Len approves a spec or plan revision, the approved doc's own header records it (status, revision, timestamp).
 - AC-16: `HANDOFF.md` **Approved Scope** links to that doc and revision rather than being the record itself.
+
+### REQ-008: Committed team-wide work register
+
+The Current Register in `docs/README.md` records team ownership and work status across worktrees.
+It does not replace approved specs, evidence, or a worktree's local `HANDOFF.md`.
+
+**Acceptance criteria**
+
+- AC-17: Each outstanding approved workstream has a linked source plan or spec, state, human owner, active agent or `none`, branch and worktree or `not assigned`, owned paths, completed work, blockers or dependencies, and one next action.
+- AC-18: The register permits parallel active plans only when their owned paths do not overlap and dependencies are recorded.
+- AC-19: The owner updates the register when work starts, ownership or state changes, a phase gate passes or blocks, a worktree changes materially, or work completes.
+- AC-20: `HANDOFF.md` remains ignored and local to its worktree; it stores that worktree's baton and does not claim shared-team status authority.
+
+### REQ-009: Spec-first implementation
+
+Agents read the current assignment and all applicable approved requirements before editing code.
+
+**Acceptance criteria**
+
+- AC-21: `AGENTS.md` requires reading the Current Register, checking the worktree, and reading applicable approved specs, contracts, plans, acceptance criteria, and evidence before implementation.
+- AC-22: `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` direct agents to the same Current Register and spec-first workflow.
+- AC-23: An agent stops to reconcile material source conflicts or coordinate ownership before editing affected paths.
+- AC-24: `AGENTS.md` lists the installed repository skills and the situations that call for them.
 
 ## 5. Data: `HANDOFF.md` sections
 

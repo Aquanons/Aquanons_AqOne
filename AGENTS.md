@@ -2,7 +2,8 @@
 
 Instructions for AI coding agents working in this repository. Read this before
 changing anything. The canonical project brief is `docs/00_START_HERE.md`.
-For current work and next actions, read [`WHAT_NEEDS_TO_BE_DONE.md`](WHAT_NEEDS_TO_BE_DONE.md), then confirm the relevant plan and latest evidence before acting.
+Before implementation, read [`docs/SPEC_INDEX.md`](docs/SPEC_INDEX.md), the [current work and ownership register](docs/README.md#current-register), this worktree's `HANDOFF.md` if present, and the applicable approved spec, contract, plan, and evidence.
+`WHAT_NEEDS_TO_BE_DONE.md` is only a pointer to the current work register.
 
 ## One-line project
 
@@ -33,6 +34,36 @@ steps. If you are unsure whether a step is done, ask.
 | Daniel | Hardware/firmware — buoy. Critical path. |
 | Jade | Flutter app (mobile) |
 | Doreen Kay | UI/UX, pitch deck |
+
+## Spec-first workflow
+
+Before editing code, read the current work and ownership register in [`docs/README.md`](docs/README.md#current-register), check `git status` and `git diff --stat`, and read this worktree's `HANDOFF.md` if present.
+Read the applicable approved product spec, decision, shared contract, implementation plan, acceptance criteria, and latest evidence before choosing an implementation.
+Use the source hierarchy in `docs/README.md` when documents disagree; if the conflict affects scope, behavior, an interface, phase order, or ownership, stop and reconcile the documents before coding.
+Do not implement from a draft, an unapproved plan, a stale handoff, or chat context when an approved source document exists.
+
+Before starting work, make sure the current register names the human owner, active agent, branch and worktree, owned paths, current state, and one next action.
+If no matching assignment exists, add one after the required spec and plan are approved.
+Do not edit paths owned by another active agent or worktree; coordinate a handoff first.
+Multiple plans may be active at once only when their path ownership is disjoint and the register records their dependencies.
+Update the register when work starts, ownership or state changes, a phase gate passes or blocks, or work completes.
+Record observed completion in the plan and relevant evidence document; the register summarizes that evidence and does not replace it.
+
+## Skill routing
+
+Repository skills live in `.agents/skills/`.
+Read the relevant skill's `SKILL.md` before using it; skills guide the process but do not override approved specs, contracts, or ownership.
+
+| Situation | Skill |
+|---|---|
+| Explore requirements or write a feature spec | `spec` |
+| Ideate or compare consequential architecture and product tradeoffs | `council` |
+| Break an approved feature into phases or resume execution | `implementation-plan` |
+| Any code change, refactor, or dependency choice | `ponytail` (required by this repository) |
+| Design or implement user interfaces | `ui-ux-pro-max` or `ui-styling` |
+| Review security or perform an authorized security audit | `security-audit` |
+| Change hard-to-test legacy code | `working-effectively-with-legacy-code` |
+| Design data systems, schemas, or reliability behavior | `designing-data-intensive-applications` |
 
 ## Deliberately NOT building (do not implement)
 
@@ -135,7 +166,7 @@ treat them as correct; see `mobile/lib/l10n/README.md`.
 
 ## Agent handoff
 
-The live handoff file is root `HANDOFF.md`, written from `.agents/templates/docs/HANDOFF.md`.
+The live handoff file is `HANDOFF.md` at the root of the current worktree, written from `.agents/templates/docs/HANDOFF.md`.
 Each git worktree maintains its own `HANDOFF.md`, which is ignored and never committed.
 The specification is in `docs/58_MULTI_AGENT_HANDOFF_SPEC.md`.
 On arrival, read `HANDOFF.md` if present before taking action.

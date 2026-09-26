@@ -7,7 +7,9 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 
 | Need | Document | Status |
 |---|---|---|
-| Current priorities and setup | [`../README.md`](../README.md) | Active |
+| Current product priorities and setup | [`../README.md`](../README.md) | Active |
+| Current work, owners, agents, worktrees, and next actions | [`README.md#current-register`](README.md#current-register) | Team-wide source of truth |
+| Spec-first workflow and skill routing | [`../AGENTS.md`](../AGENTS.md) | Required before implementation |
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) | Foundation |
 | Product scope and roadmap | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) | Canonical product scope |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) | Foundation |
@@ -18,11 +20,11 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Repository structure cleanup | [`57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md`](archive/plans/57_REPOSITORY_STRUCTURE_CLEANUP_IMPLEMENTATION_PLAN.md) | Completed cleanup plan |
 | External event deadlines | [`53_EXTERNAL_DEADLINES.md`](53_EXTERNAL_DEADLINES.md) | Active |
 | Cross-agent memory and handoff | [`58_MULTI_AGENT_HANDOFF_SPEC.md`](58_MULTI_AGENT_HANDOFF_SPEC.md) | Active specification |
-| Edge-case remediation plan | [`62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`](62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md) (tracks `62A` to `62D`), design [`61`](61_EDGE_CASE_REMEDIATION_DESIGN.md), findings [`60`](60_EXTREME_EDGE_CASE_REPORT.md), evidence [`edge-remediation/`](edge-remediation/) | Active - B, M, W merged; Phase I pending |
-| Critical edge cases (C1-C14) | [`66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md`](66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md), evidence [`edge-remediation/EVIDENCE-critical.md`](edge-remediation/) | Approved Rev 2 (Phase 6 needs approval) - Phase 1 next |
+| Edge-case remediation plan | [`62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md`](62_EDGE_CASE_REMEDIATION_IMPLEMENTATION_PLAN.md) (tracks `62A` to `62D`), design [`61`](61_EDGE_CASE_REMEDIATION_DESIGN.md), findings [`60`](60_EXTREME_EDGE_CASE_REPORT.md), evidence [`edge-remediation/`](edge-remediation/) | B, M, W merged; Phase I not started; Phase 0a owner actions open |
+| Critical edge cases (C1-C14) | [`66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md`](66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md), evidence [`edge-remediation/EVIDENCE-critical.md`](edge-remediation/) | Phase 1 shore reflash open; later firmware phases gated on bench |
 | Fisher friction reduction (handset UX) | Spec [`64_FISHER_FRICTION_REDUCTION_SPEC.md`](64_FISHER_FRICTION_REDUCTION_SPEC.md), plan [`65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`](65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md) | Approved Rev 3 - Phases 1 and 3 merged 2026-09-26; Phase 2 waits for the term study; field session after RSTW |
-| Weather-tiered check-ins (fleet watch) | Spec [`68_WEATHER_TIERED_CHECKINS_SPEC.md`](68_WEATHER_TIERED_CHECKINS_SPEC.md), plan [`69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md`](69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md) | Approved (spec Rev 3, plan Rev 2) - runs alongside plan 65; Phase 1 next |
-| Aklanon first (handset language) | [`70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md`](70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md), evidence [`aklanon/`](aklanon/) | Approved Rev 2 (auto) - runs before plan 65 Phase 2; Len proofreads the Aklanon at the end |
+| Weather-tiered check-ins (fleet watch) | Spec [`68_WEATHER_TIERED_CHECKINS_SPEC.md`](68_WEATHER_TIERED_CHECKINS_SPEC.md), plan [`69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md`](69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md) | Phases 1 and 2 complete; Phase 3 awaits Len's approval |
+| Aklanon first (handset language) | [`70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md`](70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md), evidence [`aklanon/`](aklanon/) | Approved Rev 2; implementation active per Len; phase checklist needs reconciliation by the active implementer |
 | Render free-tier database rotation | [`runbooks/RENDER_FREE_DB_ROTATION.md`](runbooks/RENDER_FREE_DB_ROTATION.md) | Active runbook (expiry around 2026-10-15) |
 | Security audit remediation | [`archive/plans/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md`](archive/plans/59_SECURITY_AUDIT_REMEDIATION_IMPLEMENTATION_PLAN.md), evidence [`security-audit/`](security-audit/) | Completed plan |
 

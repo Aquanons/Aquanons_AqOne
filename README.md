@@ -80,7 +80,8 @@ The app must never display a later state without observing evidence for it.
 
 | If you need to... | Read... |
 |---|---|
-| Find the current team handoff and next actions | [`WHAT_NEEDS_TO_BE_DONE.md`](WHAT_NEEDS_TO_BE_DONE.md) |
+| Find current work, owners, active agents, worktrees, and next actions | [`docs/README.md#current-register`](docs/README.md#current-register) |
+| Read the spec-first coding rules and installed skill guidance | [`AGENTS.md`](AGENTS.md) |
 | Understand current priorities and limitations | This README |
 | Inspect dated verification evidence | [`docs/08_DEMO_AND_STATUS.md`](docs/08_DEMO_AND_STATUS.md) |
 | Understand the target topology | [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md), while treating its old scope exclusions as historical |
