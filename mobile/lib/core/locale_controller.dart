@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_diagnostics.dart';
@@ -6,12 +6,8 @@ import 'l10n_fallback.dart';
 
 /// Holds the app's active locale and remembers an explicit choice.
 ///
-/// Three states, and the difference between the last two matters:
-///
-/// * [override] is null - follow the device locale. A phone set to Filipino
-///   gets a Filipino app without anyone touching a setting.
-/// * [override] is set - the user picked a language and that wins over the
-///   device, permanently, across restarts.
+/// With no stored choice the app runs in [kDefaultLocale]; once the fisher
+/// picks a language, that wins, permanently, across restarts.
 ///
 /// Deliberately backed by `shared_preferences` rather than the sqflite
 /// database used for identity and the SOS outbox. The language choice is
@@ -25,25 +21,11 @@ class LocaleController extends ChangeNotifier {
 
   Locale? _override;
 
-  /// The language the user explicitly picked, or null if following the device.
-  Locale? get override => _override;
-
-  /// Whether the user has ever made an explicit choice.
-  ///
-  /// Onboarding uses this to decide whether to surface the language picker
-  /// prominently on first launch.
-  bool get hasExplicitChoice => _override != null;
-
   /// The locale to hand to `MaterialApp.locale`.
-  ///
-  /// Null means "let Flutter resolve from the device", which is the correct
-  /// default rather than resolving it ourselves - Flutter's resolution also
-  /// considers the full ordered list of the user's preferred languages, not
-  /// just the first one.
-  Locale? get locale => _override;
+  Locale get locale => _override ?? kDefaultLocale;
 
   /// Load the stored choice. Never throws: a preferences failure degrades to
-  /// device-locale behaviour rather than blocking launch.
+  /// the default language rather than blocking launch.
   static Future<LocaleController> load() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance()
@@ -63,30 +45,20 @@ class LocaleController extends ChangeNotifier {
     }
   }
 
-  /// Set an explicit language. Pass null to go back to following the device.
-  Future<void> setLocale(Locale? locale) async {
-    if (locale?.languageCode == _override?.languageCode) {
+  /// Set an explicit language and remember it.
+  Future<void> setLocale(Locale locale) async {
+    if (locale.languageCode == _override?.languageCode) {
       return;
     }
     _override = locale;
     notifyListeners();
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      if (locale == null) {
-        await prefs.remove(_prefsKey);
-      } else {
-        await prefs.setString(_prefsKey, locale.languageCode);
-      }
+      await prefs.setString(_prefsKey, locale.languageCode);
     } catch (e) {
       // The in-memory switch already happened, so the user sees the language
       // change; it just will not survive a restart.
       AppDiagnostics.log('locale-save', e);
     }
   }
-
-  /// The locale actually in effect, resolving the device locale when the user
-  /// has not chosen one. For UI that needs to show which language is active.
-  Locale effectiveLocale(BuildContext context) =>
-      _override ??
-      resolveLocale(Localizations.localeOf(context), kSupportedLocales);
 }

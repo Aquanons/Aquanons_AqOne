@@ -1,16 +1,16 @@
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// How urgent an advisory is. Order matters: [severity] drives list sorting.
 enum AdvisoryPriority {
-  emergency('Emergency', 4, Color(0xFFDC2626)),
-  warning('Warning', 3, Color(0xFFF59E0B)),
-  information('Information', 2, Color(0xFF0F69C9)),
-  community('Community', 1, Color(0xFF10B981)),
-  unknown('Notice', 0, Color(0xFF6B7280));
+  emergency(4, Color(0xFFDC2626)),
+  warning(3, Color(0xFFF59E0B)),
+  information(2, Color(0xFF0F69C9)),
+  community(1, Color(0xFF10B981)),
+  unknown(0, Color(0xFF6B7280));
 
-  const AdvisoryPriority(this.label, this.severity, this.color);
+  const AdvisoryPriority(this.severity, this.color);
 
-  final String label;
   final int severity;
   final Color color;
 
@@ -29,6 +29,16 @@ enum AdvisoryPriority {
     }
   }
 }
+extension AdvisoryPriorityL10n on AdvisoryPriority {
+  String label(AppLocalizations t) => switch (this) {
+        AdvisoryPriority.emergency => t.advisoryPriorityEmergency,
+        AdvisoryPriority.warning => t.advisoryPriorityWarning,
+        AdvisoryPriority.information => t.advisoryPriorityInformation,
+        AdvisoryPriority.community => t.advisoryPriorityCommunity,
+        AdvisoryPriority.unknown => t.advisoryPriorityNotice,
+      };
+}
+
 
 /// A published notice from the MDRRMO or LGU.
 class Advisory {

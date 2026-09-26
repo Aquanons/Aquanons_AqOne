@@ -5,6 +5,23 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-26 - Aklanon first: plan 70 on `master`
+
+Len asked for the handset to run in Aklanon out of the box and for the English left in it to go.
+Plan [`70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md`](70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md), implemented and verified by Claude; evidence in [`aklanon/`](aklanon/).
+
+**On `master`:**
+- A fresh install runs in Aklanon whatever the phone is set to; a language picked in the app still wins. Flutter's own chrome and the day and month names use Tagalog, which Flutter and `intl` ship and Aklanon shares.
+- About 110 English strings moved into the ARB files with Aklanon drafts: every screen literal, the About/Help/Privacy/Terms pages, and the text models and services used to build (hazard pop-ups, advisory priorities, forecast reasons, GPS errors, the SOS "Last attempt" line, now stored as codes).
+- "RETURN NOW" reads "ULI EON KAMO" (Len's wording).
+- A source check in `localization_test.dart` fails on any new hard-coded text in `lib/ui` and on any Aklanon value still equal to English.
+- The unreachable trip checklist and brand header were deleted instead of translated.
+- Gate: `flutter analyze` no issues, `flutter test` 392 passed.
+
+**Not verified:**
+- Every Aklanon string is a machine draft until Len proofreads [`aklanon/REVIEW.md`](aklanon/REVIEW.md); the SAFETY CRITICAL rows need a second reader before the field session.
+- Backend-generated English (responder status labels, backend forecast reasons) still shows in English; `docs/22` §10 defers it to a backend contract change.
+
 ## 2026-09-26 - Fisher friction reduction: plan 65 Phases 1 and 3 on `master`
 
 Outside feedback said the handset may be too hard for fishermen with little smartphone experience.

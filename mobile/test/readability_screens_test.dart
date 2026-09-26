@@ -1,7 +1,6 @@
 import 'package:aqone/core/l10n_fallback.dart';
 import 'package:aqone/core/tokens.dart';
 import 'package:aqone/data/app_database.dart';
-import 'package:aqone/data/checklist_store.dart';
 import 'package:aqone/data/identity_store.dart';
 import 'package:aqone/data/map_snapshot_store.dart';
 import 'package:aqone/data/outbox_store.dart';
@@ -147,7 +146,6 @@ void main() {
       await tester.pumpWidget(_host(VenturePage(
         identity: _identity,
         sos: _FakeSosService(<SosRecord>[_openSos()]),
-        checklist: ChecklistStore(AppDatabase()),
         feeds: _FakeVentureFeeds(),
         location: _FakeLocationService(),
         squall: _watch,
@@ -284,7 +282,6 @@ void main() {
       await tester.pumpWidget(_host(AppShell(
         identity: _identity,
         sos: _FakeSosService(const <SosRecord>[]),
-        checklist: ChecklistStore(AppDatabase()),
         feeds: _FakeVentureFeeds(),
         location: _FakeLocationService(),
         identityStore: IdentityStore(AppDatabase()),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/advisory.dart';
 import '../services/venture_feeds.dart';
 import 'widgets/advisory_card.dart';
@@ -70,6 +71,7 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
   }
 
   Widget _buildBody(bool isDark) {
+    final t = AppLocalizations.of(context);
     if (_loading && _advisories.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -78,7 +80,7 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
       padding: EdgeInsets.fromLTRB(20, 20, 20, 32 + widget.bottomInset),
       children: <Widget>[
         Text(
-          'Advisories',
+          t.navAdvisories,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w900,
@@ -87,7 +89,7 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Notices from the MDRRMO and your LGU.',
+          t.advisoriesSubtitle,
           style: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.white70 : const Color(0xFF64748B),
@@ -97,15 +99,15 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
         if (_failed && _advisories.isEmpty)
           _Placeholder(
             icon: Icons.cloud_off_rounded,
-            title: 'Could not load advisories',
-            body: 'Check your connection and pull down to try again.',
+            title: t.advisoriesLoadFailedTitle,
+            body: t.advisoriesLoadFailedBody,
             isDark: isDark,
           )
         else if (_advisories.isEmpty)
           _Placeholder(
             icon: Icons.inbox_rounded,
-            title: 'No active advisories',
-            body: 'Nothing is currently in force for your area.',
+            title: t.advisoriesEmptyTitle,
+            body: t.advisoriesEmptyBody,
             isDark: isDark,
           )
         else ...<Widget>[
@@ -113,7 +115,7 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                'Showing the last loaded list - refresh failed.',
+                t.advisoriesStaleList,
                 style: TextStyle(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,

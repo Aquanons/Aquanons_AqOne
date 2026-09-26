@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import '../core/config.dart';
 import '../core/locale_controller.dart';
 import '../core/tokens.dart';
-import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
 import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
@@ -34,14 +33,13 @@ const double kDesktopBreakpoint = 900;
 /// Navigation shell holding the app's destinations.
 ///
 /// Venture is created lazily on first visit and then kept alive, so the map
-/// camera, checklist and in-flight state survive tab switches. Rebuilding it
+/// camera and in-flight state survive tab switches. Rebuilding it
 /// each time would reset the map and re-prompt for GPS.
 class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
     required this.identity,
     required this.sos,
-    required this.checklist,
     required this.feeds,
     required this.location,
     required this.identityStore,
@@ -54,7 +52,6 @@ class AppShell extends StatefulWidget {
 
   final VesselIdentity identity;
   final SosService sos;
-  final ChecklistStore checklist;
   final VentureFeeds feeds;
   final LocationService location;
 
@@ -232,9 +229,8 @@ class _AppShellState extends State<AppShell> {
     }
     final stale = staleRecords.first;
     final ageDuration = now.toUtc().difference(stale.createdAt.toUtc());
-    final hours = ageDuration.inHours;
-    final ageStr = hours <= 1 ? '$hours hour' : '$hours hours';
     final t = AppLocalizations.of(context);
+    final ageStr = t.weatherWindowDurationHoursOnly(ageDuration.inHours);
 
     bool dialogClosed = false;
     void doSend() {
@@ -407,7 +403,7 @@ class _AppShellState extends State<AppShell> {
   ///
   /// Once built it keeps its State: it stays at the same position in the
   /// IndexedStack's child list, so rebuilding the widget (on rotation, say)
-  /// reuses the existing State and the map camera and checklist survive.
+  /// reuses the existing State and the map camera survives.
   bool _ventureOpened = false;
 
   Widget _buildVenture(double bottomInset) {
@@ -420,7 +416,6 @@ class _AppShellState extends State<AppShell> {
       onAcknowledgeSquall: _acknowledgeSquall,
       identity: widget.identity,
       sos: widget.sos,
-      checklist: widget.checklist,
       feeds: widget.feeds,
       location: widget.location,
       bottomInset: bottomInset,

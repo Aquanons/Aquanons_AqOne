@@ -7,7 +7,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../core/config.dart';
-import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
 import '../models/buoy_marker.dart';
 import '../models/hazard_alert.dart';
@@ -56,7 +55,6 @@ class VenturePage extends StatefulWidget {
     super.key,
     required this.identity,
     required this.sos,
-    required this.checklist,
     required this.feeds,
     required this.location,
     this.bottomInset = 0,
@@ -68,7 +66,6 @@ class VenturePage extends StatefulWidget {
 
   final VesselIdentity identity;
   final SosService sos;
-  final ChecklistStore checklist;
   final VentureFeeds feeds;
   final LocationService location;
   final SosAlarm? sosAlarm;
@@ -273,7 +270,7 @@ class _VenturePageState extends State<VenturePage> {
 
     final fix = result.fix;
     if (fix == null) {
-      _snack(result.message);
+      _snack(result.failure.message(AppLocalizations.of(context)));
       // Still show conditions ashore so the screen is not empty.
       if (initial) {
         await _loadWeather(AqOneConfig.aklanLat, AqOneConfig.aklanLon);
@@ -318,7 +315,7 @@ class _VenturePageState extends State<VenturePage> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                kind.title,
+                kind.title(t),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -328,7 +325,7 @@ class _VenturePageState extends State<VenturePage> {
           ],
         ),
         content: Text(
-          kind.message(count),
+          kind.message(t, count),
           style: const TextStyle(fontSize: 14, height: 1.4),
         ),
         actions: <Widget>[
@@ -361,23 +358,20 @@ class _VenturePageState extends State<VenturePage> {
 
     final String titleText;
     if (weather == null) {
-      titleText = 'Weather unavailable';
+      titleText = t.weatherUnavailable;
     } else if (highWind) {
-      titleText = 'Wind above threshold';
+      titleText = t.safetyTitleHighWind;
     } else if (unsafe) {
-      titleText = '${weather.condition.label(t)} forecast';
+      titleText = t.safetyTitleConditionForecast(weather.condition.label(t));
     } else {
-      titleText = 'Conditions look calm';
+      titleText = t.safetyTitleCalm;
     }
 
     final String thresholdNote = highWind
-        ? 'Source: Open-Meteo · threshold '
-            '${AqOneConfig.unsafeWindKph.toStringAsFixed(0)} km/h. '
-            'This is not a PAGASA warning. '
-            'Always follow the official sea condition and advisories.'
-        : 'Source: Open-Meteo. '
-            'This is not a PAGASA warning. '
-            'Always follow the official sea condition and advisories.';
+        ? t.weatherSourceNoteThreshold(
+            AqOneConfig.unsafeWindKph.toStringAsFixed(0),
+          )
+        : t.weatherSourceNote;
 
     showDialog<void>(
       context: context,
@@ -409,9 +403,11 @@ class _VenturePageState extends State<VenturePage> {
             Text(
               weather == null
                   ? t.safetyWeatherLoadFailed
-                  : '${weather.condition.label(t)} · '
-                      '${weather.temperature.toStringAsFixed(0)}°C · '
-                      'wind ${weather.windSpeed.toStringAsFixed(0)} km/h',
+                  : t.safetyWeatherSummary(
+                      weather.condition.label(t),
+                      weather.temperature.toStringAsFixed(0),
+                      weather.windSpeed.toStringAsFixed(0),
+                    ),
               style: const TextStyle(fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -642,7 +638,7 @@ class _VenturePageState extends State<VenturePage> {
     final weather = _weather;
     final label = _weatherFailed
         ? t.weatherUnavailable
-        : weather?.condition.label(t) ?? 'Loading…';
+        : weather?.condition.label(t) ?? t.loadingShort;
     final tempDisplay = '${weather?.temperature.toStringAsFixed(0) ?? '--'}°C';
     final icon = weather?.condition.icon ?? Icons.wb_sunny_rounded;
 

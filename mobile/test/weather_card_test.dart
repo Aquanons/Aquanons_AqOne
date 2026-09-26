@@ -22,6 +22,7 @@ import 'package:aqone/ui/widgets/weather_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 
 class _TestSosService extends SosService {
   _TestSosService()
@@ -297,6 +298,12 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byIcon(Icons.dangerous_rounded), findsOneWidget);
+
+    // Plan 70 AKL-06: intl has no Aklanon data, and the Spanish-derived day
+    // names are the same words in Tagalog, so Aklanon chips use `fil`.
+    final DateTime tomorrow = sevenDays()[1].date;
+    expect(find.text(DateFormat('E', 'fil').format(tomorrow)), findsOneWidget);
+    expect(find.text(DateFormat('E', 'en').format(tomorrow)), findsNothing);
   });
 
   testWidgets('omits the strip entirely when there is no forecast', (

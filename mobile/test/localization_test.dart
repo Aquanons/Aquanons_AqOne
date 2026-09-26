@@ -24,36 +24,6 @@ Widget _app(Locale locale, Widget child) => MaterialApp(
     );
 
 void main() {
-  group('locale resolution', () {
-    test('matches on language code, ignoring region', () {
-      expect(
-        resolveLocale(const Locale('fil', 'PH'), kSupportedLocales),
-        const Locale('fil'),
-      );
-      expect(
-        resolveLocale(const Locale('en', 'US'), kSupportedLocales),
-        const Locale('en'),
-      );
-    });
-
-    // Some Android builds and older webviews still report the deprecated
-    // `tl` for Tagalog. A phone set to Tagalog must get a Tagalog app.
-    test('maps the deprecated tl code onto fil', () {
-      expect(
-        resolveLocale(const Locale('tl'), kSupportedLocales),
-        const Locale('fil'),
-      );
-    });
-
-    test('falls back to English for anything unsupported', () {
-      expect(
-        resolveLocale(const Locale('ja'), kSupportedLocales),
-        const Locale('en'),
-      );
-      expect(resolveLocale(null, kSupportedLocales), const Locale('en'));
-    });
-  });
-
   // The regression this whole fallback-delegate arrangement exists to
   // prevent: `akl` has no CLDR data in flutter_localizations, so without the
   // fallbacks the first Material widget to ask for MaterialLocalizations
@@ -67,7 +37,7 @@ void main() {
           builder: (BuildContext context) => Column(
             children: <Widget>[
               Text(AppLocalizations.of(context).navAdvisories),
-              Text(MaterialLocalizations.of(context).okButtonLabel),
+              Text(MaterialLocalizations.of(context).cancelButtonLabel),
             ],
           ),
         ),
@@ -77,9 +47,14 @@ void main() {
     expect(tester.takeException(), isNull);
     // Our own strings are Aklanon...
     expect(find.text('Mga Abiso'), findsOneWidget);
-    // ...while Flutter's built-in chrome falls back to English. Documented
-    // trade-off, see §4.2 of docs/22_LOCALIZATION_PLAN.md.
-    expect(find.text('OK'), findsOneWidget);
+    // ...while Flutter's built-in chrome falls back to Tagalog, the closest
+    // language Flutter ships (docs/22 §4.2, plan 70 D3).
+    final filChrome =
+        await GlobalMaterialLocalizations.delegate.load(const Locale('fil'));
+    final enChrome =
+        await GlobalMaterialLocalizations.delegate.load(const Locale('en'));
+    expect(filChrome.cancelButtonLabel, isNot(enChrome.cancelButtonLabel));
+    expect(find.text(filChrome.cancelButtonLabel), findsOneWidget);
   });
 
   testWidgets('sea status headline is translated in every locale',
@@ -221,16 +196,59 @@ void main() {
       }
     });
 
-    test('no bare Text literal remains on the SOS screens', () {
-      final bareTextRegex = RegExp(r"Text\(\s*'");
-      for (final path in <String>[
-        'lib/ui/venture_page.dart',
-        'lib/ui/home_page.dart',
-        'lib/ui/sos_flow.dart',
-      ]) {
-        expect(bareTextRegex.hasMatch(File(path).readAsStringSync()), isFalse,
-            reason: '$path contains bare Text(\' literals');
+    test('no hard-coded user-facing text anywhere in lib/ui', () {
+      // Plan 70 AKL-03. Brand names and the Tagalog slogan are the only
+      // literals a fisher may see in every language.
+      const allowed = <String>{
+        'AqOne',
+        'SOS',
+        r'Gabay sa Bawat Alon,\nKonektado sa Bawat Layon',
+      };
+      final literal = RegExp(
+        r"""(?:\bText\(|\b(?:title|label|labelText|hintText|helperText|tooltip|message|semanticLabel|semanticsLabel|headline|detail|body)\s*:)\s*(?:const\s+Text\(\s*)?'([^'$]*[A-Za-z][^']*)'""",
+      );
+      final offenders = <String>[];
+      for (final file in Directory('lib/ui').listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        final source = file.readAsStringSync();
+        for (final match in literal.allMatches(source)) {
+          if (!allowed.contains(match.group(1))) {
+            offenders.add('${file.path}: ${match.group(1)}');
+          }
+        }
       }
+      expect(offenders, isEmpty);
+    });
+
+    test('every English key has an Aklanon value that is not English', () {
+      // Plan 70 AKL-05. Identical values are allowed only where the word is
+      // the same in both languages (brand names, units, the compass, D5).
+      const sameInBoth = <String>{
+        'compassNorth',
+        'compassEast',
+        'compassSouth',
+        'compassWest',
+        'chatCharacterLimitLabel',
+        'buoyTitle',
+        'deliveryMetaBuoy',
+      };
+      final en = jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final akl = jsonDecode(File('lib/l10n/app_akl.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final keys = en.keys.where((k) => !k.startsWith('@'));
+      expect(
+        keys.where((k) => !akl.containsKey(k)).toList(),
+        isEmpty,
+        reason: 'keys missing from app_akl.arb',
+      );
+      expect(
+        keys
+            .where((k) => !sameInBoth.contains(k) && akl[k] == en[k])
+            .toList(),
+        isEmpty,
+        reason: 'Aklanon values still in English',
+      );
     });
   });
 }

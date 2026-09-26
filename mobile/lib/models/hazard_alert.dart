@@ -1,3 +1,4 @@
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// The two buoy-derived hazard feeds Venture polls.
@@ -9,41 +10,38 @@ enum HazardKind {
   wave(
     'wave',
     'wave_warnings',
-    'Dangerous Wave Warning',
     Icons.waves_rounded,
     Color(0xFFF59E0B),
   ),
   capsizing(
     'capsizing',
     'capsizing_advisories',
-    'Capsizing Risk Advisory',
     Icons.dangerous_rounded,
     Color(0xFFDC2626),
   );
 
-  const HazardKind(this.wire, this.responseKey, this.title, this.icon, this.color);
+  const HazardKind(this.wire, this.responseKey, this.icon, this.color);
 
   final String wire;
 
   /// The array key the backend wraps these records in.
   final String responseKey;
 
-  final String title;
   final IconData icon;
   final Color color;
+}
+
+extension HazardKindL10n on HazardKind {
+  String title(AppLocalizations t) => switch (this) {
+        HazardKind.wave => t.hazardWaveTitle,
+        HazardKind.capsizing => t.hazardCapsizingTitle,
+      };
 
   /// Message shown when [count] buoy locations are reporting this hazard.
-  String message(int count) {
-    final places = '$count buoy location${count == 1 ? '' : 's'}';
-    switch (this) {
-      case HazardKind.wave:
-        return 'Dangerous wave conditions detected at $places. Exercise '
-            'extreme caution.';
-      case HazardKind.capsizing:
-        return 'High tilt or motion detected at $places. Vessels in these '
-            'areas may be at risk of capsizing.';
-    }
-  }
+  String message(AppLocalizations t, int count) => switch (this) {
+        HazardKind.wave => t.hazardWaveMessage(count),
+        HazardKind.capsizing => t.hazardCapsizingMessage(count),
+      };
 }
 
 /// A single hazard record. Identity matters more than payload here: the UI

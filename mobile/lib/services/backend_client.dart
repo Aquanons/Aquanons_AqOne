@@ -7,6 +7,7 @@ import '../core/config.dart';
 import '../core/endpoint_guard.dart';
 import '../data/identity_store.dart';
 import '../data/secure_credential_store.dart';
+import '../models/delivery_failure.dart';
 import '../models/delivery_state.dart';
 import '../models/sos_record.dart';
 
@@ -288,7 +289,7 @@ class BackendClient {
   /// cleartext - into an indistinguishable false with nothing logged. A
   /// misconfigured base URL then looked identical to being out of signal, and
   /// the app blamed the buoy for a problem the internet path was having.
-  String? lastDirectError;
+  DeliveryFailure? lastDirectFailure;
 
   Future<bool> postSos(SosRecord record) async {
     final payload = record.toBuoyPayload()
@@ -310,17 +311,16 @@ class BackendClient {
       // recorded either way, which is all the handset needs to stop retrying
       // this route.
       if (response.statusCode == 200) {
-        lastDirectError = null;
+        lastDirectFailure = null;
         return true;
       }
-      lastDirectError = 'backend returned HTTP ${response.statusCode}';
+      lastDirectFailure = DeliveryFailure.serverError;
       return false;
     } on TimeoutException {
-      lastDirectError =
-          'backend did not answer within ${AqOneConfig.backendTimeout.inSeconds}s';
+      lastDirectFailure = DeliveryFailure.noSignal;
       return false;
     } catch (error) {
-      lastDirectError = _describeNetworkError(error);
+      lastDirectFailure = _classifyNetworkError(error);
       return false;
     }
   }
@@ -346,31 +346,25 @@ class BackendClient {
     }
   }
 
-  /// Turns a raw exception into something a person can act on, instead of
-  /// Dart's own exception text (a `SocketException` or `TimeoutException`
-  /// message reads as gibberish to a fisher, and previously reached the SOS
-  /// status card's "Last attempt" line verbatim - see
-  /// mobile/lib/ui/widgets/delivery_state_tile.dart). Matched on message text
-  /// rather than on `SocketException` / `HandshakeException`, because those
-  /// live in `dart:io` and importing it here would break the web build.
-  ///
-  /// The unrecognised-error fallback deliberately does not include the raw
-  /// exception text either - an error type this method does not know about
-  /// yet is still not something a fisher at sea needs spelled out for them.
-  String _describeNetworkError(Object error) {
+  /// Sorts a raw exception into a [DeliveryFailure] the SOS status card can
+  /// word in the fisher's language, instead of Dart's own exception text.
+  /// Matched on message text rather than on `SocketException` /
+  /// `HandshakeException`, because those live in `dart:io` and importing it
+  /// here would break the web build.
+  DeliveryFailure _classifyNetworkError(Object error) {
     final text = error.toString();
     if (text.contains('TimeoutException')) {
-      return 'the app is not getting a signal';
+      return DeliveryFailure.noSignal;
     }
     if (text.contains('Failed host lookup') ||
         text.contains('SocketException') ||
         text.contains('ClientException')) {
-      return 'no internet connection';
+      return DeliveryFailure.noInternet;
     }
     if (text.contains('HandshakeException') || text.contains('CERTIFICATE')) {
-      return "couldn't establish a secure connection";
+      return DeliveryFailure.insecure;
     }
-    return 'could not reach the server';
+    return DeliveryFailure.unreachable;
   }
 
   /// Ask the backend what has happened to this vessel's SOS records.

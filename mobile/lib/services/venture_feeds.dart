@@ -227,7 +227,7 @@ class VentureFeeds {
                         'id': a.id,
                         'title': a.title,
                         'description': a.description,
-                        'priority': a.priority.label,
+                        'priority': a.priority.name,
                         'municipality': a.municipality,
                         'source': a.source,
                         'revision': a.revision,

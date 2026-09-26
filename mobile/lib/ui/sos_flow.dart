@@ -116,16 +116,26 @@ Future<void> handleSosTap({
 /// Preset emergency types offered on the post-dispatch follow-up. Picking
 /// one amends the note already on file with the MDRRMO; it never delays the
 /// SOS itself, which has already gone out by the time this is shown.
+///
+/// [note] is what the MDRRMO reads and stays English whatever the app
+/// language: responders work in English (docs/22).
 enum _EmergencyType {
   engine('Engine failure', Icons.settings_suggest_rounded),
   capsizing('Capsizing / taking on water', Icons.waves_rounded),
   medical('Medical emergency', Icons.medical_services_rounded),
   other('Other', Icons.edit_note_rounded);
 
-  const _EmergencyType(this.label, this.icon);
+  const _EmergencyType(this.note, this.icon);
 
-  final String label;
+  final String note;
   final IconData icon;
+
+  String label(AppLocalizations t) => switch (this) {
+        _EmergencyType.engine => t.emergencyEngine,
+        _EmergencyType.capsizing => t.emergencyCapsizing,
+        _EmergencyType.medical => t.emergencyMedical,
+        _EmergencyType.other => t.emergencyOther,
+      };
 }
 
 /// Full-screen "sending SOS in N…" countdown with a slide-to-cancel bar.
@@ -336,7 +346,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
       final text = _custom.text.trim();
       return text.isEmpty ? null : text;
     }
-    return type.label;
+    return type.note;
   }
 
   Future<void> _submit() async {
@@ -465,7 +475,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
                   children: <Widget>[
                     for (final type in _EmergencyType.values)
                       ChoiceChip(
-                        label: Text(type.label),
+                        label: Text(type.label(t)),
                         avatar: Icon(type.icon, size: 16),
                         selected: _selected == type,
                         onSelected: _submitting || _standingDown

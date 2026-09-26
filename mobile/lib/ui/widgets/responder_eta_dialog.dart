@@ -225,7 +225,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Help is coming',
+              t.rescueNotifTitle,
               style: TextStyle(
                 color: accent,
                 fontWeight: FontWeight.w900,
@@ -240,7 +240,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            statusText ?? 'MDRRMO has received your SOS.',
+            statusText ?? t.responderStatusReceived,
             style: TextStyle(
               fontSize: 15,
               color: isDark ? Colors.white : const Color(0xFF1F2937),

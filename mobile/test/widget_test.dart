@@ -142,7 +142,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('3 message(s) waiting on this buoy'), findsOneWidget);
+      expect(find.text('3 messages waiting on this buoy'), findsOneWidget);
     });
 
     testWidgets('never shows a battery reading - the firmware sends none',

@@ -30,20 +30,13 @@ a typo.
 
 `en`, `fil` (**not** `tl` — flutter_localizations ships `fil`), `akl`.
 Aklanon has no Material localizations; `lib/core/l10n_fallback.dart`
-handles that. See §2 and §4.2 of the plan doc.
+handles that by loading Tagalog chrome. See §2 and §4.2 of the plan doc.
 
-## Waiting on a translator
+**Aklanon is the default.** A fresh install runs in `akl` whatever the
+phone is set to (`kDefaultLocale`); only the in-app picker changes it.
+`app_en.arb` is the template, not the default language.
 
-The 18 keys added with the forecast strip, compass and hotspot legend exist
-in `app_en.arb` only. They were deliberately **not** machine-drafted into
-`app_fil.arb` / `app_akl.arb`: five of them are tagged SAFETY CRITICAL, and a
-guessed "Dangerous" is worse than an English one a fisher can at least
-recognise. They fall back to English and are listed in `untranslated.json`.
-
-The compass cardinals (`compassNorth` and friends) need a decision rather
-than a translation — whether an Aklanon-speaking fisher reads N/E/S/W, or
-the local initials, is a question for someone from New Washington, not for a
-dictionary.
+The compass letters stay N/E/S/W in every language (Len, plan 70 D5).
 
 ## Regenerating
 

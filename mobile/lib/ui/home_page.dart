@@ -379,7 +379,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   const SizedBox(width: AqSpace.base),
                   Semantics(
                     button: true,
-                    label: 'Open fisherman profile',
+                    label: t.profileOpenSemantics,
                     child: InkWell(
                       onTap: widget.onOpenProfile,
                       customBorder: const CircleBorder(),

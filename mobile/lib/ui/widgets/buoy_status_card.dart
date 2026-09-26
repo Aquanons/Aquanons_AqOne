@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/tokens.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/buoy_contact.dart';
 
 class BuoyStatusCard extends StatelessWidget {
@@ -11,31 +12,29 @@ class BuoyStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
+    final t = AppLocalizations.of(context);
     final current = status;
 
     if (current == null) {
       return _Shell(
         palette: palette,
         accent: AqColors.disabled,
-        headline: 'No buoy connected',
-        detail: 'Join a buoy WiFi network to hand off an SOS.',
+        headline: t.buoyNoneTitle,
+        detail: t.buoyNoneBody,
       );
     }
 
     return _Shell(
       palette: palette,
       accent: current.uplink ? AqColors.success : AqColors.warning,
-      headline: 'Buoy ${current.buoyId}',
+      headline: t.buoyTitle(current.buoyId),
       // Mirrors the buoy's own captive-portal copy
       // (firmware/buoy/AqOneBuoy/AqOneBuoy.ino handlePortal()) so the phone
       // and the buoy never disagree about what "connected" means. The
       // firmware does not report a battery reading today, so this card must
       // not show one - showing a number the buoy never sent would be exactly
       // the fake operational state the Week 1 plan bans.
-      detail: current.uplink
-          ? 'Link to shore is up. Your SOS will reach the rescue centre now.'
-          : 'Link to shore is down. This buoy will hold your SOS and deliver '
-              'it automatically once the link returns.',
+      detail: current.uplink ? t.buoyUplinkUp : t.buoyUplinkDown,
       queued: current.queueDepth,
     );
   }
@@ -103,7 +102,7 @@ class _Shell extends StatelessWidget {
           if (queued > 0) ...<Widget>[
             const SizedBox(height: AqSpace.sm),
             Text(
-              '$queued message(s) waiting on this buoy',
+              AppLocalizations.of(context).buoyQueued(queued),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

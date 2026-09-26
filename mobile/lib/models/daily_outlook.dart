@@ -57,6 +57,66 @@ enum RiskSource {
   device,
 }
 
+/// What raised a device-scored verdict. [measured] kinds carry a number.
+enum RiskFactorKind {
+  gusts(measured: true),
+  wind(measured: true),
+  swell(measured: true),
+  rainMm(measured: true),
+  severeThunderstorm,
+  thunderstorm,
+  heavyRain,
+  rain,
+  poorVisibility;
+
+  const RiskFactorKind({this.measured = false});
+
+  final bool measured;
+}
+
+/// One reason behind a device-scored verdict, kept as data rather than a
+/// sentence so the forecast strip can word it in the fisher's language.
+class RiskFactor {
+  const RiskFactor(this.kind, [this.value]);
+
+  final RiskFactorKind kind;
+
+  /// The measured amount for [RiskFactorKind.gusts], [RiskFactorKind.wind]
+  /// (km/h), [RiskFactorKind.swell] (m) and [RiskFactorKind.rainMm] (mm).
+  final num? value;
+
+  /// Cache form, e.g. `swell:2.1` or `thunderstorm`.
+  String get wire => value == null ? kind.name : '${kind.name}:$value';
+
+  static RiskFactor? fromWire(Object? raw) {
+    if (raw is! String) {
+      return null;
+    }
+    final List<String> parts = raw.split(':');
+    final RiskFactorKind? kind =
+        RiskFactorKind.values.where((k) => k.name == parts.first).firstOrNull;
+    final num? value = parts.length > 1 ? num.tryParse(parts[1]) : null;
+    if (kind == null || (kind.measured && value == null)) {
+      return null;
+    }
+    return RiskFactor(kind, value);
+  }
+}
+
+extension RiskFactorL10n on RiskFactor {
+  String label(AppLocalizations t) => switch (kind) {
+        RiskFactorKind.gusts => t.riskFactorGusts(value!.round()),
+        RiskFactorKind.wind => t.riskFactorWind(value!.round()),
+        RiskFactorKind.swell => t.riskFactorSwell(value!.toStringAsFixed(1)),
+        RiskFactorKind.rainMm => t.riskFactorRainMm(value!.round()),
+        RiskFactorKind.severeThunderstorm => t.riskFactorSevereThunderstorm,
+        RiskFactorKind.thunderstorm => t.deteriorationReasonThunderstorm,
+        RiskFactorKind.heavyRain => t.deteriorationReasonHeavyRain,
+        RiskFactorKind.rain => t.riskFactorRain,
+        RiskFactorKind.poorVisibility => t.deteriorationReasonPoorVisibility,
+      };
+}
+
 /// A verdict plus enough provenance to say honestly how much it knew.
 class RiskAssessment {
   const RiskAssessment({
@@ -64,13 +124,13 @@ class RiskAssessment {
     required this.source,
     this.score,
     this.reason,
+    this.factors = const <RiskFactor>[],
     this.inputs = const <String>[],
   });
 
   static const RiskAssessment unknown = RiskAssessment(
     level: RiskLevel.unknown,
     source: RiskSource.device,
-    reason: 'No forecast data',
   );
 
   final RiskLevel level;
@@ -80,8 +140,12 @@ class RiskAssessment {
   /// gradient; the UI buckets on [level], not on this.
   final double? score;
 
-  /// Short human explanation, e.g. "Gusts 41 km/h, 2.1 m swell".
+  /// The backend's own explanation, e.g. "Gusts 41 km/h, 2.1 m swell".
+  /// English from the server (docs/22 §10); device verdicts use [factors].
   final String? reason;
+
+  /// Why a device-scored verdict came out the way it did.
+  final List<RiskFactor> factors;
 
   /// Which feeds fed the verdict, e.g. ['buoy:buoy-b', 'open-meteo'].
   final List<String> inputs;
@@ -95,6 +159,27 @@ class RiskAssessment {
   bool get missingSeaState => !inputs.any(
         (String i) => i.startsWith('buoy:') || i == 'wave',
       );
+}
+
+extension RiskAssessmentL10n on RiskAssessment {
+  /// One sentence for the day chip's tooltip and screen-reader label.
+  String? reasonText(AppLocalizations t) {
+    if (factors.isNotEmpty) {
+      final List<String> parts =
+          factors.map((RiskFactor f) => f.label(t)).toList(growable: false);
+      final String joined = parts.length == 1
+          ? parts.single
+          : t.listAnd(
+              parts.sublist(0, parts.length - 1).join(', '),
+              parts.last,
+            );
+      return joined[0].toUpperCase() + joined.substring(1);
+    }
+    if (source == RiskSource.device && level == RiskLevel.safe) {
+      return missingSeaState ? t.riskNoAdverseNoWave : t.riskNoAdverse;
+    }
+    return reason;
+  }
 }
 
 /// One day of the outlook.
@@ -136,14 +221,6 @@ class DailyOutlook {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
-  }
-
-  /// Two-letter-ish weekday for the chip. 'Today' is handled by the widget.
-  String get shortWeekday {
-    const List<String> names = <String>[
-      'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
-    ];
-    return names[(date.weekday - 1).clamp(0, 6)];
   }
 
   DailyOutlook copyWith({RiskAssessment? risk, double? waveM}) {
@@ -335,6 +412,7 @@ class DailyOutlook {
         'level': risk.level.wire,
         'score': risk.score,
         'reason': risk.reason,
+        'factors': risk.factors.map((RiskFactor f) => f.wire).toList(),
         'inputs': risk.inputs,
         'source': risk.source == RiskSource.backend ? 'backend' : 'device',
       },
@@ -357,11 +435,15 @@ class DailyOutlook {
           ? RiskSource.backend
           : RiskSource.device;
       final Object? inputs = rawRisk['inputs'];
+      final Object? factors = rawRisk['factors'];
       risk = RiskAssessment(
         level: level,
         source: source,
         score: _double(rawRisk['score']),
         reason: rawRisk['reason'] is String ? rawRisk['reason'] as String : null,
+        factors: factors is List
+            ? factors.map(RiskFactor.fromWire).nonNulls.toList(growable: false)
+            : const <RiskFactor>[],
         inputs: inputs is List
             ? inputs.whereType<String>().toList(growable: false)
             : const <String>[],

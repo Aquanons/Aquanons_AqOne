@@ -129,7 +129,7 @@ class _EnrolmentPageState extends State<EnrolmentPage> {
           ),
           const SizedBox(height: AqSpace.sm),
           Text(
-            'Enter the 8-character pairing code provided by the MDRRMO operations desk to link this device to your vessel record.',
+            t.enrolInstructions,
             style: TextStyle(
               fontSize: 14,
               color: palette.secondaryText,
@@ -141,8 +141,8 @@ class _EnrolmentPageState extends State<EnrolmentPage> {
             textCapitalization: TextCapitalization.characters,
             autocorrect: false,
             decoration: InputDecoration(
-              labelText: 'Pairing Code',
-              hintText: 'e.g. K7Q4M9PX',
+              labelText: t.enrolCodeLabel,
+              hintText: t.enrolCodeHint('K7Q4M9PX'),
               filled: true,
               fillColor: palette.surface,
               border: OutlineInputBorder(
@@ -181,9 +181,9 @@ class _EnrolmentPageState extends State<EnrolmentPage> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Verify Code',
-                      style: TextStyle(
+                  : Text(
+                      t.enrolVerifyButton,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),

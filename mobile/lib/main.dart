@@ -10,7 +10,6 @@ import 'core/l10n_fallback.dart';
 import 'core/locale_controller.dart';
 import 'core/tokens.dart';
 import 'data/app_database.dart';
-import 'data/checklist_store.dart';
 import 'core/field_cipher.dart';
 import 'data/identity_store.dart';
 import 'data/secure_credential_store.dart';
@@ -123,7 +122,6 @@ class _AqOneAppState extends State<AqOneApp> {
   final SecureCredentialStore _secureStore = SecureCredentialStore();
   late final IdentityStore _identityStore;
   late final SosService _service;
-  late final ChecklistStore _checklist;
   late final VentureFeeds _feeds;
   late final LocationService _location;
   late final BackendClient _backend;
@@ -153,7 +151,6 @@ class _AqOneAppState extends State<AqOneApp> {
       backend: _backend,
       location: _location,
     );
-    _checklist = ChecklistStore(_db);
     // Snapshots make the Venture map usable with no signal: the last good
     // response for each feed is replayed when a fetch fails, so opening
     // the app offshore shows buoys and coverage rather than empty sea.
@@ -177,14 +174,8 @@ class _AqOneAppState extends State<AqOneApp> {
   static const Duration _secureRestoreTimeout = Duration(seconds: 2);
   bool _secureRestoreTimedOut = false;
 
-  AppLocalizations _activeL10n() {
-    final code = _locale?.locale?.languageCode ?? 'en';
-    try {
-      return lookupAppLocalizations(Locale(code));
-    } catch (_) {
-      return lookupAppLocalizations(const Locale('en'));
-    }
-  }
+  AppLocalizations _activeL10n() =>
+      lookupAppLocalizations(_locale?.locale ?? kDefaultLocale);
 
   void _onLocaleChanged() {
     if (mounted) {
@@ -290,10 +281,9 @@ class _AqOneAppState extends State<AqOneApp> {
       title: 'AqOne',
       debugShowCheckedModeBanner: false,
 
-      // Null while preferences are still loading, and null again whenever the
-      // user is following their device language - in both cases Flutter
-      // resolves against supportedLocales itself, which is what we want.
-      locale: _locale?.locale,
+      // The default covers the spinner frames before preferences are read;
+      // the device language is never consulted (docs/22 §2).
+      locale: _locale?.locale ?? kDefaultLocale,
       supportedLocales: kSupportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         AppLocalizations.delegate,
@@ -390,7 +380,6 @@ class _AqOneAppState extends State<AqOneApp> {
     return AppShell(
       identity: identity,
       sos: _service,
-      checklist: _checklist,
       feeds: _feeds,
       location: _location,
       identityStore: _identityStore,

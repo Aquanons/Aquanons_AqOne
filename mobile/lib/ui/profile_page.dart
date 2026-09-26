@@ -544,22 +544,22 @@ class _ProfilePageState extends State<ProfilePage> {
             _SettingsTile(
               icon: Icons.info_outline_rounded,
               label: t.aboutAqOne,
-              onTap: () => _openInfo(t.aboutAqOne, InfoCopy.about),
+              onTap: () => _openInfo(t.aboutAqOne, t.infoAboutBody),
             ),
             _SettingsTile(
               icon: Icons.help_outline_rounded,
               label: t.helpSupport,
-              onTap: () => _openInfo(t.helpSupport, InfoCopy.help),
+              onTap: () => _openInfo(t.helpSupport, t.infoHelpBody),
             ),
             _SettingsTile(
               icon: Icons.shield_outlined,
               label: t.privacyPolicy,
-              onTap: () => _openInfo(t.privacyPolicy, InfoCopy.privacy),
+              onTap: () => _openInfo(t.privacyPolicy, t.infoPrivacyBody),
             ),
             _SettingsTile(
               icon: Icons.gavel_rounded,
               label: t.termsOfUse,
-              onTap: () => _openInfo(t.termsOfUse, InfoCopy.terms),
+              onTap: () => _openInfo(t.termsOfUse, t.infoTermsBody),
             ),
             const SizedBox(height: AqSpace.lg),
             SizedBox(

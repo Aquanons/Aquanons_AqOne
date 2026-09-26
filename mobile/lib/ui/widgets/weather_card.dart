@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/config.dart';
+import '../../core/l10n_fallback.dart';
 import '../../models/daily_outlook.dart';
 import '../../models/forecast_outlook.dart';
 import '../../models/sea_condition.dart';
@@ -201,8 +202,10 @@ class WeatherCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Wind ${value.windSpeed.toStringAsFixed(0)} km/h '
-                    '· $locationLabel',
+                    t.weatherWindLine(
+                      value.windSpeed.toStringAsFixed(0),
+                      locationLabel,
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white54 : const Color(0xFF64748B),
@@ -239,16 +242,15 @@ class WeatherCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    value.hasHighWind
-                        ? 'Wind ${value.windSpeed.toStringAsFixed(0)} km/h — '
-                            'above the ${AqOneConfig.unsafeWindKph.toStringAsFixed(0)} km/h '
-                            'threshold. Source: Open-Meteo. '
-                            'This is not a PAGASA warning. '
-                            'Always check the official sea condition and advisories.'
-                        : '${value.condition.label(t)} forecast — '
-                            'adverse condition. Source: Open-Meteo. '
-                            'This is not a PAGASA warning. '
-                            'Always check the official sea condition and advisories.',
+                    <String>[
+                      value.hasHighWind
+                          ? t.weatherHighWindNote(
+                              value.windSpeed.toStringAsFixed(0),
+                              AqOneConfig.unsafeWindKph.toStringAsFixed(0),
+                            )
+                          : t.weatherAdverseNote(value.condition.label(t)),
+                      t.weatherSourceNote,
+                    ].join(' '),
                     style: const TextStyle(
                       fontSize: 16,
                       height: 1.35,
@@ -675,23 +677,13 @@ class _FishingWindowSummary extends StatelessWidget {
     );
   }
 
-  static String _formatDateTime(BuildContext context, DateTime at) {
-    try {
-      final String locale = Localizations.localeOf(context).languageCode;
-      return DateFormat('E, h a', locale).format(at.toLocal());
-    } catch (_) {
-      return DateFormat('E, h a').format(at.toLocal());
-    }
-  }
+  static String _formatDateTime(BuildContext context, DateTime at) =>
+      DateFormat('E, h a', dateLocaleFor(Localizations.localeOf(context)))
+          .format(at.toLocal());
 
-  static String _formatDay(BuildContext context, DateTime at) {
-    try {
-      final String locale = Localizations.localeOf(context).languageCode;
-      return DateFormat('EEEE', locale).format(at.toLocal());
-    } catch (_) {
-      return DateFormat('EEEE').format(at.toLocal());
-    }
-  }
+  static String _formatDay(BuildContext context, DateTime at) =>
+      DateFormat('EEEE', dateLocaleFor(Localizations.localeOf(context)))
+          .format(at.toLocal());
 
   static String _clock(DateTime at) {
     final int hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
@@ -836,16 +828,21 @@ class _DayChip extends StatelessWidget {
     final Color risk = level.color;
     final double alpha = isOutlook ? 0.55 : 1.0;
 
-    final String label = isFirst ? t.forecastToday : day.shortWeekday;
+    final String label = isFirst
+        ? t.forecastToday
+        : DateFormat('E', dateLocaleFor(Localizations.localeOf(context)))
+            .format(day.date);
     final String high = day.tempMax == null ? '–' : '${day.tempMax!.round()}°';
     final String low = day.tempMin == null ? '' : '${day.tempMin!.round()}°';
 
+    final String? reason = day.risk.reasonText(t);
+
     return Semantics(
       label: '$label, ${day.condition.label(t)}, ${level.label(t)}.'
-          '${day.risk.reason == null ? '' : ' ${day.risk.reason}.'}'
-          '${isOutlook ? ' Longer-range outlook, lower confidence.' : ''}',
+          '${reason == null ? '' : ' $reason.'}'
+          '${isOutlook ? ' ${t.forecastLongRangeSemantics}' : ''}',
       child: Tooltip(
-        message: day.risk.reason ?? level.label(t),
+        message: reason ?? level.label(t),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           decoration: BoxDecoration(

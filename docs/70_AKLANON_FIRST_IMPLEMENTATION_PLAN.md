@@ -1,6 +1,6 @@
 # Implementation Plan: Aklanon first (handset)
 
-**Status:** APPROVED - Revision 2; Phase 1 next
+**Status:** APPROVED - Revision 2; Phases 1-4 complete, Phase 5 code complete, walkthrough and Len's proofread open
 **Owner:** Lenard (approval, Aklanon proofreading), Claude (implementation and tests)
 **Created:** 2026-09-26T13:30:00+08:00
 **Updated:** 2026-09-26T13:50:00+08:00
@@ -71,22 +71,22 @@ What the scan of `mobile/` found, which this plan is built on:
 ## Phase 1: Aklanon by default
 
 Requirements: AKL-01, AKL-02
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Amend `docs/22_LOCALIZATION_PLAN.md` first: Aklanon is the default and the device language is not consulted (D2); record D3 and D5; mark the §2 "fallback and source of truth" line as English being the ARB template only.
-- [ ] Red tests in `test/localization_test.dart`: AKL-01 (fresh preferences, `tester.platformDispatcher.localeTestValue = Locale('en', 'US')`, pump `AqOneApp`, expect Aklanon) and AKL-02.
-- [ ] `lib/core/l10n_fallback.dart`: add `const Locale kDefaultLocale = Locale('akl')`; list `akl` first in `kSupportedLocales` so the pickers show it first; delete `resolveLocale` and its three tests.
-- [ ] `lib/core/locale_controller.dart`: `locale` returns `_override ?? kDefaultLocale`; delete `effectiveLocale` (callers in `language_picker.dart` read `controller.locale`) and `hasExplicitChoice`; rewrite the class comment (two states, not three).
-- [ ] `lib/main.dart`: `MaterialApp.locale` and `_activeL10n()` use `_locale?.locale ?? kDefaultLocale`.
-- [ ] `lib/l10n/README.md`: delete the stale "Waiting on a translator" section (all keys are drafted in `akl`) and say Aklanon is the default.
+- [x] Amend `docs/22_LOCALIZATION_PLAN.md` first: Aklanon is the default and the device language is not consulted (D2); record D3 and D5; mark the §2 "fallback and source of truth" line as English being the ARB template only.
+- [x] Red tests in `test/localization_test.dart`: AKL-01 (fresh preferences, `tester.platformDispatcher.localeTestValue = Locale('en', 'US')`, pump `AqOneApp`, expect Aklanon) and AKL-02.
+- [x] `lib/core/l10n_fallback.dart`: add `const Locale kDefaultLocale = Locale('akl')`; list `akl` first in `kSupportedLocales` so the pickers show it first; delete `resolveLocale` and its three tests. The fallback delegates load `fil` chrome here rather than in Phase 5 (one line, D3).
+- [x] `lib/core/locale_controller.dart`: `locale` returns `_override ?? kDefaultLocale`; delete `effectiveLocale` (callers in `language_picker.dart` read `controller.locale`) and `hasExplicitChoice`; rewrite the class comment (two states, not three).
+- [x] `lib/main.dart`: `MaterialApp.locale` and `_activeL10n()` use `_locale?.locale ?? kDefaultLocale`.
+- [x] `lib/l10n/README.md`: delete the stale "Waiting on a translator" section (all keys are drafted in `akl`) and say Aklanon is the default.
 
 ### Verification
 
-- [ ] `cd mobile && flutter pub get && flutter analyze && flutter test`: analyze clean, all tests pass (baseline 379 on `master`).
-- [ ] Emulator, fresh install, device language English: onboarding and Home show Aklanon; switch to English in Profile, force-stop, relaunch: English.
-- [ ] Results and screenshots in `docs/aklanon/EVIDENCE.md`.
+- [x] `cd mobile && flutter pub get && flutter analyze && flutter test`: analyze clean, all tests pass (baseline 379 on `master`).
+- [ ] Emulator, fresh install, device language English: onboarding and Home show Aklanon; switch to English in Profile, force-stop, relaunch: English. Folded into the Phase 5 walkthrough; the widget tests cover the same two launches.
+- [x] Results and screenshots in `docs/aklanon/EVIDENCE.md`.
 
 ### Review and checkpoint
 
@@ -101,22 +101,23 @@ Continue automatically to the next phase (auto).
 ## Phase 2: Dead English deleted
 
 Requirements: AKL-07
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Delete `lib/ui/checklist_page.dart`, `lib/data/checklist_store.dart`, `lib/models/checklist_item.dart`, and the `checklist` parameter from `main.dart`, `AppShell`, `VenturePage`, `test/pitch_mode_test.dart` and `test/readability_screens_test.dart`.
+- [x] Delete `lib/ui/checklist_page.dart`, `lib/data/checklist_store.dart`, `lib/models/checklist_item.dart`, and the `checklist` parameter from `main.dart`, `AppShell`, `VenturePage`, `test/pitch_mode_test.dart` and `test/readability_screens_test.dart`.
   Leave the `checklist_items` table in `app_database.dart`: dropping it needs a schema version bump for no user benefit.
-- [ ] Delete `lib/ui/widgets/brand_header.dart` and `HotspotCell.ageLabel`.
+- [x] Delete `lib/ui/widgets/brand_header.dart` and `HotspotSurface.ageLabel` (and its test group).
+- [x] Delete the 12 ARB keys only the checklist and an old buoy snackbar used (`checklist*`, `tripChecklistTooltip`, `buoyConnectSnack`, `buoyDisconnectSnack`). Kept, although unused today: `sosReopened` (a `docs/22` M4 key) and `hotspotLegend*` (the activity heatmap is in scope again).
 
 ### Verification
 
-- [ ] Standard mobile gate: `flutter analyze` clean, `flutter test` passes.
-- [ ] `grep -rn "Checklist\|BrandHeader\|ageLabel" mobile/lib mobile/test` prints nothing except the table DDL.
+- [x] Standard mobile gate: `flutter analyze` clean, `flutter test` passes.
+- [x] `grep -rn "Checklist\|BrandHeader\|ageLabel" mobile/lib mobile/test` prints nothing except the table DDL.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `refactor(mobile): delete the unreachable checklist and brand header`
 Continue automatically to the next phase (auto).
@@ -124,26 +125,27 @@ Continue automatically to the next phase (auto).
 ## Phase 3: UI literals localized
 
 Requirements: AKL-03, AKL-05, AKL-08
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red tests: widen the bare-literal check in `localization_test.dart` to every file under `lib/ui` with the AKL-03 patterns and allowlist; add the AKL-05 key-parity test.
-- [ ] Move every flagged literal into `app_en.arb` with an `@key` description (screen context, and `SAFETY CRITICAL` where it is) and an `app_akl.arb` draft.
+- [x] Red tests: widen the bare-literal check in `localization_test.dart` to every file under `lib/ui` with the AKL-03 patterns and allowlist; add the AKL-05 key-parity test.
+- [x] Move every flagged literal into `app_en.arb` with an `@key` description (screen context, and `SAFETY CRITICAL` where it is) and an `app_akl.arb` draft.
   Files: `advisories_page.dart`, `app_shell.dart` (the `$hours hour` fragment becomes an ICU plural), `chathubb.dart`, `enrolment_page.dart`, `home_page.dart` (avatar semantics), `info_page.dart`, `sos_flow.dart`, `squall_alert_page.dart`, `venture_page.dart` (safety dialog), and under `widgets/`: `advisory_card.dart`, `buoy_status_card.dart`, `offline_map_banner.dart`, `responder_eta_dialog.dart`, `sea_condition_banner.dart`, `squall_banner.dart`, `weather_card.dart`.
-- [ ] `InfoCopy` becomes four ARB keys (`infoAbout`, `infoHelp`, `infoPrivacy`, `infoTerms`); `InfoPage` takes the resolved text as today.
-- [ ] Emergency types in `sos_flow.dart`: the enum keeps the icon and an English `wire` note; display text through an `...L10n` extension (AKL-04 test: the note sent to the MDRRMO stays English in `akl`).
-- [ ] The three hand-rolled "N min ago" formatters (`offline_map_banner.dart`, `sea_condition_banner.dart`, `squall_banner.dart`) become one ICU key set used by all three.
-- [ ] Start `docs/aklanon/REVIEW.md` (AKL-08) with every key added in this phase.
+- [x] `InfoCopy` becomes four ARB keys (`infoAbout`, `infoHelp`, `infoPrivacy`, `infoTerms`); `InfoPage` takes the resolved text as today.
+- [x] Emergency types in `sos_flow.dart`: the enum keeps the icon and an English `wire` note; display text through an `...L10n` extension (AKL-04 test: the note sent to the MDRRMO stays English in `akl`).
+- [x] The three hand-rolled "N min ago" formatters (`offline_map_banner.dart`, `sea_condition_banner.dart`, `squall_banner.dart`) become one ICU key set used by all three.
+- [x] Start `docs/aklanon/REVIEW.md` (AKL-08) with every key added in this phase.
+- [x] Pulled forward from Phase 5: the seven Aklanon values that were still English (the AKL-05 parity test needed them), and nine earlier drafts that used Tagalog or Cebuano function words (ang, kung, ug, kaysa), all listed in `REVIEW.md`.
 
 ### Verification
 
-- [ ] Standard mobile gate.
-- [ ] `grep -rnE "(Text|title:|label:|labelText:|hintText:|tooltip:|semanticLabel:)\s*\(?\s*'[A-Za-z]" mobile/lib/ui` prints nothing outside the allowlist.
+- [x] Standard mobile gate.
+- [x] `grep -rnE "(Text|title:|label:|labelText:|hintText:|tooltip:|semanticLabel:)\s*\(?\s*'[A-Za-z]" mobile/lib/ui` prints nothing outside the allowlist.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `feat(mobile): localize the remaining screen text with Aklanon drafts`
 Continue automatically to the next phase (auto).
@@ -151,28 +153,29 @@ Continue automatically to the next phase (auto).
 ## Phase 4: Text below the UI localized
 
 Requirements: AKL-04, AKL-08
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red tests for each item below, behavioural (drive the model or service, render in `akl`), not source greps.
-- [ ] `hazard_alert.dart`: drop `title` and `message(count)` from `HazardKind`; `HazardKindL10n` with an ICU plural for the buoy count.
-- [ ] `advisory.dart`: drop `label` from `AdvisoryPriority`; `AdvisoryPriorityL10n`. `venture_feeds.dart` snapshots write `priority.name` instead of `priority.label` (`fromWire` already lower-cases, so old snapshots still parse). The `'All'` municipality default becomes null and the UI shows the localized "All".
-- [ ] `safety_score.dart` and `daily_outlook.dart`: `RiskAssessment.reason` becomes a list of typed reasons (`RiskReason` enum plus the number where there is one); the sentence is built in the UI by `RiskReasonL10n`. Reuse the existing `DeteriorationReason` labels where they match.
-- [ ] `location_service.dart`: `LocationResult.message` moves to `LocationFailureL10n`; `venture_page.dart` resolves it.
-- [ ] SOS "Last attempt": `backend_client.dart` and `sos_service.dart` record short codes (`no_signal`, `no_internet`, `tls`, `unreachable`, `buoy_not_connected`, `no_buoy`, `buoy_rejected`, `buoy_invalid`), joined with `,`, in `last_error`; `delivery_state_tile.dart` maps each code to text and shows an unknown value verbatim (rows written before this change).
-- [ ] `welcome_advisory.dart`: title and body come from ARB keys, resolved in `advisory_card.dart` for the welcome advisory's id.
-- [ ] `sos_foreground.dart` fallbacks: drop the English defaults; the resolvers are always passed.
-- [ ] Add every new key to `docs/aklanon/REVIEW.md`.
+- [x] Red tests for each item below, behavioural (drive the model or service, render in `akl`), not source greps.
+- [x] `hazard_alert.dart`: drop `title` and `message(count)` from `HazardKind`; `HazardKindL10n` with an ICU plural for the buoy count.
+- [x] `advisory.dart`: drop `label` from `AdvisoryPriority`; `AdvisoryPriorityL10n`. `venture_feeds.dart` snapshots write `priority.name` instead of `priority.label` (`fromWire` already lower-cases, so old snapshots still parse). The `'All'` municipality default becomes null and the UI shows the localized "All".
+- [x] `safety_score.dart` and `daily_outlook.dart`: device verdicts carry `RiskAssessment.factors` (`RiskFactorKind` plus the number where there is one, cached as `swell:2.1`-style strings); `reason` stays for the backend's own English text (`docs/22` §10); the sentence is built by `RiskAssessmentL10n.reasonText`. Reuse the existing `DeteriorationReason` labels where they match.
+- [x] `location_service.dart`: `LocationResult.message` moves to `LocationFailureL10n`; `venture_page.dart` resolves it.
+- [x] SOS "Last attempt": `backend_client.dart` and `sos_service.dart` record short codes (`no_signal`, `no_internet`, `tls`, `unreachable`, `buoy_not_connected`, `no_buoy`, `buoy_rejected`, `buoy_invalid`), joined with `,`, in `last_error`; `delivery_state_tile.dart` maps each code to text and shows an unknown value verbatim (rows written before this change).
+- [x] `welcome_advisory.dart`: title and body come from ARB keys, resolved in `advisory_card.dart` for the welcome advisory's id.
+- [x] `sos_foreground.dart` fallbacks: drop the English defaults; the resolvers are always passed.
+- [x] Add every new key to `docs/aklanon/REVIEW.md`.
+- [x] `describeBuoyError` deleted: it only existed to make exception text fisher-readable for the old "Last attempt" line; the exception reason is diagnostics now.
 
 ### Verification
 
-- [ ] Standard mobile gate.
-- [ ] Emulator in `akl`, backend unreachable, no pod: send an SOS; the "Last attempt" line on the status tile is Aklanon.
+- [x] Standard mobile gate.
+- [ ] Emulator in `akl`, backend unreachable, no pod: send an SOS; the "Last attempt" line on the status tile is Aklanon. Folded into the Phase 5 walkthrough; `aklanon_below_ui_test.dart` covers the codes and the legacy rows.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `feat(mobile): models and services return codes, the UI speaks Aklanon`
 Continue automatically to the next phase (auto).
@@ -180,18 +183,18 @@ Continue automatically to the next phase (auto).
 ## Phase 5: Last English values, chrome and dates, walkthrough
 
 Requirements: AKL-05, AKL-06, AKL-08
-State: Awaiting approval
+State: Code complete - 2026-09-26; the emulator walkthrough is blocked (see evidence)
 
 ### Tasks
 
-- [ ] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
-- [ ] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaBuoy`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; added to `REVIEW.md`.
-- [ ] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); update the "OK" assertion and comment in `localization_test.dart`.
-- [ ] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
+- [x] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
+- [x] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; done in Phase 3. `deliveryMetaBuoy` stays "Buoy", the word the rest of the Aklanon file uses, and joins the allowlist.
+- [x] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); done in Phase 1.
+- [x] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
 
 ### Verification
 
-- [ ] Standard mobile gate.
+- [x] Standard mobile gate.
 - [ ] Emulator walkthrough, fresh install, device in English: onboarding, Home, SOS countdown, post-SOS sheet, pod screen, Venture, advisories, forecast, chat, profile, About/Help/Privacy/Terms.
   No English except `AqOne`, `SOS`, `MDRRMO`, `LoRa`, `GPS`, `PAGASA`, buoy ids, and the Aquanons welcome photo caption.
   Screenshots in `docs/aklanon/`.
@@ -199,7 +202,7 @@ State: Awaiting approval
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1, plus: tick plan 65 Phase 2's two moved tasks as "done in plan 70", add a dated `docs/08` entry, and add this plan to `docs/SPEC_INDEX.md` and `docs/README.md`.
+- [ ] Same four gates as Phase 1. Done early: plan 65 Phase 2's moved tasks point here, the dated `docs/08` entry, and the `docs/SPEC_INDEX.md` and `docs/README.md` rows.
 
 Checkpoint message: `feat(mobile): Aklanon dates, chrome and the last English labels`
 Stop for Len (plan complete).
