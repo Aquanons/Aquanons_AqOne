@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../data/map_snapshot_store.dart';
+import '../../l10n/app_localizations.dart';
+import 'age_text.dart';
 
 /// Tells the fisherman the map he is looking at is not live.
 ///
@@ -34,6 +36,7 @@ class OfflineMapBanner extends StatelessWidget {
     if (ages.isEmpty) {
       return const SizedBox.shrink();
     }
+    final t = AppLocalizations.of(context);
 
     // The oldest feed sets the tone. Saying "updated 2 minutes ago" because
     // one feed refreshed, while the hazard layer is three hours stale, is the
@@ -78,7 +81,7 @@ class OfflineMapBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Showing saved map data · ${_ago(age)}',
+                  t.offlineMapShowing(ageAgo(t, age)),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -90,10 +93,8 @@ class OfflineMapBanner extends StatelessWidget {
                       // Not a footnote. The absence of a hazard layer looks
                       // identical to "no hazards", and those mean opposite
                       // things to someone deciding whether to go out.
-                      ? 'Hazard warnings are NOT included - they expire after '
-                          '6 hours. Assume nothing about current conditions.'
-                      : 'Buoys and warnings are from the last time you had '
-                          'signal, not from now.',
+                      ? t.offlineMapHazardsMissing
+                      : t.offlineMapStale,
                   style: TextStyle(fontSize: 16, height: 1.3, color: fg),
                 ),
               ],
@@ -102,15 +103,5 @@ class OfflineMapBanner extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static String _ago(Duration age) {
-    if (age.inMinutes < 60) {
-      return '${age.inMinutes} min old';
-    }
-    if (age.inHours < 24) {
-      return '${age.inHours}h old';
-    }
-    return '${age.inDays}d old';
   }
 }

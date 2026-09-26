@@ -229,9 +229,8 @@ class _AppShellState extends State<AppShell> {
     }
     final stale = staleRecords.first;
     final ageDuration = now.toUtc().difference(stale.createdAt.toUtc());
-    final hours = ageDuration.inHours;
-    final ageStr = hours <= 1 ? '$hours hour' : '$hours hours';
     final t = AppLocalizations.of(context);
+    final ageStr = t.weatherWindowDurationHoursOnly(ageDuration.inHours);
 
     bool dialogClosed = false;
     void doSend() {

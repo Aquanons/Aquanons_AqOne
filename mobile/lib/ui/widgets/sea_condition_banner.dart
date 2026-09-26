@@ -2,6 +2,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/sea_condition.dart';
+import 'age_text.dart';
 
 /// The official sea condition, shown at the top of Home.
 ///
@@ -44,9 +45,8 @@ class SeaConditionBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 isLoading
-                    ? 'Checking sea condition…'
-                    : 'Sea condition unavailable. Check advisories before '
-                        'heading out.',
+                    ? AppLocalizations.of(context).seaConditionChecking
+                    : AppLocalizations.of(context).seaConditionUnavailable,
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.35,
@@ -60,6 +60,7 @@ class SeaConditionBanner extends StatelessWidget {
     }
 
     final value = condition!;
+    final t = AppLocalizations.of(context);
     final status = value.status;
     final stale = value.isStale();
 
@@ -98,8 +99,16 @@ class SeaConditionBanner extends StatelessWidget {
           if (value.buoyCount > 0 && value.currentSpeedMps != null) ...<Widget>[
             const SizedBox(height: 6),
             Text(
-              'Buoy check: ${value.currentSpeedMps!.toStringAsFixed(1)} m/s current'
-              '${value.observedAt == null ? '' : ' · ${_age(value.observedAt!)}'}',
+              <String>[
+                t.seaConditionBuoyCheck(
+                  value.currentSpeedMps!.toStringAsFixed(1),
+                ),
+                if (value.observedAt != null)
+                  ageAgo(
+                    t,
+                    DateTime.now().toUtc().difference(value.observedAt!.toUtc()),
+                  ),
+              ].join(' · '),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
@@ -109,7 +118,7 @@ class SeaConditionBanner extends StatelessWidget {
           if (value.setByName != null) ...<Widget>[
             const SizedBox(height: 6),
             Text(
-              'Set by ${value.setByName}',
+              t.seaConditionSetBy(value.setByName!),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
@@ -120,13 +129,6 @@ class SeaConditionBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-String _age(DateTime value) {
-  final minutes = DateTime.now().toUtc().difference(value.toUtc()).inMinutes;
-  if (minutes <= 0) return 'just now';
-  if (minutes == 1) return '1 min ago';
-  return '$minutes min ago';
 }
 
 class _Shell extends StatelessWidget {

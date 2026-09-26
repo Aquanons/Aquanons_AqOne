@@ -2,6 +2,7 @@ import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/squall_watch.dart';
+import 'age_text.dart';
 
 /// Squall nowcast card, shown directly above the sea-condition banner.
 ///
@@ -29,6 +30,7 @@ class SquallBanner extends StatelessWidget {
     if (!watch.shouldDisplay) {
       return const SizedBox.shrink();
     }
+    final t = AppLocalizations.of(context);
 
     // Missing/stale/insufficient telemetry that never reached watch/returnNow
     // gets a quiet, neutral notice - not the amber/red alarm styling below,
@@ -69,7 +71,7 @@ class SquallBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  isReturnNow ? 'RETURN NOW' : 'Squall watch',
+                  isReturnNow ? t.squallReturnNow : t.squallWatchTitle,
                   style: TextStyle(
                     color: accent,
                     fontWeight: FontWeight.w900,
@@ -82,7 +84,7 @@ class SquallBanner extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            _body(isReturnNow),
+            _body(t, isReturnNow),
             style: TextStyle(
               fontSize: 16,
               height: 1.35,
@@ -93,7 +95,7 @@ class SquallBanner extends StatelessWidget {
           if (watch.triggeredBuoys.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
-              'Detected at ${watch.triggeredBuoys.join(', ')}',
+              t.squallDetectedAt(watch.triggeredBuoys.join(', ')),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -105,9 +107,8 @@ class SquallBanner extends StatelessWidget {
           // trained on simulated data the app says so, even here.
           Text(
             watch.calibration == 'synthetic'
-                ? 'AqOne squall nowcast · calibrated on simulated data · '
-                    'not a PAGASA warning'
-                : 'AqOne squall nowcast · not a PAGASA warning',
+                ? t.squallNowcastSynthetic
+                : t.squallNowcast,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white60 : const Color(0xFF64748B),
@@ -121,8 +122,7 @@ class SquallBanner extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'You acknowledged this warning. It stays until the squall '
-                    'passes.',
+                    t.squallAcknowledged,
                     style: TextStyle(fontSize: 16, color: accent),
                   ),
                 ),
@@ -170,7 +170,7 @@ class SquallBanner extends StatelessWidget {
                 Text(
                   observedAt != null
                       ? t.squallStaleBodyWithAge(
-                          _ago(DateTime.now().difference(observedAt)),
+                          shortAge(t, DateTime.now().difference(observedAt)),
                         )
                       : t.squallStaleBodyNoAge,
                   style: TextStyle(
@@ -187,33 +187,14 @@ class SquallBanner extends StatelessWidget {
     );
   }
 
-  /// A bare duration - no trailing "ago". [squallStaleBodyWithAge] supplies
-  /// that word itself, so it stays in one place per locale instead of being
-  /// baked into this helper.
-  static String _ago(Duration age) {
-    if (age.inMinutes < 60) {
-      return '${age.inMinutes} min';
-    }
-    if (age.inHours < 24) {
-      return '${age.inHours}h';
-    }
-    return '${age.inDays}d';
-  }
-
-  String _body(bool isReturnNow) {
+  String _body(AppLocalizations t, bool isReturnNow) {
     final int? lead = watch.leadMinutes;
+    final bool hasLead = lead != null && lead > 0;
     if (isReturnNow) {
-      if (lead != null && lead > 0) {
-        return 'A squall is forecast to reach your area in about $lead '
-            '${lead == 1 ? 'minute' : 'minutes'}. Head back to shore now.';
-      }
-      return 'A squall is forecast to reach your area shortly. Head back to '
-          'shore now.';
+      return hasLead
+          ? t.squallBannerReturnLead(lead)
+          : t.squallBannerReturnSoon;
     }
-    if (lead != null && lead > 0) {
-      return 'Unsettled conditions building, possible arrival in about $lead '
-          '${lead == 1 ? 'minute' : 'minutes'}. Stay alert.';
-    }
-    return 'Unsettled conditions building nearby. Stay alert.';
+    return hasLead ? t.squallBannerWatchLead(lead) : t.squallBannerWatchNearby;
   }
 }

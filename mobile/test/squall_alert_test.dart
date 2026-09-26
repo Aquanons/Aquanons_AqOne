@@ -8,9 +8,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Widget wrap(SquallWatch watch, {VoidCallback? onAcknowledge}) {
+  Widget wrap(
+    SquallWatch watch, {
+    VoidCallback? onAcknowledge,
+    Locale locale = const Locale('en'),
+  }) {
     return MaterialApp(
-      locale: const Locale('en'),
+      locale: locale,
       supportedLocales: kSupportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         AppLocalizations.delegate,
@@ -42,6 +46,16 @@ void main() {
     expect(find.textContaining('20 minutes'), findsOneWidget);
     expect(find.text('Head for shore.'), findsOneWidget);
     expect(find.textContaining('buoy-a, buoy-b'), findsOneWidget);
+  });
+
+  // Plan 70 D4: Len's own wording for the one line that must never be
+  // misread at sea.
+  testWidgets('speaks Aklanon: ULI EON KAMO', (WidgetTester tester) async {
+    await tester.pumpWidget(wrap(returnNow, locale: const Locale('akl')));
+
+    expect(find.text('ULI EON KAMO'), findsOneWidget);
+    expect(find.text('RETURN NOW'), findsNothing);
+    expect(find.textContaining('20 ka minuto'), findsOneWidget);
   });
 
   testWidgets('still works when the model gives no lead time', (

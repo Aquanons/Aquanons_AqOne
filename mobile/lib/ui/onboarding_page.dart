@@ -488,7 +488,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   isDark: isDark,
                                   onTap: () => _openInfo(
                                     t.helpSupport,
-                                    InfoCopy.help,
+                                    t.infoHelpBody,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -497,7 +497,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   isDark: isDark,
                                   onTap: () => _openInfo(
                                     t.aboutAqOne,
-                                    InfoCopy.about,
+                                    t.infoAboutBody,
                                   ),
                                 ),
                               ],
@@ -505,7 +505,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             GestureDetector(
                               onTap: () => _openInfo(
                                 t.safetyNotice,
-                                InfoCopy.terms,
+                                t.infoTermsBody,
                               ),
                               child: Text(
                                 t.safetyNotice,
@@ -537,7 +537,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 GestureDetector(
                                   onTap: () => _openInfo(
                                     t.privacyPolicy,
-                                    InfoCopy.privacy,
+                                    t.infoPrivacyBody,
                                   ),
                                   child: Text(
                                     t.privacyPolicy,
@@ -558,7 +558,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 GestureDetector(
                                   onTap: () => _openInfo(
                                     t.termsOfUse,
-                                    InfoCopy.terms,
+                                    t.infoTermsBody,
                                   ),
                                   child: Text(
                                     t.termsOfUse,

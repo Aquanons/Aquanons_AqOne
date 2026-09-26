@@ -37,6 +37,7 @@ class SquallAlertPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int? lead = watch.leadMinutes;
+    final t = AppLocalizations.of(context);
 
     return PopScope(
       // The whole point. This screen cannot be backed out of.
@@ -56,10 +57,10 @@ class SquallAlertPage extends StatelessWidget {
                   size: 96,
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'RETURN NOW',
+                Text(
+                  t.squallReturnNow,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 44,
                     fontWeight: FontWeight.w900,
@@ -70,9 +71,8 @@ class SquallAlertPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   lead == null
-                      ? 'A dangerous squall is forecast for your area.'
-                      : 'A dangerous squall is forecast to arrive in about '
-                          '$lead minutes.',
+                      ? t.squallAlertBody
+                      : t.squallAlertBodyLead(lead),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -82,10 +82,10 @@ class SquallAlertPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Head for shore.',
+                Text(
+                  t.squallHeadForShore,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -94,7 +94,7 @@ class SquallAlertPage extends StatelessWidget {
                 if (watch.triggeredBuoys.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 18),
                   Text(
-                    'Reported by ${watch.triggeredBuoys.join(', ')}',
+                    t.squallReportedBy(watch.triggeredBuoys.join(', ')),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),

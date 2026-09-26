@@ -1,4 +1,5 @@
 import 'package:aqone/data/map_snapshot_store.dart';
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:aqone/ui/widgets/offline_map_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Widget wrap(Map<String, DateTime> ages) {
     return MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: OfflineMapBanner(ages: ages, isDark: false)),
     );
   }
@@ -43,7 +47,7 @@ void main() {
       }),
     );
 
-    expect(find.textContaining('4h old'), findsOneWidget);
+    expect(find.textContaining('4h ago'), findsOneWidget);
   });
 
   testWidgets('says outright when hazard layers are absent', (
@@ -59,7 +63,7 @@ void main() {
     );
 
     expect(find.textContaining('NOT included'), findsOneWidget);
-    expect(find.textContaining('9h old'), findsOneWidget);
+    expect(find.textContaining('9h ago'), findsOneWidget);
   });
 
   testWidgets('escalates past three hours', (WidgetTester tester) async {

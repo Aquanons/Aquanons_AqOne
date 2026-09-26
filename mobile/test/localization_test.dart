@@ -196,16 +196,59 @@ void main() {
       }
     });
 
-    test('no bare Text literal remains on the SOS screens', () {
-      final bareTextRegex = RegExp(r"Text\(\s*'");
-      for (final path in <String>[
-        'lib/ui/venture_page.dart',
-        'lib/ui/home_page.dart',
-        'lib/ui/sos_flow.dart',
-      ]) {
-        expect(bareTextRegex.hasMatch(File(path).readAsStringSync()), isFalse,
-            reason: '$path contains bare Text(\' literals');
+    test('no hard-coded user-facing text anywhere in lib/ui', () {
+      // Plan 70 AKL-03. Brand names and the Tagalog slogan are the only
+      // literals a fisher may see in every language.
+      const allowed = <String>{
+        'AqOne',
+        'SOS',
+        r'Gabay sa Bawat Alon,\nKonektado sa Bawat Layon',
+      };
+      final literal = RegExp(
+        r"""(?:\bText\(|\b(?:title|label|labelText|hintText|helperText|tooltip|message|semanticLabel|semanticsLabel|headline|detail|body)\s*:)\s*(?:const\s+Text\(\s*)?'([^'$]*[A-Za-z][^']*)'""",
+      );
+      final offenders = <String>[];
+      for (final file in Directory('lib/ui').listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        final source = file.readAsStringSync();
+        for (final match in literal.allMatches(source)) {
+          if (!allowed.contains(match.group(1))) {
+            offenders.add('${file.path}: ${match.group(1)}');
+          }
+        }
       }
+      expect(offenders, isEmpty);
+    });
+
+    test('every English key has an Aklanon value that is not English', () {
+      // Plan 70 AKL-05. Identical values are allowed only where the word is
+      // the same in both languages (brand names, units, the compass, D5).
+      const sameInBoth = <String>{
+        'compassNorth',
+        'compassEast',
+        'compassSouth',
+        'compassWest',
+        'chatCharacterLimitLabel',
+        'buoyTitle',
+        'deliveryMetaBuoy',
+      };
+      final en = jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final akl = jsonDecode(File('lib/l10n/app_akl.arb').readAsStringSync())
+          as Map<String, dynamic>;
+      final keys = en.keys.where((k) => !k.startsWith('@'));
+      expect(
+        keys.where((k) => !akl.containsKey(k)).toList(),
+        isEmpty,
+        reason: 'keys missing from app_akl.arb',
+      );
+      expect(
+        keys
+            .where((k) => !sameInBoth.contains(k) && akl[k] == en[k])
+            .toList(),
+        isEmpty,
+        reason: 'Aklanon values still in English',
+      );
     });
   });
 }

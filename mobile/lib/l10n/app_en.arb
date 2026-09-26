@@ -1158,5 +1158,453 @@
   "safetyWeatherLoadFailed": "Weather could not be loaded, so this cannot be assessed.",
   "@safetyWeatherLoadFailed": {
     "description": "Message shown when weather data could not be fetched for safety assessment."
+  },
+  "advisoriesSubtitle": "Notices from the MDRRMO and your LGU.",
+  "@advisoriesSubtitle": {
+    "description": "Subtitle under the Advisories page title."
+  },
+  "advisoriesLoadFailedTitle": "Could not load advisories",
+  "@advisoriesLoadFailedTitle": {
+    "description": "Advisories page placeholder title when the first load failed and nothing is cached."
+  },
+  "advisoriesLoadFailedBody": "Check your connection and pull down to try again.",
+  "@advisoriesLoadFailedBody": {
+    "description": "Advisories page placeholder body when the first load failed; the page refreshes on pull-down."
+  },
+  "advisoriesEmptyTitle": "No active advisories",
+  "@advisoriesEmptyTitle": {
+    "description": "Advisories page placeholder title when the list loaded and is empty."
+  },
+  "advisoriesEmptyBody": "Nothing is currently in force for your area.",
+  "@advisoriesEmptyBody": {
+    "description": "Advisories page placeholder body when the list loaded and is empty."
+  },
+  "advisoriesStaleList": "Showing the last loaded list - refresh failed.",
+  "@advisoriesStaleList": {
+    "description": "Italic note above a cached advisory list when the latest refresh failed."
+  },
+  "chatTitle": "Chat",
+  "@chatTitle": {
+    "description": "Chat screen app-bar title when no other boat is on the hub yet."
+  },
+  "chatConnected": "Connected to Aquan",
+  "@chatConnected": {
+    "description": "Tooltip on the chat Wi-Fi icon. \"Aquan\" is the name of the chat hub Wi-Fi; never translate it."
+  },
+  "chatOnAquanConnecting": "On Aquan - connecting…",
+  "@chatOnAquanConnecting": {
+    "description": "Tooltip on the chat Wi-Fi icon: the phone is on the Aquan Wi-Fi but the chat socket is not up yet."
+  },
+  "chatNotOnAquan": "Not on Aquan",
+  "@chatNotOnAquan": {
+    "description": "Tooltip on the chat Wi-Fi icon: the phone is not on the Aquan Wi-Fi."
+  },
+  "chatConnecting": "Connecting…",
+  "@chatConnecting": {
+    "description": "Chat header status line while the socket connects."
+  },
+  "chatOffline": "Offline",
+  "@chatOffline": {
+    "description": "Chat header status line when the phone is not on the hub Wi-Fi."
+  },
+  "chatWaitingForOthers": "Waiting for others…",
+  "@chatWaitingForOthers": {
+    "description": "Chat header status line when connected but no other boat is on the hub."
+  },
+  "chatOnMesh": "On the mesh",
+  "@chatOnMesh": {
+    "description": "Chat header status line when exactly one other boat is on the hub."
+  },
+  "chatPeersOnMesh": "{count} on the mesh",
+  "@chatPeersOnMesh": {
+    "description": "Chat header status line with the number of other boats on the hub.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatWaitingToJoin": "Waiting for others to join…",
+  "@chatWaitingToJoin": {
+    "description": "Shown in the roster strip when this phone is the only one on the hub."
+  },
+  "chatEmpty": "No messages yet. Say hi!",
+  "@chatEmpty": {
+    "description": "Empty state of the chat message list."
+  },
+  "enrolInstructions": "Enter the 8-character pairing code provided by the MDRRMO operations desk to link this device to your vessel record.",
+  "@enrolInstructions": {
+    "description": "Body text on the MDRRMO enrolment screen."
+  },
+  "enrolCodeLabel": "Pairing Code",
+  "@enrolCodeLabel": {
+    "description": "Label of the pairing-code text field on the enrolment screen."
+  },
+  "enrolCodeHint": "e.g. {example}",
+  "@enrolCodeHint": {
+    "description": "Hint in the pairing-code field; {example} is a sample code and is never translated.",
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "enrolVerifyButton": "Verify Code",
+  "@enrolVerifyButton": {
+    "description": "Button that submits the pairing code."
+  },
+  "profileOpenSemantics": "Open fisherman profile",
+  "@profileOpenSemantics": {
+    "description": "Screen-reader label of the avatar button on Home."
+  },
+  "emergencyEngine": "Engine failure",
+  "@emergencyEngine": {
+    "description": "Post-SOS emergency type chip. The note sent to the MDRRMO stays English."
+  },
+  "emergencyCapsizing": "Capsizing / taking on water",
+  "@emergencyCapsizing": {
+    "description": "Post-SOS emergency type chip. The note sent to the MDRRMO stays English."
+  },
+  "emergencyMedical": "Medical emergency",
+  "@emergencyMedical": {
+    "description": "Post-SOS emergency type chip. The note sent to the MDRRMO stays English."
+  },
+  "emergencyOther": "Other",
+  "@emergencyOther": {
+    "description": "Post-SOS emergency type chip that opens a free-text field."
+  },
+  "squallReturnNow": "RETURN NOW",
+  "@squallReturnNow": {
+    "description": "SAFETY CRITICAL. Full-screen squall alarm headline and RETURN NOW banner title. Aklanon wording given by Len (plan 70 D4)."
+  },
+  "squallAlertBody": "A dangerous squall is forecast for your area.",
+  "@squallAlertBody": {
+    "description": "SAFETY CRITICAL. Full-screen squall alarm body when no arrival time is known."
+  },
+  "squallAlertBodyLead": "{minutes, plural, =1{A dangerous squall is forecast to arrive in about 1 minute.} other{A dangerous squall is forecast to arrive in about {minutes} minutes.}}",
+  "@squallAlertBodyLead": {
+    "description": "SAFETY CRITICAL. Full-screen squall alarm body with the forecast arrival time.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "squallHeadForShore": "Head for shore.",
+  "@squallHeadForShore": {
+    "description": "SAFETY CRITICAL. Full-screen squall alarm instruction line."
+  },
+  "squallReportedBy": "Reported by {buoys}",
+  "@squallReportedBy": {
+    "description": "Full-screen squall alarm: the buoy ids that detected it. {buoys} is a comma-separated id list.",
+    "placeholders": {
+      "buoys": {
+        "type": "String"
+      }
+    }
+  },
+  "squallWatchTitle": "Squall watch",
+  "@squallWatchTitle": {
+    "description": "SAFETY CRITICAL. Home banner title for a squall watch (the lower of the two squall levels)."
+  },
+  "squallBannerReturnLead": "{minutes, plural, =1{A squall is forecast to reach your area in about 1 minute. Head back to shore now.} other{A squall is forecast to reach your area in about {minutes} minutes. Head back to shore now.}}",
+  "@squallBannerReturnLead": {
+    "description": "SAFETY CRITICAL. RETURN NOW banner body with the forecast arrival time.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "squallBannerReturnSoon": "A squall is forecast to reach your area shortly. Head back to shore now.",
+  "@squallBannerReturnSoon": {
+    "description": "SAFETY CRITICAL. RETURN NOW banner body when no arrival time is known."
+  },
+  "squallBannerWatchLead": "{minutes, plural, =1{Unsettled conditions building, possible arrival in about 1 minute. Stay alert.} other{Unsettled conditions building, possible arrival in about {minutes} minutes. Stay alert.}}",
+  "@squallBannerWatchLead": {
+    "description": "SAFETY CRITICAL. Squall watch banner body with a possible arrival time.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "squallBannerWatchNearby": "Unsettled conditions building nearby. Stay alert.",
+  "@squallBannerWatchNearby": {
+    "description": "SAFETY CRITICAL. Squall watch banner body when no arrival time is known."
+  },
+  "squallDetectedAt": "Detected at {buoys}",
+  "@squallDetectedAt": {
+    "description": "Squall banner: buoy ids that detected it. {buoys} is a comma-separated id list.",
+    "placeholders": {
+      "buoys": {
+        "type": "String"
+      }
+    }
+  },
+  "squallNowcastSynthetic": "AqOne squall nowcast · calibrated on simulated data · not a PAGASA warning",
+  "@squallNowcastSynthetic": {
+    "description": "Squall banner provenance line while the model is calibrated on simulated data."
+  },
+  "squallNowcast": "AqOne squall nowcast · not a PAGASA warning",
+  "@squallNowcast": {
+    "description": "Squall banner provenance line."
+  },
+  "squallAcknowledged": "You acknowledged this warning. It stays until the squall passes.",
+  "@squallAcknowledged": {
+    "description": "Squall banner line after the fisher tapped \"I'm heading back\"."
+  },
+  "safetyTitleHighWind": "Wind above threshold",
+  "@safetyTitleHighWind": {
+    "description": "Title of the Venture weather safety dialog when wind is above the unsafe threshold."
+  },
+  "safetyTitleConditionForecast": "{condition} forecast",
+  "@safetyTitleConditionForecast": {
+    "description": "Title of the Venture weather safety dialog for an adverse condition. {condition} is a translated weather condition.",
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "safetyTitleCalm": "Conditions look calm",
+  "@safetyTitleCalm": {
+    "description": "Title of the Venture weather safety dialog when nothing is adverse."
+  },
+  "safetyWeatherSummary": "{condition} · {temp}°C · wind {wind} km/h",
+  "@safetyWeatherSummary": {
+    "description": "Venture weather safety dialog summary line.",
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      },
+      "temp": {
+        "type": "String"
+      },
+      "wind": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherSourceNote": "Source: Open-Meteo. This is not a PAGASA warning. Always follow the official sea condition and advisories.",
+  "@weatherSourceNote": {
+    "description": "Provenance note under device weather warnings."
+  },
+  "weatherSourceNoteThreshold": "Source: Open-Meteo · threshold {kph} km/h. This is not a PAGASA warning. Always follow the official sea condition and advisories.",
+  "@weatherSourceNoteThreshold": {
+    "description": "Provenance note under a high-wind warning; {kph} is the unsafe wind threshold.",
+    "placeholders": {
+      "kph": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherHighWindNote": "Wind {wind} km/h - above the {kph} km/h threshold.",
+  "@weatherHighWindNote": {
+    "description": "Home weather card warning line when wind is above the unsafe threshold.",
+    "placeholders": {
+      "wind": {
+        "type": "String"
+      },
+      "kph": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherAdverseNote": "{condition} forecast - adverse condition.",
+  "@weatherAdverseNote": {
+    "description": "Home weather card warning line for an adverse condition. {condition} is a translated weather condition.",
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherWindLine": "Wind {wind} km/h · {location}",
+  "@weatherWindLine": {
+    "description": "Home weather card line under the condition.",
+    "placeholders": {
+      "wind": {
+        "type": "String"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "forecastLongRangeSemantics": "Longer-range outlook, lower confidence.",
+  "@forecastLongRangeSemantics": {
+    "description": "Screen-reader suffix for forecast days beyond the reliable range."
+  },
+  "loadingShort": "Loading…",
+  "@loadingShort": {
+    "description": "Short loading label in the Venture weather capsule."
+  },
+  "advisoryAppNotice": "APP NOTICE",
+  "@advisoryAppNotice": {
+    "description": "Badge on the developers' welcome note, where official advisories show their priority."
+  },
+  "advisoryAppNoticeBody": "A message from the app developers. This is not an official MDRRMO or LGU advisory.",
+  "@advisoryAppNoticeBody": {
+    "description": "Line under the developers' welcome note."
+  },
+  "advisoryInForceUntil": "In force until {date}",
+  "@advisoryInForceUntil": {
+    "description": "Advisory card expiry line; {date} is a short day and month.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "advisoryViewAllMore": "View all ({count} more)",
+  "@advisoryViewAllMore": {
+    "description": "Link under the Home advisory card when more advisories exist.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advisoryViewAll": "View all advisories",
+  "@advisoryViewAll": {
+    "description": "Link under the Home advisory card."
+  },
+  "advisoryPhotoOffline": "Photo unavailable offline",
+  "@advisoryPhotoOffline": {
+    "description": "Placeholder when an advisory photo cannot load without signal."
+  },
+  "buoyNoneTitle": "No buoy connected",
+  "@buoyNoneTitle": {
+    "description": "Home pod card title when the phone is not on a buoy Wi-Fi."
+  },
+  "buoyNoneBody": "Join a buoy WiFi network to hand off an SOS.",
+  "@buoyNoneBody": {
+    "description": "Home pod card body when the phone is not on a buoy Wi-Fi."
+  },
+  "buoyTitle": "Buoy {id}",
+  "@buoyTitle": {
+    "description": "Home pod card title; {id} is the buoy id. \"Buoy\" stays as fishers say it.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "buoyUplinkUp": "Link to shore is up. Your SOS will reach the rescue centre now.",
+  "@buoyUplinkUp": {
+    "description": "Home pod card body when the buoy reports a working shore link. Mirrors the buoy captive portal."
+  },
+  "buoyUplinkDown": "Link to shore is down. This buoy will hold your SOS and deliver it automatically once the link returns.",
+  "@buoyUplinkDown": {
+    "description": "Home pod card body when the buoy has no shore link. Mirrors the buoy captive portal."
+  },
+  "buoyQueued": "{count, plural, =1{1 message waiting on this buoy} other{{count} messages waiting on this buoy}}",
+  "@buoyQueued": {
+    "description": "Home pod card: messages the buoy is holding.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineMapShowing": "Showing saved map data · {age}",
+  "@offlineMapShowing": {
+    "description": "Offline map banner title; {age} is how old the data is, e.g. \"4h ago\".",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineMapHazardsMissing": "Hazard warnings are NOT included - they expire after 6 hours. Assume nothing about current conditions.",
+  "@offlineMapHazardsMissing": {
+    "description": "SAFETY CRITICAL. Offline map banner when the cached hazard layer has expired."
+  },
+  "offlineMapStale": "Buoys and warnings are from the last time you had signal, not from now.",
+  "@offlineMapStale": {
+    "description": "Offline map banner body."
+  },
+  "seaConditionChecking": "Checking sea condition…",
+  "@seaConditionChecking": {
+    "description": "Home sea condition banner while loading."
+  },
+  "seaConditionUnavailable": "Sea condition unavailable. Check advisories before heading out.",
+  "@seaConditionUnavailable": {
+    "description": "SAFETY CRITICAL. Home sea condition banner when it could not load."
+  },
+  "seaConditionBuoyCheck": "Buoy check: {speed} m/s current",
+  "@seaConditionBuoyCheck": {
+    "description": "Home sea condition banner: current speed measured by buoys.",
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "seaConditionSetBy": "Set by {name}",
+  "@seaConditionSetBy": {
+    "description": "Home sea condition banner: the MDRRMO officer who set it. {name} is free text.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ageJustNow": "just now",
+  "@ageJustNow": {
+    "description": "Age of data under a minute old."
+  },
+  "ageMinutes": "{minutes} min",
+  "@ageMinutes": {
+    "description": "Short age in minutes, used inside other strings.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "ageHours": "{hours}h",
+  "@ageHours": {
+    "description": "Short age in hours, used inside other strings.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "ageDays": "{days}d",
+  "@ageDays": {
+    "description": "Short age in days, used inside other strings.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "ageAgo": "{age} ago",
+  "@ageAgo": {
+    "description": "How long ago something happened; {age} is a short age like \"4h\".",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "infoAboutBody": "AqOne\nGabay sa Bawat Alon, Konektado sa Bawat Layon\n\nFishermen in New Washington, Aklan lose mobile signal as soon as they reach the fishing ground. When something goes wrong out there, there is no way to call for help, and the MDRRMO usually hears about it hours later by word of mouth.\n\nAqOne carries a distress message over a radio mesh instead of the cellular network. Your phone hands the SOS to the nearest anchored buoy over its WiFi. Buoys pass it along by LoRa radio until one of them reaches shore and forwards it to the MDRRMO dashboard.\n\nYour phone never needs a signal.",
+  "@infoAboutBody": {
+    "description": "Body of the About AqOne page. The slogan line stays in Tagalog in every language."
+  },
+  "infoHelpBody": "Sending an SOS\n\n1. Connect your phone to the WiFi of the nearest AqOne buoy. The network name starts with \"AqOne-\".\n2. Open this app and press the red SOS button.\n3. Watch the status on the message. It tells you exactly how far your SOS has travelled.\n\nWhat the four statuses mean\n\nSaved - the SOS is on your phone only. No buoy is in range yet. The app keeps trying on its own.\n\nRelayed - a buoy has taken your SOS and is passing it along the radio mesh. This is as much as your phone can know without a signal.\n\nDelivered - the MDRRMO dashboard has received it.\n\nAcknowledged - a responder has seen it and is acting on it.\n\nThe app will never show a later status than the one it has actually observed. If your message is stuck at Relayed, it is genuinely still waiting on the mesh.\n\nIf no buoy is in range\n\nYour SOS is not lost. It stays on your phone and is sent automatically as soon as a buoy is reachable, even if you close the app.",
+  "@infoHelpBody": {
+    "description": "Body of the Help page. The four status names must match deliveryState*Title in each language."
+  },
+  "infoPrivacyBody": "What AqOne collects\n\nThis app does not ask for an account, a password, an email address, or a phone number. There is no user database.\n\nWhen you first open the app it creates a random identifier on your device and stores it locally. That identifier, together with the boat name you enter, is what a responder sees next to your distress call.\n\nWhen you send an SOS, the app transmits:\n\n• your boat name\n• your GPS position, if your phone has a fix at that moment\n• the short note you typed, if you typed one\n• the time you pressed the button\n\nPrecise position is only sent as part of an SOS you deliberately send. The app does not track or transmit your location in the background, and it does not record where you fish.\n\nWeather forecasts and maps\n\nWeather forecasts use your approximate location (about 11 km) to retrieve conditions for your general area without disclosing your exact coordinates. When viewing the online map, the app fetches map tiles for the area you are viewing directly from OpenStreetMap.\n\nHow it travels\n\nAn SOS is relayed by radio between buoys. Messages are signed so a responder can tell a real buoy from a fake one, but the content itself is not encrypted end to end in this version. Treat an SOS as a public radio call, because that is what it is.\n\nDeleting your data\n\nUninstalling the app removes the identifier and every message stored on your phone. Distress calls already delivered to the MDRRMO remain part of their incident record.",
+  "@infoPrivacyBody": {
+    "description": "Body of the Privacy Policy page."
+  },
+  "infoTermsBody": "Please read this before relying on AqOne.\n\nAqOne is a prototype\n\nThis software was built for a hackathon and has not been certified, independently tested, or approved as marine safety equipment.\n\nIt is not a replacement for safety gear\n\nDo not go to sea relying on this app alone. Carry the flotation, signalling and communication equipment you would normally carry. AqOne is an addition to those, never a substitute.\n\nDelivery is not guaranteed\n\nAn SOS travels by radio between buoys. Radio is affected by weather, distance, obstructions, buoy battery level, and interference. A message may be delayed or may not arrive at all. The app shows you honestly how far your message has reached, and never claims more than it knows.\n\nCoverage is limited\n\nAqOne only works within radio range of a deployed buoy. Outside that range your SOS stays saved on your phone until you come back into range.\n\nResponsible use\n\nSend an SOS only in a genuine emergency. False alarms waste rescue resources and put responders at risk.",
+  "@infoTermsBody": {
+    "description": "SAFETY CRITICAL. Body of the Safety notice / Terms of Use page."
   }
 }

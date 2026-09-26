@@ -125,26 +125,27 @@ Continue automatically to the next phase (auto).
 ## Phase 3: UI literals localized
 
 Requirements: AKL-03, AKL-05, AKL-08
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red tests: widen the bare-literal check in `localization_test.dart` to every file under `lib/ui` with the AKL-03 patterns and allowlist; add the AKL-05 key-parity test.
-- [ ] Move every flagged literal into `app_en.arb` with an `@key` description (screen context, and `SAFETY CRITICAL` where it is) and an `app_akl.arb` draft.
+- [x] Red tests: widen the bare-literal check in `localization_test.dart` to every file under `lib/ui` with the AKL-03 patterns and allowlist; add the AKL-05 key-parity test.
+- [x] Move every flagged literal into `app_en.arb` with an `@key` description (screen context, and `SAFETY CRITICAL` where it is) and an `app_akl.arb` draft.
   Files: `advisories_page.dart`, `app_shell.dart` (the `$hours hour` fragment becomes an ICU plural), `chathubb.dart`, `enrolment_page.dart`, `home_page.dart` (avatar semantics), `info_page.dart`, `sos_flow.dart`, `squall_alert_page.dart`, `venture_page.dart` (safety dialog), and under `widgets/`: `advisory_card.dart`, `buoy_status_card.dart`, `offline_map_banner.dart`, `responder_eta_dialog.dart`, `sea_condition_banner.dart`, `squall_banner.dart`, `weather_card.dart`.
-- [ ] `InfoCopy` becomes four ARB keys (`infoAbout`, `infoHelp`, `infoPrivacy`, `infoTerms`); `InfoPage` takes the resolved text as today.
-- [ ] Emergency types in `sos_flow.dart`: the enum keeps the icon and an English `wire` note; display text through an `...L10n` extension (AKL-04 test: the note sent to the MDRRMO stays English in `akl`).
-- [ ] The three hand-rolled "N min ago" formatters (`offline_map_banner.dart`, `sea_condition_banner.dart`, `squall_banner.dart`) become one ICU key set used by all three.
-- [ ] Start `docs/aklanon/REVIEW.md` (AKL-08) with every key added in this phase.
+- [x] `InfoCopy` becomes four ARB keys (`infoAbout`, `infoHelp`, `infoPrivacy`, `infoTerms`); `InfoPage` takes the resolved text as today.
+- [x] Emergency types in `sos_flow.dart`: the enum keeps the icon and an English `wire` note; display text through an `...L10n` extension (AKL-04 test: the note sent to the MDRRMO stays English in `akl`).
+- [x] The three hand-rolled "N min ago" formatters (`offline_map_banner.dart`, `sea_condition_banner.dart`, `squall_banner.dart`) become one ICU key set used by all three.
+- [x] Start `docs/aklanon/REVIEW.md` (AKL-08) with every key added in this phase.
+- [x] Pulled forward from Phase 5: the seven Aklanon values that were still English (the AKL-05 parity test needed them), and nine earlier drafts that used Tagalog or Cebuano function words (ang, kung, ug, kaysa), all listed in `REVIEW.md`.
 
 ### Verification
 
-- [ ] Standard mobile gate.
-- [ ] `grep -rnE "(Text|title:|label:|labelText:|hintText:|tooltip:|semanticLabel:)\s*\(?\s*'[A-Za-z]" mobile/lib/ui` prints nothing outside the allowlist.
+- [x] Standard mobile gate.
+- [x] `grep -rnE "(Text|title:|label:|labelText:|hintText:|tooltip:|semanticLabel:)\s*\(?\s*'[A-Za-z]" mobile/lib/ui` prints nothing outside the allowlist.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `feat(mobile): localize the remaining screen text with Aklanon drafts`
 Continue automatically to the next phase (auto).
@@ -186,7 +187,7 @@ State: Awaiting approval
 ### Tasks
 
 - [ ] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
-- [ ] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaBuoy`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; added to `REVIEW.md`.
+- [x] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; done in Phase 3. `deliveryMetaBuoy` stays "Buoy", the word the rest of the Aklanon file uses, and joins the allowlist.
 - [x] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); done in Phase 1.
 - [ ] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
 

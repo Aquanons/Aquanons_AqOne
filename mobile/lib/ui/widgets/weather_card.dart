@@ -201,8 +201,10 @@ class WeatherCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Wind ${value.windSpeed.toStringAsFixed(0)} km/h '
-                    '· $locationLabel',
+                    t.weatherWindLine(
+                      value.windSpeed.toStringAsFixed(0),
+                      locationLabel,
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white54 : const Color(0xFF64748B),
@@ -239,16 +241,15 @@ class WeatherCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    value.hasHighWind
-                        ? 'Wind ${value.windSpeed.toStringAsFixed(0)} km/h — '
-                            'above the ${AqOneConfig.unsafeWindKph.toStringAsFixed(0)} km/h '
-                            'threshold. Source: Open-Meteo. '
-                            'This is not a PAGASA warning. '
-                            'Always check the official sea condition and advisories.'
-                        : '${value.condition.label(t)} forecast — '
-                            'adverse condition. Source: Open-Meteo. '
-                            'This is not a PAGASA warning. '
-                            'Always check the official sea condition and advisories.',
+                    <String>[
+                      value.hasHighWind
+                          ? t.weatherHighWindNote(
+                              value.windSpeed.toStringAsFixed(0),
+                              AqOneConfig.unsafeWindKph.toStringAsFixed(0),
+                            )
+                          : t.weatherAdverseNote(value.condition.label(t)),
+                      t.weatherSourceNote,
+                    ].join(' '),
                     style: const TextStyle(
                       fontSize: 16,
                       height: 1.35,
@@ -843,7 +844,7 @@ class _DayChip extends StatelessWidget {
     return Semantics(
       label: '$label, ${day.condition.label(t)}, ${level.label(t)}.'
           '${day.risk.reason == null ? '' : ' ${day.risk.reason}.'}'
-          '${isOutlook ? ' Longer-range outlook, lower confidence.' : ''}',
+          '${isOutlook ? ' ${t.forecastLongRangeSemantics}' : ''}',
       child: Tooltip(
         message: day.risk.reason ?? level.label(t),
         child: Container(

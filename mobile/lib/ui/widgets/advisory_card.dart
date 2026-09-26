@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/advisory.dart';
 
 /// One advisory, used both for the Home preview and in the full list.
@@ -28,6 +29,7 @@ class AdvisoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = AppLocalizations.of(context);
     final priority = advisory.priority;
     final bool official = advisory.isOfficial;
 
@@ -72,7 +74,7 @@ class AdvisoryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  official ? priority.label.toUpperCase() : 'APP NOTICE',
+                  official ? priority.label.toUpperCase() : t.advisoryAppNotice,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -154,8 +156,7 @@ class AdvisoryCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'A message from the app developers. This is not an '
-                    'official MDRRMO or LGU advisory.',
+                    t.advisoryAppNoticeBody,
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.35,
@@ -169,7 +170,7 @@ class AdvisoryCard extends StatelessWidget {
           if (advisory.expirationDate != null) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              'In force until ${_shortDate(advisory.expirationDate!)}',
+              t.advisoryInForceUntil(_shortDate(advisory.expirationDate!)),
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
@@ -185,8 +186,8 @@ class AdvisoryCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     remaining > 0
-                        ? 'View all ($remaining more)'
-                        : 'View all advisories',
+                        ? t.advisoryViewAllMore(remaining)
+                        : t.advisoryViewAll,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -251,13 +252,13 @@ class _AdvisoryImage extends StatelessWidget {
       return Image.asset(
         asset,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _unavailable(),
+        errorBuilder: (context, __, ___) => _unavailable(context),
       );
     }
     return Image.network(
       url!,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _unavailable(),
+      errorBuilder: (context, __, ___) => _unavailable(context),
       loadingBuilder: (
         BuildContext context,
         Widget child,
@@ -280,7 +281,7 @@ class _AdvisoryImage extends StatelessWidget {
     );
   }
 
-  Widget _unavailable() {
+  Widget _unavailable(BuildContext context) {
     return ColoredBox(
       color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
       child: Center(
@@ -294,7 +295,7 @@ class _AdvisoryImage extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'Photo unavailable offline',
+              AppLocalizations.of(context).advisoryPhotoOffline,
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white38 : const Color(0xFF94A3B8),

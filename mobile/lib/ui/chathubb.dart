@@ -794,6 +794,7 @@ class _ChathubbState extends State<Chathubb> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final t = AppLocalizations.of(context);
 
     return ListenableBuilder(
       listenable: _service,
@@ -815,8 +816,8 @@ class _ChathubbState extends State<Chathubb> {
                 padding: const EdgeInsets.only(right: 16),
                 child: Tooltip(
                   message: _service.connected
-                      ? 'Connected to Aquan'
-                      : (_onAquan ? 'On Aquan - connecting…' : 'Not on Aquan'),
+                      ? t.chatConnected
+                      : (_onAquan ? t.chatOnAquanConnecting : t.chatNotOnAquan),
                   child: Icon(
                     Icons.wifi,
                     color: (_service.connected || _onAquan)
@@ -853,25 +854,26 @@ class _ChathubbState extends State<Chathubb> {
   /// Who you are talking to. One peer shows their name; a fuller roster shows
   /// the first two and a count, the way a group thread does, so the title
   /// never overflows the app bar on a phone.
-  String get _headerName {
+  String _headerName(AppLocalizations t) {
     final peers = _peers;
-    if (peers.isEmpty) return 'Chat';
+    if (peers.isEmpty) return t.chatTitle;
     if (peers.length == 1) return peers.first;
     if (peers.length == 2) return '${peers[0]}, ${peers[1]}';
     return '${peers[0]}, ${peers[1]} +${peers.length - 2}';
   }
 
   Widget _buildHeaderTitle(bool isDark) {
+    final t = AppLocalizations.of(context);
     final peers = _peers;
     final String status;
     if (!_service.connected) {
-      status = _onAquan ? 'Connecting…' : 'Offline';
+      status = _onAquan ? t.chatConnecting : t.chatOffline;
     } else if (peers.isEmpty) {
-      status = 'Waiting for others…';
+      status = t.chatWaitingForOthers;
     } else if (peers.length == 1) {
-      status = 'On the mesh';
+      status = t.chatOnMesh;
     } else {
-      status = '${peers.length} on the mesh';
+      status = t.chatPeersOnMesh(peers.length);
     }
 
     return Row(
@@ -898,7 +900,7 @@ class _ChathubbState extends State<Chathubb> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _headerName,
+                _headerName(t),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -940,7 +942,7 @@ class _ChathubbState extends State<Chathubb> {
       child: users.length == 1
           ? Center(
               child: Text(
-                'Waiting for others to join…',
+                AppLocalizations.of(context).chatWaitingToJoin,
                 style: TextStyle(
                   color: isDark ? Colors.white54 : Colors.black38,
                   fontSize: 13,
@@ -1010,7 +1012,7 @@ class _ChathubbState extends State<Chathubb> {
             ),
             const SizedBox(height: 4),
             Text(
-              'No messages yet. Say hi!',
+              AppLocalizations.of(context).chatEmpty,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.white38 : Colors.black26,

@@ -21,3 +21,14 @@ Baseline on `886c3df`: `flutter analyze` clean, `flutter test` 379 passed.
 - `flutter test`: 380 passed (381 minus the `ageLabel` test).
 - `grep -rn "Checklist\|BrandHeader\|ageLabel" mobile/lib mobile/test` outside `lib/l10n`: only `_createChecklistItems` in `app_database.dart`, kept on purpose (the table stays).
 - Found and left alone: `VentureFeeds.hotspots()` has no caller since the legend chip was removed (`d26f49e`); the heatmap is back in scope, so that is a product call, not dead code to cut here.
+
+## Phase 3: UI literals localized (2026-09-26)
+
+- Red first: the widened bare-literal check in `localization_test.dart` listed 30 literals across `lib/ui`, and the new key-parity check failed on seven Aklanon values still in English.
+- 79 new keys in `app_en.arb` (each with an `@` description; 15 tagged SAFETY CRITICAL) and `app_akl.arb`; the four `InfoCopy` texts are now ARB keys; `InfoCopy` is gone.
+- One shared age helper (`lib/ui/widgets/age_text.dart`) replaces the three hand-rolled "N min ago" formatters; the offline map banner now says "4h ago" instead of "4h old".
+- Emergency-type chips are Aklanon; the note sent to the MDRRMO stays English (`sos_flow_honesty_test.dart`: tapping "Guba ro makina" sends "Engine failure").
+- `squall_alert_test.dart`: in `akl` the alarm reads "ULI EON KAMO" and "20 ka minuto".
+- `flutter analyze`: No issues found.
+- `flutter test`: 383 passed.
+- Residual scan of `lib/ui` string literals: only brand names, the Tagalog slogan, the buoy/seq identifier line a responder reads back, the language names in the picker, and the month table that Phase 5 replaces.

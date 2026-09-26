@@ -177,4 +177,33 @@ void main() {
       );
     });
   });
+
+  // Plan 70 AKL-04: the fisher reads the emergency types in Aklanon, but the
+  // note on the MDRRMO dashboard stays English - responders work in English.
+  testWidgets('an Aklanon emergency type still sends an English note',
+      (tester) async {
+    _tallView(tester);
+    final akl = await AppLocalizations.delegate.load(const Locale('akl'));
+    final record = ValueNotifier<SosRecord>(_record());
+    addTearDown(record.dispose);
+    final sent = <String>[];
+
+    await tester.pumpWidget(
+      _host(
+        EmergencyDetailsSheet(
+          record: record,
+          onSubmitNote: (note) async => sent.add(note),
+          onStandDown: () async {},
+        ),
+        locale: const Locale('akl'),
+      ),
+    );
+
+    await tester.tap(find.text(akl.emergencyEngine));
+    await tester.pump();
+    await tester.tap(find.text(akl.sosSendUpdate));
+    await tester.pump();
+
+    expect(sent, <String>['Engine failure']);
+  });
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:aqone/data/welcome_advisory.dart';
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:aqone/models/advisory.dart';
 import 'package:aqone/services/backend_client.dart';
 import 'package:aqone/services/venture_feeds.dart';
@@ -79,6 +80,9 @@ void main() {
 
   group('AdvisoryCard', () {
     Widget wrap(Advisory advisory) => MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SingleChildScrollView(child: AdvisoryCard(advisory: advisory)),
           ),
