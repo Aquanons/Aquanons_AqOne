@@ -137,7 +137,7 @@ Row counts and IDs only; never data, URLs or credentials.
 
 ### Manual / Device checks
 - `Pending - Len: on device, toggle silent SOS on in settings, trigger SOS; alarm siren stays silent while countdown and dispatch proceed.`
-- ~~`Pending - Len: on device, with silent SOS off, hold SOS button for 3 seconds; countdown and dispatch proceed silently without siren.`~~ Superseded 2026-09-26: plan 65 Phase 1 (`7826488`) removed the hold gesture; a long press now behaves like a tap (open decision D8 in `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md`).
+- ~~`Pending - Len: on device, with silent SOS off, hold SOS button for 3 seconds; countdown and dispatch proceed silently without siren.`~~ Superseded 2026-09-26: plan 65 Phase 1 (`7826488`) removed the hold gesture; a long press now behaves like a tap; the quick silent path becomes a "Silence" button on the countdown (docs/64 D8 and FFR-15, plan 65 Phase 4).
 
 
 

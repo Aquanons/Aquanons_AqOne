@@ -217,8 +217,8 @@ Stop for Len's go-ahead (hard-stop).
 
 ## Phase 4: SOS-first Home and plain controls
 
-Requirements: FFR-07, FFR-10
-State: Approved (D3: yes)
+Requirements: FFR-07, FFR-10, FFR-15
+State: Approved (D3: yes; D8: Silence button, Len 2026-09-26)
 
 ### Tasks
 
@@ -227,6 +227,11 @@ State: Approved (D3: yes)
 - [ ] The floating SOS pill no longer covers the last "My SOS calls" card (seen in `docs/edge-remediation/critical/c3-relayed.png`); the full-width button above removes the floating pill, and the history list keeps bottom padding for the dock.
   At 200% text it also covers the sea-condition card on Home (`docs/fisher-ux/phase-3/home-light.png`).
 - [ ] Countdown: add a large "Cancel - do not send" button beside the slide.
+- [ ] Countdown: add a large "Silence" button (volume-off icon and the word, at least 56 dp) while the alarm is ringing (FFR-15, D8).
+  `SosCountdownScreen` takes an optional `onSilence` callback and shows the button only when it is given; `handleSosTap` passes one that stops `SosAlarm` and does not pass it when the silent setting is on.
+  After a tap the button reads as silenced and is disabled; the countdown keeps running, the SOS still sends, and nothing restarts the alarm on the post-SOS sheet.
+  New string in `app_en.arb` with an `@` description (for example "Silence" and "Silenced"), with `fil` and `akl` drafts using the Phase 0a terms.
+  Place it apart from Cancel and not in the slide's path, so silencing is never mistaken for cancelling.
 - [ ] Calling off: replace the slide in `EmergencyDetailsSheet` with a normal danger button that opens the existing confirm dialog; delete `_SlideToAction` if nothing else uses it; update the "stand-down needs confirmation" test in `widget_test.dart` from a drag to a tap.
 
 ### Verification
@@ -234,6 +239,7 @@ State: Approved (D3: yes)
 - [ ] Widget test: the SOS control sits above the first weather widget on Home and is at least 96 dp tall.
 - [ ] Widget test: tapping the countdown cancel button pops `false`, nothing is inserted in the outbox, the "Nothing was sent" snackbar shows.
 - [ ] Widget test: calling off needs the button and then the confirm; cancelling the confirm leaves the SOS active.
+- [ ] Widget test (reviewer writes it first): tapping Silence stops the alarm once, the countdown still completes, `raiseSos` runs, no "Nothing was sent" message appears, and the button is then disabled; with `silent_sos` on, no Silence button is shown.
 - [ ] Existing squall, weather-card and pitch-mode tests still pass.
 - [ ] Standard mobile gate passes; screenshots in `docs/fisher-ux/PHASE_4_VERIFICATION.md`.
 

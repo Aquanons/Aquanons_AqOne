@@ -934,7 +934,7 @@ One eval-style test per change in `backend/tests/test_trip_profile.py`: 23:30 an
 4. **Silent SOS (H22).**
    - A settings toggle, "Silent SOS", and a gesture (hold the SOS button for 3 s) both send with no sound or vibration.
    - A duress cancel (a cancel gesture that looks normal but sends a `duress` flag) needs an MDRRMO procedure first, so it is roadmap.
-   - Amended 2026-09-26 by `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` FFR-02 (plan 65 Phase 1, `7826488`): the 3 s hold was removed because a panicking fisher who presses hard got a silent SOS without knowing it; the settings toggle remains. A quick silent path for H22 is open decision D8 in docs/64.
+   - Amended 2026-09-26 by `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` FFR-02 (plan 65 Phase 1, `7826488`): the 3 s hold was removed because a panicking fisher who presses hard got a silent SOS without knowing it; the settings toggle remains. Len decided D8 on 2026-09-26: a visible "Silence" button on the SOS countdown (docs/64 FFR-15, plan 65 Phase 4) is the quick silent path.
 5. **Alarm stream (L4).**
    `audioplayers` is configured with `AudioContext(android: AudioContextAndroid(usageType: AndroidUsageType.alarm, contentType: AndroidContentType.sonification))`.
 6. **Wet hands (L5).**

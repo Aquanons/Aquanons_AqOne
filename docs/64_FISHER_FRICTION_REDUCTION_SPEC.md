@@ -13,6 +13,7 @@ Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEME
 The D2 dates below are superseded by that order; plan 65 carries the current order.
 Revision 3, Len 2026-09-25T23:40:00+08:00: the At sea screen gets one summary card in place of its four top banners (Section 2.6, FFR-14, D7), shaped by a council review recorded in Section 2.6.
 Revision 4, 2026-09-26: finding status after plan 65 Phases 1 and 3 (Section 3.1), and open decision D8 on the silent SOS gesture that Phase 1 removed.
+Len, 2026-09-26: D8 decided - a visible "Silence" button on the SOS countdown (FFR-15, plan 65 Phase 4).
 
 ## 1. Purpose and success
 
@@ -249,6 +250,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | FFR-12 | Guided enrolment: one question per screen, big Next, number keypad for phone, registration type as large choice cards, plain-words battery explanation. Same validators, same `IdentityStore.ensure` call. | `enrolment_page_test.dart` and a new onboarding test walk every step; validators unchanged in the diff. | F10 |
 | FFR-13 | Field verification of the five jobs with fishermen and the MDRRMO, once schedules allow after the RSTW pitch. The unchanged build (`a8d9676`) and the newest build are both tested in the same session, in alternating order, so one session gives a before and an after. | Results recorded in `docs/fisher-ux/` against Section 1 targets. | all |
 | FFR-14 | The At sea screen shows one summary card in place of the four top banners, ranked and worded as Section 2.6 sets out. | Table test on the pure ranking function: every combination of SOS situation, squall level and acknowledgement, weather state and map age gives the Section 2.6 rows; ranks 1 and 2 are never displaced; unknown squall or weather never yields a success colour or check mark. Widget tests: at most one card and no `SquallBanner`, `OfflineMapBanner` or separate SOS pill at the top of At sea; tapping opens the details sheet with all four sections; no overflow at `TextScaler.linear(2.0)` on 360 x 640. | F13 |
+| FFR-15 | While the SOS alarm is ringing, the countdown shows a large, labelled "Silence" button (icon and word, at least 56 dp). One tap stops the siren and vibration for this SOS, the countdown keeps running and the SOS still sends; the alarm does not restart on the post-SOS sheet. With the silent setting on, no alarm rings and the button is not shown. | Widget tests: tapping Silence calls `SosAlarm.stop` once, the countdown still completes and the SOS is raised, no "cancelled" message appears, and the button then reads as silenced and cannot be tapped again; with `silent_sos` on, the button is absent. | H22, D8 |
 
 ## 6. Non-goals
 
@@ -271,7 +273,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | D5 | Recorded voice prompts. | Out of this plan; revisit after the field session. |
 | D6 | Remove "Remember me" from enrolment. | Yes: always remember; logout stays in Me behind a confirm. |
 | D7 | Four banners at the top of At sea. | One summary card (Len, 2026-09-25T23:40:00+08:00), designed in Section 2.6 after a council review. The 15-minute linger for a closed or cancelled SOS is a proposed default; Len may change it. |
-| D8 | Phase 1 removed the 3 s hold on SOS (FFR-02). That hold was also the quick silent SOS that `docs/61` D11.4 designed for a robbery at sea (finding H22); only the settings toggle is left, which a fisher under threat cannot reach in time. | Open, Len to decide. Recommendation: a visible "Silence" button on the SOS countdown screen that stops the siren and vibration without cancelling, so a silent SOS stays one deliberate, visible tap away; plan it into Phase 4 with the other countdown controls. |
+| D8 | Phase 1 removed the 3 s hold on SOS (FFR-02). That hold was also the quick silent SOS that `docs/61` D11.4 designed for a robbery at sea (finding H22); only the settings toggle was left, which a fisher under threat cannot reach in time. | Decided by Len, 2026-09-26: a visible "Silence" button on the SOS countdown that stops the siren and vibration without cancelling (FFR-15), built in plan 65 Phase 4 with the other countdown controls. The red countdown screen itself stays visible, and a duress cancel is still roadmap (docs/61 D11.4). |
 
 ## 8. Open questions and readiness
 

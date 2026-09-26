@@ -20,7 +20,7 @@ Environment: Windows 11, Flutter stable; evidence in [`fisher-ux/`](fisher-ux/).
 **Not verified:**
 - On a device: the countdown double tap (Len), the silent-SOS setting, and a release APK (the signing key is not on the build machine; debug builds work).
 - At 200% text on a 360 x 640 phone, dock labels break inside words, the floating SOS button covers the sea-condition card, and on At sea the stacked banners push the SOS status under the map credit; plan 65 Phases 2, 4 and 4b own these.
-- Removing the long-press silent SOS also removed docs/61's quick silent path for a robbery at sea (H22); open decision D8 in docs/64.
+- Removing the long-press silent SOS also removed docs/61's quick silent path for a robbery at sea (H22); Len decided (D8) to add a visible "Silence" button to the countdown in plan 65 Phase 4.
 
 **Next:** Phase 2 (fisher wording) once the team's term study (Phase 0a) is done; the field session with fishermen and the MDRRMO is after RSTW.
 
