@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 
 import pytest
+
 from app.fleet_watch.trips import OpenTrip, TripAction, auto_trip_id, trip_action
 from app.fleet_watch.watch import Checkin
 

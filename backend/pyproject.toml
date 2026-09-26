@@ -6,6 +6,11 @@ line-length = 120
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = ["EXE002"]
 
+[tool.ruff.lint.isort]
+# Without this, ruff decides `app.x.y` is first-party only if app/x/y already exists, so a red test
+# for a module not written yet sorts differently once it is, and the cached result hides the change.
+known-first-party = ["app"]
+
 [tool.ruff.lint.flake8-bugbear]
 # B008 flags function calls in argument defaults, but `Depends(...)` in a
 # default is the documented FastAPI dependency-injection idiom, not a mutable

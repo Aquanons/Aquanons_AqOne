@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from app.fleet_watch.tier import (
     INTERVAL_S,
     MAX_RAISE,
