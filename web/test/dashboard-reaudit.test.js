@@ -446,7 +446,6 @@ test('R2: SOS Distress Provenance, Actionability & Confidence Suppression', asyn
     classifyFreshness,
     freshnessLabel,
     createMarkerIcon: () => ({}),
-    createOverdueIcon: () => ({}),
     authFetch: async () => ({ ok: true, json: async () => [] }),
     openIncidentDrawerCalled: null,
     openIncidentDrawer(drawerData, marker) {

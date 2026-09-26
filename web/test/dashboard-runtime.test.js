@@ -958,50 +958,6 @@ test('Phase 2 - F11 & F14: Secondary UI wiring and real session behavior', async
     assert.ok(buoyHealthCode.includes('aqone-sar-console-export.json'), 'dashboard-buoy-health.js exports console JSON');
   });
 
-  await t.test('overdue vessel (priority 0) sorts first before in-coverage and out-of-coverage', () => {
-    const vesselList = createStubElement('div', 'vessel-list');
-    const fakeMarker = {
-      addTo: () => fakeMarker,
-      bindPopup: () => fakeMarker,
-      on: () => fakeMarker,
-      openPopup: () => fakeMarker
-    };
-    const fakeL = {
-      divIcon: () => ({}),
-      marker: () => fakeMarker,
-      layerGroup: () => ({ addLayer: () => {} })
-    };
-
-    const ns = {
-      ready: true,
-      map: { on() {}, setView() {} },
-      vesselLayer: { addLayer() {} },
-      createOverdueIcon: () => ({}),
-      createMarkerIcon: () => ({}),
-      makePopup: () => '',
-      allAlerts: () => [],
-      alertBadge: () => ({ cssClass: '', text: '' })
-    };
-
-    const { window, document } = createDOMContext({
-      'vessel-list': vesselList,
-      'alert-list': createStubElement('div', 'alert-list')
-    }, ns);
-    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-vessels-alerts.js'), 'utf8');
-    const context = vm.createContext(Object.assign({}, window, { window, document, L: fakeL, AqOneDashboard: ns }));
-    vm.runInContext(code, context);
-
-    assert.equal(typeof ns.renderVessels, 'function');
-    ns.renderVessels('all');
-
-    // Check row order in HTML
-    const html = vesselList.innerHTML;
-    const overduePos = html.indexOf('vessel-overdue');
-    assert.ok(overduePos !== -1, 'overdue vessel row rendered');
-    const firstRowEnd = html.indexOf('</div>\n      </div>');
-    assert.ok(overduePos < firstRowEnd, 'overdue vessel must be the very first row in vessel list');
-  });
-
   await t.test('script.js preserves password spaces and clears demo state upon real login', async () => {
     const script = require('../js/script.js');
     let postedData = null;
@@ -1299,7 +1255,6 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
       allAlerts: () => [],
       map: { on() {}, setView() {}, addLayer() {} },
       vesselLayer: { addLayer() {}, removeLayer() {} },
-      createOverdueIcon: () => ({}),
       createMarkerIcon: () => ({}),
       makePopup: () => '',
       vesselStatusBadge: () => ({ text: '', cls: '' }),
@@ -1312,8 +1267,6 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
       'banner-alert-count': bannerCount,
       'alert-list': alertList,
       'live-alert-banner': liveBanner,
-      'vessel-filters': createStubElement('div', 'vessel-filters'),
-      'vessel-list': createStubElement('div', 'vessel-list'),
       'badge-vessels': createStubElement('span', 'badge-vessels')
     }, ns);
 

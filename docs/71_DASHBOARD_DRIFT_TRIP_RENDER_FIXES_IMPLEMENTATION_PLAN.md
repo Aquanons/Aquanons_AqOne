@@ -180,24 +180,24 @@ Continue automatically to the next phase.
 ## Phase 3: trip anomalies are visible and honest on the dashboard
 
 Requirements: RND-01, RND-03, RND-04
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red web tests: the pure risk-feed renderer (moved from `dashboard-ai-ops.js` into `dashboard-utils.js`) for RND-03; a source check that the vessels module has no vessel literal and a badge-count test for RND-04.
-- [ ] Tab bar wraps (`D5`): `.stats-tabs` `flex-wrap: wrap`, tabs keep their natural width; check the active underline on both rows.
-- [ ] Risk feed: notice plus rows when `unavailable`; DEMO badge on `synthetic` rows.
-- [ ] Delete the hard-coded vessels, their markers and drawers, the two sample overdue drawers in `dashboard-markers.js`, and the filter chips (`D2`); the unstyled `.vessel-next` line goes with them.
-- [ ] The Vessels tab renders the risk feed, and its badge counts non-`normal` rows.
+- [x] Red web tests: the pure risk-feed renderer (moved from `dashboard-ai-ops.js` into `dashboard-utils.js`) for RND-03; a source check that the vessels module has no vessel literal and a badge-count test for RND-04.
+- [x] Tab bar wraps (`D5`): `.stats-tabs` `flex-wrap: wrap`, tabs keep their natural width; check the active underline on both rows.
+- [x] Risk feed: notice plus rows when `unavailable`; DEMO badge on `synthetic` rows.
+- [x] Delete the hard-coded vessels, their markers and drawers, the two sample overdue drawers in `dashboard-markers.js`, and the filter chips (`D2`); the unstyled `.vessel-next` line goes with them.
+- [x] The Vessels tab renders the risk feed, and its badge counts non-`normal` rows.
 
 ### Verification
 
-- [ ] Web gate.
-- [ ] Render check at 1280, 1440 and 1920: every tab inside the bar; Trip Checks opened by a real click; risk feed shows V001 under the notice; no fake overdue marker.
+- [x] Web gate.
+- [x] Render check at 1280, 1440 and 1920: every tab inside the bar; Trip Checks opened by a real click; risk feed shows V001 under the notice; no fake overdue marker.
 
 ### Review and checkpoint
 
-- [ ] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
+- [x] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
 
 Checkpoint message: `fix(dashboard): show every tab, real vessel risk rows and no sample vessels`
 Continue automatically to the next phase.

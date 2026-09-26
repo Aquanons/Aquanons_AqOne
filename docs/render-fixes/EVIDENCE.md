@@ -28,3 +28,15 @@ Date: 2026-09-26.
 - The risk-feed renderer moved from `dashboard-ai-ops.js` into `dashboard-utils.js` as the pure `riskFeedHtml`; the module now only writes its result. `check_needed` rows now sort and color with the urgent rows. Three runtime-test stubs now inject the real utilities, as `dashboard-core.js` does, and one source check reads the utilities file.
 - Gates: backend 585 passed, 61 skipped, 1 xfailed, ruff clean; web 180 passed, `node --check` clean on every file.
 - Render check (`phase-2/report.json`): RND-02 PASS, the trip check now reads "Late beyond the expected-contact window."; console PASS.
+
+## Phase 3: trip anomalies are visible and honest
+
+Date: 2026-09-26.
+
+- Red first: the five Phase 3 tests in `web/test/dashboard-render-fixes.test.js` failed (rows hidden while not monitoring, no DEMO badge, no `attention` count, sample vessel names in four source files).
+- The stats tabs wrap onto a second row; every tab and badge is inside the card at 1280, 1440 and 1920 px.
+- The risk feed shows the "Not monitoring" notice above any scored rows, and a DEMO badge on synthetic rows; the Vessels tab badge counts rows that are not `normal`.
+- Deleted: the five hard-coded vessels, their markers, drawers and filter chips, the two sample overdue incidents and drawers, `createOverdueIcon`, the vessel-list CSS, and the filter labels in both dashboard languages. The Live Overview "vessels in contact range" figure, which was computed from the hard-coded boats, now reads `--` until a real source exists (Plan 72).
+- The runtime test for the deleted sorted vessel list was removed with it.
+- Gates: web 184 passed, `node --check` clean; backend unchanged since Phase 2.
+- Render check (`phase-3/report.json`): RND-01, -02, -03, -04 and console PASS.

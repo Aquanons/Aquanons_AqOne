@@ -126,10 +126,6 @@
         hdrAdvisories: "Maritime Advisories",
         subAdvisories: "Create and manage official government advisories.",
         btnCreateAdv: "Create Advisory",
-        filterAll: "All",
-        filterInCoverage: "In Coverage",
-        filterOutOfCoverage: "Out of Coverage",
-        filterOverdue: "Overdue",
         wcTitle: "Current Conditions",
         hdrSeaStatus: "Sea Condition Status",
         btnSeaSafe: "Safe to Go Out",
@@ -173,10 +169,6 @@
         hdrAdvisories: "Mga Pasidaan sa Baybayon",
         subAdvisories: "Maghimo ag magdumala sang opisyal nga mga pasidaan sang gobyerno.",
         btnCreateAdv: "Maghimo it Pasidaan",
-        filterAll: "Tanan",
-        filterInCoverage: "Yara sa Sakop",
-        filterOutOfCoverage: "Gwa sa Sakop",
-        filterOverdue: "Lampas sa Oras",
         wcTitle: "Kasamtangan nga Panahon",
         hdrSeaStatus: "Sitwasyon sa Baybayon",
         btnSeaSafe: "Ewas nga Maglayag",
@@ -249,11 +241,6 @@
       setText('.advisory-drawer-title', 'hdrAdvisories');
       setText('.advisory-drawer-desc', 'subAdvisories');
       setText('#btn-create-advisory', 'btnCreateAdv');
-
-      setText('.vessel-filter[data-filter="all"]', 'filterAll');
-      setText('.vessel-filter[data-filter="in-coverage"]', 'filterInCoverage');
-      setText('.vessel-filter[data-filter="out-of-coverage"]', 'filterOutOfCoverage');
-      setText('.vessel-filter[data-filter="overdue"]', 'filterOverdue');
 
       setText('.wc-title', 'wcTitle');
       setText('#sea-condition-card .panel-card-header span', 'hdrSeaStatus');

@@ -241,9 +241,7 @@
   // Incidents occur at sea within the service area. The Boracay entry was
   // ~50 km outside New Washington and has been removed.
   const incidents = [
-    { name: 'Overdue Vessel — San Pedro', lat: 11.766, lng: 122.53, severity: 'danger', date: '2026-08-04', type: 'Overdue Vessel' },
     { name: 'Squall Watch — Sibuyan Sea N', lat: 11.7213, lng: 122.5736, severity: 'warning', date: '2026-08-04', type: 'Squall Nowcast' },
-    { name: 'Overdue Vessel — Maria Gracia', lat: 11.6152, lng: 122.5175, severity: 'warning', date: '2026-08-04', type: 'Overdue Vessel' },
   ];
 
   // Service area = New Washington municipal waters. Mirrors WATER_POLYGON in

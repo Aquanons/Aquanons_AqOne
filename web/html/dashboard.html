@@ -520,7 +520,7 @@
         <div class="stats-header">
           <div class="stats-tabs" id="stats-tabs">
             <button class="stats-tab active" data-tab="overview">Live Overview</button>
-            <button class="stats-tab" data-tab="vessels">Vessels <span class="tab-badge badge-red" id="badge-vessels">2</span></button>
+            <button class="stats-tab" data-tab="vessels">Vessels <span class="tab-badge badge-red" id="badge-vessels">--</span></button>
             <button class="stats-tab" data-tab="alerts">Alerts <span class="tab-badge badge-red" id="badge-alerts">2</span></button>
             <button class="stats-tab" data-tab="sar">SAR Metrics <span class="tab-badge badge-orange" id="badge-sar">2</span></button>
             <button class="stats-tab" data-tab="tripchecks">Trip Checks <span class="tab-badge badge-red" id="badge-tripchecks">0</span></button>
@@ -557,7 +557,7 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-value" id="stat-vessels">38</span>
+                  <span class="stat-value" id="stat-vessels">--</span>
                   <span class="stat-label">Vessels in Contact Range</span>
                 </div>
               </div>
@@ -583,18 +583,11 @@
           </div>
 
           <div class="tab-content" id="tab-vessels">
-            <div class="vessel-filters" id="vessel-filters">
-              <button class="vessel-filter active" data-filter="all">All</button>
-              <button class="vessel-filter" data-filter="in-coverage">In Coverage</button>
-              <button class="vessel-filter" data-filter="out-of-coverage">Out of Coverage</button>
-              <button class="vessel-filter" data-filter="overdue">Overdue</button>
-            </div>
             <div class="ai-risk-header">
               <span class="ai-risk-title">Vessel risk feed</span>
-              <span class="tab-badge badge-red" id="ai-risk-count">0</span>
+              <span class="tab-badge badge-red" id="ai-risk-count">--</span>
             </div>
             <div class="ai-risk-list" id="ai-risk-list"></div>
-            <div class="vessel-list" id="vessel-list"></div>
           </div>
 
           <div class="tab-content" id="tab-alerts">

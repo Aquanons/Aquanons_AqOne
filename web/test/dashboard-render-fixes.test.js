@@ -57,3 +57,44 @@ test('an unreachable feed says so rather than looking calm', () => {
   assert.ok(riskFeedHtml(null, { freshness: 'offline' }).html.includes('unavailable'));
   assert.equal(riskFeedHtml([], { freshness: 'live', monitoring: 'active' }).count, '0');
 });
+
+test('RND-03: while not monitoring, scored rows still show under the notice', () => {
+  const { html, count } = riskFeedHtml([riskRow({ source: 'synthetic' })], { freshness: 'live', monitoring: 'unavailable' });
+  assert.ok(html.includes('Not monitoring - no live contact source'));
+  assert.ok(html.includes('V001'));
+  assert.ok(html.indexOf('Not monitoring') < html.indexOf('V001'));
+  assert.equal(count, '1');
+});
+
+test('RND-03: with no rows, not monitoring shows the notice alone', () => {
+  const { html, count } = riskFeedHtml([], { freshness: 'live', monitoring: 'unavailable' });
+  assert.ok(html.includes('Not monitoring - no live contact source'));
+  assert.ok(!html.includes('ai-risk-item'));
+  assert.equal(count, '--');
+});
+
+test('RND-03: a synthetic row carries the DEMO badge and a live row does not', () => {
+  const state = { freshness: 'live', monitoring: 'active' };
+  assert.ok(riskFeedHtml([riskRow({ source: 'synthetic' })], state).html.includes('<span class="alert-demo-badge">DEMO</span>'));
+  assert.ok(!riskFeedHtml([riskRow({ source: 'live' })], state).html.includes('alert-demo-badge'));
+});
+
+test('RND-04: the Vessels badge counts rows that are not normal', () => {
+  const { attention } = riskFeedHtml([
+    riskRow({ status: 'alert' }), riskRow({ status: 'check_needed' }), riskRow({ status: 'normal' })
+  ], { freshness: 'live', monitoring: 'active' });
+  assert.equal(attention, '2');
+  assert.equal(riskFeedHtml(null, { freshness: 'offline' }).attention, '--');
+});
+
+test('RND-04: no sample vessel ships in the dashboard source', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const files = ['js/dashboard/dashboard-vessels-alerts.js', 'js/dashboard/dashboard-core.js', 'js/dashboard/dashboard-markers.js', 'html/dashboard.html'];
+  for (const file of files) {
+    const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    for (const name of ['San Pedro', 'Maria Gracia', 'Sta. Maria', 'Birhen sa Regla', 'Sto. Nino', 'V-002', 'V-005', 'vessel-filters']) {
+      assert.ok(!source.includes(name), `${file} still contains ${name}`);
+    }
+  }
+});

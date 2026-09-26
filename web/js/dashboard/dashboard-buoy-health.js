@@ -5,7 +5,6 @@
   var OPS_ZOOM = ns.OPS_ZOOM;
   var shoreStations = ns.shoreStations;
   var initialBuoys = ns.initialBuoys;
-  var vessels = ns.vessels;
   var incidents = ns.incidents;
   var map = ns.map;
   var openPanel = ns.openPanel;
@@ -300,16 +299,16 @@
   function updateStats() {
     const bounds = map.getBounds();
     let buoysInView = 0;
-    let vesselsInView = 0;
     let incidentsInView = 0;
 
     initialBuoys.forEach(b => { if (bounds.contains([b.lat, b.lng])) buoysInView++; });
-    vessels.forEach(v => { if (bounds.contains([v.lat, v.lng])) vesselsInView++; });
     incidents.forEach(i => { if (bounds.contains([i.lat, i.lng])) incidentsInView++; });
 
     document.getElementById('stat-buoys').textContent = Math.max(4, buoysInView) + '/' + initialBuoys.length;
     document.getElementById('stat-coverage').textContent = (68 + buoysInView * 4) + '%';
-    document.getElementById('stat-vessels').textContent = (38 + vesselsInView * 3);
+    // No source counts vessels in contact range yet; the sample figure that
+    // stood here came from hard-coded boats (docs/71 RND-04, docs/72).
+    document.getElementById('stat-vessels').textContent = '--';
     document.getElementById('stat-leadtime').textContent = '45 min';
     document.getElementById('stat-alerts').textContent = incidentsInView;
   }

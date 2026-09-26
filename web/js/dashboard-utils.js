@@ -371,7 +371,8 @@
       '<details class="ai-risk-item"' + (open ? ' open' : '') + '>' +
         '<summary>' +
           '<div class="ai-risk-main">' +
-            '<div class="ai-risk-title">' + escapeHtml(row.vessel_id) + ' · Trip ' + escapeHtml(row.trip_id) + '</div>' +
+            '<div class="ai-risk-title">' + escapeHtml(row.vessel_id) + ' · Trip ' + escapeHtml(row.trip_id) +
+              (row.source === 'synthetic' ? ' <span class="alert-demo-badge">DEMO</span>' : '') + '</div>' +
             '<div class="ai-risk-meta">Expected buoy ' + escapeHtml(row.expected_next_buoy_id || 'n/a') + ' · Last contact ' + escapeHtml(lastSeen) + '</div>' +
           '</div>' +
           '<div class="ai-risk-score">' + escapeHtml(score) + '<span class="ai-risk-status ' + (RISK_STATUS_CLASS[status] || 'status-normal') + '">' + escapeHtml(statusLabel) + '</span></div>' +
@@ -395,17 +396,23 @@
    */
   function riskFeedHtml(rows, state) {
     var s = state || {};
-    if (s.monitoring === 'unavailable') {
-      return { html: '<div class="ai-empty-state ai-unavailable-state">Not monitoring - no live contact source</div>', count: '--' };
+    var hasRows = Array.isArray(rows) && rows.length > 0;
+    // Not monitoring means an empty feed proves nothing (docs/05 E5.7); rows
+    // the last evaluation did score are still shown, under the notice.
+    var notMonitoring = s.monitoring === 'unavailable'
+      ? '<div class="ai-empty-state ai-unavailable-state">Not monitoring - no live contact source</div>'
+      : '';
+    if (notMonitoring && !hasRows) {
+      return { html: notMonitoring, count: '--', attention: '--' };
     }
-    if (rows === null || (s.freshness === 'offline' && (!rows || !rows.length))) {
-      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed unavailable &middot; unable to reach the anomaly service.</div>', count: '--' };
+    if (rows === null || (s.freshness === 'offline' && !hasRows)) {
+      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed unavailable &middot; unable to reach the anomaly service.</div>', count: '--', attention: '--' };
     }
-    if (s.freshness === 'stale' && (!rows || !rows.length)) {
-      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed is stale &middot; unable to refresh anomaly service.</div>', count: '--' };
+    if (s.freshness === 'stale' && !hasRows) {
+      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed is stale &middot; unable to refresh anomaly service.</div>', count: '--', attention: '--' };
     }
-    if (!rows || !rows.length) {
-      return { html: '<div class="ai-empty-state">No active vessel risk rows available.</div>', count: '0' };
+    if (!hasRows) {
+      return { html: '<div class="ai-empty-state">No active vessel risk rows available.</div>', count: '0', attention: '0' };
     }
     var sorted = rows.slice().sort(function (a, b) {
       var diff = (RISK_PRIORITY[a.status] !== undefined ? RISK_PRIORITY[a.status] : 9) - (RISK_PRIORITY[b.status] !== undefined ? RISK_PRIORITY[b.status] : 9);
@@ -417,7 +424,8 @@
         '<span class="' + (s.freshness === 'offline' ? 'alert-demo-badge' : 'alert-unknown-badge') + '">FEED ' + (s.freshness === 'offline' ? 'OFFLINE' : 'STALE') + '</span> ' +
         'Vessel risk feed unavailable &middot; showing last-known status</div>' + html;
     }
-    return { html: html, count: String(sorted.length) };
+    var attention = sorted.filter(function (row) { return row.status && row.status !== 'normal'; }).length;
+    return { html: notMonitoring + html, count: String(sorted.length), attention: String(attention) };
   }
 
   /**

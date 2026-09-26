@@ -56,18 +56,6 @@
     });
   }
 
-  function createOverdueIcon() {
-    return L.divIcon({
-      className: '',
-      html: '<div style="position:relative; width:32px; height:32px;">' +
-        '<div class="overdue-pulse-ring"></div>' +
-        '<div class="overdue-marker-dot"></div>' +
-      '</div>',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
-    });
-  }
-
   function makePopup(title, rows, badge) {
     let html = `<div class="popup-title">${escapeHtml(title)}</div>`;
     rows.forEach(([label, val]) => {
@@ -237,24 +225,12 @@
 
   // ===== INCIDENT MARKERS =====
   const incidentDrawerData = [
-    { alertType: 'overdue', headerText: 'OVERDUE VESSEL — MISSED EXPECTED CONTACT',
-      vesselId: 'V-002', owner: 'Ramon Flores',
-      position: '11.7141\u00B0 N, 122.4166\u00B0 E', lat: 11.7141, lng: 122.4166,
-      buoy: 'Buoy-B', coverage: 'Last seen within Buoy-B coverage radius \u2014 flagged as overdue',
-      confidence: 88, stage: 'Stage 3 \u2014 SCORED ALERT', nextContact: 'Buoy-C \u00b7 10:05 (missed \u2014 47 min)',
-      timerBaseline: 47 * 60 },
     { alertType: 'squall', headerText: 'RETURN NOW — SQUALL NOWCAST',
       vesselId: 'ALL', owner: 'Broadcast \u2014 all vessels in contact range',
       position: 'Approach NE \u2014 arrival est. 14:20', lat: 11.7383, lng: 122.5324,
       buoy: 'Buoy-B / Buoy-C', coverage: 'Alert propagated across LoRa mesh \u2014 waiting at every buoy',
       confidence: 88, stage: 'Squall nowcast \u2014 45 min lead', nextContact: 'Delivered to phones on next contact',
       timerBaseline: 12 * 60 },
-    { alertType: 'overdue', headerText: 'OVERDUE VESSEL — ESCALATING',
-      vesselId: 'V-005', owner: 'Felix Tambong',
-      position: '11.6768\u00B0 N, 122.4757\u00B0 E', lat: 11.6768, lng: 122.4757,
-      buoy: 'Buoy-A', coverage: 'Last seen within Buoy-A coverage radius \u2014 check-in request outstanding',
-      confidence: 64, stage: 'Stage 2 \u2014 check-in requested', nextContact: 'Buoy-A \u00b7 09:15 (missed)',
-      timerBaseline: 72 * 60 },
   ];
 
   const incidentMarkers = [];
@@ -437,7 +413,6 @@
   refreshDangerZones();
 
   ns.createMarkerIcon = createMarkerIcon;
-  ns.createOverdueIcon = createOverdueIcon;
   ns.makePopup = makePopup;
   ns.pulseCoverageCircle = pulseCoverageCircle;
   ns.incidentDrawerData = incidentDrawerData;

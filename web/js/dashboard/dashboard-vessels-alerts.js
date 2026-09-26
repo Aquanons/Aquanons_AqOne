@@ -4,127 +4,8 @@
   var escapeHtml = ns.escapeHtml || function (s) { return s == null ? '' : String(s); };
   var alertBadge = ns.alertBadge || function () { return { cssClass: '', text: '' }; };
   var map = ns.map;
-  var vesselLayer = ns.vesselLayer;
-  var createMarkerIcon = ns.createMarkerIcon;
-  var createOverdueIcon = ns.createOverdueIcon;
-  var makePopup = ns.makePopup || function () { return ''; };
   var formatLatLon = ns.formatLatLon || function () { return 'unknown position'; };
   var flagLabel = ns.flagLabel || function (flag) { return String(flag || ''); };
-
-  // ===== VESSEL DATA (phone–buoy contact events) =====
-  const vessels = [
-    { name: 'Sta. Maria',      id: 'V-001', owner: 'Juan dela Cruz', status: 'in-coverage',     checkin: '2 minutes ago',     lat: 11.6615, lng: 122.4499, buoy: 'Buoy-A', next: 'Buoy-D \u00b7 10:15' },
-    { name: 'San Pedro',       id: 'V-002', owner: 'Ramon Flores',   status: 'overdue',         checkin: '47 minutes ago',    lat: 11.7141, lng: 122.4166, buoy: 'Buoy-B', next: 'Buoy-C \u00b7 10:05 (MISSED)' },
-    { name: 'Birhen sa Regla', id: 'V-003', owner: 'Eddie Magbanua', status: 'out-of-coverage', checkin: '1 hour ago',        lat: 11.7191, lng: 122.4619, buoy: null,    next: 'No expected contact' },
-    { name: 'Sto. Nino',       id: 'V-004', owner: 'Rodel Javines',  status: 'in-coverage',     checkin: '5 minutes ago',     lat: 11.6975, lng: 122.4698, buoy: 'Buoy-C', next: 'Buoy-A \u00b7 10:40' },
-    { name: 'Maria Gracia',    id: 'V-005', owner: 'Felix Tambong',  status: 'overdue',         checkin: '1 hour 12 minutes ago', lat: 11.6768, lng: 122.4757, buoy: 'Buoy-A', next: 'Buoy-A \u00b7 09:15 (MISSED)' },
-  ];
-
-  function vesselStatusBadge(status) {
-    const map = { 'in-coverage': ['In Coverage', 'status-green'], 'out-of-coverage': ['Out of Coverage', 'status-gray'], 'overdue': ['Overdue', 'status-red'] };
-    const [label, cls] = map[status] || ['', ''];
-    return `<span class="status-badge ${cls}">${label}</span>`;
-  }
-
-  const overdueVessels = vessels.filter(function (v) { return v.status === 'overdue'; });
-  const overdueDrawerData = {
-    'V-002': {
-      alertType: 'overdue', headerText: 'OVERDUE VESSEL — MISSED EXPECTED CONTACT',
-      vesselId: 'V-002', owner: 'Ramon Flores',
-      position: '11.7141\u00B0 N, 122.4166\u00B0 E',
-      timerBaseline: 47 * 60,
-      buoy: 'Buoy-B', coverage: 'Last seen within Buoy-B coverage radius \u2014 flagged as overdue',
-      confidence: 88, stage: 'Stage 3 \u2014 SCORED ALERT', nextContact: 'Buoy-C \u00b7 10:05 (missed \u2014 47 min)'
-    },
-    'V-005': {
-      alertType: 'overdue', headerText: 'OVERDUE VESSEL — ESCALATING',
-      vesselId: 'V-005', owner: 'Felix Tambong',
-      position: '11.6768\u00B0 N, 122.4757\u00B0 E',
-      timerBaseline: 72 * 60,
-      buoy: 'Buoy-A', coverage: 'Last seen within Buoy-A coverage radius \u2014 check-in request outstanding',
-      confidence: 64, stage: 'Stage 2 \u2014 check-in requested', nextContact: 'Buoy-A \u00b7 09:15 (missed)'
-    }
-  };
-
-  const vesselMarkers = {};
-
-  overdueVessels.forEach(function (v) {
-    var marker = L.marker([v.lat, v.lng], { icon: createOverdueIcon() });
-    marker.on('click', function () {
-      var data = overdueDrawerData[v.id];
-      if (data) ns.openIncidentDrawer(data, marker);
-    });
-    vesselLayer.addLayer(marker);
-    vesselMarkers[v.id] = marker;
-  });
-
-  var activeVessels = vessels.filter(function (v) { return v.status === 'in-coverage' || v.status === 'out-of-coverage'; });
-  activeVessels.forEach(function (v) {
-    var statusInfo = vesselStatusBadge(v.status);
-    var marker = L.marker([v.lat, v.lng], { icon: createMarkerIcon('vessel') });
-    marker.bindPopup(makePopup(v.name, [
-      ['ID', v.id],
-      ['Owner', v.owner],
-      ['Status', statusInfo],
-      ['Last Contact', v.checkin],
-      ['Last Buoy', v.buoy || 'N/A'],
-      ['Expected Next', v.next]
-    ]));
-    vesselLayer.addLayer(marker);
-    vesselMarkers[v.id] = marker;
-  });
-
-  function renderVessels(filter) {
-    const list = document.getElementById('vessel-list');
-    const filtered = filter === 'all' ? vessels : vessels.filter(v => v.status === filter);
-    var statusPriority = { 'overdue': 0, 'in-coverage': 1, 'out-of-coverage': 2 };
-    var sorted = filtered.slice().sort(function (a, b) {
-      return (statusPriority[a.status] ?? 9) - (statusPriority[b.status] ?? 9);
-    });
-    list.innerHTML = sorted.map(v => `
-      <div class="vessel-row${v.status === 'overdue' ? ' vessel-overdue' : ''}" data-vessel-id="${v.id}">
-        <div class="vessel-info">
-          <div class="vessel-name">${v.name} (${v.id})</div>
-          <div class="vessel-owner">${v.owner}</div>
-          <div class="vessel-checkin">Last contact: ${v.checkin}</div>
-          <div class="vessel-next">Expected next: ${v.next}</div>
-        </div>
-        <div class="vessel-status">
-          ${vesselStatusBadge(v.status)}
-        </div>
-      </div>
-    `).join('');
-
-    list.querySelectorAll('.vessel-row').forEach(row => {
-      row.addEventListener('click', () => {
-        var v = vessels.find(x => x.id === row.dataset.vesselId);
-        if (!v) return;
-        if (v.status === 'overdue') {
-          var data = overdueDrawerData[v.id];
-          if (data) ns.openIncidentDrawer(data, null);
-        } else {
-          map.setView([v.lat, v.lng], 14, { animate: true, duration: 1 });
-          var vm = vesselMarkers[v.id];
-          if (vm) vm.openPopup();
-        }
-      });
-    });
-  }
-
-  const vesselFilters = document.getElementById('vessel-filters');
-  vesselFilters.addEventListener('click', (e) => {
-    const btn = e.target.closest('.vessel-filter');
-    if (!btn) return;
-    vesselFilters.querySelectorAll('.vessel-filter').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderVessels(btn.dataset.filter);
-  });
-
-  renderVessels('all');
-
-  const overdueCount = vessels.filter(v => v.status === 'overdue').length;
-  document.getElementById('badge-vessels').textContent = overdueCount;
-
 
   const alertData = [];
 
@@ -241,11 +122,6 @@
         }
         if (a.drawerData && (a.sosEventId != null || a.type === 'sos')) {
           ns.openIncidentDrawer(a.drawerData, (ns.liveSosMarkers && a.sosEventId != null && ns.liveSosMarkers[a.sosEventId]) || null);
-          return;
-        }
-        if (a.vesselId) {
-          var vm = vesselMarkers[a.vesselId];
-          if (vm) vm.openPopup();
         }
       }
       row.addEventListener('click', activateAlert);
@@ -310,8 +186,6 @@
 
   syncAlertIndicators();
 
-  ns.vessels = vessels;
-  ns.renderVessels = renderVessels;
   ns.alertData = alertData;
   ns.liveAlerts = liveAlerts;
   ns.allAlerts = allAlerts;

@@ -609,11 +609,13 @@
   function renderRiskFeed(rows, freshness, monitoring, monitoringReason) {
     var list = document.getElementById('ai-risk-list');
     var count = document.getElementById('ai-risk-count');
+    var tabBadge = document.getElementById('badge-vessels');
     if (!list || !riskFeedHtml) return;
     var feed = riskFeedHtml(rows, { freshness: freshness, monitoring: monitoring });
     list.innerHTML = feed.html;
     list.title = monitoring === 'unavailable' ? (monitoringReason || '') : '';
     if (count) count.textContent = feed.count;
+    if (tabBadge) tabBadge.textContent = feed.attention;
   }
 
   function renderSquallChart(traceSeries) {
