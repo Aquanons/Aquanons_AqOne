@@ -187,6 +187,14 @@ def test_t2_32_low_confidence_under_silence_or_without_a_recent_fix():
     assert case_confidence(missed, fresh, quiet, T0) == 'high'
 
 
+def test_t2_45_an_unknown_fix_age_is_never_a_recent_fix():
+    # docs/02: FIX_AGE_S 65535 means unknown or older, and docs/04 turns it into null.
+    # Treating it as 0 would sound the alarm with a position that may be hours old.
+    unknown_age = watch_input(checkin(minutes_ago=1, fix_age_s=None))
+    assert unknown_age.latest.fix_age_s is None
+    assert case_confidence(verdict('missed'), unknown_age, fleet_silence([], T0, T0), T0) == 'low'
+
+
 def test_t2_33_the_alarm_sounds_only_for_confident_severe_cases():
     assert should_sound_alarm('high', Tier.SEVERE) is True
     assert should_sound_alarm('high', Tier.ELEVATED) is False

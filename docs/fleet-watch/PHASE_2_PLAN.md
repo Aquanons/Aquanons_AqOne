@@ -165,8 +165,9 @@ fleet_silence(verdicts, receiver_last_upload_at, now) -> FleetSilence
     else inactive.
 case_confidence(verdict, item, silence, now) -> CaseConfidence
     'low' if silence.active, or the vessel has no fix taken within RECENT_POSITION of now; else 'high'.
-    A fix was taken at observed_at - fix_age_s (fix_age_s None counts as 0), using the latest check-in
-    when it has a fix, otherwise last_positioned.
+    A fix was taken at observed_at - fix_age_s, using the latest check-in when it has a fix,
+    otherwise last_positioned. An unknown fix_age_s (None, from FIX_AGE_S 65535) is never recent,
+    so it gives 'low' (corrected in review, T2-45).
 should_sound_alarm(confidence, current_tier) -> bool
     'high' and current_tier == SEVERE (REQ-022's rule, decided here so the dashboard only reads it).
 ```
@@ -255,6 +256,7 @@ Times are built from one base, `T0 = datetime(2026, 9, 26, 2, 0, tzinfo=UTC)`.
 | T2-30 | 1 of 10 missed; 1 of 2 missed; 2 of 4 missed | inactive in all three (P1 minimum of 3) |
 | T2-31 | Receiver last upload 3 min 1 s ago, one direct watched vessel; `None`; all watched vessels relayed | active `receiver_stale`; active; inactive |
 | T2-32 | `case_confidence`: silence active; no fix within 30 min; fresh fix, no silence | `low`; `low`; `high` |
+| T2-45 | `case_confidence` with a fix but `fix_age_s` unknown (`None`) | `low` (added in review, 2026-09-26: the first rule counted unknown as 0 and would have sounded the alarm with a possibly hours-old position) |
 | T2-33 | `should_sound_alarm` high at `SEVERE`; high at `ELEVATED`; low at `SEVERE` | `True`; `False`; `False` |
 | T2-34 | Not-watched vessels are ignored in the silence share | 3 missed of 5 watched plus 20 not watched: active |
 

@@ -120,10 +120,10 @@ def case_confidence(
 ) -> CaseConfidence:
     _require_aware(now)
     position = item.latest if item.latest.has_fix else item.last_positioned
-    if position is None or silence.active:
+    if position is None or position.fix_age_s is None or silence.active:
         return 'low'
     _require_aware(position.observed_at)
-    fix_taken_at = position.observed_at - timedelta(seconds=position.fix_age_s or 0)
+    fix_taken_at = position.observed_at - timedelta(seconds=position.fix_age_s)
     return 'low' if now - fix_taken_at > RECENT_POSITION else 'high'
 
 
