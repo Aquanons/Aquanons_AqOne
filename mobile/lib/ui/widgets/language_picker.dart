@@ -31,7 +31,7 @@ class LanguageSegmentedPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
-    final Locale active = controller.effectiveLocale(context);
+    final Locale active = controller.locale;
 
     return Container(
       decoration: BoxDecoration(
@@ -85,7 +85,7 @@ class LanguageSettingTile extends StatelessWidget {
   final LocaleController controller;
 
   Future<void> _open(BuildContext context) async {
-    final Locale active = controller.effectiveLocale(context);
+    final Locale active = controller.locale;
     final palette = AqPalette.of(context);
 
     final Locale? picked = await showModalBottomSheet<Locale>(
@@ -188,7 +188,7 @@ class LanguageSettingTile extends StatelessWidget {
                 // The active language, so the row answers "what is it set to"
                 // without being opened.
                 Text(
-                  languageNameFor(controller.effectiveLocale(context)),
+                  languageNameFor(controller.locale),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

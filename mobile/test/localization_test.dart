@@ -24,36 +24,6 @@ Widget _app(Locale locale, Widget child) => MaterialApp(
     );
 
 void main() {
-  group('locale resolution', () {
-    test('matches on language code, ignoring region', () {
-      expect(
-        resolveLocale(const Locale('fil', 'PH'), kSupportedLocales),
-        const Locale('fil'),
-      );
-      expect(
-        resolveLocale(const Locale('en', 'US'), kSupportedLocales),
-        const Locale('en'),
-      );
-    });
-
-    // Some Android builds and older webviews still report the deprecated
-    // `tl` for Tagalog. A phone set to Tagalog must get a Tagalog app.
-    test('maps the deprecated tl code onto fil', () {
-      expect(
-        resolveLocale(const Locale('tl'), kSupportedLocales),
-        const Locale('fil'),
-      );
-    });
-
-    test('falls back to English for anything unsupported', () {
-      expect(
-        resolveLocale(const Locale('ja'), kSupportedLocales),
-        const Locale('en'),
-      );
-      expect(resolveLocale(null, kSupportedLocales), const Locale('en'));
-    });
-  });
-
   // The regression this whole fallback-delegate arrangement exists to
   // prevent: `akl` has no CLDR data in flutter_localizations, so without the
   // fallbacks the first Material widget to ask for MaterialLocalizations
@@ -67,7 +37,7 @@ void main() {
           builder: (BuildContext context) => Column(
             children: <Widget>[
               Text(AppLocalizations.of(context).navAdvisories),
-              Text(MaterialLocalizations.of(context).okButtonLabel),
+              Text(MaterialLocalizations.of(context).cancelButtonLabel),
             ],
           ),
         ),
@@ -77,9 +47,14 @@ void main() {
     expect(tester.takeException(), isNull);
     // Our own strings are Aklanon...
     expect(find.text('Mga Abiso'), findsOneWidget);
-    // ...while Flutter's built-in chrome falls back to English. Documented
-    // trade-off, see §4.2 of docs/22_LOCALIZATION_PLAN.md.
-    expect(find.text('OK'), findsOneWidget);
+    // ...while Flutter's built-in chrome falls back to Tagalog, the closest
+    // language Flutter ships (docs/22 §4.2, plan 70 D3).
+    final filChrome =
+        await GlobalMaterialLocalizations.delegate.load(const Locale('fil'));
+    final enChrome =
+        await GlobalMaterialLocalizations.delegate.load(const Locale('en'));
+    expect(filChrome.cancelButtonLabel, isNot(enChrome.cancelButtonLabel));
+    expect(find.text(filChrome.cancelButtonLabel), findsOneWidget);
   });
 
   testWidgets('sea status headline is translated in every locale',

@@ -23,7 +23,7 @@ the water and one that is not.
 
 | Language | Code we use | Why |
 |---|---|---|
-| English | `en` | Fallback and source of truth. |
+| English | `en` | The ARB template (`app_en.arb`) and the fallback for a key missing from another file. Not the default language. |
 | Tagalog / Filipino | `fil` | **Not `tl`.** `flutter_localizations` ships `GlobalMaterialLocalizations` for `fil`, not `tl`. Using `tl` throws `No MaterialLocalizations found` at runtime for every Material widget (date pickers, dialogs, tooltips). |
 | Aklanon | `akl` | Valid ISO 639-3. **Not** supported by `flutter_localizations` — needs a fallback delegate, see §4. |
 
@@ -32,6 +32,12 @@ understood as a second language. Shipping both means the demo users read
 their own language and the national audience still gets a language they
 know. This ordering is deliberate: **`akl` is the differentiator, `fil`
 is the reach.**
+
+**Default language (amended 2026-09-26, plan 70, Len's D2).**
+A fresh install runs in Aklanon whatever the phone's language is set to.
+The device language is not consulted at all: the app is tailored for the fishermen of New Washington out of the box.
+An explicit pick in the language picker wins and survives a restart.
+The default lives in one place, `kDefaultLocale` in `lib/core/l10n_fallback.dart`.
 
 ## 3. Approach: `flutter gen-l10n` + ARB
 
@@ -77,14 +83,16 @@ to copy for every enum in `lib/models/`. Affected:
 
 `supportedLocales: [en, fil, akl]` will crash on `akl` because
 `GlobalMaterialLocalizations.delegate.isSupported(akl)` is `false`. Fixed
-by appending fallback delegates that claim every locale and load the `en`
-implementations — our own `AppLocalizations` still resolves `akl`
-correctly, only Flutter's built-in widget chrome falls back to English.
+by appending fallback delegates that claim every locale and load the `fil`
+implementations - our own `AppLocalizations` still resolves `akl`
+correctly, only Flutter's built-in widget chrome falls back to Tagalog.
 See `lib/core/l10n_fallback.dart`.
 
-Consequence: date pickers and the "Paste"/"Select all" context menu will
-read English in Aklanon mode. Acceptable — those are rare surfaces, and
-the alternative is contributing a full CLDR locale to Flutter.
+Amended 2026-09-26 (plan 70, Len's D3): "Load tagalog if you dont have proper aklanon term."
+Before that amendment the fallback loaded English.
+Consequence: date pickers and the "Paste"/"Select all" context menu read Tagalog in Aklanon mode.
+Dates follow the same rule: `intl` has no Aklanon data, so `dateLocaleFor` formats `akl` dates with `fil` symbols.
+The Spanish-derived day and month names (Lunes, Enero) are the same words in Aklanon.
 
 ## 5. String inventory
 

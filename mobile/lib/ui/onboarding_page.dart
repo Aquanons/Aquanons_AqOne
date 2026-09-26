@@ -662,12 +662,14 @@ class _RememberMeRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              t.rememberDevice,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: authText,
+            Flexible(
+              child: Text(
+                t.rememberDevice,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: authText,
+                ),
               ),
             ),
           ],

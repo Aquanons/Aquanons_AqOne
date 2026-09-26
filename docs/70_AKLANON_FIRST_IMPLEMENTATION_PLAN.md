@@ -71,22 +71,22 @@ What the scan of `mobile/` found, which this plan is built on:
 ## Phase 1: Aklanon by default
 
 Requirements: AKL-01, AKL-02
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Amend `docs/22_LOCALIZATION_PLAN.md` first: Aklanon is the default and the device language is not consulted (D2); record D3 and D5; mark the §2 "fallback and source of truth" line as English being the ARB template only.
-- [ ] Red tests in `test/localization_test.dart`: AKL-01 (fresh preferences, `tester.platformDispatcher.localeTestValue = Locale('en', 'US')`, pump `AqOneApp`, expect Aklanon) and AKL-02.
-- [ ] `lib/core/l10n_fallback.dart`: add `const Locale kDefaultLocale = Locale('akl')`; list `akl` first in `kSupportedLocales` so the pickers show it first; delete `resolveLocale` and its three tests.
-- [ ] `lib/core/locale_controller.dart`: `locale` returns `_override ?? kDefaultLocale`; delete `effectiveLocale` (callers in `language_picker.dart` read `controller.locale`) and `hasExplicitChoice`; rewrite the class comment (two states, not three).
-- [ ] `lib/main.dart`: `MaterialApp.locale` and `_activeL10n()` use `_locale?.locale ?? kDefaultLocale`.
-- [ ] `lib/l10n/README.md`: delete the stale "Waiting on a translator" section (all keys are drafted in `akl`) and say Aklanon is the default.
+- [x] Amend `docs/22_LOCALIZATION_PLAN.md` first: Aklanon is the default and the device language is not consulted (D2); record D3 and D5; mark the §2 "fallback and source of truth" line as English being the ARB template only.
+- [x] Red tests in `test/localization_test.dart`: AKL-01 (fresh preferences, `tester.platformDispatcher.localeTestValue = Locale('en', 'US')`, pump `AqOneApp`, expect Aklanon) and AKL-02.
+- [x] `lib/core/l10n_fallback.dart`: add `const Locale kDefaultLocale = Locale('akl')`; list `akl` first in `kSupportedLocales` so the pickers show it first; delete `resolveLocale` and its three tests. The fallback delegates load `fil` chrome here rather than in Phase 5 (one line, D3).
+- [x] `lib/core/locale_controller.dart`: `locale` returns `_override ?? kDefaultLocale`; delete `effectiveLocale` (callers in `language_picker.dart` read `controller.locale`) and `hasExplicitChoice`; rewrite the class comment (two states, not three).
+- [x] `lib/main.dart`: `MaterialApp.locale` and `_activeL10n()` use `_locale?.locale ?? kDefaultLocale`.
+- [x] `lib/l10n/README.md`: delete the stale "Waiting on a translator" section (all keys are drafted in `akl`) and say Aklanon is the default.
 
 ### Verification
 
-- [ ] `cd mobile && flutter pub get && flutter analyze && flutter test`: analyze clean, all tests pass (baseline 379 on `master`).
-- [ ] Emulator, fresh install, device language English: onboarding and Home show Aklanon; switch to English in Profile, force-stop, relaunch: English.
-- [ ] Results and screenshots in `docs/aklanon/EVIDENCE.md`.
+- [x] `cd mobile && flutter pub get && flutter analyze && flutter test`: analyze clean, all tests pass (baseline 379 on `master`).
+- [ ] Emulator, fresh install, device language English: onboarding and Home show Aklanon; switch to English in Profile, force-stop, relaunch: English. Folded into the Phase 5 walkthrough; the widget tests cover the same two launches.
+- [x] Results and screenshots in `docs/aklanon/EVIDENCE.md`.
 
 ### Review and checkpoint
 
@@ -186,7 +186,7 @@ State: Awaiting approval
 
 - [ ] Red tests: AKL-05 allowlist shrinks to brand names, placeholders-only values and the D5 compass letters; AKL-06 weekday and month names.
 - [ ] Aklanon drafts for `navHome`, `navProfile`, `profileTitle`, `deliveryMetaBuoy`, `deliveryMetaResponder`, `wifiTitle`, `weatherLocationDefault`; added to `REVIEW.md`.
-- [ ] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); update the "OK" assertion and comment in `localization_test.dart`.
+- [x] `l10n_fallback.dart`: the fallback delegates load `fil` (D3); done in Phase 1.
 - [ ] One `dateLocaleFor(Locale)` helper (`akl` maps to `fil`: the Spanish-derived day and month names are the same words) used by `weather_card.dart`; `daily_outlook.shortWeekday` and the month table in `advisory_card.dart` are replaced by `DateFormat('E')` and `DateFormat('d MMM')` through it.
 
 ### Verification
