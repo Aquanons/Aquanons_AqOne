@@ -5,6 +5,25 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-26 - Dashboard render check: drift prediction and trip anomalies
+
+Len asked how drift prediction and trip anomalies render on the dashboard.
+Claude ran the real backend against a disposable PostgreSQL 18 cluster (generator seed 42, `DEMO_MODE`), logged in through `login.html`, and screenshotted the dashboard in headless Edge.
+Full findings, environment and reproduction recipe: [`audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md`](audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md); fixes in [`71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`](71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md) (approved, running); sample data returns only through the toggleable demo mode of [`72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`](72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md) (draft).
+
+**Observed working:**
+- A live drift case with enough inputs draws its 95/75/50% rings and next-area box; one without shows INSUFFICIENT ENVIRONMENTAL DATA and draws nothing.
+- The searched-area interaction, and the trip-check row with its five actions, render correctly.
+
+**Observed broken:**
+- The Trip Checks tab is off-screen at 1440 and 1920 px, and every trip check reads "No reason recorded."
+- The vessel risk feed hides a scored ALERT row while monitoring is unavailable, and the Vessels tab and map show hard-coded fake OVERDUE boats under the LIVE badge.
+- The synthetic-replay badge is invisible in the light theme, and the drift map has no legend.
+- Tied histogram counts make the labelled 95% ring hold 100% of the mass, so the stored synthetic drift containment of 1.0 (2026-08-04) is likely inflated.
+- `POST /api/demo/beat/5` and `/6` return 500 (regression from `a1d5cc5`), and after `app.simulation.generator` the scenario start returns 500 because three id sequences stay at 1.
+
+**Not verified:** physical devices, the dark theme, and widths below 1280 px.
+
 ## 2026-09-26 - Aklanon first: plan 70 on `master`
 
 Len asked for the handset to run in Aklanon out of the box and for the English left in it to go.
