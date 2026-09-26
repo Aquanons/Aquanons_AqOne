@@ -25,10 +25,10 @@ Future<void> handleSosTap({
 }) async {
   if (isSending) return;
 
+  setSending(true);
   final preferences = await SharedPreferences.getInstance();
   if (!context.mounted) return;
   final silent = preferences.getBool('silent_sos') ?? false;
-  setSending(true);
   if (!silent) unawaited(alarm.start());
 
   final result = await showGeneralDialog<bool>(
@@ -175,7 +175,13 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
     }
     _resolved = true;
     _timer?.cancel();
-    Navigator.of(context).pop(dispatch);
+    final route = ModalRoute.of(context)!;
+    final navigator = Navigator.of(context);
+    if (route.isCurrent) {
+      navigator.pop(dispatch);
+    } else {
+      navigator.removeRoute(route, dispatch);
+    }
   }
 
   @override
