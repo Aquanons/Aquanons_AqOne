@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from app.api.anomaly import contract_factors
 from app.audit import record_audit_event
 from app.auth import require_responder_roles
 from app.db import get_pool
@@ -22,6 +23,7 @@ _CASE_COLUMNS = '''
 
 def _case_response(row: Any, *, now: datetime) -> dict[str, object]:
     data = dict(row)
+    data['reasons'] = contract_factors(data['reasons'])
     data['data_age_seconds'] = max(0.0, (now - data['last_contact_at']).total_seconds())
     return data
 

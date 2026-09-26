@@ -1,0 +1,101 @@
+[
+  {
+    "id": 10,
+    "synthetic": false,
+    "source": "sos",
+    "paths": 4,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "Case #10 · Vessel V001 · CONFIRMED | Last contact: 26 Sept, 23:09 · source: sos | Snapshot computed 26 Sept, 23:19 · run 1 | Drift class: swamped banca · Currents: 100% from buoy observations · Wind: open-meteo · Nearby buoys: 8 (max age 60min, wind max age 60min) |  | View Activity"
+  },
+  {
+    "id": 11,
+    "synthetic": false,
+    "source": "anomaly",
+    "paths": 0,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "Case #11 · Vessel V001 · CONFIRMED | Last contact: 26 Sept, 20:19 · source: anomaly | INSUFFICIENT ENVIRONMENTAL DATA | Reason: insufficient_field_geometry · run 1 | Nearby buoys: 0 (max age 60min, wind max age 60min) |  | View Activity"
+  },
+  {
+    "id": 9,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 4,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #9 · Vessel V001 | Last contact: 26 Sept, 20:19 · capsize | Drift class: swamped banca · Currents: 16% from buoy observations · Wind: open-meteo · 1 sector searched — contours show the updated posterior | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 8,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #8 · Vessel V011 | Last contact: 12 Aug, 06:21 · adverse_weather | Drift class: swamped banca · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 7,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #7 · Vessel V014 | Last contact: 11 Aug, 06:44 · loss_of_signal | Drift class: intact hull adrift · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 6,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #6 · Vessel V013 | Last contact: 7 Aug, 07:07 · capsize | Drift class: swamped banca · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 4,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #4 · Vessel V018 | Last contact: 6 Aug, 07:51 · adverse_weather | Drift class: swamped banca · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 5,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #5 · Vessel V030 | Last contact: 6 Aug, 07:46 · engine_failure | Drift class: intact hull adrift · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 3,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #3 · Vessel V009 | Last contact: 4 Aug, 06:31 · loss_of_signal | Drift class: intact hull adrift · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 2,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #2 · Vessel V017 | Last contact: 3 Aug, 05:53 · capsize | Drift class: swamped banca · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  },
+  {
+    "id": 1,
+    "synthetic": true,
+    "source": "synthetic",
+    "paths": 3,
+    "legendVisible": false,
+    "legendRows": 0,
+    "meta": "REPLAY — SYNTHETIC INCIDENT | Incident #1 · Vessel V034 | Last contact: 1 Aug, 05:54 · engine_failure | Drift class: intact hull adrift · Currents: simulated (no buoy observations yet) · Wind: open-meteo | Track labeled as ground truth for synthetic evaluation."
+  }
+]

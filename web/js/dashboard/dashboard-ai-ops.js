@@ -56,15 +56,6 @@
       });
   }
 
-  function aiStatusClass(status) {
-    var map = { alert: 'status-alert', overdue: 'status-overdue', watch: 'status-watch', normal: 'status-normal' };
-    return map[status] || 'status-normal';
-  }
-
-  function aiRiskPriority(status) {
-    return ({ alert: 0, overdue: 1, watch: 2, normal: 3 })[status] ?? 9;
-  }
-
   function clearAiDriftLayers() {
     aiContoursLayer.clearLayers();
     updateAiMapKey();
@@ -613,75 +604,16 @@
   let lastRiskMonitoring = 'active';
   let lastRiskMonitoringReason = null;
 
+  var riskFeedHtml = ns.dashboardUtils && ns.dashboardUtils.riskFeedHtml;
+
   function renderRiskFeed(rows, freshness, monitoring, monitoringReason) {
     var list = document.getElementById('ai-risk-list');
     var count = document.getElementById('ai-risk-count');
-    if (!list) return;
-    if (monitoring === 'unavailable') {
-      list.innerHTML = '<div class="ai-empty-state ai-unavailable-state">Not monitoring - no live contact source</div>';
-      list.title = monitoringReason || '';
-      if (count) count.textContent = '--';
-      return;
-    }
-    if (rows === null || (freshness === 'offline' && (!rows || !rows.length))) {
-      list.innerHTML = '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed unavailable &middot; unable to reach the anomaly service.</div>';
-      if (count) count.textContent = '--';
-      return;
-    }
-    if (freshness === 'stale' && (!rows || !rows.length)) {
-      list.innerHTML = '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed is stale &middot; unable to refresh anomaly service.</div>';
-      if (count) count.textContent = '--';
-      return;
-    }
-    if (!rows || !rows.length) {
-      list.innerHTML = '<div class="ai-empty-state">No active vessel risk rows available.</div>';
-      if (count) count.textContent = '0';
-      return;
-    }
-
-    var sorted = rows.slice().sort(function (a, b) {
-      var diff = aiRiskPriority(a.status) - aiRiskPriority(b.status);
-      if (diff !== 0) return diff;
-      return (b.score || 0) - (a.score || 0);
-    });
-
-    if (count) count.textContent = String(sorted.length);
-
-    var rowsHtml = sorted.map(function (row, index) {
-      var score = typeof row.score === 'number' ? row.score.toFixed(2) : String(row.score || '--');
-      var lastSeen = row.last_contact_at ? new Date(row.last_contact_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
-      var expectedBuoy = row.expected_next_buoy_id || 'n/a';
-      var statusLabel = row.status === 'check_needed' ? 'CHECK NEEDED' : (row.status || 'normal').toUpperCase();
-      var factors = Array.isArray(row.factors) ? row.factors : [];
-      return '' +
-        '<details class="ai-risk-item"' + (index === 0 ? ' open' : '') + '>' +
-          '<summary>' +
-            '<div class="ai-risk-main">' +
-              '<div class="ai-risk-title">' + escapeHtml(row.vessel_id) + ' · Trip ' + escapeHtml(row.trip_id) + '</div>' +
-              '<div class="ai-risk-meta">Expected buoy ' + escapeHtml(expectedBuoy) + ' · Last contact ' + escapeHtml(lastSeen) + '</div>' +
-            '</div>' +
-            '<div class="ai-risk-score">' + score + '<span class="ai-risk-status ' + aiStatusClass(row.status) + '">' + statusLabel + '</span></div>' +
-          '</summary>' +
-          '<div class="ai-risk-details">' +
-            '<div class="ai-factor-list">' + factors.map(function (factor) {
-              return '<div class="ai-factor-row">' +
-                '<div class="ai-factor-name">' + escapeHtml(factor.name || 'factor') + '</div>' +
-                '<div class="ai-factor-value">' + Number(factor.contribution || 0).toFixed(3) + '</div>' +
-                '<div class="ai-factor-explainer">' + escapeHtml(factor.explanation || '') + '</div>' +
-              '</div>';
-            }).join('') + '</div>' +
-          '</div>' +
-        '</details>';
-    }).join('');
-
-    if (freshness === 'stale' || freshness === 'offline') {
-      var notice = '<div class="ai-risk-stale-notice" style="padding:6px 8px;margin-bottom:6px;background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;font-size:11px;color:var(--text-secondary);">' +
-        '<span class="' + (freshness === 'offline' ? 'alert-demo-badge' : 'alert-unknown-badge') + '">FEED ' + (freshness === 'offline' ? 'OFFLINE' : 'STALE') + '</span> ' +
-        'Vessel risk feed unavailable &middot; showing last-known status' +
-      '</div>';
-      rowsHtml = notice + rowsHtml;
-    }
-    list.innerHTML = rowsHtml;
+    if (!list || !riskFeedHtml) return;
+    var feed = riskFeedHtml(rows, { freshness: freshness, monitoring: monitoring });
+    list.innerHTML = feed.html;
+    list.title = monitoring === 'unavailable' ? (monitoringReason || '') : '';
+    if (count) count.textContent = feed.count;
   }
 
   function renderSquallChart(traceSeries) {

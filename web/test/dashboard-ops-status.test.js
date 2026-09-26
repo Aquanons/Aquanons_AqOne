@@ -34,7 +34,8 @@ test('session refresh follows the frozen operator-session contract', () => {
 
 test('AI operations surface unavailable monitoring, check-needed, and suspect clocks', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-ai-ops.js'), 'utf8');
-  assert.match(source, /Not monitoring - no live contact source/);
-  assert.match(source, /CHECK NEEDED/);
+  const utils = fs.readFileSync(path.join(__dirname, '../js/dashboard-utils.js'), 'utf8');
+  assert.match(utils, /Not monitoring - no live contact source/);
+  assert.match(utils, /CHECK NEEDED/);
   assert.match(source, /payload\.clock_suspect/);
 });

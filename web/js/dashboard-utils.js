@@ -358,6 +358,68 @@
     return list.map(tripCheckRowHtml).join('');
   }
 
+  var RISK_STATUS_CLASS = { alert: 'status-alert', overdue: 'status-overdue', check_needed: 'status-overdue', watch: 'status-watch', normal: 'status-normal' };
+  var RISK_PRIORITY = { alert: 0, overdue: 1, check_needed: 1, watch: 2, normal: 3 };
+
+  function riskRowHtml(row, open) {
+    var score = typeof row.score === 'number' ? row.score.toFixed(2) : String(row.score || '--');
+    var lastSeen = row.last_contact_at ? new Date(row.last_contact_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
+    var status = row.status || 'normal';
+    var statusLabel = status === 'check_needed' ? 'CHECK NEEDED' : status.toUpperCase();
+    var factors = Array.isArray(row.factors) ? row.factors : [];
+    return '' +
+      '<details class="ai-risk-item"' + (open ? ' open' : '') + '>' +
+        '<summary>' +
+          '<div class="ai-risk-main">' +
+            '<div class="ai-risk-title">' + escapeHtml(row.vessel_id) + ' · Trip ' + escapeHtml(row.trip_id) + '</div>' +
+            '<div class="ai-risk-meta">Expected buoy ' + escapeHtml(row.expected_next_buoy_id || 'n/a') + ' · Last contact ' + escapeHtml(lastSeen) + '</div>' +
+          '</div>' +
+          '<div class="ai-risk-score">' + escapeHtml(score) + '<span class="ai-risk-status ' + (RISK_STATUS_CLASS[status] || 'status-normal') + '">' + escapeHtml(statusLabel) + '</span></div>' +
+        '</summary>' +
+        '<div class="ai-risk-details">' +
+          '<div class="ai-factor-list">' + factors.map(function (factor) {
+            return '<div class="ai-factor-row">' +
+              '<div class="ai-factor-name">' + escapeHtml(factor.code || 'factor') + '</div>' +
+              '<div class="ai-factor-value">' + Number(factor.contribution || 0).toFixed(3) + '</div>' +
+              '<div class="ai-factor-explainer">' + escapeHtml(factor.description || '') + '</div>' +
+            '</div>';
+          }).join('') + '</div>' +
+        '</div>' +
+      '</details>';
+  }
+
+  /**
+   * The vessel risk feed (GET /api/ai/anomaly/active) as `{html, count}`:
+   * pure, so what a responder sees for each freshness and monitoring state
+   * is covered by `node --test`. `factors` are docs/05 factor objects.
+   */
+  function riskFeedHtml(rows, state) {
+    var s = state || {};
+    if (s.monitoring === 'unavailable') {
+      return { html: '<div class="ai-empty-state ai-unavailable-state">Not monitoring - no live contact source</div>', count: '--' };
+    }
+    if (rows === null || (s.freshness === 'offline' && (!rows || !rows.length))) {
+      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed unavailable &middot; unable to reach the anomaly service.</div>', count: '--' };
+    }
+    if (s.freshness === 'stale' && (!rows || !rows.length)) {
+      return { html: '<div class="ai-empty-state ai-unavailable-state">Vessel risk feed is stale &middot; unable to refresh anomaly service.</div>', count: '--' };
+    }
+    if (!rows || !rows.length) {
+      return { html: '<div class="ai-empty-state">No active vessel risk rows available.</div>', count: '0' };
+    }
+    var sorted = rows.slice().sort(function (a, b) {
+      var diff = (RISK_PRIORITY[a.status] !== undefined ? RISK_PRIORITY[a.status] : 9) - (RISK_PRIORITY[b.status] !== undefined ? RISK_PRIORITY[b.status] : 9);
+      return diff !== 0 ? diff : (b.score || 0) - (a.score || 0);
+    });
+    var html = sorted.map(function (row, index) { return riskRowHtml(row, index === 0); }).join('');
+    if (s.freshness === 'stale' || s.freshness === 'offline') {
+      html = '<div class="ai-risk-stale-notice">' +
+        '<span class="' + (s.freshness === 'offline' ? 'alert-demo-badge' : 'alert-unknown-badge') + '">FEED ' + (s.freshness === 'offline' ? 'OFFLINE' : 'STALE') + '</span> ' +
+        'Vessel risk feed unavailable &middot; showing last-known status</div>' + html;
+    }
+    return { html: html, count: String(sorted.length) };
+  }
+
   /**
    * Whether a drift/search case (GET /api/ai/drift/incident/{id}'s payload)
    * may currently accept a search-sector report
@@ -551,6 +613,7 @@
     formatDataAge: formatDataAge,
     tripCheckRowHtml: tripCheckRowHtml,
     tripChecksListHtml: tripChecksListHtml,
+    riskFeedHtml: riskFeedHtml,
     eligibleForSearchReport: eligibleForSearchReport,
     squallStatusHtml: squallStatusHtml,
     formatAuditAction: formatAuditAction,

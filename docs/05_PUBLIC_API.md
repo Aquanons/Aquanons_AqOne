@@ -912,6 +912,24 @@ monitoring_reason}` (E5.7 below); each row carries `source` (`live` \|
 `synthetic`), `evaluated_at`, and `data_age_seconds` alongside the score, so
 the dashboard can say plainly how current a result is.
 
+**Factor object** (amended 2026-09-26, `docs/71` RND-02). Each row's `factors`
+here and each case's `reasons` below are JSON arrays - never a JSON-encoded
+string - of the same object:
+
+```json
+{"code": "overdue", "value": 1.0, "weight": 0.85, "contribution": 0.85, "description": "Late beyond the expected-contact window."}
+```
+
+- `code` names the factor (`overdue`, `sequence`, `distance`, `weather`,
+  `check_needed`, and later `missed_checkins`); `description` is the plain
+  sentence a responder reads.
+- `contribution` is the factor's share of the score; the dashboard shows the
+  largest as the reason a case was raised.
+- A factor may carry extra fields for its kind (for example `missed` on
+  `missed_checkins`); clients ignore fields they do not know.
+- The stored rows keep the model's own field names; the API maps them to this
+  shape at the boundary.
+
 ### `GET /api/ai/anomaly/cases/open`
 
 The persistent "Trip checks" queue: every unresolved case, newest first.

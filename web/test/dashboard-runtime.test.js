@@ -699,6 +699,7 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
       escapeHtml: escapeHtml,
       squallStatusHtml: () => '',
       authFetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
+      dashboardUtils: require('../js/dashboard-utils.js'),
       aiStatusClass: () => 'status-watch',
       showToast() {}
     };
@@ -721,7 +722,7 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
         expected_next_buoy_id: 'B-02',
         status: 'watch',
         score: 0.75,
-        factors: [{ name: 'distance', contribution: 0.35, explanation: 'far from shore' }]
+        factors: [{ code: 'distance', contribution: 0.35, description: 'far from shore' }]
       }
     ]);
 
@@ -746,6 +747,7 @@ test('Phase 2 - F03 & F04: Module wiring and AI panel integration', async (t) =>
             : [])
       }),
       squallStatusHtml: () => '',
+      dashboardUtils: require('../js/dashboard-utils.js'),
       aiStatusClass: () => 'status-normal'
     };
     const { window, document } = createDOMContext({
@@ -1374,6 +1376,7 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
       escapeHtml: escapeHtml,
       authFetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
       squallStatusHtml: () => '',
+      dashboardUtils: require('../js/dashboard-utils.js'),
       aiStatusClass: () => 'status-normal'
     };
 

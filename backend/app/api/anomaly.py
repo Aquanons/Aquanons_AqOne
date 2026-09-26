@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -18,6 +19,18 @@ _SCORE_COLUMNS = '''
 '''
 
 
+# The model stores each factor as {name, explanation, ...}; docs/05 "Factor
+# object" names them {code, description, ...}. Mapped here, at the boundary, so
+# the stored rows and app/ai keep their own vocabulary.
+_CONTRACT_KEYS = {'name': 'code', 'explanation': 'description'}
+
+
+def contract_factors(stored: Any) -> list[dict[str, object]]:
+    """A stored factor list (asyncpg returns jsonb as text) as docs/05 factor objects."""
+    factors = json.loads(stored) if isinstance(stored, str) else stored
+    return [{_CONTRACT_KEYS.get(key, key): value for key, value in factor.items()} for factor in factors or []]
+
+
 def _score_response(row: Any, *, now: datetime) -> dict[str, object]:
     """Add the source/evaluated-at/data-age honesty metadata docs/38 Phase 2
     item 4 requires, without a schema change - is_synthetic and the two
@@ -26,6 +39,7 @@ def _score_response(row: Any, *, now: datetime) -> dict[str, object]:
     data = dict(row)
     is_synthetic = data.pop('is_synthetic')
     data['source'] = 'synthetic' if is_synthetic else 'live'
+    data['factors'] = contract_factors(data['factors'])
     data['evaluated_at'] = data['observed_at']
     data['data_age_seconds'] = max(0.0, (now - data['last_contact_at']).total_seconds())
     return data

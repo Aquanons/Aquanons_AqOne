@@ -156,23 +156,23 @@ Continue automatically to the next phase.
 ## Phase 2: anomaly reasons and factors honour the contract
 
 Requirements: RND-02
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Amend `docs/05_PUBLIC_API.md` first: state the factor object `{code, value, weight, contribution, description}` once and use it for `reasons` and for each `factors` row of `GET /api/ai/anomaly/active`; note the change to the dashboard owner (Arnold) in the register.
-- [ ] Red tests: route tests for both endpoints with a fake pool whose `jsonb` column comes back as text; web tests for `tripCheckRowHtml` on the contract example and for the risk-feed factor rows.
-- [ ] One mapper in `app/api/anomaly.py` from a stored factor to the contract factor, decoding text defensively; `anomaly_cases.py` imports it. No change to `app/ai` or the database.
-- [ ] `dashboard-ai-ops.js` risk feed reads `code` and `description`.
+- [x] Amend `docs/05_PUBLIC_API.md` first: state the factor object `{code, value, weight, contribution, description}` once and use it for `reasons` and for each `factors` row of `GET /api/ai/anomaly/active`; note the change to the dashboard owner (Arnold) in the register.
+- [x] Red tests: route tests for both endpoints with a fake pool whose `jsonb` column comes back as text; web tests for `tripCheckRowHtml` on the contract example and for the risk-feed factor rows.
+- [x] One mapper in `app/api/anomaly.py` from a stored factor to the contract factor, decoding text defensively; `anomaly_cases.py` imports it. No change to `app/ai` or the database.
+- [x] `dashboard-ai-ops.js` risk feed reads `code` and `description`.
 
 ### Verification
 
-- [ ] Backend and web gates.
-- [ ] Render check: after beat 4 and an evaluation, the trip-check row shows "Late beyond the expected-contact window." (screenshot; the tab is still clipped until Phase 3, so the harness opens it by script and says so).
+- [x] Backend and web gates.
+- [x] Render check: after beat 4 and an evaluation, the trip-check row shows "Late beyond the expected-contact window." (screenshot; the tab is still clipped until Phase 3, so the harness opens it by script and says so).
 
 ### Review and checkpoint
 
-- [ ] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
+- [x] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
 
 Checkpoint message: `fix(anomaly): serve reasons and factors in the contract shape`
 Continue automatically to the next phase.

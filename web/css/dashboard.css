@@ -1387,6 +1387,15 @@ body {
 }
 
 .trip-checks-unavailable,
+.ai-risk-stale-notice {
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid #ef4444;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 .ai-unavailable-state {
   color: #b7791f;
   font-style: italic;
