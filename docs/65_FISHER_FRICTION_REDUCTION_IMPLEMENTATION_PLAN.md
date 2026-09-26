@@ -1,6 +1,6 @@
 # Implementation Plan: Fisher friction reduction (handset UX)
 
-**Status:** APPROVED - Revision 3; Phase 1 handed to Luna (mobile only, beside plan 66); merge after review and not during RSTW
+**Status:** APPROVED - Revision 3; Phase 1 complete and merged 2026-09-26; next phase waits for Len
 **Owner:** Lenard (plan, review), Jade (Flutter), Doreen Kay (UX, term study, field session)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
@@ -100,8 +100,8 @@ Checkpoint message: `docs(ux): record field session with fishermen and MDRRMO`
 ## Phase 1: Honest and predictable SOS (no contract change)
 
 Requirements: FFR-01, FFR-02, FFR-03
-State: Approved; failing tests written 2026-09-25 and parked on local branch `ux/fisher-friction` so they do not redden `master` while plan 66 runs
-Starts: after plan 66 Phase 5
+State: Complete - merged to `master` 2026-09-26 (`7826488`), with the frozen-countdown fix (`dd9fc7d`, docs/fisher-ux/HANDOFF-luna-countdown-freeze.md); implemented by Luna, reviewed by Claude; 341 tests pass.
+Open: the device double-tap check for the countdown fix (`docs/fisher-ux/COUNTDOWN_FREEZE_VERIFICATION.md`).
 
 Failing tests already in the tree (write code until they pass; do not weaken them):
 
@@ -116,28 +116,28 @@ On that branch, the suite runs 296 passing and 4 failing to load, all because `l
 
 ### Tasks
 
-- [ ] Add `mobile/lib/models/fisher_sos_situation.dart`: `enum FisherSosSituation { notSentYet, podHasIt, podNotConfirmed, rescueCentreHasIt, helpComing, cancelling, cancelled, closed }` with `icon` and `color` fields, `static FisherSosSituation of(SosRecord record, {DateTime? now})` (priority: resolved, then safe-now reply synced, then safe-now reply pending, then ETA or `acknowledged`, then state; `podNotConfirmed` uses `podDeliveryDeadline` from `delivery_policy.dart`), and `extension FisherSosSituationL10n` with `title(t)` and `description(t)`.
-- [ ] The extension reuses existing ARB keys in this phase (`deliveryState*`, `sosPodNotConfirmed`, `standDownPending*`, `standDown*`, `resolved*`); fisher wording changes come in Phase 2.
-- [ ] Create `mobile/lib/ui/sos_flow.dart` and move into it `SosCountdownScreen`, `EmergencyDetailsSheet`, `_SlideToAction` and `_EmergencyType` from `venture_page.dart`, plus one shared function for tap, countdown, `raiseSos` and the sheet that both `HomePage` and `VenturePage` call.
-- [ ] `EmergencyDetailsSheet` takes `ValueListenable<SosRecord> record` instead of `boat`; the header shows the situation's icon, colour and title, and the boat name; the shared flow feeds it from `SosService.changes`.
-- [ ] Replace `sosSentForBoat` and `sosWhatsWrongNotice` with honest keys (for example "What's wrong? Optional. This is added to your SOS."), with `@` descriptions and `fil` and `akl` drafts; delete the two old keys if nothing else uses them.
-- [ ] Remove `onHold` from `ActionPill` and both call sites; delete the "hold the SOS button for 3 seconds" sentence from `settingsSilentSosDescription` in all three ARB files.
-- [ ] `_buildSosStatus` in `venture_page.dart` and `DeliveryStateTile` take title, description, icon and colour from `FisherSosSituation`.
+- [x] Add `mobile/lib/models/fisher_sos_situation.dart`: `enum FisherSosSituation { notSentYet, podHasIt, podNotConfirmed, rescueCentreHasIt, helpComing, cancelling, cancelled, closed }` with `icon` and `color` fields, `static FisherSosSituation of(SosRecord record, {DateTime? now})` (priority: resolved, then safe-now reply synced, then safe-now reply pending, then ETA or `acknowledged`, then state; `podNotConfirmed` uses `podDeliveryDeadline` from `delivery_policy.dart`), and `extension FisherSosSituationL10n` with `title(t)` and `description(t)`.
+- [x] The extension reuses existing ARB keys in this phase (`deliveryState*`, `sosPodNotConfirmed`, `standDownPending*`, `standDown*`, `resolved*`); fisher wording changes come in Phase 2.
+- [x] Create `mobile/lib/ui/sos_flow.dart` and move into it `SosCountdownScreen`, `EmergencyDetailsSheet`, `_SlideToAction` and `_EmergencyType` from `venture_page.dart`, plus one shared function for tap, countdown, `raiseSos` and the sheet that both `HomePage` and `VenturePage` call.
+- [x] `EmergencyDetailsSheet` takes `ValueListenable<SosRecord> record` instead of `boat`; the header shows the situation's icon, colour and title, and the boat name; the shared flow feeds it from `SosService.changes`.
+- [x] Replace `sosSentForBoat` and `sosWhatsWrongNotice` with honest keys (for example "What's wrong? Optional. This is added to your SOS."), with `@` descriptions and `fil` and `akl` drafts; delete the two old keys if nothing else uses them.
+- [x] Remove `onHold` from `ActionPill` and both call sites; delete the "hold the SOS button for 3 seconds" sentence from `settingsSilentSosDescription` in all three ARB files.
+- [x] `_buildSosStatus` in `venture_page.dart` and `DeliveryStateTile` take title, description, icon and colour from `FisherSosSituation`.
 
 ### Verification
 
-- [ ] The four test files above pass unchanged.
-- [ ] `grep -rn "_handleSosTap" mobile/lib` shows exactly one definition.
-- [ ] `grep -rn "onHold" mobile/lib` returns nothing.
-- [ ] Standard mobile gate passes.
-- [ ] Evidence in `docs/fisher-ux/PHASE_1_VERIFICATION.md`: commands with pass counts, and an emulator screenshot of the sheet with the pod unreachable.
+- [x] The four test files above pass unchanged.
+- [x] `grep -rn "_handleSosTap" mobile/lib` shows exactly one definition (it is now the public `handleSosTap` in `sos_flow.dart`).
+- [x] `grep -rn "onHold" mobile/lib` returns nothing.
+- [x] Standard mobile gate passes.
+- [x] Evidence in `docs/fisher-ux/PHASE_1_VERIFICATION.md`: commands with pass counts, and an emulator screenshot of the sheet with the pod unreachable.
 
 ### Review and checkpoint
 
-- [ ] Claude reviews correctness, scope, dependencies, and unrelated changes, and reruns the gate.
-- [ ] Update plan, evidence, and current handoff.
-- [ ] Stage only reviewed phase-related paths and verify the staged diff.
-- [ ] Commit with a unique phase message and verify Git reports success.
+- [x] Claude reviews correctness, scope, dependencies, and unrelated changes, and reruns the gate.
+- [x] Update plan, evidence, and current handoff.
+- [x] Stage only reviewed phase-related paths and verify the staged diff.
+- [x] Commit with a unique phase message and verify Git reports success.
 
 Checkpoint message: `fix(mobile): honest post-SOS sheet, no hidden silent hold, one SOS situation model`
 Stop for Len's go-ahead (hard-stop).
