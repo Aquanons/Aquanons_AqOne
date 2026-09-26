@@ -1,6 +1,6 @@
 # Implementation Plan: Fisher friction reduction (handset UX)
 
-**Status:** APPROVED - Revision 3; Phase 1 complete and merged 2026-09-26; next phase waits for Len
+**Status:** APPROVED - Revision 3; Phase 1 merged 2026-09-26; Phase 3 handed to Luna
 **Owner:** Lenard (plan, review), Jade (Flutter), Doreen Kay (UX, term study, field session)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
@@ -34,7 +34,9 @@ Order and timing (D2):
 |---|---|
 | Now | Plan 66 (Critical edge cases) first. Phase 0a here runs in parallel because it is people work and touches no code. |
 | 2026-10-01 to 03 | RSTW pitch; no merges to `master` that change the demo APK |
-| After plan 66 Phase 5 | Phases 1, 2, 3, 4, 4b and 5 here, in order |
+| Done 2026-09-26 | Phase 1, merged to `master` |
+| Now (Len, 2026-09-26) | Phase 3, ahead of Phase 2 because it needs no wording from the term study |
+| After Phase 3 | Phases 2, 4, 4b and 5 here, in order (Phase 2 once Phase 0a has the terms) |
 | After Phase 5 here | Phase 6 here |
 | Date set by Len, after RSTW | Phase 0b field session, on whatever build is newest |
 
@@ -181,8 +183,8 @@ Stop for Len's go-ahead (hard-stop).
 
 Requirements: FFR-04, FFR-08, FFR-11
 Failing tests: written 2026-09-26 on local branch `ux/p3-tests` (`b834687`): `mobile/test/readability_tokens_test.dart` and `mobile/test/readability_screens_test.dart`; cherry-pick onto `ux/fisher-friction` when the phase starts.
-Phase 3 needs no wording from the term study, so it may run before Phase 2 if Len agrees.
-State: Approved
+Len, 2026-09-26: Phase 3 runs next, before Phase 2 (it needs no wording from the term study).
+State: Handed to Luna 2026-09-26; brief `docs/fisher-ux/HANDOFF-luna-phase-3.md`
 
 ### Tasks
 
