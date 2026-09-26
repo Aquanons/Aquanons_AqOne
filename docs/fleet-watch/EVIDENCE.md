@@ -3,6 +3,45 @@
 Evidence for `docs/69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md`, newest phase first.
 Spec: `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md` Revision 3 (approved 2026-09-26T09:50:00+08:00).
 
+## Phase 2 - Pure backend policy (2026-09-26)
+
+### Review by Claude Code (2026-09-26)
+
+- Reran every gate on `83d91c5`: ruff clean; the five Phase 2 files 55 passed; full suite 573 passed, 59 skipped, 1 xfailed; no test edited after `5b1debb`; only allowed paths changed.
+- Behaviour probes beyond the tests found one defect, from the plan rather than the implementation: a check-in with a fix but an unknown fix age (`FIX_AGE_S` 65535) was rated high confidence, so a Severe case would sound the alarm with a position that may be hours old.
+- Fixed by Claude on Len's instruction: red test T2-45 first (failed: `'high' == 'low'`), then `case_confidence` treats an unknown age as not recent. Results after the fix are in the next bullet.
+- After the fix: `python -m ruff check .` all checks passed; the five Phase 2 files 56 passed; `python -m pytest -q` 574 passed, 59 skipped, 1 xfailed.
+- Left for later, not defects: a raise of zero or negative duration is labelled `raise_too_long` (the dashboard API already rejects it); `_require_aware` is repeated in three modules; a vessel silent for days stays `missed` at this layer, so Phase 4 must not re-raise a dismissed case.
+
+
+Author: implementer, on `feat/fleet-watch`.
+
+Commands run from `backend/`:
+
+```text
+> python -m ruff check .
+All checks passed!
+
+> python -m pytest -q tests/test_fleet_watch_tier.py tests/test_fleet_watch_watch.py tests/test_fleet_watch_trips.py tests/test_fleet_watch_slots.py tests/test_incidents_is_pure.py
+.......................................................                  [100%]
+55 passed in 0.57s
+
+> python -m pytest -q
+...............................................sssss.................... [ 11%]
+......ss................................................................ [ 22%]
+..................................................ssssssssssssssssssssss [ 34%]
+ssssssssssssssssssssssss.ssss........................................... [ 45%]
+.................x...................................................... [ 56%]
+........................................................................ [ 68%]
+........................................................................ [ 79%]
+..................ss.................................................... [ 90%]
+.........................................................                [100%]
+573 passed, 59 skipped, 1 xfailed in 18.57s
+```
+
+The interval literals are defined only in `tier.py`; T2-26 passes.
+`git diff master -- backend/tests` contains only the five red-test files from the test commit; no test was edited for this phase.
+
 ## Phase 1 - Contracts written (2026-09-26)
 
 Author: Claude Code (claude-opus-5-5), on `master`.
