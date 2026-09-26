@@ -877,52 +877,6 @@
   "@cropPhotoError": {
     "description": "Error shown when the image processing fails on the crop screen."
   },
-  "checklistNewTripTitle": "Start a new trip?",
-  "@checklistNewTripTitle": {
-    "description": "Dialog title when resetting the trip checklist."
-  },
-  "checklistNewTripBody": "This unchecks everything on the list so you can go through your gear again. Your items stay - nothing is deleted.",
-  "@checklistNewTripBody": {
-    "description": "Dialog body explaining the trip checklist reset."
-  },
-  "checklistStartNewTrip": "Start new trip",
-  "@checklistStartNewTrip": {
-    "description": "Confirm button in the new-trip dialog."
-  },
-  "checklistResetSnackBar": "Checklist reset for the next trip.",
-  "@checklistResetSnackBar": {
-    "description": "SnackBar confirmation after checklist reset."
-  },
-  "checklistTripTitle": "Trip checklist",
-  "@checklistTripTitle": {
-    "description": "AppBar title of the checklist screen."
-  },
-  "checklistNewTripButton": "New trip",
-  "@checklistNewTripButton": {
-    "description": "AppBar action button to start a new trip."
-  },
-  "checklistPackedLabel": "{done} of {total} packed",
-  "@checklistPackedLabel": {
-    "description": "Label showing checklist progress. {done} and {total} are integers.",
-    "placeholders": {
-      "done": {
-        "type": "int",
-        "example": "3"
-      },
-      "total": {
-        "type": "int",
-        "example": "10"
-      }
-    }
-  },
-  "checklistEmpty": "No checklist items yet.",
-  "@checklistEmpty": {
-    "description": "Empty state text when the checklist has no items."
-  },
-  "checklistAddItem": "Add an item",
-  "@checklistAddItem": {
-    "description": "Hint text in the add-item text field."
-  },
   "squallAckButton": "I'm heading back",
   "@squallAckButton": {
     "description": "SAFETY CRITICAL. Button text on the squall full-screen alert and home-page squall banner. The fisher taps this to acknowledge the squall warning."
@@ -934,26 +888,6 @@
   "squallWarningStays": "The warning stays on your screen until the squall passes.",
   "@squallWarningStays": {
     "description": "Note under the squall acknowledge button."
-  },
-  "buoyDisconnectSnack": "Disconnected from {ssid}",
-  "@buoyDisconnectSnack": {
-    "description": "SnackBar shown when the phone disconnects from a buoy WiFi. {ssid} is the network name.",
-    "placeholders": {
-      "ssid": {
-        "type": "String",
-        "example": "AqOne-Buoy-01"
-      }
-    }
-  },
-  "buoyConnectSnack": "Connected to {ssid}",
-  "@buoyConnectSnack": {
-    "description": "SnackBar shown when the phone connects to a buoy WiFi. {ssid} is the network name.",
-    "placeholders": {
-      "ssid": {
-        "type": "String",
-        "example": "AqOne-Buoy-01"
-      }
-    }
   },
   "gotItButton": "Got it",
   "@gotItButton": {
@@ -974,10 +908,6 @@
   "myLocationTooltip": "My location",
   "@myLocationTooltip": {
     "description": "Tooltip for the re-center map button on the Venture screen."
-  },
-  "tripChecklistTooltip": "Trip checklist",
-  "@tripChecklistTooltip": {
-    "description": "Tooltip for the checklist button on the Venture action rail."
   },
   "chatWithBoatsTooltip": "Chat with nearby boats",
   "@chatWithBoatsTooltip": {
@@ -1230,4 +1160,3 @@
     "description": "Message shown when weather data could not be fetched for safety assessment."
   }
 }
-

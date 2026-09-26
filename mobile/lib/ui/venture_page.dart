@@ -7,7 +7,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../core/config.dart';
-import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
 import '../models/buoy_marker.dart';
 import '../models/hazard_alert.dart';
@@ -56,7 +55,6 @@ class VenturePage extends StatefulWidget {
     super.key,
     required this.identity,
     required this.sos,
-    required this.checklist,
     required this.feeds,
     required this.location,
     this.bottomInset = 0,
@@ -68,7 +66,6 @@ class VenturePage extends StatefulWidget {
 
   final VesselIdentity identity;
   final SosService sos;
-  final ChecklistStore checklist;
   final VentureFeeds feeds;
   final LocationService location;
   final SosAlarm? sosAlarm;

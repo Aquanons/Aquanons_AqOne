@@ -119,20 +119,4 @@ class HotspotSurface {
   /// output as an example, and a fisherman burning fuel on invented
   /// coordinates is the exact outcome this flag exists to prevent.
   final bool isDemo;
-
-  /// Rough staleness label for the legend.
-  String? get ageLabel {
-    final DateTime? at = generatedAt;
-    if (at == null) {
-      return null;
-    }
-    final Duration age = DateTime.now().difference(at);
-    if (age.inHours < 1) {
-      return 'updated just now';
-    }
-    if (age.inHours < 24) {
-      return 'updated ${age.inHours}h ago';
-    }
-    return 'updated ${age.inDays}d ago';
-  }
 }

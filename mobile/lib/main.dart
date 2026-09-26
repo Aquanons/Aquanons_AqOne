@@ -10,7 +10,6 @@ import 'core/l10n_fallback.dart';
 import 'core/locale_controller.dart';
 import 'core/tokens.dart';
 import 'data/app_database.dart';
-import 'data/checklist_store.dart';
 import 'core/field_cipher.dart';
 import 'data/identity_store.dart';
 import 'data/secure_credential_store.dart';
@@ -123,7 +122,6 @@ class _AqOneAppState extends State<AqOneApp> {
   final SecureCredentialStore _secureStore = SecureCredentialStore();
   late final IdentityStore _identityStore;
   late final SosService _service;
-  late final ChecklistStore _checklist;
   late final VentureFeeds _feeds;
   late final LocationService _location;
   late final BackendClient _backend;
@@ -153,7 +151,6 @@ class _AqOneAppState extends State<AqOneApp> {
       backend: _backend,
       location: _location,
     );
-    _checklist = ChecklistStore(_db);
     // Snapshots make the Venture map usable with no signal: the last good
     // response for each feed is replayed when a fetch fails, so opening
     // the app offshore shows buoys and coverage rather than empty sea.
@@ -383,7 +380,6 @@ class _AqOneAppState extends State<AqOneApp> {
     return AppShell(
       identity: identity,
       sos: _service,
-      checklist: _checklist,
       feeds: _feeds,
       location: _location,
       identityStore: _identityStore,

@@ -1,7 +1,6 @@
 import 'package:aqone/core/config.dart';
 import 'package:aqone/core/l10n_fallback.dart';
 import 'package:aqone/data/app_database.dart';
-import 'package:aqone/data/checklist_store.dart';
 import 'package:aqone/data/identity_store.dart';
 import 'package:aqone/data/map_snapshot_store.dart';
 import 'package:aqone/data/outbox_store.dart';
@@ -178,7 +177,6 @@ void main() {
           VenturePage(
             identity: _testIdentity,
             sos: _FakeSosService(),
-            checklist: ChecklistStore(AppDatabase()),
             feeds: _FakeVentureFeeds(),
             location: _FakeLocationService(),
           ),
@@ -220,7 +218,6 @@ void main() {
             VenturePage(
               identity: _testIdentity,
               sos: _FakeSosService(),
-              checklist: ChecklistStore(AppDatabase()),
               feeds: _FakeVentureFeeds(),
               location: _FakeLocationService(),
             ),
@@ -261,7 +258,6 @@ void main() {
               VenturePage(
                 identity: _testIdentity,
                 sos: sosService,
-                checklist: ChecklistStore(AppDatabase()),
                 feeds: _FakeVentureFeeds(),
                 location: _FakeLocationService(),
               ),

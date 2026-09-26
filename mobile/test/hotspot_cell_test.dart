@@ -66,24 +66,4 @@ void main() {
       expect(surface!.cells.first.score, 1.0);
     });
   });
-
-  group('HotspotSurface.ageLabel', () {
-    test('reports staleness so an old surface cannot pass as fresh', () {
-      final HotspotSurface fresh = HotspotSurface(
-        cells: const <HotspotCell>[],
-        generatedAt: DateTime.now().subtract(const Duration(minutes: 10)),
-      );
-      final HotspotSurface old = HotspotSurface(
-        cells: const <HotspotCell>[],
-        generatedAt: DateTime.now().subtract(const Duration(days: 21)),
-      );
-
-      expect(fresh.ageLabel, 'updated just now');
-      expect(old.ageLabel, 'updated 21d ago');
-      expect(
-        const HotspotSurface(cells: <HotspotCell>[]).ageLabel,
-        isNull,
-      );
-    });
-  });
 }

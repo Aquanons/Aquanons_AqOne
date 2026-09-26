@@ -101,22 +101,23 @@ Continue automatically to the next phase (auto).
 ## Phase 2: Dead English deleted
 
 Requirements: AKL-07
-State: Awaiting approval
+State: Complete - 2026-09-26, evidence `docs/aklanon/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Delete `lib/ui/checklist_page.dart`, `lib/data/checklist_store.dart`, `lib/models/checklist_item.dart`, and the `checklist` parameter from `main.dart`, `AppShell`, `VenturePage`, `test/pitch_mode_test.dart` and `test/readability_screens_test.dart`.
+- [x] Delete `lib/ui/checklist_page.dart`, `lib/data/checklist_store.dart`, `lib/models/checklist_item.dart`, and the `checklist` parameter from `main.dart`, `AppShell`, `VenturePage`, `test/pitch_mode_test.dart` and `test/readability_screens_test.dart`.
   Leave the `checklist_items` table in `app_database.dart`: dropping it needs a schema version bump for no user benefit.
-- [ ] Delete `lib/ui/widgets/brand_header.dart` and `HotspotCell.ageLabel`.
+- [x] Delete `lib/ui/widgets/brand_header.dart` and `HotspotSurface.ageLabel` (and its test group).
+- [x] Delete the 12 ARB keys only the checklist and an old buoy snackbar used (`checklist*`, `tripChecklistTooltip`, `buoyConnectSnack`, `buoyDisconnectSnack`). Kept, although unused today: `sosReopened` (a `docs/22` M4 key) and `hotspotLegend*` (the activity heatmap is in scope again).
 
 ### Verification
 
-- [ ] Standard mobile gate: `flutter analyze` clean, `flutter test` passes.
-- [ ] `grep -rn "Checklist\|BrandHeader\|ageLabel" mobile/lib mobile/test` prints nothing except the table DDL.
+- [x] Standard mobile gate: `flutter analyze` clean, `flutter test` passes.
+- [x] `grep -rn "Checklist\|BrandHeader\|ageLabel" mobile/lib mobile/test` prints nothing except the table DDL.
 
 ### Review and checkpoint
 
-- [ ] Same four gates as Phase 1.
+- [x] Same four gates as Phase 1.
 
 Checkpoint message: `refactor(mobile): delete the unreachable checklist and brand header`
 Continue automatically to the next phase (auto).
