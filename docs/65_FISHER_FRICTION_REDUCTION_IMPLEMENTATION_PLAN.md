@@ -154,6 +154,8 @@ Depends on: Phase 0a terms
 - [ ] Add the glossary (spec 64 Section 2.3 with the Phase 0a terms) to `docs/22_LOCALIZATION_PLAN.md`.
 - [ ] Give `FisherSosSituationL10n` its own ARB keys with the spec 64 Section 2.4 wording; rewrite the other affected `app_en.arb` values to the glossary; draft `app_fil.arb` and `app_akl.arb`, marked unreviewed.
 - [ ] Localise the remaining English literals: `buoy_status_card.dart`, the emergency types (enum keeps only the icon; text through an `...L10n` extension), the safety dialog in `venture_page.dart`, `info_page.dart`, `chathubb.dart`, `advisories_page.dart`, `squall_banner.dart`, `weather_card.dart`, `sea_condition_banner.dart`, `offline_map_banner.dart`, `advisory_card.dart`, `squall_alert_page.dart`, `enrolment_page.dart`, the avatar semantics label in `home_page.dart`.
+- [ ] The post-SOS sheet shows the situation's description under its title, not only the title (Phase 1 review, 2026-09-26: the sheet reads just "Saved", and the line that says it is not sent yet appears only on the status pill behind the sheet).
+- [ ] "Sent by mistake?" above the call-off control becomes wording that is true for an SOS that has not left the phone.
 - [ ] The pod card stops promising delivery: "Your SOS will reach the rescue centre now" becomes wording that matches `podHasIt`.
 - [ ] Update `delivery_state_test.dart` to assert the ARB against the new `docs/06` column.
 - [ ] Widen the `localization_test.dart` bare-literal check to every file in `mobile/lib/ui` (allowlist: `AqOne`, `SOS`).
@@ -178,11 +180,15 @@ Stop for Len's go-ahead (hard-stop).
 ## Phase 3: Readable in the sun
 
 Requirements: FFR-04, FFR-08, FFR-11
+Failing tests: written 2026-09-26 on local branch `ux/p3-tests` (`b834687`): `mobile/test/readability_tokens_test.dart` and `mobile/test/readability_screens_test.dart`; cherry-pick onto `ux/fisher-friction` when the phase starts.
+Phase 3 needs no wording from the term study, so it may run before Phase 2 if Len agrees.
 State: Approved
 
 ### Tasks
 
 - [ ] `core/tokens.dart`: light `dimText` and `secondaryText` raised to at least 4.5:1 on `canvas` and `surface`; check dark tokens the same way; update `docs/47_VISUAL_DESIGN_GUIDE.md` rows to match.
+- [ ] `FisherSosSituation` icon colours reach at least 3:1 on `surface` in both themes (non-text contrast; today every situation except `rescueCentreHasIt` and `cancelled` fails on white).
+- [ ] The SOS countdown and the post-SOS sheet fit a 360 x 640 phone at 200% text (today the sheet overflows by 164 px at the bottom).
 - [ ] Raise every `fontSize` below 12 in `mobile/lib/ui` to at least 12; body text 16.
 - [ ] Active SOS status card on Home (At sea shows the same situation inside the Phase 4b summary card) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
 - [ ] Dock: four labelled items (Home, At sea, News, Me), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
@@ -190,7 +196,7 @@ State: Approved
 
 ### Verification
 
-- [ ] Token test: computed contrast of each text token on each surface token is at least 4.5:1; situation colours at least 7:1 on the status card.
+- [ ] Token test: every text token is at least 4.5:1 on `canvas` and `surface` in both themes, `primaryText` is at least 7:1 on `surface` (the SOS status title), and every situation icon colour is at least 3:1 on `surface`.
 - [ ] `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing.
 - [ ] Widget tests at `TextScaler.linear(2.0)` on 360 x 640: Home, the status card, the dock and the countdown raise no overflow errors and show the full status text.
 - [ ] Dock widget test finds four visible labels.
@@ -216,6 +222,7 @@ State: Approved (D3: yes)
 
 - [ ] Reorder Home: full-width SOS button (at least 96 dp) or the active SOS status card; one pod line with a "Connect" action (opens the Phase 5 screen once it exists, today's pod screen until then); one "Safe to go out today?" answer from the MDRRMO sea condition and squall watch; one advisory line; "More weather" opens the existing `WeatherCard`; "My SOS calls" opens the history list.
 - [ ] Squall banner and its acknowledge button keep their place above everything else when a squall is showing.
+- [ ] The floating SOS pill no longer covers the last "My SOS calls" card (seen in `docs/edge-remediation/critical/c3-relayed.png`); the full-width button above removes the floating pill, and the history list keeps bottom padding for the dock.
 - [ ] Countdown: add a large "Cancel - do not send" button beside the slide.
 - [ ] Calling off: replace the slide in `EmergencyDetailsSheet` with a normal danger button that opens the existing confirm dialog; delete `_SlideToAction` if nothing else uses it; update the "stand-down needs confirmation" test in `widget_test.dart` from a drag to a tap.
 
@@ -242,10 +249,11 @@ Stop for Len's go-ahead (hard-stop).
 Requirements: FFR-14 (spec 64 Section 2.6)
 State: Approved (D7)
 Depends on: Phase 1 (`FisherSosSituation`), Phase 2 (wording and localisation), Phase 3 (tokens and font floor)
+Failing tests: written 2026-09-26 on local branch `ux/p4b-tests` (`f454e24`): `mobile/test/at_sea_summary_test.dart` (ranking table) and `mobile/test/at_sea_summary_card_test.dart` (At sea widget tests; the RETURN NOW button carries `Key('at_sea_acknowledge_squall')`).
 
 ### Tasks
 
-- [ ] Write the failing tests first (the reviewer writes them, as for Phase 1):
+- [x] Write the failing tests first (the reviewer writes them, as for Phase 1):
   a table test for the ranking function covering every SOS situation, squall level with and without acknowledgement, weather loaded, failed and unsafe, and map ages below 2 minutes, between 2 minutes and 3 hours, and 3 hours or more; and the widget tests listed under Verification.
 - [ ] Add the pure ranking function in `mobile/lib/models/` (for example `at_sea_summary.dart`): inputs are the newest `SosRecord` (or none), `SquallWatch` and its acknowledgement, the weather snapshot or failure, the map layer ages, pitch mode and a clock; output is up to two headline rows and the three chip states, in the order and with the rules of spec 64 Section 2.6.
 - [ ] Add the card widget (for example `mobile/lib/ui/widgets/at_sea_summary_card.dart`) that only draws that output: headline rows, the chip line, the "Details" label, and the "I understand" button on a rank 1 row wired to the existing squall acknowledge.

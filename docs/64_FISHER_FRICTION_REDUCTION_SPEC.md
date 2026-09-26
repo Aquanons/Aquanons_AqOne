@@ -156,7 +156,7 @@ The card reads four inputs the screen already has and adds no new fetch:
 | 1 | Squall `returnNow`, not acknowledged | Storm coming - go back to shore, with a large "I understand" button that calls the existing acknowledge |
 | 2 | An SOS whose situation is not `closed` or `cancelled` | The `FisherSosSituation` title and description |
 | 3 | Squall `returnNow` already acknowledged, or `watch` | The squall message, no button |
-| 4 | A `closed` or `cancelled` SOS changed less than 15 minutes ago | The situation title and description |
+| 4 | A `closed` SOS whose `resolvedAt` is less than 15 minutes old; a `cancelled` SOS leaves the headline at once, since the fisher cancelled it and the record keeps no time for it | The situation title and description |
 | 5 | Map layers 3 hours old or more (today's severe threshold) | Map is old - hazards may have changed |
 | 6 | Weather unsafe or wind above the threshold | The existing safety title |
 | 7 | Nothing above | The weather condition and temperature |
