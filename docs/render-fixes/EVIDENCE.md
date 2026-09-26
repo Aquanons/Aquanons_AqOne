@@ -40,3 +40,15 @@ Date: 2026-09-26.
 - The runtime test for the deleted sorted vessel list was removed with it.
 - Gates: web 184 passed, `node --check` clean; backend unchanged since Phase 2.
 - Render check (`phase-3/report.json`): RND-01, -02, -03, -04 and console PASS.
+
+## Phase 4: the drift card and map explain themselves
+
+Date: 2026-09-26.
+
+- Red first: six Phase 4 tests failed on the missing `driftLegendItems`, `driftLegendHtml`, `insufficiencyText` and `DRIFT_COLORS`, and on the drift card printing the raw code.
+- `DRIFT_COLORS` in `dashboard-utils.js` is now the one source for the drift map's stroke colors and the legend chips.
+- The legend overlays the map's lower left and lists exactly the drawn layers; it is hidden for an insufficient case and when no case is selected.
+- The insufficiency test reads the `INSUFFICIENT_*` and `DEGRADED_*` codes from `backend/app/ai/environment.py`, so a new backend code cannot ship without a sentence.
+- The replay badge text is `#334155` in the light theme (7.26:1, was 1.04:1) and keeps `#cbd5e1` in the dark theme (5.72:1). "View Activity" has a light-card button style.
+- Gates: web 190 passed, `node --check` clean.
+- Render check (`phase-4/report.json`): RND-01 to -06, RND-11a and console PASS; RND-07 and RND-10 are the remaining phases.

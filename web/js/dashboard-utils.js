@@ -428,6 +428,72 @@
     return { html: notMonitoring + html, count: String(sorted.length), attention: String(attention) };
   }
 
+  // The drift map's stroke colors, shared by the map layers and the legend so
+  // a legend chip is always the exact visible color (docs/47).
+  var DRIFT_COLORS = {
+    contour95: '#ef4444',
+    contour75: '#f59e0b',
+    contour50: '#facc15',
+    track: '#2563eb',
+    nextArea: '#38bdf8',
+    searched: '#94a3b8'
+  };
+
+  function contourBand(mass) {
+    return mass >= 0.9 ? '95' : (mass >= 0.7 ? '75' : '50');
+  }
+
+  /**
+   * The legend rows for exactly the layers dashboard-ai-ops.js draws for a
+   * drift payload (docs/71 RND-06): nothing for an insufficient case or a
+   * payload without contours.
+   */
+  function driftLegendItems(payload) {
+    var p = payload || {};
+    var isRealCase = typeof p.environmental_status === 'string';
+    if (isRealCase && p.environmental_status !== 'ok') return [];
+    var contours = (p.contours && p.contours.length) ? p.contours : ((p.prediction && p.prediction.contours) || []);
+    if (!contours.length) return [];
+    var bands = {};
+    contours.forEach(function (feature) { bands[contourBand(feature.properties && feature.properties.mass)] = true; });
+    var items = ['95', '75', '50'].filter(function (band) { return bands[band]; }).map(function (band) {
+      return { key: 'contour' + band, label: band + '% search area', color: DRIFT_COLORS['contour' + band], dashed: band === '95' };
+    });
+    var origin = p.posterior_grid && p.posterior_grid.origin;
+    if (origin && p.search_sectors && p.search_sectors.length) {
+      items.push({ key: 'searched', label: 'Searched area', color: DRIFT_COLORS.searched, dashed: true });
+    }
+    if (isRealCase && p.next_area && p.next_area.bounds) {
+      items.push({ key: 'nextArea', label: 'Next area to review', color: DRIFT_COLORS.nextArea, dashed: true });
+    }
+    if (!isRealCase && p.ground_truth_track && p.ground_truth_track.length) {
+      items.push({ key: 'track', label: 'Ground-truth track (synthetic)', color: DRIFT_COLORS.track, dashed: true });
+    }
+    return items;
+  }
+
+  function driftLegendHtml(items) {
+    if (!items || !items.length) return '';
+    return '<div class="ai-map-key-title">Drift map key</div>' + items.map(function (item) {
+      return '<div class="ai-map-key-row">' +
+        '<span class="ai-map-chip" style="border-color:' + escapeHtml(item.color) + ';border-style:' + (item.dashed ? 'dashed' : 'solid') + '"></span>' +
+        '<span>' + escapeHtml(item.label) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // The codes app/ai/environment.py can put in a run's insufficiency_reason.
+  var INSUFFICIENCY_TEXT = {
+    insufficient_field_geometry: 'Fewer than two buoys near the last position reported currents within an hour of it.',
+    insufficient_current_coverage: 'Buoy currents cover less than half of the forecast area; the rest would be guesswork.',
+    degraded_wind_source: 'Live wind data was unavailable, so the forecast would rest on a fallback wind.'
+  };
+
+  function insufficiencyText(code) {
+    if (!code) return 'Reason not recorded.';
+    return INSUFFICIENCY_TEXT[code] || String(code);
+  }
+
   /**
    * Whether a drift/search case (GET /api/ai/drift/incident/{id}'s payload)
    * may currently accept a search-sector report
@@ -622,6 +688,10 @@
     tripCheckRowHtml: tripCheckRowHtml,
     tripChecksListHtml: tripChecksListHtml,
     riskFeedHtml: riskFeedHtml,
+    DRIFT_COLORS: DRIFT_COLORS,
+    driftLegendItems: driftLegendItems,
+    driftLegendHtml: driftLegendHtml,
+    insufficiencyText: insufficiencyText,
     eligibleForSearchReport: eligibleForSearchReport,
     squallStatusHtml: squallStatusHtml,
     formatAuditAction: formatAuditAction,

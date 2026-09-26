@@ -9,7 +9,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { tripCheckRowHtml, riskFeedHtml } = require('../js/dashboard-utils.js');
+const fs = require('node:fs');
+const path = require('node:path');
+const { tripCheckRowHtml, riskFeedHtml, driftLegendItems, driftLegendHtml, insufficiencyText, DRIFT_COLORS } = require('../js/dashboard-utils.js');
 
 // The docs/05 "Factor object" example.
 const OVERDUE = { code: 'overdue', value: 1.0, weight: 0.85, contribution: 0.85, description: 'Late beyond the expected-contact window.' };
@@ -88,8 +90,6 @@ test('RND-04: the Vessels badge counts rows that are not normal', () => {
 });
 
 test('RND-04: no sample vessel ships in the dashboard source', () => {
-  const fs = require('node:fs');
-  const path = require('node:path');
   const files = ['js/dashboard/dashboard-vessels-alerts.js', 'js/dashboard/dashboard-core.js', 'js/dashboard/dashboard-markers.js', 'html/dashboard.html'];
   for (const file of files) {
     const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -97,4 +97,59 @@ test('RND-04: no sample vessel ships in the dashboard source', () => {
       assert.ok(!source.includes(name), `${file} still contains ${name}`);
     }
   }
+});
+
+function ring(mass) {
+  return { type: 'Feature', properties: { mass: mass }, geometry: { type: 'Polygon', coordinates: [[[122.5, 11.7], [122.6, 11.7], [122.6, 11.8], [122.5, 11.7]]] } };
+}
+const ORIGIN = { origin: { lat: 11.7, lon: 122.5 } };
+
+test('RND-06: an ok case lists its rings and the next area, in the map colors', () => {
+  const items = driftLegendItems({
+    environmental_status: 'ok', contours: [ring(0.5), ring(0.75), ring(0.95)],
+    posterior_grid: ORIGIN, next_area: { bounds: { south: 1, west: 1, north: 2, east: 2 } }, search_sectors: []
+  });
+  assert.deepEqual(items.map((item) => item.key), ['contour95', 'contour75', 'contour50', 'nextArea']);
+  assert.equal(items[0].color, DRIFT_COLORS.contour95);
+  assert.equal(items[3].color, DRIFT_COLORS.nextArea);
+});
+
+test('RND-06: a synthetic replay adds its ground-truth track, and sectors add the searched area', () => {
+  const items = driftLegendItems({
+    contours: [ring(0.95)], posterior_grid: ORIGIN,
+    ground_truth_track: [{ lat: 11.7, lon: 122.5 }, { lat: 11.71, lon: 122.51 }],
+    search_sectors: [{ x_min_m: 0, x_max_m: 1, y_min_m: 0, y_max_m: 1 }]
+  });
+  assert.deepEqual(items.map((item) => item.key), ['contour95', 'searched', 'track']);
+});
+
+test('RND-06: an insufficient case or no contours has no legend', () => {
+  assert.deepEqual(driftLegendItems({ environmental_status: 'insufficient_environmental_data', contours: [] }), []);
+  assert.deepEqual(driftLegendItems(null), []);
+  assert.equal(driftLegendHtml([]), '');
+});
+
+test('RND-06: the legend html escapes labels and draws each chip in its color', () => {
+  const html = driftLegendHtml([{ key: 'contour95', label: '95% search area', color: '#ef4444', dashed: true }]);
+  assert.ok(html.includes('95% search area'));
+  assert.ok(html.includes('border-color:#ef4444'));
+  assert.ok(html.includes('dashed'));
+});
+
+test('RND-11: every insufficiency code the backend emits reads as a sentence', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../../backend/app/ai/environment.py'), 'utf8');
+  const codes = [...source.matchAll(/^(?:INSUFFICIENT|DEGRADED)_[A-Z_]+ = '([a-z_]+)'/gm)].map((match) => match[1]);
+  assert.ok(codes.length >= 3);
+  for (const code of codes) {
+    const text = insufficiencyText(code);
+    assert.notEqual(text, code, code);
+    assert.ok(/^[A-Z].*\.$/.test(text), text);
+  }
+  assert.equal(insufficiencyText('something_new'), 'something_new');
+  assert.equal(insufficiencyText(null), 'Reason not recorded.');
+});
+
+test('RND-11: the drift card prints the sentence, not the code', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-ai-ops.js'), 'utf8');
+  assert.ok(source.includes('insufficiencyText(payload.insufficiency_reason)'));
 });

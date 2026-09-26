@@ -1,0 +1,64 @@
+{
+  "RND-01": {
+    "ok": true,
+    "detail": [
+      {
+        "width": 1280,
+        "outside": []
+      },
+      {
+        "width": 1440,
+        "outside": []
+      },
+      {
+        "width": 1920,
+        "outside": []
+      }
+    ]
+  },
+  "RND-02": {
+    "ok": true,
+    "detail": "RESPONDER ATTENTION | ESCALATED | DEMO | V001 | Confidence score 99% | Late beyond the expected-contact window."
+  },
+  "RND-03": {
+    "ok": true,
+    "detail": "rows V001; monitoring unavailable"
+  },
+  "RND-04": {
+    "ok": true,
+    "detail": {
+      "overdueMarkers": 0,
+      "sampleNames": []
+    }
+  },
+  "RND-06": {
+    "ok": true,
+    "detail": "10:4p/4r 11:0p/0r 9:4p/5r 8:3p/4r 7:3p/4r 6:3p/4r 4:3p/4r 5:3p/4r 3:3p/4r 2:3p/4r 1:3p/4r"
+  },
+  "RND-11a": {
+    "ok": true,
+    "detail": "Case #10 · Vessel V001 · CONFIRMED | Last contact: 26 Sept, 23:09 · source: sos  || Case #11 · Vessel V001 · CONFIRMED | Last contact: 26 Sept, 20:19 · source: anom || REPLAY — SYNTHETIC INCIDENT | Incident #9 · Vessel V001 | Last contact: 26 Sept, || REPLAY — SYNTHETIC INCIDENT | Incident #8 · Vessel V011 | Last contact: 12 Aug,  || REPLAY — SYNTHETIC INCIDENT | Incident #7 · Vessel V014 | Last contact: 11 Aug,  || REPLAY — SYNTHETIC INCIDENT | Incident #6 · Vessel V013 | Last contact: 7 Aug, 0 || REPLAY — SYNTHETIC INCIDENT | Incident #4 · Vessel V018 | Last contact: 6 Aug, 0 || REPLAY — SYNTHETIC INCIDENT | Incident #5 · Vessel V030 | Last contact: 6 Aug, 0 || REPLAY — SYNTHETIC INCIDENT | Incident #3 · Vessel V009 | Last contact: 4 Aug, 0 || REPLAY — SYNTHETIC INCIDENT | Incident #2 · Vessel V017 | Last contact: 3 Aug, 0 || REPLAY — SYNTHETIC INCIDENT | Incident #1 · Vessel V034 | Last contact: 1 Aug, 0"
+  },
+  "RND-05": {
+    "ok": true,
+    "detail": {
+      "light": 7.26,
+      "dark": 5.72
+    }
+  },
+  "RND-07": {
+    "ok": false,
+    "detail": {
+      "distinctRings": 2,
+      "expectedHours": 9.5
+    }
+  },
+  "RND-10": {
+    "ok": false,
+    "detail": "open-drift buttons: 0"
+  },
+  "console": {
+    "ok": true,
+    "detail": []
+  }
+}

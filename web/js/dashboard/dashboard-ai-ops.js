@@ -33,14 +33,11 @@
   var aiDrawLayer = L.layerGroup().addTo(map);
   var sectorDraw = { active: false, corner1: null, bounds: null };
 
-  var aiColors = {
-    contour95: '#ef4444',
-    contour75: '#f59e0b',
-    contour50: '#facc15',
-    track: '#2563eb',
-    squall: '#22c55e',
-    nextArea: '#38bdf8'
-  };
+  var dashboardUtils = ns.dashboardUtils || {};
+  var aiColors = Object.assign({ squall: '#22c55e' }, dashboardUtils.DRIFT_COLORS);
+  var driftLegendItems = dashboardUtils.driftLegendItems || function () { return []; };
+  var driftLegendHtml = dashboardUtils.driftLegendHtml || function () { return ''; };
+  var insufficiencyText = dashboardUtils.insufficiencyText || function (code) { return String(code || 'unknown'); };
 
   var AI_FETCH_TIMEOUT_MS = 25000;
 
@@ -58,6 +55,7 @@
 
   function clearAiDriftLayers() {
     aiContoursLayer.clearLayers();
+    currentDriftPayload = null;
     updateAiMapKey();
   }
 
@@ -66,10 +64,14 @@
     updateAiMapKey();
   }
 
+  // The legend follows the drift case on the map (docs/71 RND-06); it is
+  // hidden whenever nothing is drawn.
   function updateAiMapKey() {
     var key = document.getElementById('ai-map-key');
     if (!key) return;
-    key.style.display = 'none';
+    var html = driftLegendHtml(driftLegendItems(currentDriftPayload));
+    key.innerHTML = html;
+    key.hidden = !html;
   }
 
   // Banner count and header badge follow the backend's own `level`/
@@ -124,7 +126,7 @@
       var east = origin.lon + sector.x_max_m / mPerDegLon;
       var box = L.rectangle([[south, west], [north, east]], {
         pane: 'aiContoursPane',
-        color: '#94a3b8',
+        color: aiColors.searched,
         weight: 1.5,
         opacity: 0.9,
         fillColor: '#64748b',
@@ -251,7 +253,7 @@
     var statusLine = isOk
       ? 'Snapshot computed ' + computedAt + ' · run ' + payload.run_number
       : '<span class="ai-insufficient-badge">INSUFFICIENT ENVIRONMENTAL DATA</span><br>' +
-        'Reason: ' + escapeHtml(payload.insufficiency_reason || 'unknown') + ' · run ' + payload.run_number;
+        escapeHtml(insufficiencyText(payload.insufficiency_reason)) + ' · run ' + payload.run_number;
 
     metaEl.innerHTML =
       '<strong>Case #' + incident.id + '</strong> · Vessel ' + escapeHtml(incident.vessel_id) +

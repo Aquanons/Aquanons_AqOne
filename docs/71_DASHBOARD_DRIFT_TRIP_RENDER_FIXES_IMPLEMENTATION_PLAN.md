@@ -205,23 +205,23 @@ Continue automatically to the next phase.
 ## Phase 4: the drift card and map explain themselves
 
 Requirements: RND-05, RND-06, RND-11 (plain reasons and button style)
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red web tests: `driftLegendItems(payload)`; the insufficiency sentence map, including the fallback, and a test that reads the `INSUFFICIENT_*` constants from `backend/app/ai/environment.py` so a new code cannot ship without a sentence.
-- [ ] Replay badge colors from theme tokens with at least 4.5:1 in both themes.
-- [ ] Add `#ai-map-key` to `dashboard.html`; `updateAiMapKey` renders `driftLegendItems` and hides the key when it is empty; colors come from the existing `aiColors`.
-- [ ] Scoped light-card style for the "View Activity" button.
+- [x] Red web tests: `driftLegendItems(payload)`; the insufficiency sentence map, including the fallback, and a test that reads the `INSUFFICIENT_*` constants from `backend/app/ai/environment.py` so a new code cannot ship without a sentence.
+- [x] Replay badge colors from theme tokens with at least 4.5:1 in both themes.
+- [x] Add `#ai-map-key` to `dashboard.html`; `updateAiMapKey` renders `driftLegendItems` and hides the key when it is empty; colors come from the existing `aiColors`.
+- [x] Scoped light-card style for the "View Activity" button.
 
 ### Verification
 
-- [ ] Web gate.
-- [ ] Render check: synthetic replay, `ok` case and insufficient case, light and dark theme; contrast ratios printed.
+- [x] Web gate.
+- [x] Render check: synthetic replay, `ok` case and insufficient case, light and dark theme; contrast ratios printed.
 
 ### Review and checkpoint
 
-- [ ] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
+- [x] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
 
 Checkpoint message: `fix(dashboard): drift legend, readable replay badge and plain insufficiency reasons`
 Continue automatically to the next phase.

@@ -1789,26 +1789,27 @@ body {
 }
 
 .ai-map-key {
-  position: sticky;
-  bottom: 12px;
-  margin-top: auto;
-  align-self: flex-start;
-  width: calc(var(--panel-w) - 16px);
-  background: rgba(15,23,42,0.78);
+  position: absolute;
+  left: 12px;
+  bottom: 36px;
+  z-index: 800;
+  background: rgba(15,23,42,0.82);
   color: #fff;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 8px 12px 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.24);
   font-size: 11px;
-  z-index: 2;
+  pointer-events: none;
 }
+
+.ai-map-key[hidden] { display: none; }
 
 .ai-map-key-title {
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
   color: #e2e8f0;
 }
 
@@ -1821,19 +1822,12 @@ body {
 }
 
 .ai-map-chip {
-  width: 16px;
+  width: 18px;
   height: 10px;
-  border-radius: 999px;
+  border-radius: 3px;
   border: 2px solid transparent;
   flex-shrink: 0;
 }
-
-.ai-map-chip.contour-95 { background: rgba(239,68,68,0.18); border-color: #ef4444; }
-.ai-map-chip.contour-75 { background: rgba(245,158,11,0.16); border-color: #f59e0b; }
-.ai-map-chip.contour-50 { background: rgba(250,204,21,0.16); border-color: #facc15; }
-.ai-map-chip.track { background: #2563eb; border-color: #dbeafe; }
-.ai-map-chip.squall { background: rgba(34,197,94,0.16); border-color: #22c55e; }
-.ai-map-chip.searched { background: rgba(100,116,139,0.22); border-color: #94a3b8; border-style: dashed; }
 
 .drift-incident-label,
 .squall-track-label {
@@ -5243,7 +5237,6 @@ h3.buoy-drawer-title {
   background: #f8fafc;
 }
 
-.drift-replay-badge,
 .drift-degraded { color: #b7791f; }
 
 /* ══════════════════════════════════════════════════════════════
@@ -5493,11 +5486,36 @@ h3.buoy-drawer-title {
   border-radius: 3px;
   background: rgba(100,116,139,0.25);
   border: 1px dashed #94a3b8;
-  color: #cbd5e1;
+  color: #334155;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.6px;
 }
+
+[data-theme="dark"] .drift-replay-badge { color: #cbd5e1; }
+
+/* "View Activity" sits in the light meta box; the default .action-btn is
+   styled for the dark theme and read as plain text here. */
+.ai-meta-line .ai-drift-activity-btn {
+  display: inline-flex;
+  width: auto;
+  margin-top: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ai-meta-line .ai-drift-activity-btn:hover { background: #eef2f7; }
+
+[data-theme="dark"] .ai-meta-line .ai-drift-activity-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--glass-border);
+}
+
+[data-theme="dark"] .ai-meta-line .ai-drift-activity-btn:hover { background: rgba(255,255,255,0.12); }
 
 /* A real case whose current run failed the Phase 2 environmental quality
    gate - honest state, not an error, but must never be mistaken for a
