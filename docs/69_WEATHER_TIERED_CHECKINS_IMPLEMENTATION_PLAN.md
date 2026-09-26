@@ -1,9 +1,9 @@
 # Implementation Plan: Weather-tiered check-ins (fleet watch)
 
-**Status:** APPROVED - Revision 2; Phase 1 complete; Phase 2 detailed plan awaiting approval
+**Status:** APPROVED - Revision 2; Phases 1 and 2 complete
 **Owner:** Lenard (plan, backend, review), Daniel (firmware bench, shore hardware), Arnold (dashboard, gateway review)
 **Created:** 2026-09-26T09:50:00+08:00
-**Updated:** 2026-09-26T10:10:00+08:00
+**Updated:** 2026-09-26T10:55:43+08:00
 **Related:** `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`, `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (Phases 3, 4, 7), `docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`
 
 Revision: 2
@@ -135,22 +135,22 @@ Stop for Len's go-ahead (hard-stop).
 ## Phase 2: Pure backend policy
 
 Requirements: REQ-001, REQ-002, REQ-003 and REQ-004 (rules only), REQ-016 (trip decision), REQ-018, REQ-019, REQ-021 (decision), REQ-024, REQ-031 (slot choice)
-State: Detailed plan drafted, awaiting Len's approval; no code yet (Len, 2026-09-26: "only creating an implementation plan")
+State: Complete 2026-09-26 (evidence: [`docs/fleet-watch/EVIDENCE.md`](fleet-watch/EVIDENCE.md))
 Detailed plan: [`docs/fleet-watch/PHASE_2_PLAN.md`](fleet-watch/PHASE_2_PLAN.md) (module API, red tests T2-01 to T2-44, gates, findings P1 to P4)
 
 ### Tasks (red tests first)
 
-- [ ] Red tests (Claude, commit 1): `tests/test_fleet_watch_tier.py`, `test_fleet_watch_watch.py`, `test_fleet_watch_trips.py`, `test_fleet_watch_slots.py`, and `app.fleet_watch` added to `tests/test_incidents_is_pure.py`, exactly as the detailed plan lists them.
-- [ ] Implement `app/fleet_watch/` (`tier.py`, `watch.py`, `trips.py`, `slots.py`) until green; no I/O, no `datetime.now()` inside policy. `ports.py` moves to Phase 3, where its first consumer is.
+- [x] Red tests (Claude, commit 1): `tests/test_fleet_watch_tier.py`, `test_fleet_watch_watch.py`, `test_fleet_watch_trips.py`, `test_fleet_watch_slots.py`, and `app.fleet_watch` added to `tests/test_incidents_is_pure.py`, exactly as the detailed plan lists them.
+- [x] Implement `app/fleet_watch/` (`tier.py`, `watch.py`, `trips.py`, `slots.py`) until green; no I/O, no `datetime.now()` inside policy. `ports.py` moves to Phase 3, where its first consumer is.
 
 ### Verification
 
-- [ ] Backend gates green, same skip count as `master`.
-- [ ] Static test T2-26 shows the interval literals only in `fleet_watch/tier.py` (REQ-001). It replaces the earlier `rg` check, which could never pass because `240` is already a note length in `api/catch.py` and `api/trips.py`.
+- [x] Backend gates green, same skip count as `master`.
+- [x] Static test T2-26 shows the interval literals only in `fleet_watch/tier.py` (REQ-001). It replaces the earlier `rg` check, which could never pass because `240` is already a note length in `api/catch.py` and `api/trips.py`.
 
 ### Review and checkpoint
 
-- [ ] Update plan, evidence, handoff; commit.
+- [x] Update plan, evidence, handoff; commit.
 
 Checkpoint message: `feat(fleet-watch): pure tier, watch and slot policy`
 Stop for Len's go-ahead (hard-stop).
