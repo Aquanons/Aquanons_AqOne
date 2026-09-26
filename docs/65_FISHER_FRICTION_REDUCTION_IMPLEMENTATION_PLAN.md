@@ -1,6 +1,6 @@
 # Implementation Plan: Fisher friction reduction (handset UX)
 
-**Status:** APPROVED - Revision 3; Phase 1 merged 2026-09-26; Phase 3 handed to Luna
+**Status:** APPROVED - Revision 3; Phases 1 and 3 merged 2026-09-26; next phase waits for Len
 **Owner:** Lenard (plan, review), Jade (Flutter), Doreen Kay (UX, term study, field session)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
@@ -185,7 +185,7 @@ Stop for Len's go-ahead (hard-stop).
 Requirements: FFR-04, FFR-08, FFR-11
 Failing tests: written 2026-09-26 on local branch `ux/p3-tests` (`b834687`): `mobile/test/readability_tokens_test.dart` and `mobile/test/readability_screens_test.dart`; cherry-pick onto `ux/fisher-friction` when the phase starts.
 Len, 2026-09-26: Phase 3 runs next, before Phase 2 (it needs no wording from the term study).
-State: Handed to Luna 2026-09-26; brief `docs/fisher-ux/HANDOFF-luna-phase-3.md`
+State: Complete - merged to `master` 2026-09-26 (`186e231`); implemented by Luna, reviewed by Claude; 379 tests pass. Brief `docs/fisher-ux/HANDOFF-luna-phase-3.md`.
 
 ### Tasks
 
