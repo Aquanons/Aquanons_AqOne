@@ -141,7 +141,12 @@ class WeatherCard extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: 12),
-          Text(t.weatherLoading, style: const TextStyle(fontSize: 13)),
+          Expanded(
+            child: Text(
+              t.weatherLoading,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
         ],
       );
     }
@@ -160,7 +165,7 @@ class WeatherCard extends StatelessWidget {
             child: Text(
               t.weatherUnavailable,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 16,
                 color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
@@ -245,7 +250,7 @@ class WeatherCard extends StatelessWidget {
                             'This is not a PAGASA warning. '
                             'Always check the official sea condition and advisories.',
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 16,
                       height: 1.35,
                       color: Color(0xFF8A5A12),
                     ),
@@ -310,7 +315,7 @@ class _FishingWindowSummary extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.2,
                       color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -320,7 +325,8 @@ class _FishingWindowSummary extends StatelessWidget {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
                       color: style.badgeBackgroundColor,
                       borderRadius: BorderRadius.circular(6),
@@ -330,7 +336,7 @@ class _FishingWindowSummary extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: style.badgeTextColor,
                       ),
@@ -343,7 +349,7 @@ class _FishingWindowSummary extends StatelessWidget {
             Text(
               headline,
               style: TextStyle(
-                fontSize: 14.5,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: style.headlineColor,
               ),
@@ -353,7 +359,8 @@ class _FishingWindowSummary extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  if (result.hasPositiveWindow && result.upcomingRisk != null) ...<Widget>[
+                  if (result.hasPositiveWindow &&
+                      result.upcomingRisk != null) ...<Widget>[
                     Padding(
                       padding: const EdgeInsets.only(top: 2, right: 5),
                       child: Icon(
@@ -367,7 +374,7 @@ class _FishingWindowSummary extends StatelessWidget {
                     child: Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 16,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                         color: style.subtitleColor,
@@ -382,7 +389,7 @@ class _FishingWindowSummary extends StatelessWidget {
               Text(
                 t.weatherWindowReturnTravelDisclaimer,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 16,
                   color: isDark ? Colors.white54 : const Color(0xFF64748B),
                 ),
               ),
@@ -394,7 +401,7 @@ class _FishingWindowSummary extends StatelessWidget {
                   child: Text(
                     _footerProvenance(t),
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 12,
                       color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                     ),
                   ),
@@ -403,13 +410,16 @@ class _FishingWindowSummary extends StatelessWidget {
                   InkWell(
                     onTap: onRetry,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
                       child: Text(
                         t.weatherRetry,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.blue.shade300 : const Color(0xFF0B4C8C),
+                          color: isDark
+                              ? Colors.blue.shade300
+                              : const Color(0xFF0B4C8C),
                         ),
                       ),
                     ),
@@ -485,20 +495,24 @@ class _FishingWindowSummary extends StatelessWidget {
 
     return switch (result.availability) {
       FishingWindowAvailability.noWorseningForecast =>
-        t.weatherWindowNoWorsening(_formatDateTime(context, result.coverageEnd ?? DateTime.now())),
-      FishingWindowAvailability.earlierDataMissing =>
-        result.deteriorationTime != null && result.upcomingReason != null
-            ? '${t.weatherWindowUpcoming(
-                _formatDateTime(context, result.deteriorationTime!),
-                result.upcomingReason!.label(t),
-              )}${result.upcomingRisk != null ? ' (${result.upcomingRisk!.label(t)})' : ''}'
-            : t.weatherWindowEarlierMissing,
-      FishingWindowAvailability.missingHourly =>
-        result.firstAdverseDay != null
-            ? t.weatherWindowDailyAdverse(_formatDay(context, result.firstAdverseDay!))
-            : t.weatherWindowDailyOnly,
+        t.weatherWindowNoWorsening(
+            _formatDateTime(context, result.coverageEnd ?? DateTime.now())),
+      FishingWindowAvailability.earlierDataMissing => result
+                      .deteriorationTime !=
+                  null &&
+              result.upcomingReason != null
+          ? '${t.weatherWindowUpcoming(
+              _formatDateTime(context, result.deteriorationTime!),
+              result.upcomingReason!.label(t),
+            )}${result.upcomingRisk != null ? ' (${result.upcomingRisk!.label(t)})' : ''}'
+          : t.weatherWindowEarlierMissing,
+      FishingWindowAvailability.missingHourly => result.firstAdverseDay != null
+          ? t.weatherWindowDailyAdverse(
+              _formatDay(context, result.firstAdverseDay!))
+          : t.weatherWindowDailyOnly,
       FishingWindowAvailability.incompleteData => t.weatherWindowIncomplete,
-      FishingWindowAvailability.staleRefreshNeeded => t.weatherWindowRefreshNeeded,
+      FishingWindowAvailability.staleRefreshNeeded =>
+        t.weatherWindowRefreshNeeded,
       FishingWindowAvailability.expired => t.weatherWindowExpired,
       FishingWindowAvailability.clockSkew => t.weatherWindowClockSkew,
       FishingWindowAvailability.noForecast => t.weatherWindowNoForecast,
@@ -550,12 +564,9 @@ class _FishingWindowSummary extends StatelessWidget {
         t.weatherWindowIncompleteSubtitle,
       FishingWindowAvailability.staleRefreshNeeded =>
         t.weatherWindowRefreshNeededSubtitle,
-      FishingWindowAvailability.expired =>
-        t.weatherWindowExpiredSubtitle,
-      FishingWindowAvailability.clockSkew =>
-        t.weatherWindowClockSkewSubtitle,
-      FishingWindowAvailability.noForecast =>
-        t.weatherWindowNoForecastSubtitle,
+      FishingWindowAvailability.expired => t.weatherWindowExpiredSubtitle,
+      FishingWindowAvailability.clockSkew => t.weatherWindowClockSkewSubtitle,
+      FishingWindowAvailability.noForecast => t.weatherWindowNoForecastSubtitle,
       _ => null,
     };
   }
@@ -576,10 +587,12 @@ class _FishingWindowSummary extends StatelessWidget {
             : const Color(0xFFFECACA),
         iconColor: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
         headlineColor: isDark ? Colors.white : const Color(0xFF991B1B),
-        subtitleColor: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+        subtitleColor:
+            isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
         icon: Icons.error_outline_rounded,
         badgeText: t.riskLevelDanger,
-        badgeBackgroundColor: isDark ? const Color(0xFF991B1B) : const Color(0xFFFEE2E2),
+        badgeBackgroundColor:
+            isDark ? const Color(0xFF991B1B) : const Color(0xFFFEE2E2),
         badgeTextColor: isDark ? Colors.white : const Color(0xFF991B1B),
       );
     }
@@ -594,11 +607,14 @@ class _FishingWindowSummary extends StatelessWidget {
             ? const Color(0xFFD97706).withValues(alpha: 0.5)
             : const Color(0xFFFDE68A),
         iconColor: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-        headlineColor: isDark ? const Color(0xFFFDE68A) : const Color(0xFF78350F),
-        subtitleColor: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
+        headlineColor:
+            isDark ? const Color(0xFFFDE68A) : const Color(0xFF78350F),
+        subtitleColor:
+            isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
         icon: Icons.warning_amber_rounded,
         badgeText: t.riskLevelCaution,
-        badgeBackgroundColor: isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A),
+        badgeBackgroundColor:
+            isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A),
         badgeTextColor: isDark ? Colors.white : const Color(0xFF78350F),
       );
     }
@@ -613,10 +629,12 @@ class _FishingWindowSummary extends StatelessWidget {
             : const Color(0xFFA7F3D0),
         iconColor: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
         headlineColor: isDark ? Colors.white : const Color(0xFF065F46),
-        subtitleColor: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF047857),
+        subtitleColor:
+            isDark ? const Color(0xFFA7F3D0) : const Color(0xFF047857),
         icon: Icons.schedule_rounded,
         badgeText: t.weatherWindowLowerRisk,
-        badgeBackgroundColor: isDark ? const Color(0xFF047857) : const Color(0xFFD1FAE5),
+        badgeBackgroundColor:
+            isDark ? const Color(0xFF047857) : const Color(0xFFD1FAE5),
         badgeTextColor: isDark ? Colors.white : const Color(0xFF065F46),
       );
     }
@@ -631,10 +649,12 @@ class _FishingWindowSummary extends StatelessWidget {
             : const Color(0xFFBBF7D0),
         iconColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
         headlineColor: isDark ? Colors.white : const Color(0xFF0C4A6E),
-        subtitleColor: isDark ? const Color(0xFFBAE6FD) : const Color(0xFF0369A1),
+        subtitleColor:
+            isDark ? const Color(0xFFBAE6FD) : const Color(0xFF0369A1),
         icon: Icons.check_circle_outline_rounded,
         badgeText: t.weatherWindowLowerRisk,
-        badgeBackgroundColor: isDark ? const Color(0xFF0369A1) : const Color(0xFFE0F2FE),
+        badgeBackgroundColor:
+            isDark ? const Color(0xFF0369A1) : const Color(0xFFE0F2FE),
         badgeTextColor: isDark ? Colors.white : const Color(0xFF0C4A6E),
       );
     }
@@ -649,7 +669,8 @@ class _FishingWindowSummary extends StatelessWidget {
       subtitleColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
       icon: Icons.info_outline_rounded,
       badgeText: t.riskLevelUnknown,
-      badgeBackgroundColor: isDark ? const Color(0xFF475569) : const Color(0xFFE2E8F0),
+      badgeBackgroundColor:
+          isDark ? const Color(0xFF475569) : const Color(0xFFE2E8F0),
       badgeTextColor: isDark ? Colors.white : const Color(0xFF475569),
     );
   }
@@ -747,7 +768,7 @@ class _ForecastStrip extends StatelessWidget {
               Text(
                 t.forecastAsOf(_clock(age!)),
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 12,
                   color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                 ),
               ),
@@ -779,7 +800,7 @@ class _ForecastStrip extends StatelessWidget {
               ? t.forecastDisclaimerNoSeaState
               : t.forecastDisclaimer,
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: 16,
             height: 1.35,
             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
           ),
@@ -816,8 +837,7 @@ class _DayChip extends StatelessWidget {
     final double alpha = isOutlook ? 0.55 : 1.0;
 
     final String label = isFirst ? t.forecastToday : day.shortWeekday;
-    final String high =
-        day.tempMax == null ? '–' : '${day.tempMax!.round()}°';
+    final String high = day.tempMax == null ? '–' : '${day.tempMax!.round()}°';
     final String low = day.tempMin == null ? '' : '${day.tempMin!.round()}°';
 
     return Semantics(
@@ -844,7 +864,7 @@ class _DayChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.clip,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: isFirst ? FontWeight.w900 : FontWeight.w700,
                   color: (isDark ? Colors.white : const Color(0xFF0F172A))
                       .withValues(alpha: alpha),
@@ -861,7 +881,7 @@ class _DayChip extends StatelessWidget {
               Text(
                 high,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: (isDark ? Colors.white : const Color(0xFF0F172A))
                       .withValues(alpha: alpha),
@@ -871,7 +891,7 @@ class _DayChip extends StatelessWidget {
                 Text(
                   low,
                   style: TextStyle(
-                    fontSize: 9.5,
+                    fontSize: 12,
                     color: (isDark ? Colors.white54 : const Color(0xFF64748B))
                         .withValues(alpha: alpha),
                   ),

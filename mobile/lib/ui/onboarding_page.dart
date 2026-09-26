@@ -368,7 +368,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: Text(
                             _licenseType.hint(t),
                             style: const TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 16,
                               color: authLabel,
                               height: 1.3,
                             ),
@@ -708,7 +708,7 @@ class _UnverifiedNotice extends StatelessWidget {
             child: Text(
               t.identityUnverifiedNotice,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 16,
                 color: noticeFg,
                 height: 1.35,
               ),

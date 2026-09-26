@@ -14,7 +14,8 @@ import '../../services/sos_service.dart';
 /// because a fisher glancing at a phone in bad weather must not be able to
 /// miss it by looking away for three seconds.
 class ResponderEtaDialog extends StatefulWidget {
-  const ResponderEtaDialog({super.key, required this.record, required this.sos});
+  const ResponderEtaDialog(
+      {super.key, required this.record, required this.sos});
 
   final SosRecord record;
   final SosService sos;
@@ -90,7 +91,8 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
       _sendingReply = true;
       _confirmingSafeNow = false;
     });
-    final sentDirectly = await widget.sos.replyToSos(widget.record.localId, reply);
+    final sentDirectly =
+        await widget.sos.replyToSos(widget.record.localId, reply);
     if (!mounted) return;
     setState(() {
       _sendingReply = false;
@@ -102,7 +104,8 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
   /// The fisher's one-tap answer, or a confirmation step / queued notice in
   /// its place. Kept out of `build()` only for readability - all the state it
   /// reads and writes belongs to this same State object.
-  Widget _buildReplySection(BuildContext context, AppLocalizations t, bool isDark) {
+  Widget _buildReplySection(
+      BuildContext context, AppLocalizations t, bool isDark) {
     final mutedColor = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     if (_sentReply != null) {
@@ -117,15 +120,21 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
           Row(
             children: <Widget>[
               Icon(
-                _sentReply == 2 ? Icons.check_circle_rounded : Icons.info_rounded,
+                _sentReply == 2
+                    ? Icons.check_circle_rounded
+                    : Icons.info_rounded,
                 size: 18,
-                color: _sentReply == 2 ? const Color(0xFF16A34A) : const Color(0xFFF59E0B),
+                color: _sentReply == 2
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFF59E0B),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   sentText,
-                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF1F2937)),
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white : const Color(0xFF1F2937)),
                 ),
               ),
             ],
@@ -154,7 +163,9 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
             children: <Widget>[
               Expanded(
                 child: TextButton(
-                  onPressed: _sendingReply ? null : () => setState(() => _confirmingSafeNow = false),
+                  onPressed: _sendingReply
+                      ? null
+                      : () => setState(() => _confirmingSafeNow = false),
                   child: Text(t.actionCancel),
                 ),
               ),
@@ -162,7 +173,8 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
               Expanded(
                 child: FilledButton(
                   onPressed: _sendingReply ? null : () => _sendReply(2),
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                  style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A)),
                   child: Text(t.responderReplyConfirmConfirm),
                 ),
               ),
@@ -183,8 +195,11 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
         const SizedBox(width: 8),
         Expanded(
           child: FilledButton(
-            onPressed: _sendingReply ? null : () => setState(() => _confirmingSafeNow = true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+            onPressed: _sendingReply
+                ? null
+                : () => setState(() => _confirmingSafeNow = true),
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A)),
             child: Text(t.responderReplySafeNow),
           ),
         ),
@@ -246,7 +261,7 @@ class _ResponderEtaDialogState extends State<ResponderEtaDialog> {
                   Text(
                     overdue ? t.etaArrivalOverdue : t.etaArrivingIn,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w800,
                       color: accent,

@@ -25,9 +25,11 @@ class ActionPill extends StatelessWidget {
     final display = enabled
         ? color
         : (isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8));
-    return SizedBox(
-      width: kActionPillWidth,
-      height: kActionPillHeight,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: kActionPillWidth,
+        minHeight: kActionPillHeight,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(kActionPillHeight / 2),
@@ -46,16 +48,15 @@ class ActionPill extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(kActionPillHeight / 2),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Icon(icon, size: 20, color: Colors.white),
                   const SizedBox(width: 8),
                   Text(
                     label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,

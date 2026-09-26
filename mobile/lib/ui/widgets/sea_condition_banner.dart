@@ -48,7 +48,7 @@ class SeaConditionBanner extends StatelessWidget {
                     : 'Sea condition unavailable. Check advisories before '
                         'heading out.',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 16,
                   height: 1.35,
                   color: isDark ? Colors.white70 : const Color(0xFF475569),
                 ),
@@ -90,7 +90,7 @@ class SeaConditionBanner extends StatelessWidget {
           Text(
             value.subtitle(AppLocalizations.of(context)),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 16,
               height: 1.35,
               color: isDark ? Colors.white70 : const Color(0xFF334155),
             ),
@@ -101,7 +101,7 @@ class SeaConditionBanner extends StatelessWidget {
               'Buoy check: ${value.currentSpeedMps!.toStringAsFixed(1)} m/s current'
               '${value.observedAt == null ? '' : ' · ${_age(value.observedAt!)}'}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
               ),
             ),
@@ -111,7 +111,7 @@ class SeaConditionBanner extends StatelessWidget {
             Text(
               'Set by ${value.setByName}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
               ),
             ),
@@ -173,7 +173,7 @@ class _StaleChip extends StatelessWidget {
       child: Text(
         AppLocalizations.of(context).seaConditionStaleLabel,
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Color(0xFF475569),
         ),

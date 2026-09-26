@@ -74,8 +74,8 @@ Canonical CSS definitions, as implemented in web/css/dashboard.css:
 | Primary surface | #FFFFFF | #1E293B | Cards, panels, header surfaces |
 | Secondary surface | #B9E8FF | #334155 | Stronger nested surface |
 | Primary text | #1E293B | #F0F4F8 | Titles and body copy |
-| Secondary text | #64748B | #94A3B8 | Labels, metadata, supporting copy |
-| Dim text | #94A3B8 | #64748B | Placeholders and low-priority details |
+| Secondary text | #475569 | #94A3B8 | Labels, metadata, supporting copy |
+| Dim text | #5B6574 | #94A3B8 | Placeholders and low-priority details |
 | Tertiary text | #CBD5E1 | #CBD5E1 | Faint separators/labels |
 | Border | #CFE8F9 | rgba(255,255,255,0.10) | General boundaries |
 | Accent border | #E3F5FF | rgba(255,255,255,0.14) | Raised/selected boundaries |
@@ -100,12 +100,12 @@ The Flutter equivalent is implemented directly in each screen:
 
 | Meaning | Preferred value | Supporting values | Application |
 |---|---:|---|---|
-| Success / safe / online | #2ECC71 | #22C55E, #10B981, #16A34A, #27AE60 | Safe sea state, online buoys, completed actions, positive metrics |
-| Warning / caution | #F59E0B | #F39C12, #F1C40F, #E67E22, #D97706 | Demo state, caution, pending review, weather advisory |
+| Success / safe / online | #16A34A | #22C55E, #10B981, #2ECC71, #27AE60 | Safe sea state, online buoys, completed actions, positive metrics |
+| Warning / caution | #D97706 | #F39C12, #F1C40F, #E67E22, #F59E0B | Demo state, caution, pending review, weather advisory |
 | Error / danger / SOS | #E74C3C | #EF4444, #DC2626, #C0392B, #8B0000, #FF4D4D | Emergency state, validation, critical markers, destructive actions |
 | Information | #2E86AB | #3498DB, #0284C7, #3B82F6 | Informational advisory, facilities, map actions |
 | Purple / model or buoy | #A78BFA | #9B59B6, #7C4DFF, #C4B5FD | Buoy markers, gradient avatars, model-assessment accents |
-| Cyan / connectivity | #22D3EE | #00BCD4, #00D1FF, #4FC3F7 | Mesh links, pins, water/weather emphasis |
+| Cyan / connectivity | #0891B2 | #22D3EE, #00BCD4, #00D1FF, #4FC3F7 | Mesh links, pins, water/weather emphasis |
 | Disabled / unknown | #94A3B8 | #9CA3AF, #95A5A6, #7F8C8D, #666666 | Offline, unavailable, unknown, secondary state |
 
 Semantic colors are never the sole carrier of meaning. Pair them with an icon, label, badge text, border treatment, or shape. Current examples include SAFE TO SAIL, CAUTION, DO NOT SAIL, status dots, and alert headings.
@@ -907,9 +907,9 @@ Approximate contrast of core solid-color pairs:
 | #0F69C9 on #FFFFFF | 5.41:1 | Suitable for normal text |
 | #0958A6 on #FFFFFF | 7.10:1 | Suitable for high-contrast headings |
 | #38BDF8 on #FFFFFF | 2.14:1 | Accent only; not normal text on white |
-| #94A3B8 on #F4F8FA | 2.40:1 | Too faint for essential copy |
+| #5B6574 on #F4F8FA | 5.52:1 | Light-theme dim text |
 | #CBD5E1 on #F4F8FA | 1.39:1 | Decorative/divider use only |
-| #64748B on #1E293B | 3.07:1 | Too faint for normal dark-theme body copy |
+| #94A3B8 on #1E293B | 5.71:1 | Dark-theme dim text |
 | #FFFFFF on #7B93B0 | 3.16:1 | Legacy secondary button needs contrast review |
 
 Glass, video, and map backgrounds change effective contrast, so rendered-state verification remains required.

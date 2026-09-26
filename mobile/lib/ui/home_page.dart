@@ -14,6 +14,7 @@ import '../models/advisory.dart';
 import '../models/daily_outlook.dart';
 import '../models/forecast_outlook.dart';
 import '../models/buoy_contact.dart';
+import '../models/fisher_sos_situation.dart';
 import '../models/sea_condition.dart';
 import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
@@ -29,6 +30,7 @@ import 'widgets/advisory_card.dart';
 import 'widgets/buoy_status_card.dart';
 import 'widgets/delivery_state_tile.dart';
 import 'widgets/sea_condition_banner.dart';
+import 'widgets/sos_status_card.dart';
 import 'widgets/squall_banner.dart';
 import 'widgets/weather_card.dart';
 
@@ -285,6 +287,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final palette = AqPalette.of(context);
     final t = AppLocalizations.of(context);
+    final latestSos = _records.isEmpty ? null : _records.first;
+    final situation =
+        latestSos == null ? null : FisherSosSituation.of(latestSos);
+    final activeSos = situation == FisherSosSituation.closed ||
+            situation == FisherSosSituation.cancelled
+        ? null
+        : latestSos;
     return Scaffold(
       backgroundColor: palette.canvas,
       floatingActionButton: Padding(
@@ -435,6 +444,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
+                const SizedBox(height: AqSpace.base),
+              ],
+              if (activeSos != null) ...<Widget>[
+                SosStatusCard(record: activeSos),
                 const SizedBox(height: AqSpace.base),
               ],
               SeaConditionBanner(condition: _sea, isLoading: _seaLoading),

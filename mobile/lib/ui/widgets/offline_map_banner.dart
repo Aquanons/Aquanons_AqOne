@@ -94,7 +94,7 @@ class OfflineMapBanner extends StatelessWidget {
                           '6 hours. Assume nothing about current conditions.'
                       : 'Buoys and warnings are from the last time you had '
                           'signal, not from now.',
-                  style: TextStyle(fontSize: 10.5, height: 1.3, color: fg),
+                  style: TextStyle(fontSize: 16, height: 1.3, color: fg),
                 ),
               ],
             ),

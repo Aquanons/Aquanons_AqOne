@@ -65,7 +65,7 @@ class DeliveryStateTile extends StatelessWidget {
           Text(
             situation.description(t),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               height: 1.5,
               color: palette.secondaryText,
             ),
@@ -76,7 +76,7 @@ class DeliveryStateTile extends StatelessWidget {
               child: Text(
                 t.resolvedStillEndangered,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AqColors.warning,
                 ),

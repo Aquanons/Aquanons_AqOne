@@ -12,17 +12,19 @@ class AqColors {
   static const Color raisedSlate = Color(0xFF334155);
   static const Color slateText = Color(0xFF64748B);
   static const Color mutedSlate = Color(0xFF94A3B8);
+  static const Color lightSecondaryText = Color(0xFF475569);
+  static const Color lightDimText = Color(0xFF5B6574);
   static const Color paleSlate = Color(0xFFCBD5E1);
   static const Color lightBorder = Color(0xFFCFE8F9);
   static const Color lightBlueSurface = Color(0xFFE8F8FF);
   static const Color lightCanvas = Color(0xFFF4F8FA);
   static const Color darkPrimaryText = Color(0xFFF0F4F8);
 
-  static const Color success = Color(0xFF2ECC71);
-  static const Color warning = Color(0xFFF59E0B);
+  static const Color success = Color(0xFF16A34A);
+  static const Color warning = Color(0xFFD97706);
   static const Color danger = Color(0xFFE74C3C);
   static const Color info = Color(0xFF2E86AB);
-  static const Color connectivity = Color(0xFF22D3EE);
+  static const Color connectivity = Color(0xFF0891B2);
   static const Color disabled = Color(0xFF94A3B8);
 }
 
@@ -81,8 +83,8 @@ class AqPalette {
     surface: Colors.white,
     surfaceAlt: AqColors.lightBlueSurface,
     primaryText: AqColors.slateSurface,
-    secondaryText: AqColors.slateText,
-    dimText: AqColors.mutedSlate,
+    secondaryText: AqColors.lightSecondaryText,
+    dimText: AqColors.lightDimText,
     border: AqColors.lightBorder,
     active: AqColors.brandPrimary,
   );
@@ -93,7 +95,7 @@ class AqPalette {
     surfaceAlt: AqColors.raisedSlate,
     primaryText: AqColors.darkPrimaryText,
     secondaryText: AqColors.mutedSlate,
-    dimText: AqColors.slateText,
+    dimText: AqColors.mutedSlate,
     border: Color(0x1AFFFFFF),
     active: AqColors.skyAccent,
   );

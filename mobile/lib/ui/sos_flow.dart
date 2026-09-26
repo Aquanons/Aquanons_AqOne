@@ -200,75 +200,92 @@ class _SosCountdownScreenState extends State<SosCountdownScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFF7A0E0E),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-            child: Column(
-              children: <Widget>[
-                const Spacer(),
-                const Icon(
-                  Icons.warning_rounded,
-                  color: Colors.white,
-                  size: 60,
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  t.sosSendingTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t.sosSendingSubtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: 130,
-                  height: 130,
-                  child: Stack(
-                    alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
-                      SizedBox(
-                        width: 130,
-                        height: 130,
-                        child: CircularProgressIndicator(
-                          value: fraction,
-                          strokeWidth: 7,
-                          backgroundColor: Colors.white24,
-                          valueColor:
-                              const AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
+                      const Icon(
+                        Icons.warning_rounded,
+                        color: Colors.white,
+                        size: 48,
                       ),
+                      const SizedBox(height: 12),
                       Text(
-                        secondsDisplay,
+                        t.sosSendingTitle,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 42,
+                          fontSize: 24,
                           fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.sosSendingSubtitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 110,
+                        height: 110,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            SizedBox(
+                              width: 110,
+                              height: 110,
+                              child: CircularProgressIndicator(
+                                value: fraction,
+                                strokeWidth: 7,
+                                backgroundColor: Colors.white24,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              secondsDisplay,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 42,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _SlideToAction(
+                        label: t.sosSlideToCancel,
+                        icon: Icons.close_rounded,
+                        accentColor: Colors.white,
+                        thumbIconColor: const Color(0xFF7A0E0E),
+                        onConfirmed: () => _finish(false),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.sosAutoSendNotice,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 16,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Spacer(),
-                _SlideToAction(
-                  label: t.sosSlideToCancel,
-                  icon: Icons.close_rounded,
-                  accentColor: Colors.white,
-                  thumbIconColor: const Color(0xFF7A0E0E),
-                  onConfirmed: () => _finish(false),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  t.sosAutoSendNotice,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -439,7 +456,7 @@ class _EmergencyDetailsSheetState extends State<EmergencyDetailsSheet> {
                 const SizedBox(height: 4),
                 Text(
                   t.sosSituationNotePrompt,
-                  style: TextStyle(color: dim, fontSize: 12.5, height: 1.35),
+                  style: TextStyle(color: dim, fontSize: 16, height: 1.35),
                 ),
                 const SizedBox(height: 14),
                 Wrap(

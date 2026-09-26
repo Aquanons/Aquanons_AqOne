@@ -249,9 +249,8 @@ class ChatService extends ChangeNotifier {
       case 'clients':
         _clients
           ..clear()
-          ..addAll((json['list'] as List<dynamic>?)
-                  ?.map((e) => e.toString()) ??
-              []);
+          ..addAll(
+              (json['list'] as List<dynamic>?)?.map((e) => e.toString()) ?? []);
         _notify();
 
       case 'msg':
@@ -364,8 +363,7 @@ class ChatService extends ChangeNotifier {
     Iterable<ChatMessage> messages, {
     DateTime? now,
   }) {
-    final DateTime cutoff =
-        (now ?? DateTime.now()).subtract(_messageRetention);
+    final DateTime cutoff = (now ?? DateTime.now()).subtract(_messageRetention);
     final List<ChatMessage> retained = messages
         .where((ChatMessage message) => !message.time.isBefore(cutoff))
         .toList(growable: true);
@@ -476,7 +474,9 @@ class ChatService extends ChangeNotifier {
   /// limitation documented in docs/05_PUBLIC_API.md, not a new one.
   void _markHandedToHub(String text) {
     for (final ChatMessage m in _messages) {
-      if (m.isMine && m.text == text && m.hubState == ChatHubState.queuedLocally) {
+      if (m.isMine &&
+          m.text == text &&
+          m.hubState == ChatHubState.queuedLocally) {
         m.hubState = ChatHubState.handedToHub;
         _persistMessages();
         _notify();
@@ -502,9 +502,8 @@ class ChatService extends ChangeNotifier {
 
   Future<void> _backfillHistory() async {
     try {
-      final res = await _client
-          .get(_historyUri)
-          .timeout(const Duration(seconds: 4));
+      final res =
+          await _client.get(_historyUri).timeout(const Duration(seconds: 4));
       if (res.statusCode != 200) return;
       final dynamic json = jsonDecode(res.body);
       if (json is! Map<String, dynamic>) return;
@@ -917,7 +916,7 @@ class _ChathubbState extends State<Chathubb> {
                       ? const Color(0xFF16A34A)
                       : (isDark ? Colors.white54 : Colors.black45),
                   fontWeight: FontWeight.w500,
-                  fontSize: 11,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -951,8 +950,7 @@ class _ChathubbState extends State<Chathubb> {
           : ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: users.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(width: 16),
+              separatorBuilder: (context, index) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
                 final name = users[index];
                 final isSelf = name == _service.displayName;
@@ -977,7 +975,7 @@ class _ChathubbState extends State<Chathubb> {
                     Text(
                       name,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: isDark ? Colors.white70 : Colors.black54,
                       ),
                     ),
@@ -1038,9 +1036,7 @@ class _ChathubbState extends State<Chathubb> {
     final bg = isMine
         ? const Color(0xFF0F69C9)
         : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
-    final fg = isMine
-        ? Colors.white
-        : (isDark ? Colors.white : Colors.black87);
+    final fg = isMine ? Colors.white : (isDark ? Colors.white : Colors.black87);
     final align = isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(16),
@@ -1084,7 +1080,7 @@ class _ChathubbState extends State<Chathubb> {
                     child: Text(
                       msg.from,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white54 : Colors.black45,
                       ),
@@ -1114,7 +1110,7 @@ class _ChathubbState extends State<Chathubb> {
                             '${hubCloudStatusLabel(AppLocalizations.of(context), msg)}'
                         : '${msg.time.hour.toString().padLeft(2, '0')}:${msg.time.minute.toString().padLeft(2, '0')}',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: isDark ? Colors.white30 : Colors.black26,
                     ),
                   ),
@@ -1154,7 +1150,8 @@ class _ChathubbState extends State<Chathubb> {
             child: Container(
               constraints: const BoxConstraints(maxHeight: 100),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                color:
+                    isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: TextField(
@@ -1181,15 +1178,15 @@ class _ChathubbState extends State<Chathubb> {
                       maxLength ?? ChatService.maxMessageLength,
                     ),
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 12,
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                   );
                 },
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   hintText: AppLocalizations.of(context).chatHint,
                   hintStyle: TextStyle(
                     color: isDark ? Colors.white38 : Colors.black26,

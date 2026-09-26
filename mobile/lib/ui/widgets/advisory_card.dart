@@ -64,8 +64,7 @@ class AdvisoryCard extends StatelessWidget {
           Row(
             children: <Widget>[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: official
                       ? priority.color.withValues(alpha: 0.15)
@@ -75,12 +74,10 @@ class AdvisoryCard extends StatelessWidget {
                 child: Text(
                   official ? priority.label.toUpperCase() : 'APP NOTICE',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
-                    color: official
-                        ? priority.color
-                        : const Color(0xFF0F69C9),
+                    color: official ? priority.color : const Color(0xFF0F69C9),
                   ),
                 ),
               ),
@@ -90,9 +87,8 @@ class AdvisoryCard extends StatelessWidget {
                   advisory.byline ?? advisory.municipality,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
-                    color:
-                        isDark ? Colors.white54 : const Color(0xFF64748B),
+                    fontSize: 12,
+                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
                   ),
                 ),
               ),
@@ -100,9 +96,8 @@ class AdvisoryCard extends StatelessWidget {
                 Text(
                   _shortDate(advisory.publishDate!),
                   style: TextStyle(
-                    fontSize: 11,
-                    color:
-                        isDark ? Colors.white54 : const Color(0xFF64748B),
+                    fontSize: 12,
+                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
                   ),
                 ),
             ],
@@ -140,7 +135,7 @@ class AdvisoryCard extends StatelessWidget {
               maxLines: maxDescriptionLines,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 16,
                 height: 1.4,
                 color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
@@ -162,10 +157,9 @@ class AdvisoryCard extends StatelessWidget {
                     'A message from the app developers. This is not an '
                     'official MDRRMO or LGU advisory.',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 16,
                       height: 1.35,
-                      color:
-                          isDark ? Colors.white54 : const Color(0xFF64748B),
+                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
                     ),
                   ),
                 ),
@@ -177,7 +171,7 @@ class AdvisoryCard extends StatelessWidget {
             Text(
               'In force until ${_shortDate(advisory.expirationDate!)}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontStyle: FontStyle.italic,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
               ),
@@ -194,7 +188,7 @@ class AdvisoryCard extends StatelessWidget {
                         ? 'View all ($remaining more)'
                         : 'View all advisories',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: priority.color,
                     ),
@@ -216,8 +210,18 @@ class AdvisoryCard extends StatelessWidget {
 
   static String _shortDate(DateTime value) {
     const months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${value.day} ${months[value.month - 1]}';
   }
@@ -292,7 +296,7 @@ class _AdvisoryImage extends StatelessWidget {
             Text(
               'Photo unavailable offline',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
               ),
             ),

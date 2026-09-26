@@ -95,7 +95,7 @@ class _Shell extends StatelessWidget {
           Text(
             detail,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 16,
               height: 1.5,
               color: palette.secondaryText,
             ),
@@ -105,7 +105,7 @@ class _Shell extends StatelessWidget {
             Text(
               '$queued message(s) waiting on this buoy',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AqColors.warning,
               ),

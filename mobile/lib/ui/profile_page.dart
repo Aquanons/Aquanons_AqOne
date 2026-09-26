@@ -731,7 +731,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Text(
                     _licenseType.hint(t),
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 16,
                       color: _authLabel,
                       height: 1.3,
                     ),
@@ -815,7 +815,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Text(
                     t.profileEditTrustNotice,
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 16,
                       color: _noticeFg,
                       height: 1.35,
                     ),
@@ -965,7 +965,7 @@ class _TierChip extends StatelessWidget {
           Text(
             tier.label(t),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
             ),

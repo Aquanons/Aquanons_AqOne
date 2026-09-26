@@ -188,29 +188,29 @@ State: Handed to Luna 2026-09-26; brief `docs/fisher-ux/HANDOFF-luna-phase-3.md`
 
 ### Tasks
 
-- [ ] `core/tokens.dart`: light `dimText` and `secondaryText` raised to at least 4.5:1 on `canvas` and `surface`; check dark tokens the same way; update `docs/47_VISUAL_DESIGN_GUIDE.md` rows to match.
-- [ ] `FisherSosSituation` icon colours reach at least 3:1 on `surface` in both themes (non-text contrast; today every situation except `rescueCentreHasIt` and `cancelled` fails on white).
-- [ ] The SOS countdown and the post-SOS sheet fit a 360 x 640 phone at 200% text (today the sheet overflows by 164 px at the bottom).
-- [ ] Raise every `fontSize` below 12 in `mobile/lib/ui` to at least 12; body text 16.
-- [ ] Active SOS status card on Home (At sea shows the same situation inside the Phase 4b summary card) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
-- [ ] Dock: four labelled items (Home, At sea, News, Me), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
-- [ ] Replace fixed heights that clip at large text (`ActionPill` 176 x 50, dock `barHeight`) with minimum sizes.
+- [x] `core/tokens.dart`: light `dimText` and `secondaryText` raised to at least 4.5:1 on `canvas` and `surface`; check dark tokens the same way; update `docs/47_VISUAL_DESIGN_GUIDE.md` rows to match.
+- [x] `FisherSosSituation` icon colours reach at least 3:1 on `surface` in both themes (non-text contrast; today every situation except `rescueCentreHasIt` and `cancelled` fails on white).
+- [x] The SOS countdown and the post-SOS sheet fit a 360 x 640 phone at 200% text (today the sheet overflows by 164 px at the bottom).
+- [x] Raise every `fontSize` below 12 in `mobile/lib/ui` to at least 12; body text 16.
+- [x] Active SOS status card on Home (At sea shows the same situation inside the Phase 4b summary card) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
+- [x] Dock: four labelled items (Home, At sea, News, Me), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
+- [x] Replace fixed heights that clip at large text (`ActionPill` 176 x 50, dock `barHeight`) with minimum sizes.
 
 ### Verification
 
-- [ ] Token test: every text token is at least 4.5:1 on `canvas` and `surface` in both themes, `primaryText` is at least 7:1 on `surface` (the SOS status title), and every situation icon colour is at least 3:1 on `surface`.
-- [ ] `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing.
-- [ ] Widget tests at `TextScaler.linear(2.0)` on 360 x 640: Home, the status card, the dock and the countdown raise no overflow errors and show the full status text.
-- [ ] Dock widget test finds four visible labels.
-- [ ] Emulator screenshots, light and dark, largest system font, in `docs/fisher-ux/PHASE_3_VERIFICATION.md`.
-- [ ] Standard mobile gate passes.
+- [x] Token test: every text token is at least 4.5:1 on `canvas` and `surface` in both themes, `primaryText` is at least 7:1 on `surface` (the SOS status title), and every situation icon colour is at least 3:1 on `surface`.
+- [x] `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing.
+- [x] Widget tests at `TextScaler.linear(2.0)` on 360 x 640: Home, the status card, the dock and the countdown raise no overflow errors and show the full status text.
+- [x] Dock widget test finds four visible labels.
+- [x] Emulator screenshots, light and dark, largest system font, in `docs/fisher-ux/PHASE_3_VERIFICATION.md`.
+- [x] Standard mobile gate passes.
 
 ### Review and checkpoint
 
-- [ ] Review correctness, scope, dependencies, and unrelated changes.
-- [ ] Update plan, evidence, and current handoff.
-- [ ] Stage only reviewed phase-related paths and verify the staged diff.
-- [ ] Commit with a unique phase message and verify Git reports success.
+- [x] Review correctness, scope, dependencies, and unrelated changes.
+- [x] Update plan, evidence, and current handoff.
+- [x] Stage only reviewed phase-related paths and verify the staged diff.
+- [x] Commit with a unique phase message and verify Git reports success.
 
 Checkpoint message: `feat(mobile): sun-readable tokens, font floor, labelled dock`
 Stop for Len's go-ahead (hard-stop).

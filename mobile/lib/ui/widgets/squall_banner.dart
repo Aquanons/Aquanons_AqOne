@@ -35,8 +35,8 @@ class SquallBanner extends StatelessWidget {
     // and never hidden outright. A fisher should be able to tell "the model
     // has nothing current to say" from "everything is fine", and from an
     // alarm.
-    final bool isAlarming =
-        watch.level == SquallLevel.watch || watch.level == SquallLevel.returnNow;
+    final bool isAlarming = watch.level == SquallLevel.watch ||
+        watch.level == SquallLevel.returnNow;
     if (!isAlarming && watch.statusReason != null) {
       return _buildStaleNotice(context);
     }
@@ -84,7 +84,7 @@ class SquallBanner extends StatelessWidget {
           Text(
             _body(isReturnNow),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 16,
               height: 1.35,
               color: isDark ? Colors.white : const Color(0xFF1F2937),
               fontWeight: isReturnNow ? FontWeight.w600 : FontWeight.normal,
@@ -95,7 +95,7 @@ class SquallBanner extends StatelessWidget {
             Text(
               'Detected at ${watch.triggeredBuoys.join(', ')}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
@@ -109,7 +109,7 @@ class SquallBanner extends StatelessWidget {
                     'not a PAGASA warning'
                 : 'AqOne squall nowcast · not a PAGASA warning',
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: 12,
               color: isDark ? Colors.white60 : const Color(0xFF64748B),
             ),
           ),
@@ -123,7 +123,7 @@ class SquallBanner extends StatelessWidget {
                   child: Text(
                     'You acknowledged this warning. It stays until the squall '
                     'passes.',
-                    style: TextStyle(fontSize: 11.5, color: accent),
+                    style: TextStyle(fontSize: 16, color: accent),
                   ),
                 ),
               ],
@@ -151,7 +151,8 @@ class SquallBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.history_toggle_off_rounded, color: neutral, size: 20),
+          const Icon(Icons.history_toggle_off_rounded,
+              color: neutral, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -173,7 +174,7 @@ class SquallBanner extends StatelessWidget {
                         )
                       : t.squallStaleBodyNoAge,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 16,
                     height: 1.3,
                     color: isDark ? Colors.white70 : const Color(0xFF64748B),
                   ),

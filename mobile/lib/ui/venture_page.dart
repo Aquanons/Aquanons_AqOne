@@ -424,7 +424,7 @@ class _VenturePageState extends State<VenturePage> {
               child: Text(
                 thresholdNote,
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 16,
                   color: Color(0xFF8A5A12),
                   height: 1.35,
                 ),
@@ -469,7 +469,8 @@ class _VenturePageState extends State<VenturePage> {
               child: Column(
                 children: <Widget>[
                   _buildWeatherCapsule(isDark),
-                  if (!AqOneConfig.pitchMode && widget.squall.shouldDisplay) ...<Widget>[
+                  if (!AqOneConfig.pitchMode &&
+                      widget.squall.shouldDisplay) ...<Widget>[
                     const SizedBox(height: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -584,7 +585,8 @@ class _VenturePageState extends State<VenturePage> {
         TileLayer(
           urlTemplate: AqOneConfig.osmTileUrl,
           userAgentPackageName: 'ph.aqone.app',
-          tileProvider: _tileProvider ?? CachedNetworkTileProvider(cache: _tiles),
+          tileProvider:
+              _tileProvider ?? CachedNetworkTileProvider(cache: _tiles),
           // Keep showing the coarser tile already on screen while a finer one
           // loads or fails. Offline, that is the difference between a blurry
           // map and a grey one.
@@ -738,7 +740,8 @@ class _VenturePageState extends State<VenturePage> {
           isActive: false,
           isDark: isDark,
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => Chathubb(identity: widget.identity)),
+            MaterialPageRoute<void>(
+                builder: (_) => Chathubb(identity: widget.identity)),
           ),
         ),
         const SizedBox(height: 14),
@@ -813,7 +816,7 @@ class _VenturePageState extends State<VenturePage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 12,
                     color: isDark ? Colors.white70 : const Color(0xFF475569),
                   ),
                 ),
@@ -913,7 +916,7 @@ class _VenturePageState extends State<VenturePage> {
       child: Text(
         AqOneConfig.osmAttribution,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 12,
           color: isDark ? Colors.white70 : const Color(0xFF475569),
         ),
       ),

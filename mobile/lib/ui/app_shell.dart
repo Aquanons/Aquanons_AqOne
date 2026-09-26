@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../core/config.dart';
 import '../core/locale_controller.dart';
+import '../core/tokens.dart';
 import '../data/checklist_store.dart';
 import '../data/identity_store.dart';
 import '../models/delivery_policy.dart';
@@ -22,7 +23,6 @@ import 'profile_page.dart';
 import 'squall_alert_page.dart';
 import 'venture_page.dart';
 import 'widgets/responder_eta_dialog.dart';
-
 
 const Color _brandPrimary = Color(0xFF0F69C9);
 const Color _accentDark = Color(0xFF38BDF8);
@@ -452,7 +452,7 @@ class _AppShellState extends State<AppShell> {
     final body = IndexedStack(
       index: _index,
       children: <Widget>[
-HomePage(
+        HomePage(
           service: widget.sos,
           identity: widget.identity,
           feeds: widget.feeds,
@@ -652,7 +652,11 @@ class _MobileDock extends StatelessWidget {
   final bool isDark;
 
   /// Height of the bar itself, excluding the system inset below it.
-  static const double barHeight = 78;
+  static double barHeightFor(BuildContext context) {
+    final labelLine = MediaQuery.textScalerOf(context).scale(12);
+    final scaledHeight = labelLine * 2.5 + 52;
+    return scaledHeight > 78 ? scaledHeight : 78;
+  }
 
   /// How far the Venture circle rises above the bar.
   static const double overhang = 33;
@@ -661,142 +665,183 @@ class _MobileDock extends StatelessWidget {
 
   /// Total space the dock occupies, including the home-indicator inset.
   static double heightFor(BuildContext context) =>
-      barHeight + MediaQuery.of(context).viewPadding.bottom + overhang;
+      barHeightFor(context) +
+      MediaQuery.of(context).viewPadding.bottom +
+      overhang;
 
   @override
   Widget build(BuildContext context) {
     final systemInset = MediaQuery.of(context).viewPadding.bottom;
+    final barHeight = barHeightFor(context);
     final fullBarHeight = barHeight + systemInset;
 
-    return SizedBox(
-      height: fullBarHeight + overhang,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Container(
-            height: fullBarHeight,
-            padding: EdgeInsets.only(bottom: systemInset),
-            decoration: BoxDecoration(
-              color: isDark ? _surfaceDark : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Expanded(
-                  child: Center(
-                    child: _DockItem(
-                      icon: Icons.home_rounded,
-                      label: AppLocalizations.of(context).navHome,
-                      isActive: index == 0,
-                      isDark: isDark,
-                      onTap: () => onSelect(0),
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final ventureCenter = constraints.maxWidth * 3 / 8;
+        return SizedBox(
+          height: fullBarHeight + overhang,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Container(
+                height: fullBarHeight,
+                padding: EdgeInsets.only(bottom: systemInset),
+                decoration: BoxDecoration(
+                  color: isDark ? _surfaceDark : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
                   ),
-                ),
-                // Reserved gap for the raised Venture button.
-                const SizedBox(width: 72),
-                Expanded(
-                  child: Center(
-                    child: _DockItem(
-                      icon: Icons.campaign_rounded,
-                      label: AppLocalizations.of(context).navAdvisories,
-                      isActive: index == 2,
-                      isDark: isDark,
-                      onTap: () => onSelect(2),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: fullBarHeight - overhang,
-            child: Semantics(
-              button: true,
-              label: AppLocalizations.of(context).navVenture,
-              child: GestureDetector(
-                onTap: () => onSelect(1),
-                child: Container(
-                  width: buttonSize,
-                  height: buttonSize,
-                  decoration: BoxDecoration(
-                    color: index == 1 ? const Color(0xFF0284C7) : _brandPrimary,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark ? _surfaceDark : Colors.white,
-                      width: 4,
-                    ),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: _brandPrimary.withValues(alpha: 0.4),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _DockItem(
+                        icon: Icons.home_rounded,
+                        label: AppLocalizations.of(context).navHome,
+                        isActive: index == 0,
+                        isDark: isDark,
+                        onTap: () => onSelect(0),
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.explore_rounded,
-                    color: Colors.white,
-                    size: 30,
+                    ),
+                    Expanded(
+                      child: _DockItem(
+                        label: AppLocalizations.of(context).navVenture,
+                        raisedButtonSpace: true,
+                        isActive: index == 1,
+                        isDark: isDark,
+                        onTap: () => onSelect(1),
+                      ),
+                    ),
+                    Expanded(
+                      child: _DockItem(
+                        icon: Icons.campaign_rounded,
+                        label: AppLocalizations.of(context).navAdvisories,
+                        isActive: index == 2,
+                        isDark: isDark,
+                        onTap: () => onSelect(2),
+                      ),
+                    ),
+                    Expanded(
+                      child: _DockItem(
+                        icon: Icons.person_rounded,
+                        label: AppLocalizations.of(context).navProfile,
+                        isActive: index == 3,
+                        isDark: isDark,
+                        onTap: () => onSelect(3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: ventureCenter - buttonSize / 2,
+                bottom: fullBarHeight - overhang,
+                child: Semantics(
+                  button: true,
+                  label: AppLocalizations.of(context).navVenture,
+                  child: GestureDetector(
+                    onTap: () => onSelect(1),
+                    child: Container(
+                      width: buttonSize,
+                      height: buttonSize,
+                      decoration: BoxDecoration(
+                        color: index == 1
+                            ? const Color(0xFF0284C7)
+                            : _brandPrimary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? _surfaceDark : Colors.white,
+                          width: 4,
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: _brandPrimary.withValues(alpha: 0.4),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.explore_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _DockItem extends StatelessWidget {
   const _DockItem({
-    required this.icon,
+    this.icon,
     required this.label,
     required this.isActive,
     required this.isDark,
     required this.onTap,
+    this.raisedButtonSpace = false,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final bool isActive;
   final bool isDark;
   final VoidCallback onTap;
+  final bool raisedButtonSpace;
 
   @override
   Widget build(BuildContext context) {
     final active = isDark ? _accentDark : _brandPrimary;
-    final color =
-        isActive ? active : (isDark ? Colors.white60 : const Color(0xFF94A3B8));
+    final palette = AqPalette.of(context);
+    final color = isActive ? active : palette.secondaryText;
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 2),
+            if (raisedButtonSpace)
+              const SizedBox(height: _MobileDock.overhang - 4)
+            else ...<Widget>[
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 2),
+            ],
             Text(
               label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
               style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
                 color: color,
               ),
             ),
+            if (isActive) ...<Widget>[
+              const SizedBox(height: 2),
+              Container(
+                width: 16,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: active,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ],
         ),
       ),
