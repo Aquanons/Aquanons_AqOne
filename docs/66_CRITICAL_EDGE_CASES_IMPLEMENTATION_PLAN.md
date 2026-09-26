@@ -469,6 +469,7 @@ Clean Architecture point: a button press and a phone handoff are two adapters fo
 - [ ] `policy_test.cpp`: `holdTriggered` fires after 3 s of continuous press and not on bounces; `handoffDecision` treats a second press during an open SOS as a duplicate; a phone SOS without a fix is filled from the pod fix.
 - [ ] Pod adapters: button GPIO with debounce feeding `holdTriggered`; GPS via `TinyGPSPlus` feeding the latest valid fix; LED driver for the four states.
 - [ ] `provision_pod.py` writes the vessel ID into the pod's secrets header.
+  Plan 69 Phase 7 later extends the same script to fetch and write the pod's check-in slot (`docs/68` REQ-031); keep the write in one place so that extension is one call.
 
 ### Verification
 

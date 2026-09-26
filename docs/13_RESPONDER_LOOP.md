@@ -188,6 +188,10 @@ sos_events
 
 Deliverable: the same acknowledgement reaches a handset with no internet.
 
+> **Superseded (2026-09-26).** The downlink shipped as its own frame type, `ETA` (`0x06`), not as a repurposed `0x04`.
+> `0x04` (`STATUS`) is now the pod's routine check-in (`docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`, `docs/02`).
+> Do not reuse `0x04` for anything else.
+
 **Repurpose frame type `0x04`**, currently marked "future use", as
 `RESPONDER_STATUS`. Payload is 9 bytes:
 

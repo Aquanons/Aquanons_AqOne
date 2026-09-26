@@ -7,7 +7,8 @@ Any packet that does not parse and verify is dropped; there is no negotiation.
 ## Scope
 
 This doc defines the wire format for every LoRa frame in the hybrid network:
-SOS, mesh ACK, ping, status, sensor telemetry, and downlink advisories. It does
+SOS, mesh ACK, ping, the pod check-in (`STATUS`), sensor telemetry, and
+downlink advisories, and the two radio channels they use. It does
 **not** cover the phone↔boat pod WiFi hop
 (`docs/03_PHONE_BUOY_WIFI.md`) or the gateway→backend hop
 (`docs/04_INGEST_API.md`).
@@ -29,12 +30,14 @@ trailing signature.
 | 14 | 4 | `TS` | Origin epoch seconds, UTC. |
 | 18 | 1 | `TTL` | Remaining hop budget. |
 | 19 | 1 | `HOPS` | Hops taken so far. |
-| 20 | 2 | `PAYLOAD_LEN` | `N`, the payload byte count (0–64). |
-| 22 | N | `PAYLOAD` | Type-specific payload (JSON). |
+| 20 | 2 | `PAYLOAD_LEN` | `N`, the payload byte count (0-225). |
+| 22 | N | `PAYLOAD` | Type-specific payload: JSON, except `STATUS`, which is binary. |
 | 22+N | 8 | `SIG` | HMAC-SHA256 truncated to 8 bytes. |
 
-Max frame size = 22 + 64 + 8 = **94 bytes**, comfortably inside a LoRa packet
-at the radio settings below.
+Max frame size = 22 + 225 + 8 = **255 bytes**, the SX1262's packet ceiling
+(`LOAM_MAX_PAYLOAD` in `AqOneLoam.h`).
+Corrected 2026-09-26: this doc said 64 and 94 bytes, but the firmware has
+always enforced 225 and 255, and a real SOS frame is about 170 to 255 bytes.
 
 ## Node roles
 
@@ -45,6 +48,9 @@ at the radio settings below.
 - **Relay buoy:** Forwards new frames using TTL flooding and the seen-set.
 - **Shore gateway:** Receives and acknowledges frames, forwards accepted events
   to the backend, and sends downlink warnings or responder updates.
+- **Shore check-in receiver** (approved 2026-09-26, not built): listens only on
+  the check-in channel, never transmits, and uploads check-ins in batches
+  (`docs/04`, "Pod check-ins"). Design: `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`.
 
 Direct boat-pod frames use `HOPS = 0`. Relay buoys mutate `RELAY_ID`, decrement
 `TTL`, and increment `HOPS` without re-signing the origin frame.
@@ -55,8 +61,8 @@ Direct boat-pod frames use `HOPS = 0`. Relay buoys mutate `RELAY_ID`, decrement
 |---|---|---|
 | `0x01` | `SOS` | Distress report (schema below). Highest radio priority. |
 | `0x02` | `ACK` | Mesh-level ack for a previous frame. |
-| `0x03` | `PING` | Presence / heartbeat. |
-| `0x04` | `STATUS` | Non-SOS status update. |
+| `0x03` | `PING` | Shore beacon: presence, clock, fleet tier (schema below). |
+| `0x04` | `STATUS` | Pod check-in, binary (schema below). Lowest priority. |
 | `0x05` | `CHAT` | Local mesh chat message. |
 | `0x06` | `ETA` | Dispatcher acknowledgement and ETA downlink. |
 | `0x07` | `WARN` | Weather warning / advisory downlink (schema below). Subordinate to SOS. |
@@ -73,6 +79,9 @@ Direct boat-pod frames use `HOPS = 0`. Relay buoys mutate `RELAY_ID`, decrement
 
 Payloads are UTF-8 JSON with a `v` version field so a future revision can be
 detected before parsing the rest.
+The one exception is `STATUS`, a fixed binary layout whose first byte carries
+its version, because every pod sends it every 2 to 14 minutes and airtime is
+the binding constraint (`docs/68` D4).
 
 ### SOS (`0x01`)
 
@@ -127,23 +136,54 @@ bytes are better spent on `sq`.
 
 ### PING (`0x03`)
 
-```json
-{ "v": 1 }
-```
-
-### STATUS (`0x04`)
+Sent by the shore gateway every 60 s on the SOS channel.
 
 ```json
-{
-  "v": 1,
-  "kind": "status",
-  "lat": 11.6050,
-  "lon": 122.3125,
-  "batt": 86
-}
+{ "v": 1, "now": 1790000000, "ms": 250, "net": true, "ct": 2, "cx": 1790000600 }
 ```
 
-`batt` is battery percent 0–100.
+| Field | Required | Notes |
+|---|---|---|
+| `v` | yes | `1` |
+| `now` | no | Shore clock, epoch seconds UTC, at the start of transmission. Absent until the shore has a valid clock. |
+| `ms` | no | Milliseconds (0-999) to add to `now`. A receiver sets its clock to `now + ms` plus the frame's time-on-air at receive-complete, which holds pods within the 100 ms slot tolerance (`docs/68` REQ-029). Approved 2026-09-26, not built. |
+| `net` | no | `true` while the shore has an uplink. |
+| `ct` | no | Fleet check-in tier: `0` normal, `1` elevated, `2` severe (`docs/68`). Absent when the shore has no current tier. Approved 2026-09-26, not built. |
+| `cx` | with `ct` | Epoch seconds after which `ct` must be ignored. A pod with no valid `ct` uses normal. |
+
+### STATUS (`0x04`) - pod check-in
+
+Approved 2026-09-26, not built (`docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`).
+Replaces an earlier JSON body that no firmware ever sent.
+
+Binary payload, exactly 15 bytes, big-endian:
+
+| Offset | Size | Field | Meaning |
+|---|---|---|---|
+| 0 | 1 | `VER_FLAGS` | High nibble: payload version, `1`. Low nibble: bit 0 `HAS_FIX`; bits 1-3 zero. |
+| 1 | 4 | `LAT_E5` | Latitude x 100000 as a signed int32; `0` when `HAS_FIX` is clear. |
+| 5 | 4 | `LON_E5` | Longitude x 100000 as a signed int32; `0` when `HAS_FIX` is clear. |
+| 9 | 2 | `FIX_AGE_S` | Seconds since the fix was taken; `65535` when unknown or older. |
+| 11 | 1 | `BATT` | Battery percent 0-100; `255` when unknown. |
+| 12 | 1 | `TIER` | The tier the pod is using: `0` normal, `1` elevated, `2` severe. |
+| 13 | 2 | `STAGNANT_MIN` | Reserved for `docs/67` stagnant mode: minutes left, `0` for none. Sent as `0` until plan 67 defines it. |
+
+- The frame header's `SRC_ID` identifies the pod and `SEQ` is its check-in counter; receivers deduplicate on `(SRC_ID, SEQ)`.
+- `FLAGS` is `SIGNED` only. A check-in never sets `WANTS_ACK` and is never acknowledged.
+- On the check-in channel `TTL` and `HOPS` are `0` and nothing relays it.
+  A pod out of direct range sends it on the SOS channel with `TTL = 2` instead (see "Check-in channel and slots").
+- Frame size is 22 + 15 + 8 = **45 bytes**, about 0.54 s at SF10.
+- Worked example with a test key: `fixtures/loam/checkin_v1.json`.
+
+```
+A5 01 04 01 A1 B2 C3 D4 A1 B2 C3 D4 01 2C 6A B1 3B 80 00 00 00 0F
+11 00 11 B5 34 00 BA A2 52 00 0C 56 02 00 00
+3C 63 F5 D2 57 71 F9 FF
+```
+
+Pod `0xA1B2C3D4`, `SEQ` 300, `TS` 1790000000, fix 11.60500, 122.31250 taken
+12 s ago, battery 86%, tier severe, not stagnant; the last line is the `SIG`
+under the fixture's test key.
 
 ### WARN (`0x07`)
 
@@ -185,6 +225,7 @@ strictly subordinate: queued warning frames yield immediately if an SOS frame
 is received or pending transmission. Warning retries/rebroadcasts are rate-limited
 and must never saturate the radio channel.
 The transmit ring buffer reserves capacity for distress traffic via the `reserve` parameter in `txEnqueue`.
+`STATUS` check-ins are the lowest priority of all: a pod skips its check-in slot while any `SOS`, `ACK`, `ETA` or `CHAT` frame of its own is waiting, never holds more than one check-in in the ring, and never catches up on a skipped slot (approved 2026-09-26, not built).
 `CHAT` frames require more than 2 free ring slots.
 Distress (`SOS`), `ACK`, and `WARN` frames may use any free slot so they are never starved by routine chat traffic.
 
@@ -207,6 +248,8 @@ Distress (`SOS`), `ACK`, and `WARN` frames may use any free slot so they are nev
 
 ### Keys
 
+Today every board shares one key, `LOAM_KEY` in the gitignored `AqOneSecrets.h`; per-device keys arrive with `docs/66` Phase 5 (C11).
+
 - All endpoints must have a registered external id and key before they enter
   the mesh.
 - Development builds may share one key; production deploys per-device keys.
@@ -218,15 +261,48 @@ Distress (`SOS`), `ACK`, and `WARN` frames may use any free slot so they are nev
 Deployment configuration, not part of the frame. Firmware and gateway must
 agree or packets never decode.
 
-| Parameter | Value |
-|---|---|
-| Modulation | LoRa |
-| Frequency | 433.0 MHz (PH ISM band) — set per region |
-| SF | 7 |
-| Bandwidth | 125 kHz |
-| Coding rate | 4/5 |
-| Header | Explicit |
-| CRC | Enabled (SX1262) |
+| Parameter | SOS channel | Check-in channel (approved 2026-09-26, not built) |
+|---|---|---|
+| Modulation | LoRa | LoRa |
+| Frequency | `LORA_FREQ_MHZ` = 915.0 MHz | `LORA_CHECKIN_FREQ_MHZ` = 917.0 MHz |
+| SF | 10 | 10 |
+| Bandwidth | 125 kHz | 125 kHz |
+| Coding rate | 4/5 | 4/5 |
+| Sync word | `0x34` (private) | `0x34` (private) |
+| TX power | +22 dBm | +22 dBm |
+| Preamble | 8 symbols | 8 symbols |
+| Header | Explicit | Explicit |
+| CRC | Enabled (SX1262) | Enabled (SX1262) |
+
+Corrected 2026-09-26: this table said 433.0 MHz and SF7; the firmware ships
+915.0 MHz to match the antennas bought, and SF10 per
+`docs/33_LORA_RF_BUDGET.md`. The band is still subject to the NTC answer
+(`docs/62D` M11); if it moves, both channels move together and stay at least
+1 MHz apart inside the permitted band.
+
+## Check-in channel and slots
+
+Approved 2026-09-26, not built (`docs/68` D9, D10, REQ-008, REQ-012, REQ-029).
+
+- **Who uses it.** Only `STATUS` check-ins from pods that hear the shore
+  `PING` directly (`HOPS = 0`) and have had a `PING` clock in the last 10 min.
+  Only the check-in receiver listens on it.
+- **Cycle.** 120 s, aligned to UTC: a cycle starts whenever `epoch mod 120 = 0`.
+- **Slots.** 80 slots of 1.5 s; slot `k` (0-79) starts `k x 1.5 s` into the
+  cycle. Every pod has a unique slot, assigned at enrolment (`docs/04`,
+  "Pod check-ins").
+- **When a pod sends.** At the start of its slot, in the cycles where
+  `floor(epoch / 120) mod (interval / 120) = 0`, with `interval` 840 s
+  (normal), 240 s (elevated) or 120 s (severe). A pod inside a harbor zone
+  uses 840 s whatever the tier.
+- **Channel switch.** The pod retunes to `LORA_CHECKIN_FREQ_MHZ` for its
+  own check-in only and returns to the SOS channel as soon as the frame is
+  sent.
+- **Fallback.** A pod that hears `PING` only through a relay, or has had no
+  `PING` clock for 10 min, sends its check-in on the SOS channel every 840 s
+  at a random offset, with `TTL = 2`; relays forward it under the normal
+  relay rules, so it travels at most 2 hops.
+
 
 ## Relay rules
 
@@ -246,7 +322,7 @@ A receiver must drop, without forwarding, any frame where:
 
 - `MAGIC` ≠ `0xA5` or `VERSION` ≠ `0x01`
 - `TYPE` / `FLAGS` have unknown bits set
-- `PAYLOAD_LEN` > 64 or payload fails JSON parse
+- `PAYLOAD_LEN` > 225, or a JSON payload fails to parse, or a `STATUS` payload is not exactly 15 bytes or its version nibble is not `1`
 - `TTL` is 0 on arrival at a relay, or `HOPS` > 15
 - signature verification fails when `FLAGS.SIGNED` is set
 

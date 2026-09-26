@@ -68,6 +68,11 @@ horizon described below.
 | 10 | −132 dBm | 7.5 km | −136.5 dBm | 9.7 km | 950 ms |
 | 12 | −137 dBm | ~10 km † | −141.5 dBm | 13 km † | 3.8 s |
 
+**Time-on-air is for a 94-byte frame and is stale for the SOS (corrected 2026-09-26).**
+The 94 bytes came from the old 64-byte payload cap in `02_LOAM_PACKET_SPEC.md`; the shipped firmware allows 225 payload bytes (`LOAM_MAX_PAYLOAD`), and a real SOS frame is about 170 to 255 bytes.
+At SF10 / 125 kHz / CR 4/5 that is about **1.6 to 2.3 s per SOS hop**, and about 0.9 s for an ACK.
+The weather-tiered check-in frame (`68_WEATHER_TIERED_CHECKINS_SPEC.md`) is 46 bytes, about **0.54 s**.
+
 † **Capped by the horizon, not the budget.** The geometric radio horizon at
 1.5 m both ends is `4.12·(√1.5 + √1.5)` = **10.1 km**. SF12 has budget for
 more distance than the earth will give you.
@@ -91,7 +96,7 @@ choice into a necessity.
 
 ## Recommended configuration
 
-**SF10 on the current SX1262 hardware** (7.5 km, ~950 ms), superseding the
+**SF10 on the current SX1262 hardware** (7.5 km, ~950 ms for a 94-byte frame, ~1.8 s for a real SOS), superseding the
 `SF 7` currently written into `02_LOAM_PACKET_SPEC.md`'s radio-parameters
 table.
 
@@ -102,7 +107,7 @@ Rationale:
   10.1 km horizon, so it buys nothing usable. In a TTL flood where every relay
   retransmits, a 3.8-second frame makes collisions the binding constraint long
   before range is.
-- SF10 keeps a single hop under a second, which a flood mesh can absorb.
+- SF10 keeps a 94-byte hop under a second; a real SOS hop is nearer 2 s, which is why routine check-ins get their own channel (`68_WEATHER_TIERED_CHECKINS_SPEC.md` D9) instead of sharing the SOS channel.
 
 **Optional relay spacing: 4–5 km**, i.e. 60–70% of modelled low-node range. Do
 not deploy buoys at this spacing by default: first test the direct pod-to-shore
@@ -182,6 +187,9 @@ agnostic, so this decision is reversible at no protocol cost.
 - [ ] **PH regulatory confirmation** (NTC) for the chosen band, duty cycle,
       and permitted EIRP. Not yet checked. The +22 dBm assumption above may
       not survive it.
+      The check-in channel (`68_WEATHER_TIERED_CHECKINS_SPEC.md` D9) adds a second
+      frequency in the same band; Len accepted that as a risk rather than a
+      prerequisite (2026-09-26).
 - [ ] **Per-SF LR2021 sensitivities are extrapolated.** Only the SF12 figure
       is published; the other LR2021 rows apply the same ~4.5 dB delta.
       Confirm against the full datasheet table before quoting externally.

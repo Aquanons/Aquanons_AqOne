@@ -984,6 +984,105 @@ Closes the case; it drops out of `GET /cases/open` on the next poll.
 Idempotent, no body required. Because evaluation never writes `resolved_at`,
 a later score refresh can never reopen a case a responder closed.
 
+## Fleet watch (weather-tiered check-ins) - **approved 2026-09-26, not built**
+
+Design: `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`; plan: `docs/69`.
+Gateway routes (tier read, check-in batches, pod enrolment) are in `docs/04`.
+No `/api/public/*` route ever returns a check-in position (`docs/68` REQ-025).
+
+### `GET /api/fleet-watch/tier`
+
+Any operator role.
+
+```json
+{
+  "tier": "elevated",
+  "interval_s": 240,
+  "rev": 16,
+  "exp": "2026-09-21T14:23:20Z",
+  "source": {
+    "kind": "advisory",
+    "advisory_id": 101,
+    "title": "Gale Warning",
+    "raise": null
+  }
+}
+```
+
+- `source.kind` is `advisory` (a published, unexpired `Warning` or
+  `Emergency` for New Washington or `All`), `raise` (a dispatcher raise;
+  `raise` then holds `tier`, `reason`, `raised_by`, `expires_at`) or `none`.
+- When both apply, the higher tier wins and `source` names it.
+
+### `POST /api/fleet-watch/tier/raise` and `DELETE /api/fleet-watch/tier/raise`
+
+`mdrrmo` or `admin`.
+Raises the tier above what the advisories give, or ends the active raise.
+
+```json
+{ "tier": "severe", "reason": "Squall line reported by fishers off Pinamuk-an", "duration_min": 120 }
+```
+
+- `reason` is required, 1 to 200 characters; `duration_min` 1 to 720 (12 h).
+- `422` `raise_too_long` above 720; `422` `cannot_lower` when `tier` is not
+  above the advisory tier.
+- A new raise replaces the active one. Every raise and end is written to the
+  operations audit log.
+
+### `GET /api/fleet-watch/vessels`
+
+Any operator role. The vessels with a check-in in the last 24 h:
+
+```json
+[
+  {
+    "vessel_id": "NW-001",
+    "pod_id": "AQ-A1B2C3D4",
+    "last_checkin_at": "2026-09-21T14:13:21Z",
+    "watched": true,
+    "path": "direct",
+    "last_position": { "latitude": 11.605, "longitude": 122.3125, "fix_age_s": 12 }
+  }
+]
+```
+
+`last_position` is `null` for the `lgu` role (`docs/68` D7).
+
+### `GET /api/fleet-watch/vessels/{vessel_id}/checkins?since=`
+
+`mdrrmo` or `admin` only; `lgu` gets `403`. The vessel's check-ins inside the
+30-day retention window, newest first, each with `observed_at`, position,
+`fix_age_s`, `battery_pct`, `pod_tier`, `path` and `trip_id`.
+
+### Missed-check-in cases
+
+They use the trip-anomaly review queue above and its four actions.
+Every case gains `case_kind`: `trip_profile` (existing cases) or
+`missed_checkin`. A `missed_checkin` case:
+
+- `case_type` is `responder_attention` when confident and `verification`
+  when low confidence (fleet silence, or no recent position).
+- `reasons` holds one `missed_checkins` entry:
+
+  ```json
+  {
+    "code": "missed_checkins",
+    "missed": 3,
+    "tier": "severe",
+    "interval_s": 120,
+    "last_checkin_at": "2026-09-21T14:13:21Z",
+    "last_position": { "latitude": 11.605, "longitude": 122.3125, "fix_age_s": 12 },
+    "battery_pct": 86,
+    "fleet_silence": false,
+    "description": "No check-in for 3 intervals at the severe tier."
+  }
+  ```
+
+- A later check-in from the vessel resolves the case with
+  `resolved_by = "system"`, and the case timeline records
+  `checkin_resumed`.
+- It never creates an SOS incident.
+
 ## Drift prediction and search re-tasking — **implemented (Phases 1-3: case lifecycle, quality-gated runs, search re-tasking)**
 
 The responder-facing side of
@@ -1460,6 +1559,13 @@ Without one it returns 401.
 - `sms_configured` is `false` when the SMS provider has no credentials; escalation still runs and is audited, and the dashboard shows "SMS escalation not configured".
 - `db_expires_at` comes from the environment variable `DB_EXPIRES_AT`; both it and `db_days_left` are `null` when it is unset.
 - Each `scheduler_last_run` value is `null` until that job has run once.
+- Fleet watch adds (approved 2026-09-26, not built, `docs/68` REQ-021, REQ-028):
+  `checkin_receiver_last_upload_at`, `checkin_receiver_stale` (no upload for
+  3 min), `fleet_silence` (`{ "active": bool, "reason": str | null, "since": str | null }`),
+  `checkin_slots_assigned`, `checkin_slots_total` (80), `checkins_last_cycle`,
+  `relayed_share` (0 to 1), `checkin_warnings` (list of plain sentences:
+  more than 70 slots assigned, relayed share above 20%), and
+  `scheduler_last_run` keys `fleet_watch` and `checkin_retention`.
 
 **Anomaly (B7, EC-H6 to EC-H9, EC-H16).**
 
@@ -1495,6 +1601,9 @@ the dashboard shows it a panel.
 | Case timeline (one case) | `GET /api/ops/cases/{resource_type}/{resource_id}/timeline` | Yes | Yes | Yes |
 | Global audit search / export | `GET /api/ops/audit`, `GET /api/ops/audit/export` | No | **No** | Yes |
 | Squall model training | `POST /api/ai/squall/train` | No | No | Yes |
+| Fleet tier raise and end (approved, not built) | `POST` and `DELETE /api/fleet-watch/tier/raise` | Yes | No | Yes |
+| Check-in history (approved, not built) | `GET /api/fleet-watch/vessels/{id}/checkins` | Yes | **No** | Yes |
+| Pod enrolment (approved, not built) | `POST /api/v1/pods/{pod_id}/enrol` (`docs/04`) | No | Yes | Yes |
 
 `lgu` has the same permissions as `admin` for every action above **except**
 global audit search/export and squall model training (owner decision, 2026-08-30 for operational

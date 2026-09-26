@@ -1,0 +1,35 @@
+{
+  "_comment": "docs/02 STATUS (0x04) check-in worked example. Test key only; never flash it.",
+  "hmac_key_ascii": "fixture-key-not-for-flashing",
+  "frame_hex": "A5010401A1B2C3D4A1B2C3D4012C6AB13B800000000F110011B53400BAA252000C560200003C63F5D25771F9FF",
+  "frame_len": 45,
+  "header": {
+    "magic": "0xA5",
+    "version": 1,
+    "type": "0x04",
+    "flags": "0x01",
+    "src_id": "0xA1B2C3D4",
+    "relay_id": "0xA1B2C3D4",
+    "seq": 300,
+    "ts": 1790000000,
+    "ttl": 0,
+    "hops": 0,
+    "payload_len": 15
+  },
+  "payload_hex": "110011B53400BAA252000C56020000",
+  "decoded": {
+    "payload_version": 1,
+    "has_fix": true,
+    "lat": 11.605,
+    "lon": 122.3125,
+    "lat_e5": 1160500,
+    "lon_e5": 12231250,
+    "fix_age_s": 12,
+    "battery_pct": 86,
+    "tier": "severe",
+    "tier_code": 2,
+    "stagnant_min": 0
+  },
+  "pod_id": "AQ-A1B2C3D4",
+  "sig_hex": "3C63F5D25771F9FF"
+}

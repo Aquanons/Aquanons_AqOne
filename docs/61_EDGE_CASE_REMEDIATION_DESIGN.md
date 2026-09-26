@@ -868,6 +868,7 @@ All of this is in `app/ai/` and remains advisory.
    The dashboard renders "Not monitoring - no live contact source", the same honest pattern squall nowcasting already uses.
 2. **Input source (H6, H7).**
    - The gateway posts a contact event (`/api/v1/contacts`) for every pod frame it hears (T_PING, T_STATUS, T_SOS).
+   - **Superseded for the pod heartbeat (2026-09-26):** `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md` makes the pod's periodic `STATUS` check-in the heartbeat, received by a dedicated check-in receiver and posted in batches (`docs/69` Phase 4). The gateway does not post a contact per frame.
    - Once pods are provisioned with a vessel ID (D12), the pod is the boat's heartbeat.
    - Phone-only contacts are tagged `source=handset`.
      They can support a pod-based finding but never raise "overdue" on their own.

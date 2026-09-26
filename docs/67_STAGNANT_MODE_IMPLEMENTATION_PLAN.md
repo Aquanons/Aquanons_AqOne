@@ -69,6 +69,13 @@ Update the shared contracts before any code, and tell the owners:
    crosses LoRa. Prefer a field inside the existing `STATUS` (`0x04`) payload
    over a new frame type; add a type only if `STATUS` cannot carry it. SOS
    keeps radio priority.
+   **Conflict note (2026-09-26):** approved `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`
+   turns `STATUS` into a 16-byte binary pod check-in sent every 2 to 14 min,
+   and `docs/02` reserves its last 2 bytes as `stagnant_min` (minutes of
+   stagnant mode left, 0 = none) for this plan. Proposed for this plan's
+   owners: the pod stores the phone's declaration and repeats it in every
+   check-in, so a lost frame costs one interval, not the declaration. Plan 68
+   REQ-024 already defines the Severe-tier override (D2).
 3. [`04_INGEST_API.md`](04_INGEST_API.md): the gateway-only ingest shape,
    idempotent on the upstream event ID like other contact events.
 4. [`05_PUBLIC_API.md`](05_PUBLIC_API.md): `stagnant_until` on the trip/vessel

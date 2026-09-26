@@ -135,7 +135,7 @@ rules. Coverage is therefore determined by pod-to-shore radio geometry plus
 selective relay placement, not by a dense WiFi zone around every buoy. This is
 still an opportunistic, store-and-forward network, not always-on connectivity.
 
-This is a real constraint and the PRD treats it as one. It shapes every design decision below, and it is why the detection strategy in §5.2 is built around contact events rather than continuous telemetry.
+This is a real constraint and the PRD treats it as one. It shapes every design decision below, and it is why the detection strategy in §5.2 is built around contact events rather than continuous telemetry. The weather-tiered pod check-ins in §5.2 item 5 are still contact events, just scheduled ones: small, periodic, and on their own channel.
 
 ### 4.4 Everyday value
 
@@ -221,6 +221,13 @@ trajectory escalates to a scored alert on the PCG console.
    app. Silence-based overdue scoring is held off until that time runs out,
    then the ladder resumes. An SOS always overrides it. See
    `docs/67_STAGNANT_MODE_IMPLEMENTATION_PLAN.md`.
+5. **Weather-tiered check-ins.** [Roadmap — not implemented] The pod checks
+   in by itself every 14 min in normal weather, 4 min under a `Warning`
+   advisory and 2 min under an `Emergency` one, on a channel of its own so
+   SOS keeps the main channel. A boat at sea that misses 3 check-ins in a
+   row becomes a review case with its last position; it is never an
+   automatic SOS. The fisher does nothing. See
+   `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`.
 
 **This is unsupervised anomaly detection over a learned behavioural baseline** — it requires no labelled disaster dataset, only ordinary usage, which the network generates from day one.
 

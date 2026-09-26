@@ -8,7 +8,9 @@ an optional stationary sensor/relay buoy.
 ## Scope
 
 - Authenticated submission of direct or relayed LoRa frames.
-- Device / vessel registration (external id → UUID mapping).
+- Device / vessel registration (external id → UUID mapping), and pod
+  enrolment with a check-in slot.
+- Pod check-ins and the fleet tier (approved 2026-09-26, not built).
 - Dedupe semantics.
 
 Out of scope: the LoRa wire format (`docs/02_LOAM_PACKET_SPEC.md`) and the
@@ -170,6 +172,136 @@ gateway does not need to branch on it.
 
 Errors: `401` bad/missing API key; `422` malformed body (bad/future timestamp,
 empty/oversized id, missing/invalid `source`); `400` unknown `buoy_id`.
+
+## Pod check-ins (weather-tiered, `docs/68`)
+
+Approved 2026-09-26, not built.
+Design: `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`; plan: `docs/69`.
+The radio side (`STATUS` frame, check-in channel, slots) is in `docs/02`.
+
+Two boards call these routes with `X-Api-Key` (`GATEWAY_API_KEY`):
+the shore check-in receiver, for check-ins heard on the check-in channel, and
+the shore gateway, for relayed check-ins heard on the SOS channel.
+
+### `GET /api/v1/fleet-tier` - the tier the shore puts in its beacon
+
+Read by the shore gateway every 60 s.
+
+```json
+{
+  "v": 1,
+  "tier": "severe",
+  "tier_code": 2,
+  "interval_s": 120,
+  "rev": 17,
+  "exp": 1790000600
+}
+```
+
+| Field | Notes |
+|---|---|
+| `tier` / `tier_code` | `normal` 0, `elevated` 1, `severe` 2. The shore sends `tier_code` as `ct` in its `PING`. |
+| `interval_s` | 840, 240 or 120. Informational; pods hold the same table. |
+| `rev` | Increases on every tier change. |
+| `exp` | Epoch seconds, 10 min after this read while the tier holds; the shore sends it as `cx`. |
+
+Errors: `401` bad or missing key.
+
+### `POST /api/v1/checkins` - submit a batch of check-ins
+
+Request body, at most 128 items:
+
+```json
+{
+  "v": 1,
+  "receiver_id": "CHK01",
+  "items": [
+    {
+      "event_id": "AQ-A1B2C3D4-300-1790000000",
+      "pod_id": "AQ-A1B2C3D4",
+      "src_id": 2712847316,
+      "seq": 300,
+      "observed_at": "2026-09-21T14:13:21Z",
+      "latitude": 11.605,
+      "longitude": 122.3125,
+      "fix_age_s": 12,
+      "battery_pct": 86,
+      "pod_tier": "severe",
+      "stagnant_min": 0,
+      "path": "direct",
+      "hops": 0
+    }
+  ]
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `receiver_id` | yes | The uploading board's name; recorded for the fleet-silence check. |
+| `event_id` | yes | `<pod_id>-<SEQ>-<TS>` from the frame header. The idempotency key. |
+| `pod_id` | yes | `AQ-XXXXXXXX`, the pod's name derived from `SRC_ID` (`docs/66` C1). Must be enrolled. |
+| `src_id` | yes | The frame's `SRC_ID`, for audit. |
+| `seq` | yes | The frame's `SEQ`. |
+| `observed_at` | yes | RFC 3339 time the receiving board heard the frame, not the pod's clock (`docs/68` REQ-017). Rejected if more than 5 min ahead of the server. |
+| `latitude` / `longitude` | no | Decimal degrees from `LAT_E5` / `LON_E5`; omitted or `null` when `HAS_FIX` is clear. Never `0,0`. |
+| `fix_age_s` | no | `null` when the frame says 65535. |
+| `battery_pct` | no | `null` when the frame says 255. |
+| `pod_tier` | yes | The tier the pod says it is using. |
+| `stagnant_min` | no | Reserved for `docs/67`; stored, not acted on until plan 67 defines it. |
+| `path` | yes | `direct` (check-in channel) or `relayed` (SOS channel fallback). |
+| `hops` | yes | The frame's `HOPS`. |
+
+Success `200`, one result per item, in order:
+
+```json
+{
+  "accepted": 1,
+  "results": [
+    { "event_id": "AQ-A1B2C3D4-300-1790000000", "status": "stored", "vessel_id": "NW-001", "trip_id": "auto-NW-001-1790000000" }
+  ]
+}
+```
+
+`status` is `stored`, `duplicate` (the `event_id` exists; the original is
+returned), `unknown_pod` (not enrolled) or `invalid` (with a `detail`).
+One bad item never rejects the batch.
+
+Errors: `401` bad or missing key; `422` when the body itself is malformed
+(wrong `v`, no `items`, more than 128 items).
+
+Storage and trips (`docs/68` REQ-016, D11):
+
+- Each stored item is a `buoy_contacts` row with `contact_via = pod`,
+  `contact_type = checkin`, `source = live`, plus `fix_age_s`, `battery_pct`
+  and `path`.
+- An at-sea check-in for a vessel with no open trip opens one:
+  `trip_id = auto-<vessel_id>-<epoch>`, `reporter_type = gateway`,
+  departure at that check-in.
+- A check-in inside the harbor or on land completes a trip that was opened
+  this way. A trip opened from the handset is never completed by a
+  check-in.
+- A harbor check-in with no open trip is stored with no trip.
+
+### `POST /api/v1/pods/{pod_id}/enrol` - give a pod its vessel and slot
+
+Called by `provision_pod.py` when a pod is set up (`docs/66` Phase 7, `docs/69` Phase 7).
+Authenticated as an operator with the `lgu` or `admin` role (the same roles
+that pair vessel devices, `docs/05` Roles), not with the gateway key.
+
+```json
+{ "vessel_id": "NW-001", "src_id": 2712847316 }
+```
+
+Success `200`:
+
+```json
+{ "pod_id": "AQ-A1B2C3D4", "vessel_id": "NW-001", "slot": 7, "created": true }
+```
+
+- The backend is the only registry of slots; slots are unique, 0 to 79.
+- Enrolling the same pod again keeps its slot and updates its vessel.
+- `409` `fleet_full` when all 80 slots are taken; `401` no token; `403`
+  wrong role; `422` unknown vessel.
 
 ## Pressure events — retired
 

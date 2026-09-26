@@ -116,6 +116,15 @@ than taken on trust.
   properly means adding accounts for fishermen, which product scope
   deliberately rejects (see "Accounts and passwords" above).
 
+- **Weather-tiered pod check-ins (approved 2026-09-26, not built).** The pod
+  reports its position on a schedule that tightens with the weather, so a
+  boat that goes silent at sea is noticed without anyone pressing SOS
+  (`docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`). It stays a safety feature,
+  not tracking: check-in positions never appear on a public endpoint, the
+  per-vessel history is readable by `mdrrmo` and `admin` only, and
+  positions not attached to a case or incident are deleted after 30 days.
+  A missed check-in is a review case, never an automatic SOS.
+
 - **Aggregated catch-activity heatmap.** Fish-hotspot prediction was removed
   from v3.0 and is now amended back into scope as a privacy-preserving recent
   activity surface, not a guaranteed-catch prediction. A catch contributes

@@ -49,6 +49,7 @@ preserving the benefits of fixed offshore instrumentation.
 | Stationary sensor buoy | Fixed-position current and environmental telemetry (no barometer; weather comes from the PAGASA weather API) | LoRa relay, physical warning indicator |
 | Stationary relay buoy | Extend LoRa coverage into measured dead zones | Fixed sensors and warning cache |
 | Shore gateway | Tall LoRa endpoint, acknowledgements, backend HTTPS | Second gateway for redundancy |
+| Shore check-in receiver (approved 2026-09-26, not built) | Listens only on the check-in channel and uploads pod check-ins in batches (`docs/68_WEATHER_TIERED_CHECKINS_SPEC.md` D9) | None |
 
 Stationary buoys do not need to provide phone WiFi unless a field test gives
 that feature a specific operational purpose.

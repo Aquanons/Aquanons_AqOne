@@ -145,6 +145,7 @@ Monitors departures, active maritime transits, and expected return windows to de
 
 #### Detailed Execution Steps:
 1. **Trip Registration:** When a registered vessel departs, an active trip session is initiated (via handset check-in or shore radio log).
+   Approved, not built (2026-09-26): the pod's weather-tiered check-ins become the live input, an at-sea check-in with no open trip opens one, and a missed-check-in case (`case_kind = missed_checkin`) sits beside the trip-profile case (`docs/68_WEATHER_TIERED_CHECKINS_SPEC.md`, `docs/69`).
 2. **Causal History Filter:** To eliminate data leakage, the anomaly engine filters history strictly causally (only voyages completed prior to the current trip are evaluated).
 3. **Baseline Verification:**
    - *Sufficient Profile ($\ge 5$ prior trips):* The model calculates vessel-specific expected trip duration, usual gear type, and customary fishing grounds.
