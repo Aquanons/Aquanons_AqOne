@@ -1,16 +1,17 @@
 # 64 - Fisher friction reduction (handset UX) spec
 
-**Status:** APPROVED - Revision 2
+**Status:** APPROVED - Revision 3
 **Owner:** Lenard (spec), Doreen Kay (UX and field test), Jade (Flutter)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
 **Related:** `docs/65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`, `docs/06_DELIVERY_STATES.md`, `docs/22_LOCALIZATION_PLAN.md`, `docs/47_VISUAL_DESIGN_GUIDE.md`
 
-Revision: 2
+Revision: 3
 Len's chat approval, 2026-09-25T17:00:00+08:00: go with the recommendations for D2, D3, D5 and D6; the team picks the terms itself (D1); add an in-app way to join the pod Wi-Fi (D4).
 Revision 2 applies exactly those answers (Section 7) and records that the field session with fishermen and the MDRRMO waits until after the RSTW pitch, on a date Len sets.
 Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
 The D2 dates below are superseded by that order; plan 65 carries the current order.
+Revision 3, Len 2026-09-25T23:40:00+08:00: the At sea screen gets one summary card in place of its four top banners (Section 2.6, FFR-14, D7), shaped by a council review recorded in Section 2.6.
 
 ## 1. Purpose and success
 
@@ -125,6 +126,62 @@ The existing "join in Wi-Fi settings" hint stays as the fallback when the fisher
 The pod stays an open "Aquan" network: Len ruled out a pod password on 2026-09-25 (plan 66 D3), and plan 66 Phase 6 checks the pod's identity inside the SOS reply instead, so this channel takes only the SSID.
 Starting a connect attempt automatically when an SOS is saved and no pod is reachable is a possible follow-up, not part of this revision.
 
+### 2.6 One summary card on the At sea screen (D7)
+
+Today the top of the At sea map stacks up to four separately styled banners, 8 dp apart, over the map (F13).
+They become one card, the **At sea summary card**, so the fisher reads one place, in one style, and sees more map.
+
+**What goes in.**
+The card reads four inputs the screen already has and adds no new fetch:
+
+| Input | Source today | Card part |
+|---|---|---|
+| The newest SOS | `_latestSos`, read through `FisherSosSituation` (Section 2.4) | SOS row |
+| Squall watch and its acknowledgement | `SquallWatch` from `AppShell` (source-agnostic, so it survives the move to PAGASA alerts) | Storm row or storm chip |
+| Weather at the fisher's position | `WeatherSnapshot` and `_weatherFailed` | Weather chip |
+| Age of the cached map layers | `MapSnapshotStore.ages()` | Map chip |
+
+**Shape.**
+- A headline area of at most two rows, each an icon, a title of 8 words or fewer (at least 18 sp) and one "what to do" line that wraps and is never cut with "...".
+- Below it, one line of three chips, always present: weather (icon, word, temperature), storm (icon and word), map (icon and age).
+  Each chip is an icon plus a word, never colour alone, at least 14 sp and 48 dp tall.
+- A visible "Details" label with a chevron; tapping anywhere on the card opens a details sheet.
+- The details sheet holds the full existing content, reused rather than rewritten: the squall banner, the offline-map explanation, the weather safety text and its Open-Meteo and "not a PAGASA warning" note, and the SOS status with its time and position.
+  It closes with a large button and with Back.
+
+**What reaches the headline (first two that apply, in this order).**
+
+| Rank | Condition | Headline row |
+|---|---|---|
+| 1 | Squall `returnNow`, not acknowledged | Storm coming - go back to shore, with a large "I understand" button that calls the existing acknowledge |
+| 2 | An SOS whose situation is not `closed` or `cancelled` | The `FisherSosSituation` title and description |
+| 3 | Squall `returnNow` already acknowledged, or `watch` | The squall message, no button |
+| 4 | A `closed` or `cancelled` SOS changed less than 15 minutes ago | The situation title and description |
+| 5 | Map layers 3 hours old or more (today's severe threshold) | Map is old - hazards may have changed |
+| 6 | Weather unsafe or wind above the threshold | The existing safety title |
+| 7 | Nothing above | The weather condition and temperature |
+
+Rows ranked 1 and 2 are never pushed out: when both apply they are the two rows, and everything else stays in the chips and the sheet.
+
+**Honesty rules (the council's non-negotiables).**
+- Unknown is never calm: a failed or stale squall fetch reads "Storm check unavailable" in a neutral colour, a failed weather fetch reads "Weather unavailable", and neither ever uses green or a check mark.
+- The card has no "all clear" state; the calmest it gets is a plain weather summary.
+- Map age is always visible in its chip whenever the oldest layer is 2 minutes old or more, as the banner does today (system design Section 3.4, data age visible wherever a feed drives a decision).
+- The full-screen RETURN NOW alert from `AppShell` stays exactly as it is; the card is the reminder after it, not a replacement.
+- In pitch mode the storm row and storm chip are hidden, as the squall banner is today.
+
+**Where the logic lives.**
+The ranking is a pure function in `mobile/lib/models/` (next to `FisherSosSituation`) that takes the four inputs and a clock and returns the ordered rows and chip states.
+The card is a humble widget that draws what that function returns.
+This keeps the rules testable without a map, a network or a device, the same boundary docs/61 Section 4.3 uses for SOS policy.
+
+**Council review (2026-09-25).**
+- Devil's advocate: merging hides warnings.
+  Answer: ranks 1 and 2 can never be displaced, the three chips are always on screen, and the sheet holds every detail.
+- Simplicity: no banner framework or plugin registry; one pure function, one card, and the old widgets reused inside the sheet.
+- Reliability: unknown states must not collapse into calm, and map age must stay visible; both are rules above.
+- Architecture: a pure read model that draws on Getting Help (SOS), Trip Readiness (squall, weather) and map data, with the widget kept thin.
+
 ## 3. Findings (code reading, 2026-09-25)
 
 Not yet field-tested; the field session (plan Phase 0b) measures them on real users.
@@ -144,6 +201,7 @@ Severity is by effect on J1 to J5.
 | F10 | Medium | Enrolment is one long form: five fields, a dropdown, remember-me, legal links, then a technical battery-optimisation dialog. | `ui/onboarding_page.dart:286-570,154` | first run |
 | F11 | Low | SOS status and SOS flow are duplicated (Section 2.4), so wording and honesty drift between screens. | `ui/venture_page.dart:884`, `ui/widgets/delivery_state_tile.dart:16-30,65`, `ui/home_page.dart:285` | J2 |
 | F12 | Low | Terminology drift: docs say "boat pod", the app says "buoy", the SSID is `Aquan`; "MDRRMO" and "rescue centre" are mixed. | `docs/06`, `l10n/app_en.arb` | all |
+| F13 | Medium | The At sea screen stacks up to four differently styled banners over the top of the map (weather capsule, squall banner, offline-map banner, SOS status pill), 8 dp apart; the locating pill is pinned at 90 dp from the top and draws over the second banner; the weather capsule shows a bare English "Loading…". | `ui/venture_page.dart:589-615,646-651,767-770` | J2, J5 |
 
 ## 4. Design principles
 
@@ -176,6 +234,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | FFR-11 | Tokens: light `dimText` at least 4.5:1 on its surfaces; no `fontSize` below 12 in `mobile/lib/ui`; body 16 sp. | Token contrast test; `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing. | F8 |
 | FFR-12 | Guided enrolment: one question per screen, big Next, number keypad for phone, registration type as large choice cards, plain-words battery explanation. Same validators, same `IdentityStore.ensure` call. | `enrolment_page_test.dart` and a new onboarding test walk every step; validators unchanged in the diff. | F10 |
 | FFR-13 | Field verification of the five jobs with fishermen and the MDRRMO, once schedules allow after the RSTW pitch. The unchanged build (`a8d9676`) and the newest build are both tested in the same session, in alternating order, so one session gives a before and an after. | Results recorded in `docs/fisher-ux/` against Section 1 targets. | all |
+| FFR-14 | The At sea screen shows one summary card in place of the four top banners, ranked and worded as Section 2.6 sets out. | Table test on the pure ranking function: every combination of SOS situation, squall level and acknowledgement, weather state and map age gives the Section 2.6 rows; ranks 1 and 2 are never displaced; unknown squall or weather never yields a success colour or check mark. Widget tests: at most one card and no `SquallBanner`, `OfflineMapBanner` or separate SOS pill at the top of At sea; tapping opens the details sheet with all four sections; no overflow at `TextScaler.linear(2.0)` on 360 x 640. | F13 |
 
 ## 6. Non-goals
 
@@ -197,6 +256,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | D4 | How the fisher joins the pod Wi-Fi. | From inside the app (Section 2.5, FFR-09). |
 | D5 | Recorded voice prompts. | Out of this plan; revisit after the field session. |
 | D6 | Remove "Remember me" from enrolment. | Yes: always remember; logout stays in Me behind a confirm. |
+| D7 | Four banners at the top of At sea. | One summary card (Len, 2026-09-25T23:40:00+08:00), designed in Section 2.6 after a council review. The 15-minute linger for a closed or cancelled SOS is a proposed default; Len may change it. |
 
 ## 8. Open questions and readiness
 

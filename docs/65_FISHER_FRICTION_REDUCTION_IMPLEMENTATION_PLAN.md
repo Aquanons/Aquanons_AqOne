@@ -1,16 +1,17 @@
 # Implementation Plan: Fisher friction reduction (handset UX)
 
-**Status:** APPROVED - Revision 2; Phase 1 handed to Luna (mobile only, beside plan 66); merge after review and not during RSTW
+**Status:** APPROVED - Revision 3; Phase 1 handed to Luna (mobile only, beside plan 66); merge after review and not during RSTW
 **Owner:** Lenard (plan, review), Jade (Flutter), Doreen Kay (UX, term study, field session)
 **Created:** 2026-09-25
 **Updated:** 2026-09-25
 **Related:** `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md`, `docs/06_DELIVERY_STATES.md`, `docs/22_LOCALIZATION_PLAN.md`
 
-Revision: 2
+Revision: 3
 **Execution mode:** hard-stop
-Feature spec and revision: `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` Revision 2
+Feature spec and revision: `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` Revision 3
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
 Len's chat approval, 2026-09-25T17:00:00+08:00: recommendations accepted for D2, D3, D5 and D6; the team picks the terms itself (D1); joining the pod Wi-Fi happens inside the app (D4); the field session with fishermen and the MDRRMO is after the RSTW pitch, date to be set by Len.
+Len, 2026-09-25T23:40:00+08:00: replace the four At sea top banners with one summary card (spec 64 Section 2.6, FFR-14, D7); added as Phase 4b so no later phase number changes.
 Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may push phases straight to `master`)
 Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed by `docs/fisher-ux/HANDOFF-luna-phase-1.md` (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
 
@@ -33,7 +34,7 @@ Order and timing (D2):
 |---|---|
 | Now | Plan 66 (Critical edge cases) first. Phase 0a here runs in parallel because it is people work and touches no code. |
 | 2026-10-01 to 03 | RSTW pitch; no merges to `master` that change the demo APK |
-| After plan 66 Phase 5 | Phases 1 to 5 here, in order |
+| After plan 66 Phase 5 | Phases 1, 2, 3, 4, 4b and 5 here, in order |
 | After Phase 5 here | Phase 6 here |
 | Date set by Len, after RSTW | Phase 0b field session, on whatever build is newest |
 
@@ -183,7 +184,7 @@ State: Approved
 
 - [ ] `core/tokens.dart`: light `dimText` and `secondaryText` raised to at least 4.5:1 on `canvas` and `surface`; check dark tokens the same way; update `docs/47_VISUAL_DESIGN_GUIDE.md` rows to match.
 - [ ] Raise every `fontSize` below 12 in `mobile/lib/ui` to at least 12; body text 16.
-- [ ] Active SOS status card (shared by Home and At sea) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
+- [ ] Active SOS status card on Home (At sea shows the same situation inside the Phase 4b summary card) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
 - [ ] Dock: four labelled items (Home, At sea, News, Me), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
 - [ ] Replace fixed heights that clip at large text (`ActionPill` 176 x 50, dock `barHeight`) with minimum sizes.
 
@@ -234,6 +235,46 @@ State: Approved (D3: yes)
 - [ ] Commit with a unique phase message and verify Git reports success.
 
 Checkpoint message: `feat(mobile): SOS-first home and button alternatives to slides`
+Stop for Len's go-ahead (hard-stop).
+
+## Phase 4b: One summary card on the At sea screen
+
+Requirements: FFR-14 (spec 64 Section 2.6)
+State: Approved (D7)
+Depends on: Phase 1 (`FisherSosSituation`), Phase 2 (wording and localisation), Phase 3 (tokens and font floor)
+
+### Tasks
+
+- [ ] Write the failing tests first (the reviewer writes them, as for Phase 1):
+  a table test for the ranking function covering every SOS situation, squall level with and without acknowledgement, weather loaded, failed and unsafe, and map ages below 2 minutes, between 2 minutes and 3 hours, and 3 hours or more; and the widget tests listed under Verification.
+- [ ] Add the pure ranking function in `mobile/lib/models/` (for example `at_sea_summary.dart`): inputs are the newest `SosRecord` (or none), `SquallWatch` and its acknowledgement, the weather snapshot or failure, the map layer ages, pitch mode and a clock; output is up to two headline rows and the three chip states, in the order and with the rules of spec 64 Section 2.6.
+- [ ] Add the card widget (for example `mobile/lib/ui/widgets/at_sea_summary_card.dart`) that only draws that output: headline rows, the chip line, the "Details" label, and the "I understand" button on a rank 1 row wired to the existing squall acknowledge.
+- [ ] Add the details sheet, reusing `SquallBanner`, the offline-map explanation from `OfflineMapBanner`, the weather safety text now in `_showSafetyDialog`, and the SOS status from `FisherSosSituation`; one large close button; Back closes it.
+- [ ] In `venture_page.dart`, replace the top `Column` (weather capsule, squall banner, offline-map banner, SOS status pill) with the one card; delete `_buildWeatherCapsule` and `_buildSosStatus`, and fold `_showSafetyDialog` into the sheet.
+- [ ] Move the "locating" pill so it no longer draws over the card (inside the card's chip line or directly under the card).
+- [ ] Delete `OfflineMapBanner` if nothing else uses it after the move; keep `SquallBanner` (Home still uses it).
+- [ ] New strings go in `app_en.arb` with `@` descriptions and `fil` and `akl` drafts; use the Phase 0a terms; no bare literals (the old "Loading…" goes too).
+- [ ] Update `docs/47_VISUAL_DESIGN_GUIDE.md` for the card and remove the rows for the three retired banners.
+
+### Verification
+
+- [ ] The ranking table test passes, including: ranks 1 and 2 both present means both are the headline; unknown squall and failed weather never give a success colour or a check mark; pitch mode never shows a storm row or chip.
+- [ ] Widget test: the At sea screen shows exactly one summary card at the top and no `OfflineMapBanner`, no top `SquallBanner` and no separate SOS pill.
+- [ ] Widget test: tapping the card opens the sheet with all four sections, and the close button and Back both close it.
+- [ ] Widget test: with a RETURN NOW squall not acknowledged, the card's "I understand" button calls the acknowledge callback once and the row drops to rank 3.
+- [ ] Widget test at `TextScaler.linear(2.0)` on 360 x 640, light and dark, with an active SOS and a squall watch at the same time: no overflow, full text of both headline rows present.
+- [ ] Existing squall alert, pitch-mode and offline-map age tests still pass or are moved to the ranking test with the same assertions.
+- [ ] Emulator screenshots of four cases (calm, squall watch, active SOS plus RETURN NOW, old map) in `docs/fisher-ux/PHASE_4B_VERIFICATION.md`.
+- [ ] Standard mobile gate passes.
+
+### Review and checkpoint
+
+- [ ] Review correctness, scope, dependencies, and unrelated changes.
+- [ ] Update plan, evidence, and current handoff.
+- [ ] Stage only reviewed phase-related paths and verify the staged diff.
+- [ ] Commit with a unique phase message and verify Git reports success.
+
+Checkpoint message: `feat(mobile): one at-sea summary card replaces the four top banners`
 Stop for Len's go-ahead (hard-stop).
 
 ## Phase 5: Join the boat pod Wi-Fi from inside the app
