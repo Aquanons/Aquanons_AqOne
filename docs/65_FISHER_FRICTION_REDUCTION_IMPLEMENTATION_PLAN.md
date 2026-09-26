@@ -147,23 +147,23 @@ Stop for Len's go-ahead (hard-stop).
 
 Requirements: FFR-05, FFR-06
 State: Approved; starts after Phase 1
-Depends on: Phase 0a terms
+Depends on: Phase 0a terms, and plan 70 (Aklanon first) complete
 
 ### Tasks
 
 - [ ] Amend `docs/06_DELIVERY_STATES.md` first: add a "Fisher handset wording" column beside the existing display conventions; responder wording unchanged; tell Arnold (dashboard unaffected) and Jade.
 - [ ] Add the glossary (spec 64 Section 2.3 with the Phase 0a terms) to `docs/22_LOCALIZATION_PLAN.md`.
 - [ ] Give `FisherSosSituationL10n` its own ARB keys with the spec 64 Section 2.4 wording; rewrite the other affected `app_en.arb` values to the glossary; draft `app_fil.arb` and `app_akl.arb`, marked unreviewed.
-- [ ] Localise the remaining English literals: `buoy_status_card.dart`, the emergency types (enum keeps only the icon; text through an `...L10n` extension), the safety dialog in `venture_page.dart`, `info_page.dart`, `chathubb.dart`, `advisories_page.dart`, `squall_banner.dart`, `weather_card.dart`, `sea_condition_banner.dart`, `offline_map_banner.dart`, `advisory_card.dart`, `squall_alert_page.dart`, `enrolment_page.dart`, the avatar semantics label in `home_page.dart`.
+- [x] Moved to `docs/70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md` Phases 3 and 4 (Len, D1, 2026-09-26T13:45:00+08:00): localise the remaining English literals. This phase changes only ARB values after plan 70.
 - [ ] The post-SOS sheet shows the situation's description under its title, not only the title (Phase 1 review, 2026-09-26: the sheet reads just "Saved", and the line that says it is not sent yet appears only on the status pill behind the sheet).
 - [ ] "Sent by mistake?" above the call-off control becomes wording that is true for an SOS that has not left the phone.
 - [ ] The pod card stops promising delivery: "Your SOS will reach the rescue centre now" becomes wording that matches `podHasIt`.
 - [ ] Update `delivery_state_test.dart` to assert the ARB against the new `docs/06` column.
-- [ ] Widen the `localization_test.dart` bare-literal check to every file in `mobile/lib/ui` (allowlist: `AqOne`, `SOS`).
+- [x] Moved to plan 70 Phase 3 (D1): widen the `localization_test.dart` bare-literal check to every file in `mobile/lib/ui`.
 
 ### Verification
 
-- [ ] `grep -rnE "Text\('[A-Za-z]" mobile/lib/ui` returns nothing outside the allowlist.
+- [x] Moved to plan 70 Phase 3 (D1): `grep -rnE "Text\('[A-Za-z]" mobile/lib/ui` returns nothing outside the allowlist.
 - [ ] Emulator walkthrough in `fil` and `akl`: Home, SOS countdown, post-SOS sheet and pod screen show no English except "SOS" and "AqOne"; screenshots in `docs/fisher-ux/PHASE_2_VERIFICATION.md`.
 - [ ] A Tagalog and an Aklanon reader on the team review the SOS-path strings; corrections are applied or listed as open.
 - [ ] At 200% text on a 360 x 640 phone, no dock label breaks inside a word (Phase 3 screenshots `docs/fisher-ux/phase-3/home-*.png` show "Advisor-ies" and "Ventur-e mode"; the shorter glossary labels should fix it).

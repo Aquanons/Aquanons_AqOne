@@ -84,6 +84,7 @@ Do not delete historical documents. When a plan is verified complete, it may mov
 | ACTIVE | [`66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md`](66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md) | Critical edge cases C1-C14: Phase 1 evidence in progress; firmware phases wait on Daniel's two-board bench |
 | ACTIVE | [`69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md`](69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md) | Weather-tiered pod check-ins (spec [`68`](68_WEATHER_TIERED_CHECKINS_SPEC.md)): approved 2026-09-26, runs alongside plan 65; Phases 1-5 need no hardware |
 | ACTIVE | [`65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`](65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md) | Handset friction reduction: Phases 1 and 3 merged 2026-09-26; Phase 2 waits for the term study, then 4, 4b, 5, 6 |
+| ACTIVE | [`70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md`](70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md) | Aklanon by default and no English left in the handset UI; approved 2026-09-26; plan 65 Phase 2's literal extraction moved here |
 
 Add a row here when a document becomes `ACTIVE`.
 Remove it when the document becomes `COMPLETE`, `BLOCKED`, or `SUPERSEDED`.
