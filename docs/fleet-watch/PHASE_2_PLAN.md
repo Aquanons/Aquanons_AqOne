@@ -1,14 +1,15 @@
 # Plan 69 Phase 2 - pure backend policy: detailed implementation plan
 
-**Status:** APPROVED - Revision 1
+**Status:** APPROVED - Revision 2
 **Owner:** Claude Code (plan, red tests, review), implementer named in the worktree `HANDOFF.md`, Len (merge)
 **Created:** 2026-09-26T10:05:00+08:00
-**Updated:** 2026-09-26T10:20:00+08:00
+**Updated:** 2026-09-26T10:15:00+08:00
 **Related:** `docs/69_WEATHER_TIERED_CHECKINS_IMPLEMENTATION_PLAN.md` Phase 2, `docs/68_WEATHER_TIERED_CHECKINS_SPEC.md` Revision 3, `docs/02`, `docs/04`, `docs/05` (fleet-watch sections from `1f2a5bd`)
 
 Len, 2026-09-26: "Go for phase 2, note that we're only creating an implementation plan. Dont modify any code yet."
 This document is that plan.
-Len's chat approval, 2026-09-26T10:18:00+08:00: "Start". Section 9 offered "answers P1 (or accepts the proposal)", so P1 is accepted as proposed: `FLEET_SILENCE_MIN_VESSELS = 3`. P2 stays open until the team supplies the landing-site coordinates (needed before Phase 4).
+Len's chat approval of Revision 1, 2026-09-26T10:09:00+08:00: "Start". Section 9 offered "answers P1 (or accepts the proposal)", so P1 is accepted as proposed: `FLEET_SILENCE_MIN_VESSELS = 3`. P2 stays open until the team supplies the landing-site coordinates (needed before Phase 4).
+Revision 2 (2026-09-26T10:15:00+08:00) is editorial: while writing the red tests, five details of Section 5 were pinned down to match them (the `advisory_tier` result for normal, `VesselVerdict.path`, the `fleet_silence` signature, how "recent fix" is measured, eight trip cases instead of seven, and the purity test's wider import ban). No rule changed.
 It names every module, type, function and test, so the red tests and the implementation can be written from it without further design.
 Nothing under `backend/` changes until Len approves this plan and says to start.
 
@@ -24,7 +25,7 @@ Requirements covered: `docs/68` REQ-001, REQ-002, REQ-003 (the rules only), REQ-
 
 | # | Finding | Proposal | Blocks |
 |---|---|---|---|
-| P1 | **Fleet silence can hide a real emergency in a small fleet.** With the 30% rule alone, 1 missed vessel out of 2 watched is 50%, so that case would be marked low confidence and would not sound the alarm. | Fleet silence also needs at least 3 missed vessels (`FLEET_SILENCE_MIN_VESSELS = 3`). 4 of 10 still triggers it; 1 of 2 does not. | Accepted, Len 2026-09-26T10:18:00+08:00 |
+| P1 | **Fleet silence can hide a real emergency in a small fleet.** With the 30% rule alone, 1 missed vessel out of 2 watched is 50%, so that case would be marked low confidence and would not sound the alarm. | Fleet silence also needs at least 3 missed vessels (`FLEET_SILENCE_MIN_VESSELS = 3`). 4 of 10 still triggers it; 1 of 2 does not. | Accepted, Len 2026-09-26T10:09:00+08:00 |
 | P2 | **The harbor zones cannot come from `SHORE_STATIONS`.** `app/geo.py` moves every shore station about 1.7 km west of its real position so it sits on land for `tests/test_geo.py`, and the real landing sites fall inside `WATER_POLYGON`. Zones drawn around those points would miss the real harbors, and every boat moored at home would count as at sea. | A new `HARBOR_ZONES` constant in `app/geo.py`: the real landing sites (at least Dumaguit Port and the Poblacion landing), each a centre and a 500 m radius, from the team's map. Both the backend's "at sea" test and the generated firmware header read it. This amends spec D6's source, not its behaviour. | Phase 4 (backend wiring) and Phase 6 (firmware header) |
 | P3 | Advisory expiry is a date, not a time (`advisories.expiration_date`). | An advisory is active through the end of its expiry date in Manila time (23:59:59+08:00); the adapter converts, the policy only sees a datetime. | Nothing |
 | P4 | A dispatcher raise equal to the advisory tier changes nothing. | A raise must be strictly above the advisory tier when it is made (`cannot_lower` otherwise). If advisories later rise to meet it, the advisory is named as the source and the raise stays on record until it expires. | Nothing |
@@ -104,6 +105,7 @@ signal_tier(signal, now) -> Tier
     A signal that does not count -> NORMAL.
 advisory_tier(signals, now) -> tuple[Tier, WeatherSignal | None]
     Highest signal_tier; ties go to the signal with the latest expires_at (None counts as latest).
+    (NORMAL, None) when no signal counts.
 fleet_tier(signals, active_raise, now) -> TierDecision
     Raise counts only while now < raise.expires_at.
     Higher of advisory tier and raise tier; the raise is the source only if strictly higher.
@@ -137,7 +139,8 @@ AtSea = Callable[[float, float], bool]
 @dataclass(frozen) VesselVerdict:
     vessel_id: str, trip_id: str | None,
     state: 'not_watched' | 'on_time' | 'stagnant' | 'missed',
-    interval_s: int, deadline: datetime | None, missed_count: int
+    interval_s: int, deadline: datetime | None, missed_count: int,
+    path: 'direct' | 'relayed'                       the latest check-in's path
 @dataclass(frozen) FleetSilence:
     active: bool, reason: 'share' | 'receiver_stale' | None
 @dataclass(frozen) CaseConfidence: 'high' | 'low'   (maps to case_type responder_attention | verification)
@@ -155,13 +158,15 @@ evaluate_vessel(item, current_tier, now, at_sea) -> VesselVerdict
     now > deadline -> 'missed', missed_count = floor((now - latest.observed_at) / interval_s).
     else -> 'on_time'.
 fleet_silence(verdicts, receiver_last_upload_at, now) -> FleetSilence
-    receiver_last_upload_at is None or older than RECEIVER_STALE_AFTER -> active, 'receiver_stale'
-        (only when at least one watched vessel's latest check-in came direct).
+    receiver_last_upload_at is None or older than RECEIVER_STALE_AFTER (strictly) -> active, 'receiver_stale'
+        (only when at least one watched verdict has path 'direct').
     watched = verdicts not 'not_watched'; missed = 'missed'.
     len(missed) >= FLEET_SILENCE_MIN_VESSELS and len(missed) / len(watched) >= FLEET_SILENCE_SHARE -> active, 'share'.
     else inactive.
 case_confidence(verdict, item, silence, now) -> CaseConfidence
     'low' if silence.active, or the vessel has no fix taken within RECENT_POSITION of now; else 'high'.
+    A fix was taken at observed_at - fix_age_s (fix_age_s None counts as 0), using the latest check-in
+    when it has a fix, otherwise last_positioned.
 should_sound_alarm(confidence, current_tier) -> bool
     'high' and current_tier == SEVERE (REQ-022's rule, decided here so the dashboard only reads it).
 ```
@@ -183,7 +188,7 @@ trip_action(vessel_id, checkin, open_trip, at_sea) -> TripAction
 | Check-in | Open trip | Result |
 |---|---|---|
 | Fix at sea | none | `open`, `auto_trip_id(...)` |
-| Fix at sea | any | `attach` to it |
+| Fix at sea | any (gateway or handset) | `attach` to it |
 | Fix in harbor or on land | opened by `gateway` | `complete` it (the check-in attaches first) |
 | Fix in harbor or on land | opened by anyone else | `attach` (a handset trip is never completed by a check-in) |
 | Fix in harbor or on land | none | `none` (stored with no trip) |
@@ -257,7 +262,7 @@ Times are built from one base, `T0 = datetime(2026, 9, 26, 2, 0, tzinfo=UTC)`.
 
 | ID | Case | Expect |
 |---|---|---|
-| T2-35 | The seven rows of the table in 5.3 | the listed `TripAction` each (REQ-016, D11) |
+| T2-35 | The rows of the table in 5.3, with "any" split into a gateway and a handset trip (eight cases) | the listed `TripAction` each (REQ-016, D11) |
 | T2-36 | `auto_trip_id('NW-001', 2026-09-21T14:13:20Z)` | `auto-NW-001-1790000000` (matches `docs/04`) |
 
 ### `tests/test_fleet_watch_slots.py`
@@ -275,7 +280,7 @@ Times are built from one base, `T0 = datetime(2026, 9, 26, 2, 0, tzinfo=UTC)`.
 
 | ID | Case | Expect |
 |---|---|---|
-| T2-43 | Every `app.fleet_watch` module | imports none of `fastapi`, `asyncpg`, `httpx`, `app.db`, `app.geo` |
+| T2-43 | Every `app.fleet_watch` module, read with `ast` so `from x import y` is caught | imports none of `fastapi`, `asyncpg`, `httpx`, `app.db`, `app.geo`, `app.api`, `app.ai`, `numpy`, nor bare `app` |
 | T2-44 | Source of every `app.fleet_watch` module | contains no `datetime.now(`, `time.time(` or `random` |
 
 ## 7. Gates
@@ -287,7 +292,7 @@ python -m pytest -q tests/test_fleet_watch_tier.py tests/test_fleet_watch_watch.
 python -m pytest -q
 ```
 
-- After commit 1: the four new files fail at import (`ModuleNotFoundError: app.fleet_watch`), T2-43 and T2-44 fail the same way, and every other test is unchanged.
+- After commit 1: the four new files fail at import (`ModuleNotFoundError: app.fleet_watch`), T2-43 and T2-44 fail the same way, and every other test is unchanged. Recorded run (`pytest -q --continue-on-collection-errors`): 2 failed, 519 passed, 59 skipped, 1 xfailed, 4 errors, against 519 passed on `master`.
 - After commit 2: all green, with the same skip count as `master` (DB tests need `AQONE_PROBE_PG_ADMIN_URL`; Phase 2 adds none).
 - Review (Claude): no test edited between the commits; no file outside the allowed paths; each function no longer than the rule it encodes.
 
