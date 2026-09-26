@@ -957,8 +957,25 @@ async def regenerate(database_url: str, plan: SimulationPlan) -> None:
             await _insert_current_observations(conn, plan.current_observations)
             await _insert_incidents(conn, plan.incidents)
             await _insert_sos_events(conn, plan.sos_events)
+            await _advance_id_sequences(conn)
     finally:
         await conn.close()
+
+
+# These three tables are inserted with explicit ids, which never move their
+# sequences; without this the next default-id insert (a real SOS, the demo
+# scenario) collides with generated row 1.
+_EXPLICIT_ID_TABLES = ('squall_events', 'incidents', 'sos_events')
+
+
+async def _advance_id_sequences(conn: asyncpg.Connection) -> None:
+    for table in _EXPLICIT_ID_TABLES:
+        await conn.execute(
+            f"""
+            SELECT setval(pg_get_serial_sequence('{table}', 'id'), COALESCE(MAX(id), 1), MAX(id) IS NOT NULL)
+            FROM {table}
+            """
+        )
 
 
 async def _insert_vessels(conn: asyncpg.Connection, rows: list[dict[str, Any]]) -> None:

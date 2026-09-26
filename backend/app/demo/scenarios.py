@@ -272,7 +272,8 @@ async def _write_anomaly_contacts(pool, run_id: str) -> str:
 
 
 async def _write_incident(pool, run_id: str, vessel_id: str) -> int:
-    from app.api.sos import SosIn, ingest_sos
+    from app.api.sos import SosIn, record_sos
+    from app.incidents.trust import sos_provenance
 
     async with pool.acquire() as conn:
         contact = await conn.fetchrow(
@@ -295,17 +296,27 @@ async def _write_incident(pool, run_id: str, vessel_id: str) -> int:
         return int(existing['id'])
 
     client_ts = int(contact['observed_at'].timestamp())
-    await ingest_sos(
-        SosIn(
-            vessel_id=vessel_id,
-            client_ts=client_ts,
-            boat=vessel_id,
-            lat=float(contact['latitude']),
-            lon=float(contact['longitude']),
-            note='Capsize distress in demo scenario',
-            source='direct',
-        )
+    payload = SosIn(
+        vessel_id=vessel_id,
+        client_ts=client_ts,
+        boat=vessel_id,
+        lat=float(contact['latitude']),
+        lon=float(contact['longitude']),
+        note='Capsize distress in demo scenario',
+        source='direct',
     )
+    provenance = sos_provenance(
+        vessel_id=vessel_id,
+        requested_tier=payload.trust_tier,
+        source=payload.source,
+        buoy_id=None,
+        src_id=None,
+        seq=None,
+        device_vessel_id=None,
+        gateway_authenticated=False,
+    )
+    async with pool.acquire() as conn, conn.transaction():
+        await record_sos(conn, payload, provenance)
     rng_seed = int(hashlib.sha256(run_id.encode('utf-8')).hexdigest()[:8], 16)
     track = _simulate_drift_track(
         contact['observed_at'],

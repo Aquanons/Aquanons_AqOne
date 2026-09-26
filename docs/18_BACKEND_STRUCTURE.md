@@ -56,7 +56,7 @@ return plain values, so they are tested without a server or a database.
 | `triage.py` | The dispatcher's order (waiting before answered, corroborated before not) and flood detection. |
 | `plausibility.py` | Advisory flags such as `position_on_land`; they never block or reorder a call. |
 | `escalation.py` | Which unanswered calls are due for an SMS, and the message text. |
-| `trust.py` | Whether a vessel counts as verified. |
+| `trust.py` | Whether a vessel counts as verified, and `sos_provenance`: which trust tier and delivery route an incoming SOS may claim, given only what its credentials prove (SEC-06). |
 | `text.py` | Cutting text to a byte limit without splitting a character. |
 
 `app/mesh/chat_policy.py` does the same for mesh chat: reserved sender names and
@@ -93,7 +93,7 @@ Every URL the mobile app or dashboard can call. These files are thin on purpose.
 
 | File | What it handles |
 |---|---|
-| `sos.py` | **The most important file in the backend.** Receiving SOS, de-duplicating (by incident nonce, or `client_ts` for old phones), the triage-ordered live feed, acknowledge / resolve / reopen with version checks, the radio downlink, and the fisherman's reply. About 860 lines. |
+| `sos.py` | **The most important file in the backend.** Receiving SOS, de-duplicating (by incident nonce, or `client_ts` for old phones), the triage-ordered live feed, acknowledge / resolve / reopen with version checks, the radio downlink, and the fisherman's reply. About 860 lines. `record_sos` is the one way to store an SOS: the route and the demo scenario both call it, and the route only turns its headers into plain arguments for `sos_provenance`. |
 | `mesh.py` | Nearby-boat chat. Anyone may post; who you are decides the `origin`. Reading needs a credential. |
 | `vessel_profile.py` | A boat's declared owner identity, and the responder "Confirm vessel" route. |
 | `vessel_auth.py` | Pairing codes, device enrolment and token refresh for handsets. |
@@ -123,8 +123,8 @@ Every URL the mobile app or dashboard can call. These files are thin on purpose.
 | `app/audit.py` | Writes one row to the operations audit log inside the caller's transaction. |
 | `app/scheduler.py` | Background jobs started with the app: SOS escalation every 30 s and anomaly evaluation every 5 min. A Postgres advisory lock keeps two copies of the app from running the same job twice. Set `AQONE_SCHEDULER=0` to switch it off. |
 | `app/notify.py` | Sends the escalation SMS through Semaphore. With no `SEMAPHORE_API_KEY` or `ONCALL_SMS_NUMBERS` it reports "not configured" instead of failing. |
-| `app/demo/` | The demo scenario engine (synthetic squall and drift). |
-| `app/simulation/generator.py` | Makes all the fake data — buoys, weather, boats, trips. **The biggest file in the backend at 1,254 lines.** |
+| `app/demo/` | The demo scenario engine (synthetic squall and drift). It records its SOS through `record_sos`, never by calling a route function. |
+| `app/simulation/generator.py` | Makes all the fake data — buoys, weather, boats, trips. **The biggest file in the backend at 1,254 lines.** It inserts explicit ids, then advances the `squall_events`, `incidents` and `sos_events` sequences so later inserts do not collide. |
 | `migrate.py` | Runs the database migrations in order on every deploy. |
 
 ---

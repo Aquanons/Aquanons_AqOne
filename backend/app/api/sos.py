@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -20,7 +19,7 @@ from app.incidents.plausibility import PlausibilityContext
 from app.incidents.plausibility import flags as plausibility_flags
 from app.incidents.text import truncate_utf8
 from app.incidents.triage import flood_status, triage_key
-from app.incidents.trust import vessel_verified
+from app.incidents.trust import SosProvenance, sos_provenance, vessel_verified
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -44,16 +43,6 @@ REPLY_STILL_IN_DANGER = 1
 REPLY_SAFE_NOW = 2
 
 CONFLICT_DEGREES = 0.009
-
-
-@dataclass(frozen=True)
-class SosProvenance:
-    trust_tier: str
-    buoy_id: str | None
-    src_id: int | None
-    seq: int | None
-    delivered_direct: bool
-    delivered_via_buoy: bool
 
 
 def _truncate_text(value: Any, max_bytes: int) -> Any:
@@ -148,30 +137,19 @@ async def ingest_sos(
     Always returns the same event id, so a client retrying - or both transports
     succeeding - is safe.
     """
-    # SEC-06: Store trust_tier='self_declared' unless the request carries a valid
-    # vessel device bearer for the same vessel_id; then allow phone_verified.
-    # Never accept confirmed_by_responder from ingest.
-    trust_tier = 'self_declared'
-    if (
-        vessel_device is not None
-        and vessel_device.get('vessel_id') == payload.vessel_id
-        and payload.trust_tier == 'phone_verified'
-    ):
-        trust_tier = 'phone_verified'
-
-    # SEC-06: Accept source='buoy', buoy_id, src_id, seq only with a valid X-Api-Key.
-    # Without it, store the SOS as a direct delivery and drop the buoy fields,
-    # so no buoy row is auto-registered.
-    has_valid_gateway = is_valid_gateway_key(api_key)
-    if has_valid_gateway and payload.source == 'buoy':
-        provenance = SosProvenance(
-            trust_tier, payload.buoy_id, payload.src_id, payload.seq, False, True,
-        )
-    else:
-        provenance = SosProvenance(trust_tier, None, None, None, True, False)
+    provenance = sos_provenance(
+        vessel_id=payload.vessel_id,
+        requested_tier=payload.trust_tier,
+        source=payload.source,
+        buoy_id=payload.buoy_id,
+        src_id=payload.src_id,
+        seq=payload.seq,
+        device_vessel_id=vessel_device.get('vessel_id') if vessel_device is not None else None,
+        gateway_authenticated=is_valid_gateway_key(api_key),
+    )
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
-        row = await _upsert_sos(conn, payload, provenance)
+        row = await record_sos(conn, payload, provenance)
 
     return {
         'id': row['id'],
@@ -535,7 +513,7 @@ async def acknowledge(
     }
 
 
-async def _upsert_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> Any:
+async def record_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> Any:
     await conn.execute(
         '''
         INSERT INTO vessels (id, boat_name) VALUES ($1, $2)

@@ -1,0 +1,12 @@
+{
+  "name": "aqone-render-check",
+  "private": true,
+  "description": "Headless-Edge layout checks for the MDRRMO dashboard (docs/71). Not a product dependency.",
+  "type": "module",
+  "scripts": {
+    "check": "node render_check.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

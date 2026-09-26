@@ -124,31 +124,31 @@ export AQONE_PROBE_PG_ADMIN_URL=postgresql://postgres@127.0.0.1:55432/postgres
 ## Phase 1: demo, seed data and the render check run end to end
 
 Requirements: RND-08, RND-09
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Red tests: `backend/tests/test_sos_provenance.py` for the SEC-06 rule as a pure function; `backend/tests/test_demo_probe.py` (uses `probe_db`) that regenerates, starts `squall-fleet` and fires beats 4, 5 and 6; `backend/tests/test_generator_probe.py` that inserts one default-id row into each of the three tables after a regenerate.
-- [ ] Move `SosProvenance` into `app/incidents/trust.py` and add `sos_provenance(vessel_id, requested_tier, source, buoy_id, src_id, seq, *, device_vessel_id, gateway_authenticated)`; the route translates its header and dependency into those two plain values and calls it.
-- [ ] Rename `_upsert_sos` to `record_sos` and update every caller found by grep, including tests.
-- [ ] `app/demo/scenarios.py` `_write_incident`: build a direct, self-declared provenance through `sos_provenance` and call `record_sos` in its own transaction; delete the `ingest_sos` import.
-- [ ] `app/simulation/generator.py` `regenerate`: after the inserts, inside the same transaction, advance each sequence with `setval(pg_get_serial_sequence(<table>, 'id'), COALESCE(MAX(id), 1), MAX(id) IS NOT NULL)` for `squall_events`, `incidents` and `sos_events`.
-- [ ] `tools/render-check/`: `package.json` pinning `playwright-core`, `render_check.mjs` (logs in through `login.html`, prints measurements as JSON, saves named screenshots), `seed_live_currents.sql` (marks recent synthetic currents live in a disposable database only, with a loud header), and a `README.md` holding the recipe above.
-- [ ] Update `docs/18_BACKEND_STRUCTURE.md` for the moved rule and `record_sos`.
+- [x] Red tests: `backend/tests/test_sos_provenance.py` for the SEC-06 rule as a pure function; `backend/tests/test_demo_probe.py` (uses `probe_db`) that regenerates, starts `squall-fleet` and fires beats 4, 5 and 6; `backend/tests/test_generator_probe.py` that inserts one default-id row into each of the three tables after a regenerate.
+- [x] Move `SosProvenance` into `app/incidents/trust.py` and add `sos_provenance(vessel_id, requested_tier, source, buoy_id, src_id, seq, *, device_vessel_id, gateway_authenticated)`; the route translates its header and dependency into those two plain values and calls it.
+- [x] Rename `_upsert_sos` to `record_sos` and update every caller found by grep, including tests.
+- [x] `app/demo/scenarios.py` `_write_incident`: build a direct, self-declared provenance through `sos_provenance` and call `record_sos` in its own transaction; delete the `ingest_sos` import.
+- [x] `app/simulation/generator.py` `regenerate`: after the inserts, inside the same transaction, advance each sequence with `setval(pg_get_serial_sequence(<table>, 'id'), COALESCE(MAX(id), 1), MAX(id) IS NOT NULL)` for `squall_events`, `incidents` and `sos_events`.
+- [x] `tools/render-check/`: `package.json` pinning `playwright-core`, `render_check.mjs` (logs in through `login.html`, prints measurements as JSON, saves named screenshots), `seed_live_currents.sql` (marks recent synthetic currents live in a disposable database only, with a loud header), and a `README.md` holding the recipe above.
+- [x] Update `docs/18_BACKEND_STRUCTURE.md` for the moved rule and `record_sos`.
 
 ### Verification
 
-- [ ] Red tests fail on `fc89fe7` for the stated reason, then pass.
-- [ ] Backend gate with and without `AQONE_PROBE_PG_ADMIN_URL`.
-- [ ] Manual: on a fresh disposable database, `curl` the scenario start and beats 0 to 6; every call returns 200.
-- [ ] Evidence in `docs/render-fixes/EVIDENCE.md`.
+- [x] Red tests fail on `fc89fe7` for the stated reason, then pass.
+- [x] Backend gate with and without `AQONE_PROBE_PG_ADMIN_URL`.
+- [x] Manual: on a fresh disposable database, `curl` the scenario start and beats 0 to 6; every call returns 200.
+- [x] Evidence in `docs/render-fixes/EVIDENCE.md`.
 
 ### Review and checkpoint
 
-- [ ] Review correctness, scope, dependencies, and unrelated changes; confirm `tests/test_incidents_is_pure.py` still passes with the moved rule.
-- [ ] Update plan, evidence, Current Register and handoff.
-- [ ] Stage only reviewed phase paths and verify the staged diff.
-- [ ] Commit, merge to `master`, push, and confirm `origin/master` moved.
+- [x] Review correctness, scope, dependencies, and unrelated changes; confirm `tests/test_incidents_is_pure.py` still passes with the moved rule.
+- [x] Update plan, evidence, Current Register and handoff.
+- [x] Stage only reviewed phase paths and verify the staged diff.
+- [x] Commit, merge to `master`, push, and confirm `origin/master` moved.
 
 Checkpoint message: `fix(demo): record demo SOS through the application function and repair seed sequences`
 Continue automatically to the next phase.
