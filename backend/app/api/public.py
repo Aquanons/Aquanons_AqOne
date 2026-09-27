@@ -80,8 +80,12 @@ async def public_buoys() -> dict[str, object]:
             '''
             SELECT b.id, b.label, b.lat, b.lon, b.contact_radius_m, b.lora_radius_m,
                    b.is_gateway_linked, b.is_synthetic,
-                   (SELECT MAX(COALESCE(c.observed_at, c.created_at))
-                    FROM buoy_contacts c WHERE c.buoy_id = b.id) AS last_heard_at
+                   GREATEST(
+                     (SELECT MAX(COALESCE(c.observed_at, c.created_at))
+                      FROM buoy_contacts c WHERE c.buoy_id = b.id),
+                     (SELECT MAX(r.observed_at)
+                      FROM barometric_readings r WHERE r.buoy_id = b.id)
+                   ) AS last_heard_at
             FROM buoys b
             ORDER BY b.id
             LIMIT 50

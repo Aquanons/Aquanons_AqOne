@@ -5,6 +5,23 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-27 - Dashboard tutorial mode and live buoy honesty: plan 72 on `master`
+
+Plan [`72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`](72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md) (Revision 2, Len's answers of 2026-09-27) is built; evidence and screenshots in [`demo-mode/`](demo-mode/).
+
+**On `master`:**
+- Live honesty: the dashboard's buoys, mesh links, coverage rings and Buoy Network panel come from `GET /api/public/buoys`, which now returns each buoy's recorded position (or none), radii, provenance and last-heard time instead of invented positions (`docs/05`). The invented "4/5 buoys online", coverage and 45-minute lead-time figures and the sample squall incident are gone; the overview shows measured figures or `--`.
+- The SAR Metrics tab shows the evaluation figures again: it had ignored the `{status, data}` envelope of `/api/ai/metrics`.
+- Tutorial: the profile page's Learn AqOne tab (or "Explore the tutorial without an account" on the login page) opens seven short lessons: find your way around, squall nowcast, warn the fleet, an overdue boat, receive and acknowledge an SOS, drift and search, close the case. Each lesson opens on its own recording of the real backend's presenter scenario, every step can be skipped, and the actions it teaches replay the backend's real answers.
+- In the tutorial a banner, a watermark and the feed status say TUTORIAL; no request reaches the API, except that a signed-in learner is still told when a real SOS is waiting.
+- It runs with no backend at all (verified with only a static file server), so it works at a venue without a signal and on the Render site.
+- With no basemap tiles, the map draws the service-area polygon on a plain land colour and says so.
+- Gates: backend 654 passed with the database probes, ruff clean; web 210 passed; the Plan 71 render check 11 of 11 PASS.
+
+**Changes for other owners:** Jade (handset) - `/api/public/buoys` now omits invented buoys, so the production map shows no buoy until buoys have recorded positions (the handset already skips a buoy without coordinates). Arnold (dashboard) - review the buoy network, tutorial and SAR changes.
+
+**Not verified:** the tutorial on the deployed Render site (local runs only), physical projectors, widths below 1280 px.
+
 ## 2026-09-27 - Dashboard drift and trip-anomaly fixes: plan 71 on `master`
 
 Plan [`71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`](71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md) fixed all 11 findings of the 2026-09-26 render check below; evidence and screenshots in [`render-fixes/`](render-fixes/).

@@ -216,7 +216,8 @@
   let apiBuoys = [];
   var dangerZoneRequestId = 0;
   var lastDangerZoneResult = null;
-  var dangerZoneCacheKey = 'aqone-last-danger-zone-result-new-washington-grid-v2';
+  var dangerZoneCacheKey = 'aqone-last-danger-zone-result-new-washington-grid-v2' +
+    (window.AqOneTutorial && window.AqOneTutorial.active ? '-tutorial' : '');
 
   function readCachedDangerZoneResult() {
     try {
@@ -370,6 +371,45 @@
     className: 'ops-boundary'
   }).bindTooltip('Municipal Waters \u2014 Aqone Coverage Area', { permanent: true, direction: 'center', className: 'boundary-tooltip' });
   boundaryLayer.addLayer(boundaryPoly);
+
+  // ===== OFFLINE MAP FALLBACK =====
+  // The basemap tiles come from the internet. Without them the map would be a
+  // grey box, so it switches to the service-area outline drawn as water on a
+  // plain land colour, and says so (docs/72).
+  var tileLoads = 0;
+  var tileErrors = 0;
+  var offlineNote = null;
+  function showOfflineMap() {
+    var container = map.getContainer();
+    if (container.classList.contains('map-tiles-offline')) return;
+    container.classList.add('map-tiles-offline');
+    boundaryPoly.setStyle({ fillColor: '#7cb7e8', fillOpacity: 0.55 });
+    offlineNote = L.control({ position: 'topright' });
+    offlineNote.onAdd = function () {
+      var note = L.DomUtil.create('div', 'map-offline-note');
+      note.textContent = 'Map tiles unavailable - showing the service-area outline';
+      return note;
+    };
+    offlineNote.addTo(map);
+  }
+  function hideOfflineMap() {
+    var container = map.getContainer();
+    if (!container.classList.contains('map-tiles-offline')) return;
+    container.classList.remove('map-tiles-offline');
+    boundaryPoly.setStyle({ fillColor: '#2ecc71', fillOpacity: 0.06 });
+    if (offlineNote) offlineNote.remove();
+  }
+  Object.keys(ns.tileLayers || {}).forEach(function (name) {
+    ns.tileLayers[name].on('tileload', function () {
+      tileLoads++;
+      hideOfflineMap();
+    });
+    ns.tileLayers[name].on('tileerror', function () {
+      tileErrors++;
+      if (tileLoads === 0 && tileErrors >= 4) showOfflineMap();
+    });
+  });
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) showOfflineMap();
 
   // Add layers to map (checked toggles by default)
   gatewayLayer.addTo(map);

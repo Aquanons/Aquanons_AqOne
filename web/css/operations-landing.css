@@ -78,7 +78,7 @@ body.operations-login { overflow-y: auto; }
 }
 
 .operations-title {
-  margin: 0;
+  margin: 0 0 18px;
   color: #0958a6;
   font-size: clamp(28px, 6vw, 38px);
   line-height: 1.1;

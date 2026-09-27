@@ -137,6 +137,7 @@
                 <button class="profile-tab active" data-tab="personal">Personal Info</button>
                 <button class="profile-tab" data-tab="security">Security</button>
                 <button class="profile-tab" data-tab="preferences">Preferences</button>
+                <button class="profile-tab" data-tab="learn">Learn AqOne</button>
             </div>
 
             <!-- PERSONAL INFO TAB -->
@@ -239,6 +240,18 @@
                 </div>
             </div>
 
+            <!-- LEARN AQONE TAB (docs/72) -->
+            <div class="profile-tab-content" id="tab-learn">
+                <div class="profile-panel">
+                    <div class="profile-panel-header">
+                        <h3>Learn AqOne</h3>
+                        <p>Short lessons on the operations console, each on its own practice data. Start anywhere, skip any step, and come back to one whenever you need it.</p>
+                    </div>
+                    <ol class="tutorial-lessons" id="tutorial-lessons"></ol>
+                    <p class="tutorial-lessons-note">Lessons open the console in tutorial mode: sample data, clearly marked, and nothing is sent. Exit the tutorial from its banner to return to live operations.</p>
+                </div>
+            </div>
+
         </section>
     </main>
 
@@ -253,6 +266,7 @@
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="../js/tutorial/tutorial-lessons.js"></script>
     <script src="../js/profile.js"></script>
 
 </body>

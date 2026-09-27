@@ -54,3 +54,28 @@ node render_check.mjs --setup --live-case --out ../../docs/render-fixes/phase-N 
 | RND-11c | A live case whose forecast window has ended refuses a search report. |
 | RND-11a | No drift card prints a raw `insufficient_*` code. |
 | console | No console error and no 5xx response during the run. |
+
+## Tutorial recordings
+
+`record_tutorial.mjs` records the dashboard tutorial's lessons (`docs/72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`) into `web/data/tutorial/<lesson>.json`.
+It runs the presenter scenario beat by beat, does each lesson's actions through the real dashboard in headless Edge, and saves every API response the dashboard saw.
+The tutorial replays those files, so re-record whenever an API the dashboard reads changes shape.
+
+Use a fresh disposable database, then run the two seeds in this order:
+
+```bash
+psql -h 127.0.0.1 -p 55432 -U postgres -c "create database aqone_render_tutorial"
+cd backend
+export DATABASE_URL=postgresql://postgres@127.0.0.1:55432/aqone_render_tutorial
+python migrate.py && python -m app.simulation.generator
+psql "$DATABASE_URL" -f ../tools/render-check/seed_live_currents.sql
+psql "$DATABASE_URL" -f ../tools/render-check/seed_tutorial.sql
+DEMO_MODE=1 DEMO_CONTROL_KEY=demo JWT_SECRET=<48+ random chars> ADMIN_SETUP_KEY=setup AQONE_SCHEDULER=0 \
+  python -m uvicorn app.main:app --port 8765
+cd ../tools/render-check && npm ci && node record_tutorial.mjs
+```
+
+- The recorder creates its own account, `duty.officer@example.com`, through the setup key.
+- Lessons build on each other (the SOS acknowledged in one is the drift case of the next), so record them all in one run; `--only <lesson>` still prepares the earlier ones but writes one file.
+- `--out <dir>` writes elsewhere, for comparing a new recording with the committed one.
+- Then run `node --test web/test/*.test.js`: the lesson tests check that every step's target exists and every action a step waits for was recorded.

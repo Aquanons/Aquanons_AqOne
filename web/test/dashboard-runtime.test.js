@@ -1901,3 +1901,30 @@ test('Phase 4 - Incident actions, audit reads, and keyboard stabilization', asyn
     assert.ok(drawerContent.innerHTML.includes('CASE B TIMELINE'), 'Case B timeline must be rendered');
   });
 });
+
+test('SAR metrics read the {status, data} envelope /api/ai/metrics returns', async (t) => {
+  function runSar(payload) {
+    const list = createStubElement('div', 'sar-list');
+    const leadTime = createStubElement('span', 'stat-leadtime');
+    const ns = {
+      ready: true,
+      escapeHtml,
+      authFetch: () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(payload) })
+    };
+    const { window, document } = createDOMContext({ 'sar-list': list, 'stat-leadtime': leadTime }, ns);
+    const code = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-sar.js'), 'utf8');
+    vm.runInContext(code, vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns })));
+    return new Promise((resolve) => setTimeout(() => resolve({ list, leadTime }), 10));
+  }
+
+  await t.test('ok: the evaluated figures render and fill the overview lead time', async () => {
+    const { list, leadTime } = await runSar({ status: 'ok', data: { squall: { mean_lead_time_minutes: 50, precision: 0.29, recall: 0.13 } } });
+    assert.ok(list.innerHTML.includes('Squall mean lead time'), list.innerHTML);
+    assert.equal(leadTime.textContent, '50 min');
+  });
+
+  await t.test('no_results: says the evaluations have not been run', async () => {
+    const { list } = await runSar({ status: 'no_results', data: null });
+    assert.ok(list.innerHTML.includes('No evaluation results yet'), list.innerHTML);
+  });
+});

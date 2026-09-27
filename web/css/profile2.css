@@ -859,3 +859,99 @@ body.profile-body {
     gap: 10px;
     z-index: 9999;
 }
+/* Learn AqOne tab (docs/72) */
+.tutorial-lessons {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tutorial-lesson {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.tutorial-lesson-num {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fef3c7;
+    color: #b45309;
+    font-weight: 800;
+}
+
+.tutorial-lesson.is-done .tutorial-lesson-num {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.tutorial-lesson-text {
+    flex: 1;
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.tutorial-lesson-text strong {
+    color: var(--text);
+    font-size: 15px;
+}
+
+.tutorial-lesson-text span {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.tutorial-lesson-min {
+    flex: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.tutorial-lesson-start {
+    flex: none;
+    min-width: 84px;
+    padding: 8px 16px;
+    border: 1px solid #b45309;
+    border-radius: 8px;
+    background: #b45309;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tutorial-lesson.is-done .tutorial-lesson-start {
+    background: transparent;
+    color: #b45309;
+}
+
+.tutorial-lesson-start:focus-visible {
+    outline: 3px solid #fcd34d;
+    outline-offset: 2px;
+}
+
+.tutorial-lessons-note {
+    margin-top: 16px;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+}
+
+@media (max-width: 560px) {
+    .tutorial-lesson { flex-wrap: wrap; }
+    .tutorial-lesson-min { order: 3; }
+    .tutorial-lesson-start { width: 100%; order: 4; }
+}

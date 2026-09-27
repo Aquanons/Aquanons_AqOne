@@ -1,101 +1,90 @@
-# Implementation Plan: toggleable dashboard demo mode
+# Implementation Plan: dashboard tutorial (demo) mode
 
-**Status:** DRAFT - Revision 1, not started; a separate workload from Plan 71
-**Owner:** Lenard (approval), implementer not assigned
+**Status:** COMPLETE - Revision 2, built and verified 2026-09-27
+**Owner:** Lenard (approval); implemented by Claude Code on `master`
 **Created:** 2026-09-26T23:05:00+08:00
-**Updated:** 2026-09-26T23:05:00+08:00
-**Related:** `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md` (removes the hard-coded sample vessels this plan replaces), `docs/audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md`, `docs/05_PUBLIC_API.md`, `docs/43_DTI_PITCH_IMPLEMENTATION_PLAN.md`, `docs/53_EXTERNAL_DEADLINES.md`
+**Updated:** 2026-09-27T16:15:00+08:00
+**Related:** `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`, `docs/audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md`, `docs/05_PUBLIC_API.md`, `docs/53_EXTERNAL_DEADLINES.md`, `docs/demo-mode/EVIDENCE.md`, `tools/render-check/README.md`
 
-Revision: 1
-**Execution mode:** hard-stop (proposed by the plan rule: product code and more than three phases; Len may choose `auto` at approval)
-Feature spec and revision: Len's chat request, 2026-09-26: "I think its just better to have a toggleable demo mode where the dashboard would be populated by sample vessels, sample alerts, and generally a sample of all the features and how it functions. but i think this is a seperate workload put this somewhere in the docs /implementation-plan /council."
-The requirements below (DEMO-01 to DEMO-08) are the draft spec; Len's answers to the open questions become Revision 2.
-Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0; `docs/05_PUBLIC_API.md` after Plan 71.
-Len's chat approval: Not recorded.
-Target branch: to be assigned in the Current Register when approved.
+Revision: 2
+**Execution mode:** auto (Len: "We will finish this demo today lets just update the docs after we're done")
+Feature spec and revision: Len's chat request of 2026-09-26 (Revision 1) and Len's answers of 2026-09-27 to the second council (Revision 2, below).
+Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0; `docs/05_PUBLIC_API.md` as amended by this plan.
+Len's chat approval: 2026-09-27, answers to Q1-Q6 of the second council deliberation, recorded under "Revision 2 decisions".
+Target branch: `master` (Len's push-direct rule).
 
-Success condition: a presenter can switch the dashboard into demo mode with no backend, no network and no login, see every dashboard feature populated with plausible sample data and working interactions, and switch back to a dashboard that shows only real data.
-Next hard stop: Len answers Q1-Q5 and approves Revision 2.
+Success condition: a presenter or responder can open the dashboard as a set of short, skippable lessons filled with data recorded from the real backend, on the deployed site or with no network, never mistake it for live operations, and return to a live dashboard that shows only what the backend reports.
 
 ## Why
 
-Plan 71 removes the hard-coded sample vessels because they were shown as real, under the LIVE badge, next to real rows.
-Sample data is still valuable for pitches, training and venues without a signal (`docs/53`: RSTW 2026-10-01 to 10-03, Enactus 2026-10-09 to 10-10).
+Plan 71 removed the hard-coded sample vessels because they were shown as real, under the LIVE badge, next to real rows.
+Sample data is still valuable for pitches, training and venues without a signal (`docs/53`: RSTW 2026-10-01 to 10-03, Enactus 2026-10-09 to 10-10 in Manila).
 The honest form of it is a mode the viewer chooses and can always see, that never mixes with live data.
 
-## Council deliberation (2026-09-26)
+## Council deliberation, first pass (2026-09-26)
 
-### 1. Grounding
+The first council recommended one demo data source behind the dashboard's fetch seam, all-demo or all-live per tab, no `/api/*` calls in demo mode, an always-visible banner, and deleting every scattered sample literal.
+Its full text is in this file's git history (Revision 1).
 
-**Observed facts:**
+## Council deliberation, second pass (2026-09-27)
 
-- The dashboard reads every API through one seam, `ns.authFetch` in `web/js/dashboard/dashboard-core.js`, against `window.location.origin`.
-- `login.html` already has "Continue without logging in for an offline demo", which stores the token `DEMO-OFFLINE-NO-AUTH` and `aqoneDemoBypassActive=1` in `sessionStorage` (`web/js/script.js:67-73`); with that token every protected API call returns 401.
-- Sample content is scattered through the DOM modules today: the Vessels list and overdue markers (`dashboard-vessels-alerts.js`, deleted by Plan 71), sample incident and squall drawers (`dashboard-markers.js`), Live Overview figures ("Displaying sample data"), the SAR metrics footer, and the buoy drawer baseline.
-- The backend has a separate presenter demo: `DEMO_MODE` mounts `/api/demo/*`, and scenario beats write rows tagged `is_synthetic` and `demo_tag` into the real tables (`app/demo/scenarios.py`), driven from `web/html/demo-control.html`.
-- The pure renderers in `web/js/dashboard-utils.js` already badge synthetic rows DEMO.
+Checked against `master` after Plan 71, the second council found:
 
-**Unverified assumptions (Len to confirm):**
+- The live dashboard still invented figures: `Math.max(4, ...)` buoys online, coverage `68 + 4n %`, a fixed `45 min` lead time, five hard-coded buoys and a sample squall incident, and a "Displaying sample data" note beside live numbers.
+- `GET /api/public/buoys` placed every registered buoy at one of two invented positions, and returned an invented mesh when the table was empty.
+- Four data paths bypass `authFetch` (hotspots, advisories, two Open-Meteo calls), so a swap at `authFetch` alone would leak live data into demo mode.
+- `aqoneDemoBypassActive` already meant three things; demo mode needed its own key.
+- Without a network the basemap tiles fail and the map is a grey box.
+- The backend scenario engine already scripts a seven-beat story; recording it beats hand-writing fixtures.
 
-- Demo mode is for presentations and training on a laptop or projector, not for a responder's working console.
-- It must work with no backend at all (venue WiFi down), which rules out a server-only design.
-- "A sample of all the features and how it functions" means clickable features with in-memory effects (acknowledge, escalate, mark a searched area), not a narrated guided tour.
-- The deployed production dashboard may offer the toggle, as long as it is unmistakable.
+It recommended fixing the live honesty problems first, one data-source seam covering every path, a new mode key, recorded rather than authored fixtures, and replayed rather than re-implemented actions.
 
-### 2. Perspectives and debate
+## Revision 2 decisions (Len, 2026-09-27)
 
-- 😈 **Devil's Advocate:** Sample data inside real modules is how the fake OVERDUE boats reached the LIVE view; a toggle that swaps a few arrays in place will regress the same way. Mixed state is the failure: a real SOS arriving while demo mode is on, or a demo acknowledgement sent to the real backend. Fixtures also rot: when `docs/05` changes, a frozen demo keeps showing the old shape and hides contract bugs. Timestamps frozen in fixtures read "3 weeks ago" at the next event.
-- ✂️ **Simplicity Champion:** Do not build a second dashboard or a mock server. Put one fake data source behind the existing `authFetch` seam: contract-shaped JSON per route, and a tiny in-memory store for the few mutations. Every module renders demo data through its real code path, so the demo also exercises the product. No new dependency, no build step. Reuse the existing offline-demo button as the entry instead of inventing a second one.
-- 🛡️ **Security Auditor:** The trust boundary is "a viewer must always know what they are looking at". Demo mode must be all or nothing per tab, shown by a persistent banner and watermark that no panel can hide, and it must make zero network calls to `/api/*`, so nothing can write to real tables or leak a token. The toggle must not be a URL parameter an attacker can send to a responder to hide a real alert. No real vessel names, owner names or phone numbers in fixtures.
-- 🛠️ **Architecture / DX:** The data-source swap is the composition root's job: `dashboard-core.js` chooses `liveSource` or `demoSource` once at start-up, and modules stay unaware. Fixtures live next to the contract (`fixtures/dashboard_demo/`) and are validated by the same web tests that feed the pure renderers, so a contract change breaks the demo in CI rather than on stage. Time-relative fixtures (`"-00:47"` offsets resolved at load) keep "47 minutes ago" true. Keep the backend scenario engine as the separate full-path demo; the two answer different questions.
+| # | Question | Len's answer |
+|---|---|---|
+| Q1 | Where is demo mode entered? | A button in the profile section, as a tutorial that teaches how to use the console and what it can do, split into lessons that can be skipped and replayed one at a time, never one forced tour. |
+| Q2 | Record fixtures from the scenario engine's beats? | Yes. |
+| Q3 | Split into a pre-RSTW honesty fix and a later demo mode? | No: finish it today and update the docs afterwards. |
+| Q4 | Laptop-only backend scenario for RSTW? | No: it must work live on the Render site too. |
+| Q5 | Offline map: water-polygon fallback or grey basemap? | Polygon fallback. |
+| Q6 | Enactus date and `DEMO_MODE` on Render | Enactus is 9-10 October in Manila; `DEMO_MODE` is set on Render. |
 
-### 3. Consensus and tension
+Consequences:
 
-- **Where all seats agree:** one swap at the `authFetch` seam; all-demo or all-live per tab, never mixed; an always-visible banner; no network calls in demo mode; delete every scattered sample literal once the demo source serves it.
-- **Core tension:** fidelity against honesty and upkeep. A richer demo (live-looking timelines, alarms, drift maps) sells better but costs fixture upkeep and risks being mistaken for reality; a minimal one is safe but may undersell the product.
+- A signed-in responder can enter the tutorial from the profile page, so a real SOS must still be announced there.
+  The tutorial therefore keeps one read-only request to the real SOS feed (below, DEMO-02).
+- The login page's offline-demo button now opens the tutorial without an account.
 
-### 4. The verdict
-
-- **Recommended path:** a client-side demo data source behind `authFetch`, entered from the existing offline-demo button and a toggle in the header, with contract-validated, time-relative fixtures, in-memory mutations, a scripted timeline that replays a short incident story, and a banner plus watermark; then delete the scattered sample literals.
-- **Revisit when:** a second consumer needs demo data (the handset, a training course), or fixture upkeep outgrows one person; then move the fixtures behind a backend demo tenant with its own database.
-
-## Requirements (draft)
+## Requirements
 
 | ID | Requirement | Observable acceptance |
 |---|---|---|
-| DEMO-01 | Demo mode is entered from the login page's offline-demo button or a header toggle, and left from the same toggle; it lasts for the browser tab's session. It cannot be switched on by a URL alone. | Web test on the mode resolver; render check: toggle on and off. |
-| DEMO-02 | In demo mode the dashboard makes no request to `/api/*`. | Render check: network log in demo mode has no `/api/` request. |
-| DEMO-03 | A banner and a watermark that no panel covers say DEMO - SAMPLE DATA for the whole time; the LIVE badge never shows. | Render check screenshot of every tab and drawer. |
-| DEMO-04 | Every dashboard feature has sample data: SOS feed and drawer, alerts, Trip Checks, vessel risk feed, squall nowcast, drift and search (with a searched sector and next area), advisories, buoys, sea conditions, operations status, SAR metrics. | Render check: each panel is non-empty in demo mode. |
-| DEMO-05 | Actions work in memory: acknowledge, resolve and reply on an SOS; acknowledge, dismiss, escalate and resolve on a trip check; open, rerun and mark a searched area on a drift case. A reload restores the starting story. | Web tests on the in-memory store; render check of each action. |
-| DEMO-06 | Fixtures follow the `docs/05` shapes and use relative timestamps. | Web test: every fixture passes through its pure renderer, and the contract examples in `docs/05` and the fixtures share their keys. |
-| DEMO-07 | Outside demo mode no sample content exists anywhere in the dashboard source. | Web source check: no sample literal outside the demo source module and fixtures. |
-| DEMO-08 | Fixtures contain no real person's name, phone number or licence number. | Web test over the fixture files. |
+| DEMO-01 | The tutorial is entered from the profile page's Learn AqOne tab (any lesson) or the login page (no account); it lasts for the tab session under its own key `aqoneDashboardMode`, and a URL alone cannot switch it on. Exit returns a signed-in user to the live dashboard and a guest to the login page. | Web test on `activeLesson`; flow check: guest and signed-in entry and exit. |
+| DEMO-02 | In the tutorial every request is answered from the lesson's recording; nothing reaches `/api/*`, except, for a signed-in user, a read-only poll of the real `/api/sos/active` that announces a waiting real SOS. | Flow check: no `/api/` request on the network for a guest; the real-SOS bar appears for a real unacknowledged SOS. |
+| DEMO-03 | A banner and a watermark above every panel say TUTORIAL for the whole time; the feed status reads TUTORIAL, never LIVE. | Web test on script order and z-index; screenshots. |
+| DEMO-04 | Lessons cover the console, squall nowcast, warning the fleet, trip checks, receiving an SOS, drift and search, and closing a case, each on its own recording, each startable directly, each step skippable. | Web test: every panel route recorded; lesson walkthrough of all seven. |
+| DEMO-05 | The actions a lesson teaches (sea condition; trip check acknowledge and escalate; SOS acknowledge; drift open, searched area, rerun; SOS resolve) replay what the real backend answered; an action a lesson did not record is refused with a note and nothing is sent. | Web tests on the source; walkthrough of every action. |
+| DEMO-06 | Recordings are made from the running backend by `tools/render-check/record_tutorial.mjs`, and their timestamps shift to the moment a lesson opens. | Web test on `shiftTimes`; recorder run. |
+| DEMO-07 | Outside the tutorial no sample content exists in the dashboard source; the buoy network, coverage and overview figures come from the backend or read `--`. | Web source check; render check RND-04. |
+| DEMO-08 | Recordings contain no real person's contact details. | Web test over the recordings. |
+| DEMO-09 | When basemap tiles fail, the map draws the service-area water polygon on a plain land colour and says so. | Offline walkthrough screenshot. |
 
-## Open questions for Len
+## Phases (all complete on 2026-09-27)
 
-| # | Question | Recommendation |
+| Phase | Outcome | Commit |
 |---|---|---|
-| Q1 | Offer the toggle on the deployed production dashboard, or only in the offline-demo entry? | Both, since the banner makes the mode unmistakable; revisit once MDRRMO responders use the console daily. |
-| Q2 | A scripted timeline (an SOS arrives, a trip check escalates, a drift case opens) or a static snapshot? | Scripted, restartable, about three minutes. |
-| Q3 | Keep the backend `DEMO_MODE` scenario engine alongside it? | Yes. It proves the real path end to end; this plan does not change it. |
-| Q4 | Sound alarms in demo mode? | Off by default, with the normal "click to enable" control. |
-| Q5 | The handset's pitch mode (`PITCH_MODE`) is out of scope? | Yes; a later plan may reuse the fixtures. |
+| 1 | Live honesty: real buoy positions, radii, provenance and last-heard time from `/api/public/buoys`; the map, mesh, coverage and Buoy Network panel from that feed; measured overview figures; white-on-white metric values fixed. | `00527a3` |
+| 2 | Tutorial source: `web/js/tutorial/tutorial-source.js` swaps `window.fetch` first, replays phases, shifts times, refuses unrecorded actions. | Tutorial commit |
+| 3 | Recorder and recordings: `record_tutorial.mjs`, `seed_tutorial.sql`, `/api/demo/squall/buoy/{id}`, seven recordings in `web/data/tutorial/`. | Tutorial commit |
+| 4 | Lessons and coach: `tutorial-lessons.js`, `tutorial-coach.js`, `css/tutorial.css`; Learn AqOne tab; login entry; real-SOS bar. | Tutorial commit |
+| 5 | Offline map fallback, the SAR tab reading the metrics envelope, resolved-call times, and the evidence walkthrough. | Tutorial commit |
 
-## Phases (draft)
+Evidence: [`demo-mode/EVIDENCE.md`](demo-mode/EVIDENCE.md).
 
-| Phase | Outcome | Requirements |
-|---|---|---|
-| 1 | The data-source seam: `liveSource` and `demoSource` chosen once in `dashboard-core.js`; mode resolver; banner and watermark; `demoSource` answers every route with an empty contract-shaped response | DEMO-01, -02, -03 |
-| 2 | Fixtures for every panel, time-relative, validated against the pure renderers and the `docs/05` examples | DEMO-04, -06, -08 |
-| 3 | In-memory store for the actions, reset on reload | DEMO-05 |
-| 4 | Scripted timeline (if Q2 is yes) | DEMO-04 |
-| 5 | Delete every scattered sample literal and add the source check; walkthrough with screenshots; update `docs/08`, the register and the index | DEMO-07 |
+## Known limits
 
-Each phase starts with red tests and ends with the web gate (`node --test test/*.test.js`, `node --check`) and the Plan 71 render check (`tools/render-check/`).
-
-## Dependencies
-
-- Starts after Plan 71 Phase 3, which removes the sample vessels and leaves the Vessels tab reading the real risk feed.
-- Uses the Plan 71 render check and its screenshots as the baseline.
-- Must land before the pitch dates in `docs/53` to be useful there; the current deadlines are RSTW 2026-10-01 and Enactus 2026-10-09.
+- The recorded SOS was pressed three hours before it arrived and came in directly, not through a buoy: that is how the presenter scenario writes it.
+- A searched area the learner draws is replaced by the one the recorder drew; the lesson says so.
+- The recordings follow today's API shapes; re-record with `record_tutorial.mjs` when a route the dashboard reads changes (the lesson tests catch a missing target or action, not a changed field).
+- The handset's `PITCH_MODE` does not use these recordings.

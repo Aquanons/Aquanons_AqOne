@@ -630,6 +630,7 @@ this exact response shape, and a demo-only `GET /api/demo/squall`
 (gateway-key-free, `X-Demo-Key`-gated) carries the identical shape with
 `source: "synthetic"` for presenter use — the synthetic scenario never
 reaches either production route.
+`GET /api/demo/squall/buoy/{buoy_id}` (same gating, added by docs/72) is the synthetic twin of `GET /api/ai/squall/buoy/{buoy_id}`; the tutorial recorder uses it to capture the scenario's pressure traces.
 
 `level` is one of:
 
@@ -828,6 +829,45 @@ Field notes, all of them load-bearing:
 
 Parsing and every one of these rules is pinned by
 `mobile/test/daily_outlook_test.dart`.
+
+## Buoy network — **implemented, amended by docs/72 on 2026-09-27**
+
+### `GET /api/public/buoys`
+
+Registered buoys and the shore gateways, unauthenticated, for the handset map and the dashboard's Buoy Network panel.
+
+```json
+{
+  "buoys": [
+    {
+      "id": "B01",
+      "name": "Buoy 01",
+      "latitude": 11.6713,
+      "longitude": 122.4665,
+      "coverage_radius_meters": 1342,
+      "lora_radius_meters": 6877,
+      "is_gateway_linked": true,
+      "is_synthetic": true,
+      "last_heard_at": "2026-09-27T07:55:00+00:00",
+      "status": "active"
+    }
+  ],
+  "shore_stations": [
+    { "name": "New Washington Municipal Hall", "lat": 11.6473, "lon": 122.42, "type": "MDRRMO Station", "role": "Shore gateway" }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `latitude`, `longitude` | The buoy's recorded position, or `null` when none is recorded. A client must not place a buoy without one; the handset skips it and the dashboard lists it as unplaced. |
+| `coverage_radius_meters` | Phone (WiFi) contact radius, or `null`. Nominal, not measured. |
+| `lora_radius_meters` | Buoy-to-buoy and buoy-to-gateway LoRa range, or `null`. Nominal, not measured. |
+| `last_heard_at` | The newest buoy contact or pressure reading from this buoy, or `null` if never heard. |
+| `status` | `active` when heard in the last hour, `silent` when heard before that, `unknown` when never heard. |
+
+Until 2026-09-27 this route placed every buoy at one of two invented positions and returned an invented two-buoy mesh when the table was empty or the database was down.
+It now answers 503 when the database is down, so a handset keeps its cached map, and an empty list when no buoy is registered.
 
 ## Catch-activity heatmap — **implemented**
 

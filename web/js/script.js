@@ -50,6 +50,8 @@ async function handleLogin(event) {
     const result = await postJson('/api/login', { email, password });
     sessionStorage.setItem(LAST_EMAIL_KEY, email);
     sessionStorage.removeItem('aqoneDemoBypassActive');
+    sessionStorage.removeItem('aqoneDashboardMode');
+    sessionStorage.removeItem('aqoneTutorialLesson');
     if (result.token) {
       sessionStorage.setItem('aqoneToken', result.token);
     }
@@ -64,11 +66,12 @@ async function handleLogin(event) {
   }
 }
 
-function handleDemoBypass(event) {
+// No account needed: the tutorial (docs/72) replays practice data and never
+// calls the API, so it works at a venue without a login or a signal.
+function startTutorial(event) {
   event.preventDefault();
-  sessionStorage.setItem('aqoneToken', 'DEMO-OFFLINE-NO-AUTH');
-  sessionStorage.setItem('aqoneUser', JSON.stringify({ id: 'demo-bypass', name: 'Demo Operator' }));
-  sessionStorage.setItem('aqoneDemoBypassActive', '1');
+  sessionStorage.setItem('aqoneDashboardMode', 'tutorial');
+  sessionStorage.setItem('aqoneTutorialLesson', 'console');
   window.location.href = 'dashboard.html';
 }
 
@@ -84,9 +87,9 @@ function initAuthForms() {
     loginForm.addEventListener('submit', handleLogin);
   }
 
-  const demoBypassBtn = document.getElementById('demo-bypass-btn');
-  if (demoBypassBtn) {
-    demoBypassBtn.addEventListener('click', handleDemoBypass);
+  const tutorialBtn = document.getElementById('tutorial-btn');
+  if (tutorialBtn) {
+    tutorialBtn.addEventListener('click', startTutorial);
   }
 }
 
@@ -97,7 +100,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     handleLogin: handleLogin,
-    handleDemoBypass: handleDemoBypass,
+    startTutorial: startTutorial,
     postJson: postJson
   };
 }

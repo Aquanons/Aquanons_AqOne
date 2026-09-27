@@ -32,7 +32,10 @@
     var regHtml = (typeof ns.registrationBadgeHtml === 'function')
       ? '<div class="incident-feed-reg">' + ns.registrationBadgeHtml(ev.license_type) + '</div>'
       : '';
-    var when = ev.resolved_at || ev.created_at || '';
+    var whenMs = Date.parse(ev.resolved_at || ev.created_at || '');
+    var when = isFinite(whenMs)
+      ? new Date(whenMs).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : 'at an unknown time';
     return '<div class="incident-feed-row incident-feed-resolved">' +
       '<div class="incident-feed-info">' +
         '<div class="incident-feed-desc">' + escapeHtml(name) +

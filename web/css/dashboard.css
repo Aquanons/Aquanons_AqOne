@@ -5761,3 +5761,21 @@ h3.buoy-drawer-title {
   background: rgba(245, 158, 11, 0.18);
   border-color: rgba(245, 158, 11, 0.42);
 }
+
+/* Offline map fallback (docs/72): the service-area outline as water on land. */
+.leaflet-container.map-tiles-offline { background: #e9e4d6; }
+[data-theme="dark"] .leaflet-container.map-tiles-offline { background: #2b2f36; }
+
+.map-offline-note {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--glass-shadow);
+}
+
+/* A long stage label wraps inside the drawer instead of running off its edge. */
+.sos-detail-value .aq-stage-badge { white-space: normal; text-align: left; }

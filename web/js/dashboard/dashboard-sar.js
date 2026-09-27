@@ -117,7 +117,11 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
-      .then(renderSarMetrics)
+      .then(function (payload) {
+        // The route answers {status: 'ok' | 'no_results', data}.
+        if (!payload || payload.status === 'no_results' || !payload.data) throw new Error('not-run');
+        renderSarMetrics(payload.data);
+      })
       .catch(function (err) {
         renderSarEmpty(
           err.message === 'not-run'

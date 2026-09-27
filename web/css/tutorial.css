@@ -1,0 +1,359 @@
+/* Dashboard tutorial (docs/72). Every rule is scoped to body.tutorial-mode or
+   to elements the coach creates, so live mode is untouched. */
+
+:root {
+  --tutorial-amber: #b45309;
+  --tutorial-amber-bg: #fef3c7;
+  --tutorial-amber-border: #f59e0b;
+  --tutorial-ink: #1f2a37;
+  --tutorial-card-bg: #ffffff;
+  --tutorial-card-border: #e2e8f0;
+  --tutorial-muted: #5b6776;
+}
+
+[data-theme="dark"] {
+  --tutorial-amber: #fbbf24;
+  --tutorial-amber-bg: #3a2a07;
+  --tutorial-amber-border: #d97706;
+  --tutorial-ink: #f0f4f8;
+  --tutorial-card-bg: #1e293b;
+  --tutorial-card-border: rgba(255, 255, 255, 0.14);
+  --tutorial-muted: #aab6c5;
+}
+
+/* The banner reuses the disclosure strip's slot, so no layout moves. */
+body.tutorial-mode .demo-data-banner.tutorial-banner {
+  z-index: 10002;
+  gap: 10px;
+  background: var(--tutorial-amber-bg);
+  color: var(--tutorial-ink);
+  border-bottom: 1px solid var(--tutorial-amber-border);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body.tutorial-mode .demo-data-banner.tutorial-banner::before { content: none; }
+
+/* The banner sits above the spotlight, so drawers open below it and the
+   alarm switch moves off it. */
+body.tutorial-mode .sos-drawer { top: calc(var(--header-h) + var(--demo-banner-h)); }
+
+body.tutorial-mode .alarm-sound-banner {
+  top: auto;
+  bottom: 16px;
+}
+
+.tutorial-banner-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tutorial-amber);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+[data-theme="dark"] .tutorial-banner-tag { color: #1f1300; }
+
+.tutorial-banner-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutorial-banner-btn {
+  padding: 3px 12px;
+  border: 1px solid var(--tutorial-amber-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tutorial-ink);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-banner-btn:hover,
+.tutorial-banner-btn:focus-visible { background: rgba(245, 158, 11, 0.18); }
+
+.tutorial-banner-exit {
+  background: var(--tutorial-amber);
+  border-color: var(--tutorial-amber);
+  color: #fff;
+}
+
+[data-theme="dark"] .tutorial-banner-exit { color: #1f1300; }
+
+/* No panel covers it: above everything, never catching a click. */
+.tutorial-watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='220'%3E%3Ctext x='40' y='130' transform='rotate(-22 180 110)' font-family='Arial,sans-serif' font-size='30' font-weight='800' letter-spacing='6' fill='%23b45309' fill-opacity='0.07'%3ETUTORIAL%3C/text%3E%3C/svg%3E");
+}
+
+/* The feed status says TUTORIAL, never LIVE. */
+body.tutorial-mode #sync-text,
+body.tutorial-mode #stats-feed-status { font-size: 0; }
+
+body.tutorial-mode #sync-text::after,
+body.tutorial-mode #stats-feed-status::after {
+  content: 'TUTORIAL';
+  font-size: 11px;
+}
+
+body.tutorial-mode #stats-feed-status::after { font-size: 10px; }
+body.tutorial-mode .alert-live-badge { display: none; }
+
+.tutorial-real-sos {
+  position: fixed;
+  top: calc(var(--header-h) + var(--demo-banner-h));
+  left: 50%;
+  z-index: 10002;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 0 0 10px 10px;
+  background: #c8383d;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.tutorial-real-sos[hidden] { display: none; }
+
+.tutorial-real-sos button {
+  padding: 3px 10px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #fff;
+  color: #c8383d;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-ring {
+  position: fixed;
+  z-index: 10001;
+  border: 3px solid var(--tutorial-amber-border);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.32);
+  pointer-events: none;
+  transition: left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+.tutorial-ring[hidden] { display: none; }
+
+.tutorial-card {
+  position: fixed;
+  z-index: 10003;
+  width: min(360px, calc(100vw - 28px));
+  padding: 14px 16px 12px;
+  border: 1px solid var(--tutorial-card-border);
+  border-top: 4px solid var(--tutorial-amber-border);
+  border-radius: 12px;
+  background: var(--tutorial-card-bg);
+  color: var(--tutorial-ink);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+}
+
+.tutorial-card[hidden] { display: none; }
+.tutorial-card.tutorial-card-behind { z-index: 999; }
+
+.tutorial-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tutorial-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.tutorial-card-hide {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--tutorial-card-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tutorial-muted);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.tutorial-card-title {
+  margin: 8px 0 6px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.tutorial-card-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.tutorial-card-waiting {
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--tutorial-amber-bg);
+  color: var(--tutorial-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tutorial-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tutorial-card-count {
+  margin-right: auto;
+  color: var(--tutorial-muted);
+  font-size: 12px;
+}
+
+.tutorial-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--tutorial-card-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tutorial-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tutorial-btn:hover,
+.tutorial-btn:focus-visible { border-color: var(--tutorial-amber-border); }
+
+.tutorial-btn-primary {
+  border-color: var(--tutorial-amber);
+  background: var(--tutorial-amber);
+  color: #fff;
+}
+
+[data-theme="dark"] .tutorial-btn-primary { color: #1f1300; }
+
+.tutorial-pill {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 10003;
+  padding: 9px 16px;
+  border: 1px solid var(--tutorial-amber);
+  border-radius: 999px;
+  background: var(--tutorial-amber);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+}
+
+.tutorial-pill[hidden] { display: none; }
+
+.tutorial-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10004;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.tutorial-menu-overlay[hidden] { display: none; }
+
+.tutorial-menu {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 18px 20px 14px;
+  border-radius: 14px;
+  background: var(--tutorial-card-bg);
+  color: var(--tutorial-ink);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+}
+
+.tutorial-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tutorial-menu-header h2 { margin: 0; font-size: 18px; }
+
+.tutorial-menu-close {
+  border: 0;
+  background: transparent;
+  color: var(--tutorial-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tutorial-menu-intro {
+  margin: 6px 0 12px;
+  color: var(--tutorial-muted);
+  font-size: 13px;
+}
+
+.tutorial-menu-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tutorial-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--tutorial-card-border);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tutorial-menu-item:hover,
+.tutorial-menu-item:focus-visible { border-color: var(--tutorial-amber-border); }
+.tutorial-menu-item.is-current { border-color: var(--tutorial-amber); background: var(--tutorial-amber-bg); }
+
+.tutorial-menu-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--tutorial-amber-bg);
+  color: var(--tutorial-amber);
+  font-weight: 800;
+}
+
+.tutorial-menu-text { flex: 1; display: grid; gap: 2px; }
+.tutorial-menu-text strong { font-size: 14px; }
+.tutorial-menu-text span { color: var(--tutorial-muted); font-size: 12.5px; line-height: 1.4; }
+.tutorial-menu-min { flex: none; color: var(--tutorial-muted); font-size: 12px; }

@@ -135,7 +135,9 @@
   }
 
   // Guard: no token means never logged in, so do not even start the panels.
-  if (!getToken()) {
+  // The tutorial (docs/72) needs no account: it never reaches the API.
+  var inTutorial = !!(window.AqOneTutorial && window.AqOneTutorial.active);
+  if (!getToken() && !inTutorial) {
     redirectToLogin();
     return;
   }

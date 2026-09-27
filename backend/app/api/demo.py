@@ -6,6 +6,7 @@ import os
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
+from app.ai.squall import build_buoys, buoy_detail
 from app.api.squall import _load_rows, build_squall_status
 from app.db import get_pool
 from app.demo.scenarios import advance, fire_beat, get_state, reset, start_scenario
@@ -104,6 +105,23 @@ async def demo_squall() -> dict[str, object]:
     async with pool.acquire() as conn:
         readings, _, buoy_rows = await _load_rows(conn, live=False)
     return build_squall_status(readings, buoy_rows, source='synthetic', allow_return_now=True)
+
+
+@router.get('/squall/buoy/{buoy_id}', dependencies=[Depends(require_demo_key)])
+async def demo_squall_buoy(buoy_id: str) -> dict[str, object]:
+    """Synthetic pressure trace for one buoy, the demo twin of
+    `/api/ai/squall/buoy/{id}` (which reads live readings only). The tutorial
+    recorder (docs/72) uses it to capture the scenario's squall chart."""
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        readings, _, buoy_rows = await _load_rows(conn, live=False)
+    buoys = build_buoys(buoy_rows)
+    if buoy_id not in buoys:
+        raise HTTPException(status_code=404, detail='buoy not found')
+    try:
+        return buoy_detail(readings, buoy_id, buoys)
+    except KeyError:
+        raise HTTPException(status_code=404, detail='no pressure readings available for buoy') from None
 
 
 def _weather_cells(latitude: str | None, longitude: str | None) -> list[tuple[float, float]]:

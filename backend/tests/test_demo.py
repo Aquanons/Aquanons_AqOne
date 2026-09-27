@@ -102,3 +102,12 @@ def test_firing_same_beat_is_idempotent(monkeypatch):
 
     assert first == second
     assert writes == [('run-1', 1, 'squall-fleet')]
+
+
+def test_synthetic_buoy_trace_is_behind_the_demo_key():
+    # docs/72: the tutorial recording reads the scenario's pressure traces here,
+    # because /api/ai/squall/buoy/{id} serves live readings only.
+    from app.api.demo import router
+
+    route = next(r for r in router.routes if r.path == '/api/demo/squall/buoy/{buoy_id}')
+    assert any(dep.call is require_demo_key for dep in route.dependant.dependencies)

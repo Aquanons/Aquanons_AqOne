@@ -71,3 +71,173 @@ test('DEMO-07: the live dashboard source carries no sample network or figures', 
     for (const text of banned) assert.ok(!source.includes(text), `${file} still contains ${text}`);
   }
 });
+
+// ===== Tutorial source =====
+
+const tutorial = require('../js/tutorial/tutorial-source.js');
+
+const ORIGIN = 'https://aqone.example';
+function recording() {
+  return {
+    recorded_at: '2026-09-27T06:00:00Z',
+    phases: [
+      {
+        label: 'start',
+        responses: {
+          'GET /api/sos/active?limit=200': { status: 200, body: { events: [] } },
+          'GET /api/ai/drift/cases': { status: 200, body: [{ id: 3, opened_at: '2026-09-27T05:48:00+00:00' }] }
+        }
+      },
+      {
+        label: 'sos-arrives',
+        trigger: { cue: 'sos-arrives' },
+        responses: { 'GET /api/sos/active?limit=200': { status: 200, body: { events: [{ id: 12, acknowledged_at: null }] } } }
+      },
+      {
+        label: 'acknowledged',
+        trigger: { request: 'POST /api/sos/12/acknowledge', reply: { status: 200, body: { id: 12, version: 2 } } },
+        responses: {
+          'GET /api/sos/active?limit=200': { status: 200, body: { events: [{ id: 12, acknowledged_at: '2026-09-27T06:01:00Z' }] } },
+          'GET /api/ai/drift/cases/3': { status: 200, body: { id: 3 } }
+        }
+      }
+    ]
+  };
+}
+
+async function json(promise) {
+  const res = await promise;
+  return { status: res.status, body: await res.json() };
+}
+
+test('DEMO-06: recorded times move to the moment the lesson opens', () => {
+  const delta = 2 * 3600 * 1000;
+  const shifted = tutorial.shiftTimes({
+    a: '2026-09-27T06:00:00Z', b: '2026-09-27T05:48:00.5+00:00', c: '2026-09-27T06:00', d: '2026-09-26', e: 'not a time', f: [5]
+  }, delta);
+  assert.equal(shifted.a, '2026-09-27T08:00:00.000Z');
+  assert.equal(shifted.b, '2026-09-27T07:48:00.500Z');
+  assert.equal(shifted.c, '2026-09-27T08:00');
+  assert.equal(shifted.d, '2026-09-26');
+  assert.equal(shifted.e, 'not a time');
+  assert.deepEqual(shifted.f, [5]);
+});
+
+test('the source answers what the dashboard asked, from the current phase', async () => {
+  const source = tutorial.createSource(recording(), { origin: ORIGIN, now: Date.parse('2026-09-27T08:00:00Z') });
+  assert.deepEqual((await json(source.fetch('/api/sos/active?limit=200'))).body, { events: [] });
+  assert.deepEqual((await json(source.fetch(ORIGIN + '/api/sos/active?limit=50'))).body, { events: [] }, 'same path, other query');
+  const cases = await json(source.fetch('/api/ai/drift/cases'));
+  assert.equal(cases.body[0].opened_at, '2026-09-27T07:48:00.000Z');
+  assert.equal((await json(source.fetch('/api/unknown'))).status, 404);
+});
+
+test('a cue and an action move the lesson forward; unrecorded actions are refused', async () => {
+  const refused = [];
+  const source = tutorial.createSource(recording(), { origin: ORIGIN, onRefusal: (key) => refused.push(key) });
+  assert.equal(source.cue('sos-arrives'), true);
+  assert.equal((await json(source.fetch('/api/sos/active?limit=200'))).body.events[0].acknowledged_at, null);
+
+  const ack = await json(source.fetch('/api/sos/12/acknowledge', { method: 'POST', body: '{}' }));
+  assert.deepEqual(ack, { status: 200, body: { id: 12, version: 2 } });
+  assert.equal(source.phase(), 'acknowledged');
+  assert.ok((await json(source.fetch('/api/sos/active?limit=200'))).body.events[0].acknowledged_at);
+
+  const resolve = await json(source.fetch('/api/sos/12/resolve', { method: 'POST' }));
+  assert.equal(resolve.status, 409);
+  assert.deepEqual(refused, ['POST /api/sos/12/resolve']);
+  assert.equal(source.cue('sos-arrives'), false, 'a cue never moves back');
+});
+
+test('a detail recorded after an action is still served before it', async () => {
+  const source = tutorial.createSource(recording(), { origin: ORIGIN });
+  assert.deepEqual((await json(source.fetch('/api/ai/drift/cases/3'))).body, { id: 3 });
+});
+
+test('DEMO-01: only the tab session switches the tutorial on, never a URL', () => {
+  const store = (entries) => ({ getItem: (key) => (key in entries ? entries[key] : null) });
+  assert.equal(tutorial.activeLesson(store({})), null);
+  assert.equal(tutorial.activeLesson(store({ aqoneDashboardMode: 'tutorial', aqoneTutorialLesson: 'sos' })), 'sos');
+  assert.equal(tutorial.activeLesson(store({ aqoneDashboardMode: 'tutorial', aqoneTutorialLesson: '../secrets' })), null);
+  const source = fs.readFileSync(path.join(__dirname, '../js/tutorial/tutorial-source.js'), 'utf8');
+  assert.ok(!/location\.(search|hash)|URLSearchParams/.test(source), 'the mode must not be read from the URL');
+});
+
+// ===== Lessons and recordings =====
+
+const lessons = require('../js/tutorial/tutorial-lessons.js');
+const WEB = path.join(__dirname, '..');
+const dashboardHtml = fs.readFileSync(path.join(WEB, 'html/dashboard.html'), 'utf8');
+const dashboardJs = fs.readdirSync(path.join(WEB, 'js/dashboard'))
+  .map((file) => fs.readFileSync(path.join(WEB, 'js/dashboard', file), 'utf8')).join('\n') +
+  fs.readFileSync(path.join(WEB, 'js/dashboard-utils.js'), 'utf8');
+
+function recordingOf(id) {
+  return JSON.parse(fs.readFileSync(path.join(WEB, 'data/tutorial', id + '.json'), 'utf8'));
+}
+
+// The first #id or .class of a selector must exist in the page or be drawn by
+// its scripts, or a step would highlight nothing.
+function anchorExists(selector) {
+  const anchor = selector.match(/[#.][A-Za-z][\w-]*/)[0];
+  return anchor[0] === '#'
+    ? dashboardHtml.includes(`id="${anchor.slice(1)}"`)
+    : dashboardHtml.includes(anchor.slice(1)) || dashboardJs.includes(anchor.slice(1));
+}
+
+test('every lesson has a recording, and every step points at something real', () => {
+  assert.equal(new Set(lessons.map((l) => l.id)).size, lessons.length);
+  for (const lesson of lessons) {
+    const recording = recordingOf(lesson.id);
+    assert.ok(Date.parse(recording.recorded_at), `${lesson.id}: recorded_at`);
+    const labels = recording.phases.map((phase) => phase.label);
+    assert.equal(labels[0], 'start');
+    for (const step of lesson.steps) {
+      if (step.target) assert.ok(anchorExists(step.target), `${lesson.id}: ${step.target}`);
+      for (const action of step.before || []) {
+        const selector = action.click || `.stats-tab[data-tab="${action.tab}"]`;
+        assert.ok(anchorExists(selector), `${lesson.id}: before ${selector}`);
+        if (action.tab) assert.ok(dashboardHtml.includes(`data-tab="${action.tab}"`), `${lesson.id}: tab ${action.tab}`);
+      }
+      // DEMO-05: an action the lesson asks for was recorded, so it replays.
+      if (step.waitFor) assert.ok(labels.some((label) => new RegExp(step.waitFor).test(label)), `${lesson.id}: ${step.waitFor} in ${labels}`);
+      if (step.cue) assert.ok(recording.phases.some((phase) => phase.trigger && phase.trigger.cue === step.cue), `${lesson.id}: cue ${step.cue}`);
+    }
+  }
+});
+
+test('DEMO-04: the recordings fill every panel the lessons talk about', () => {
+  const seen = new Set();
+  for (const lesson of lessons) {
+    for (const phase of recordingOf(lesson.id).phases) {
+      Object.keys(phase.responses).forEach((key) => seen.add(key.split('?')[0]));
+    }
+  }
+  for (const route of ['GET /api/sos/active', 'GET /api/sos/recent', 'GET /api/public/buoys', 'GET /api/ai/squall/current',
+    'GET /api/ai/anomaly/active', 'GET /api/ai/anomaly/cases/open', 'GET /api/ai/drift/incidents', 'GET /api/sea-condition',
+    'GET /api/advisories', 'GET /api/ops/status', 'GET /api/ai/metrics', 'GET /api/public/hotspots', 'GET /api/demo/weather/forecast']) {
+    assert.ok(seen.has(route), `no recording answers ${route}`);
+  }
+});
+
+test('DEMO-08: recordings carry no real contact details', () => {
+  for (const lesson of lessons) {
+    const text = fs.readFileSync(path.join(WEB, 'data/tutorial', lesson.id + '.json'), 'utf8');
+    for (const email of text.match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) || []) {
+      assert.match(email, /@example\.(com|org)$/, `${lesson.id}: ${email}`);
+    }
+    assert.ok(!/(\+63|\b09)\d{9}\b/.test(text), `${lesson.id}: a phone number`);
+  }
+});
+
+test('DEMO-02 and DEMO-03: the data source loads first and the watermark covers everything', () => {
+  const firstScript = dashboardHtml.match(/<script src="([^"]+)"/)[1];
+  assert.equal(firstScript, '../js/tutorial/tutorial-source.js');
+  const css = fs.readFileSync(path.join(WEB, 'css/tutorial.css'), 'utf8');
+  const watermark = css.match(/\.tutorial-watermark \{([^}]*)\}/)[1];
+  assert.match(watermark, /pointer-events: none/);
+  const top = Number(watermark.match(/z-index: (\d+)/)[1]);
+  const dashboardCss = fs.readFileSync(path.join(WEB, 'css/dashboard.css'), 'utf8');
+  const highest = Math.max(...(dashboardCss.match(/z-index: \d+/g) || []).map((z) => Number(z.slice(9))));
+  assert.ok(top > highest, `watermark z-index ${top} must exceed the dashboard's ${highest}`);
+});

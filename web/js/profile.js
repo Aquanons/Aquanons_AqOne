@@ -11,6 +11,7 @@
             initLanguageSwitcher();
             initDarkMode();
             initHeaderAndActions();
+            initTutorialLessons();
             loadAuthenticatedUser();
         });
     }
@@ -388,6 +389,11 @@
         }
 
         if (!token) {
+            // A tutorial guest has no account; only the lessons are theirs.
+            if (inTutorial()) {
+                renderUserProfile({ name: 'Tutorial guest', role: 'guest', email: '--' });
+                return;
+            }
             window.location.replace('login.html');
             return;
         }
@@ -397,14 +403,7 @@
             renderUserProfile(cachedUser);
         }
 
-        // If not a local demo bypass, refresh identity from /api/me
-        const isDemo = sessionStorage.getItem('aqoneDemoBypassActive') === '1' || token === 'DEMO-OFFLINE-NO-AUTH';
-        if (isDemo) {
-            if (!cachedUser) {
-                renderUserProfile({ name: 'Demo Operator', role: 'admin', email: 'demo@aqone.local' });
-            }
-            return;
-        }
+        // Refresh identity from /api/me
 
         fetch('/api/me', {
             headers: {
@@ -440,6 +439,49 @@
         .catch(function (err) {
             console.warn('[AqOne] Could not refresh /api/me:', err.message);
         });
+    }
+
+    /* --------------------------------------------------------------
+       LEARN AQONE: the dashboard tutorial's lessons (docs/72)
+       -------------------------------------------------------------- */
+    const TUTORIAL_MODE_KEY = 'aqoneDashboardMode';
+    const TUTORIAL_LESSON_KEY = 'aqoneTutorialLesson';
+
+    function inTutorial() {
+        try { return sessionStorage.getItem(TUTORIAL_MODE_KEY) === 'tutorial'; } catch (e) { return false; }
+    }
+
+    function startTutorialLesson(id) {
+        sessionStorage.setItem(TUTORIAL_MODE_KEY, 'tutorial');
+        sessionStorage.setItem(TUTORIAL_LESSON_KEY, id);
+        window.location.href = 'dashboard.html';
+    }
+
+    function initTutorialLessons() {
+        const list = document.getElementById('tutorial-lessons');
+        const lessons = typeof window !== 'undefined' ? window.AqOneTutorialLessons : null;
+        if (!list || !Array.isArray(lessons)) return;
+        let progress = {};
+        try { progress = JSON.parse(localStorage.getItem('aqoneTutorialProgress') || '{}') || {}; } catch (e) { progress = {}; }
+        list.innerHTML = lessons.map(function (lesson, index) {
+            const done = progress[lesson.id] === true;
+            return '<li class="tutorial-lesson' + (done ? ' is-done' : '') + '">' +
+                '<span class="tutorial-lesson-num">' + (done ? '&#10003;' : index + 1) + '</span>' +
+                '<span class="tutorial-lesson-text"><strong>' + escapeText(lesson.title) + '</strong>' +
+                '<span>' + escapeText(lesson.summary) + '</span></span>' +
+                '<span class="tutorial-lesson-min">' + lesson.minutes + ' min</span>' +
+                '<button type="button" class="tutorial-lesson-start" data-lesson="' + escapeText(lesson.id) + '">' +
+                (done ? 'Review' : 'Start') + '</button>' +
+            '</li>';
+        }).join('');
+        list.addEventListener('click', function (event) {
+            const button = event.target.closest('[data-lesson]');
+            if (button) startTutorialLesson(button.getAttribute('data-lesson'));
+        });
+        if (inTutorial()) {
+            const learnTab = document.querySelector('.profile-tab[data-tab="learn"]');
+            if (learnTab) learnTab.click();
+        }
     }
 
     // Export for unit tests under Node
