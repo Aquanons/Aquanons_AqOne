@@ -258,7 +258,7 @@
           <button class="rail-btn" id="rail-btn-buoy" data-panel="buoys" title="Buoy Network Health">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg>
             <span class="rail-label">BUOYS</span>
-            <span class="rail-badge" id="buoy-rail-badge">4/5</span>
+            <span class="rail-badge" id="buoy-rail-badge">--</span>
           </button>
           <button class="rail-btn rail-emergency" id="btn-emergency" title="Emergency Contacts">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -437,12 +437,12 @@
             </div>
             <div class="sidebar-section">
               <h4 class="buoy-drawer-title">Buoy Network Health</h4>
-              <span class="buoy-drawer-badge" id="buoy-drawer-badge">4/5 Online</span>
+              <span class="buoy-drawer-badge" id="buoy-drawer-badge">--</span>
             </div>
             <div class="buoy-drawer-body">
               <div class="buoy-list" id="buoy-list"></div>
             </div>
-            <div class="buoy-drawer-footer" id="buoy-drawer-footer">Sample buoy network baseline (unpolled offline data)</div>
+            <div class="buoy-drawer-footer" id="buoy-drawer-footer">Loading buoy network...</div>
           </div>
 
           <div class="rail-panel-content" id="panel-advisories">
@@ -522,8 +522,8 @@
           <div class="stats-tabs" id="stats-tabs">
             <button class="stats-tab active" data-tab="overview">Live Overview</button>
             <button class="stats-tab" data-tab="vessels">Vessels <span class="tab-badge badge-red" id="badge-vessels">--</span></button>
-            <button class="stats-tab" data-tab="alerts">Alerts <span class="tab-badge badge-red" id="badge-alerts">2</span></button>
-            <button class="stats-tab" data-tab="sar">SAR Metrics <span class="tab-badge badge-orange" id="badge-sar">2</span></button>
+            <button class="stats-tab" data-tab="alerts">Alerts <span class="tab-badge badge-red" id="badge-alerts">0</span></button>
+            <button class="stats-tab" data-tab="sar">SAR Metrics</button>
             <button class="stats-tab" data-tab="tripchecks">Trip Checks <span class="tab-badge badge-red" id="badge-tripchecks">0</span></button>
           </div>
           <button id="stats-minimize" class="stats-minimize-btn">-</button>
@@ -532,7 +532,6 @@
           <div class="tab-content active" id="tab-overview">
             <div class="stats-timing">
               <span class="last-updated">Last updated: 0 seconds ago</span>
-              <div class="sample-data-disclaimer">Displaying sample data</div>
             </div>
             <div class="stats-cards">
               <div class="stat-card">
@@ -540,8 +539,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-value" id="stat-buoys">4/5</span>
-                  <span class="stat-label">Buoys Online</span>
+                  <span class="stat-value" id="stat-buoys">--</span>
+                  <span class="stat-label">Buoys Heard in the Last Hour</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -549,17 +548,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-value" id="stat-coverage">68%</span>
-                  <span class="stat-label">Municipal Water Coverage</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon stat-projects">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-value" id="stat-vessels">--</span>
-                  <span class="stat-label">Vessels in Contact Range</span>
+                  <span class="stat-value" id="stat-coverage">--</span>
+                  <span class="stat-label">Waters in Phone Range of a Buoy</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -567,8 +557,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-value" id="stat-leadtime">45 min</span>
-                  <span class="stat-label">Squall Alert Lead Time</span>
+                  <span class="stat-value" id="stat-leadtime">--</span>
+                  <span class="stat-label">Squall Lead Time (Evaluated)</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -576,7 +566,7 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-value" id="stat-alerts">3</span>
+                  <span class="stat-value" id="stat-alerts">0</span>
                   <span class="stat-label">Active Alerts</span>
                 </div>
               </div>
@@ -603,7 +593,7 @@
 
           <div class="tab-content" id="tab-sar">
             <div class="sar-list" id="sar-list"></div>
-            <div class="sar-footer">Success metrics track the PRD targets for Aqone &mdash; sample data for demonstration</div>
+            <div class="sar-footer">Measured by the AqOne evaluation scripts.</div>
           </div>
         </div>
       </div>

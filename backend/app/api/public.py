@@ -19,7 +19,7 @@ credentials the person at risk cannot hold.
 from __future__ import annotations
 
 import math
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -41,65 +41,57 @@ OPEN_METEO_MARINE_URL = 'https://marine-api.open-meteo.com/v1/marine'
 FORECAST_UPSTREAM_TIMEOUT_SECONDS = 5.0
 MAX_FORECAST_DAYS = 7
 
-DEMO_BUOYS: tuple[dict[str, object], ...] = (
-    {
-        'id': 'buoy-a',
-        'name': 'Buoy A - Tambak',
-        'latitude': 11.6800,
-        'longitude': 122.4140,
-        'coverage_radius_meters': 700,
-        'status': 'active',
-    },
-    {
-        'id': 'buoy-b',
-        'name': 'Buoy B - Batan Bay',
-        'latitude': 11.6520,
-        'longitude': 122.4480,
-        'coverage_radius_meters': 700,
-        'status': 'active',
-    },
-)
+BUOY_ACTIVE_WINDOW = timedelta(hours=1)
+
+
+def buoy_marker(row, now: datetime) -> dict[str, object]:
+    last_heard_at = row['last_heard_at']
+    if last_heard_at is None:
+        status = 'unknown'
+    elif now - last_heard_at <= BUOY_ACTIVE_WINDOW:
+        status = 'active'
+    else:
+        status = 'silent'
+    return {
+        'id': row['id'],
+        'name': row['label'],
+        'latitude': row['lat'],
+        'longitude': row['lon'],
+        'coverage_radius_meters': row['contact_radius_m'],
+        'lora_radius_meters': row['lora_radius_m'],
+        'is_gateway_linked': row['is_gateway_linked'],
+        'is_synthetic': row['is_synthetic'],
+        'last_heard_at': last_heard_at.isoformat() if last_heard_at else None,
+        'status': status,
+    }
 
 
 @router.get('/buoys')
 async def public_buoys() -> dict[str, object]:
-    """Buoy coverage markers for the fisherman app.
+    """Registered buoys and the shore gateways, for the handset map and the dashboard.
 
-    The live database may still be empty during a pitch rehearsal. Returning the
-    demo mesh keeps Venture usable while real buoy telemetry is being installed.
+    A buoy with no recorded position is listed with null coordinates, never
+    placed somewhere plausible; the handset skips it and the dashboard lists it
+    as unplaced.
     """
-    try:
-        pool = get_pool()
-    except HTTPException:
-        return {'buoys': list(DEMO_BUOYS), 'shore_stations': list(SHORE_STATIONS)}
+    pool = get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             '''
-            SELECT id, label, 700 AS coverage_radius_meters
-            FROM buoys
-            ORDER BY id
-            LIMIT 20
+            SELECT b.id, b.label, b.lat, b.lon, b.contact_radius_m, b.lora_radius_m,
+                   b.is_gateway_linked, b.is_synthetic,
+                   (SELECT MAX(COALESCE(c.observed_at, c.created_at))
+                    FROM buoy_contacts c WHERE c.buoy_id = b.id) AS last_heard_at
+            FROM buoys b
+            ORDER BY b.id
+            LIMIT 50
             '''
         )
-
-    if not rows:
-        return {'buoys': list(DEMO_BUOYS), 'shore_stations': list(SHORE_STATIONS)}
-
-    fallback_positions = list(DEMO_BUOYS)
-    buoys = []
-    for index, row in enumerate(rows):
-        fallback = fallback_positions[index % len(fallback_positions)]
-        buoys.append(
-            {
-                'id': row['id'],
-                'name': row['label'],
-                'latitude': fallback['latitude'],
-                'longitude': fallback['longitude'],
-                'coverage_radius_meters': row['coverage_radius_meters'],
-                'status': 'active',
-            }
-        )
-    return {'buoys': buoys, 'shore_stations': list(SHORE_STATIONS)}
+    now = datetime.now(UTC)
+    return {
+        'buoys': [buoy_marker(row, now) for row in rows],
+        'shore_stations': list(SHORE_STATIONS),
+    }
 
 
 @router.get('/alerts/waves')

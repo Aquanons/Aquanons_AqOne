@@ -1,11 +1,7 @@
 (function (ns) {
   'use strict';
   if (!ns.ready) return;
-  var shoreStations = ns.shoreStations;
-  var initialBuoys = ns.initialBuoys;
-  var _metresBetween = ns._metresBetween;
-  var meshLinks = ns.meshLinks;
-  var incidents = ns.incidents;
+  var utils = ns.dashboardUtils || window.AqOneDashboardUtils;
   var opsBoundary = ns.opsBoundary;
   var map = ns.map;
   var gatewayLayer = ns.gatewayLayer;
@@ -68,144 +64,13 @@
   }
 
 
-  // ===== GATEWAY MARKERS =====
-  shoreStations.forEach(s => {
-    const marker = L.marker([s.lat, s.lng], { icon: createMarkerIcon('facility') })
-      .bindPopup(makePopup(s.name, [
-        ['Type', s.type],
-        ['Role', s.role],
-        ['Status', s.status.charAt(0).toUpperCase() + s.status.slice(1)]
-      ], { cls: s.status, text: s.status }));
-    gatewayLayer.addLayer(marker);
-  });
-
-
-  // ===== BUOY MARKERS =====
-  initialBuoys.forEach(b => {
-    var extraRows = b.isGateway
-      ? [['Role', 'LoRa gateway — mesh exit to shore']]
-      : [];
-    var pressureRow = b.pressure != null
-      ? [['Pressure', b.pressure.toFixed(1) + ' hPa (' + (b.pressureTrend > 0 ? '+' : '') + b.pressureTrend + ')']]
-      : [];
-    // These readings (battery, signal, pressure, current) are the fixed
-    // sample values in initialBuoys above, not live telemetry from hardware -
-    // no buoy in this deployment reports them yet. Rule 4 of
-    // docs/20_WEEK_1_DASHBOARD_FLUTTER_IMPLEMENTATION_PLAN.md bans presenting
-    // that as if it were live, so every buoy popup says so explicitly.
-    const marker = L.marker([b.lat, b.lng], { icon: createMarkerIcon('buoy') })
-      .bindPopup(makePopup(b.name, [
-        ['Status', b.status.charAt(0).toUpperCase() + b.status.slice(1)],
-        ['Battery', b.battery + '% (simulated)'],
-        ['Signal', b.signal + ' (simulated)']
-      ].concat(pressureRow, extraRows), { cls: b.status, text: b.status }));
-    buoyLayer.addLayer(marker);
-  });
-
-
-  // ===== COVERAGE CIRCLES =====
-  // Two layers per buoy. The large LoRa rings overlap into a continuous relay
-  // fabric; the small WiFi bubbles inside them show where a phone can actually
-  // reach a buoy. Drawing only one radius was misleading either way: LoRa alone
-  // implies phones connect from 7 km out, WiFi alone makes the mesh look
-  // disconnected.
+  // ===== BUOY NETWORK =====
+  // Everything drawn here comes from GET /api/public/buoys. A buoy with no
+  // recorded position is listed in the Buoy Network panel but never placed.
+  var network = { buoys: [], stations: [], loadedAt: null, failed: false };
+  var networkListeners = [];
   var coverageCircles = {};
-  initialBuoys.forEach(function (b) {
-    // LoRa relay range - drawn first so it sits beneath the WiFi bubble.
-    var lora = L.circle([b.lat, b.lng], {
-      radius: b.loraRadius || 7000,
-      color: '#22d3ee',
-      fillColor: '#22d3ee',
-      fillOpacity: 0.05,
-      weight: 1,
-      dashArray: '2 6',
-      opacity: 0.35
-    }).bindTooltip(b.name + ' — LoRa relay range ' + ((b.loraRadius || 7000) / 1000).toFixed(1) + ' km', { sticky: true });
-    coverageLayer.addLayer(lora);
-
-    // WiFi SoftAP bubble - where a phone can hand over an SOS.
-    var wifi = L.circle([b.lat, b.lng], {
-      radius: b.wifiRadius || 1200,
-      color: '#60a5fa',
-      fillColor: '#60a5fa',
-      fillOpacity: 0.14,
-      weight: 1.5,
-      dashArray: '6 4',
-      opacity: 0.55
-    }).bindTooltip(b.name + ' — phone contact range ' + ((b.wifiRadius || 1200) / 1000).toFixed(1) + ' km', { sticky: true });
-    coverageLayer.addLayer(wifi);
-
-    // Pulse animation targets the WiFi bubble: it marks a phone check-in.
-    coverageCircles[b.name] = wifi;
-  });
-
-  function pulseCoverageCircle(buoyName) {
-    var c = coverageCircles[buoyName];
-    if (!c) return;
-    c.setStyle({ weight: 4, opacity: 0.9, fillOpacity: 0.2 });
-    setTimeout(function () {
-      c.setStyle({ weight: 1.5, opacity: 0.4, fillOpacity: 0.08, dashArray: '6 4' });
-    }, 2500);
-  }
-
-
-  // ===== MESH NETWORK =====
-  var meshPolylines = [];
-  function findNode(name) {
-    return initialBuoys.find(function (b) { return b.name === name; }) ||
-           shoreStations.find(function (s) { return s.name === name; });
-  }
-
-  meshLinks.forEach(function (link) {
-    var n1 = findNode(link[0]);
-    var n2 = findNode(link[1]);
-    if (!n1 || !n2) return;
-    // The mesh is the product. Drawn at 1.5px and 45% opacity it was
-    // effectively invisible against the basemap, which made a correctly
-    // connected array look like scattered unconnected buoys.
-    var line = L.polyline([[n1.lat, n1.lng], [n2.lat, n2.lng]], {
-      color: '#22d3ee',
-      weight: 2.5,
-      opacity: 0.85,
-      dashArray: '6 6',
-      smoothFactor: 1
-    });
-    line.bindTooltip(
-      link[0] + ' ↔ ' + link[1] + ' · ' +
-      (_metresBetween(n1.lat, n1.lng, n2.lat, n2.lng) / 1000).toFixed(1) + ' km LoRa link',
-      { sticky: true, className: 'drift-incident-label' }
-    );
-    meshLayer.addLayer(line);
-    meshPolylines.push(line);
-  });
-
-  var gatewayBuoy = initialBuoys.find(function (b) { return b.isGateway; });
-  if (gatewayBuoy) {
-    var ringIcon = L.divIcon({
-      className: '',
-      html: '<div class="gateway-ring"></div>',
-      iconSize: [44, 44],
-      iconAnchor: [22, 22]
-    });
-    var ringMarker = L.marker([gatewayBuoy.lat, gatewayBuoy.lng], { icon: ringIcon });
-    meshLayer.addLayer(ringMarker);
-  }
-
   var meshPath = [];
-  meshLinks.forEach(function (link) {
-    var n1 = findNode(link[0]);
-    var n2 = findNode(link[1]);
-    if (!n1 || !n2) return;
-    var steps = 25;
-    for (var i = 0; i <= steps; i++) {
-      var t = i / steps;
-      meshPath.push([
-        n1.lat + (n2.lat - n1.lat) * t,
-        n1.lng + (n2.lng - n1.lng) * t
-      ]);
-    }
-  });
-
   var meshDot = L.circleMarker([0, 0], {
     radius: 3.5,
     color: '#99f6e4',
@@ -214,36 +79,139 @@
     weight: 2,
     opacity: 1
   });
-  meshLayer.addLayer(meshDot);
+
+  function km(metres) {
+    return metres == null ? 'not recorded' : (metres / 1000).toFixed(1) + ' km';
+  }
+
+  function buoyBadge(b) {
+    if (b.isSynthetic) return { cls: 'warning', text: 'DEMO' };
+    if (b.status === 'active') return { cls: 'active', text: 'active' };
+    return { cls: 'warning', text: b.status === 'silent' ? 'silent' : 'never heard' };
+  }
+
+  function drawNetwork() {
+    gatewayLayer.clearLayers();
+    buoyLayer.clearLayers();
+    coverageLayer.clearLayers();
+    meshLayer.clearLayers();
+    coverageCircles = {};
+    meshPath = [];
+    var now = Date.now();
+
+    network.stations.forEach(function (s) {
+      gatewayLayer.addLayer(L.marker([s.lat, s.lng], { icon: createMarkerIcon('facility') })
+        .bindPopup(makePopup(s.name, [['Type', s.type], ['Role', s.role]])));
+    });
+
+    network.buoys.forEach(function (b) {
+      if (b.lat == null) return;
+      var rows = [
+        ['Status', utils.buoyHeardText(b, now)],
+        ['Phone range', km(b.wifiRadius)],
+        ['LoRa range', km(b.loraRadius)]
+      ];
+      if (b.isGateway) rows.push(['Role', 'LoRa gateway - mesh exit to shore']);
+      buoyLayer.addLayer(L.marker([b.lat, b.lng], { icon: createMarkerIcon('buoy') })
+        .bindPopup(makePopup(b.name, rows, buoyBadge(b))));
+
+      // The large LoRa rings overlap into the relay fabric; the small WiFi
+      // bubbles inside them are where a phone can actually hand over an SOS.
+      if (b.loraRadius != null) {
+        coverageLayer.addLayer(L.circle([b.lat, b.lng], {
+          radius: b.loraRadius,
+          color: '#22d3ee',
+          fillColor: '#22d3ee',
+          fillOpacity: 0.05,
+          weight: 1,
+          dashArray: '2 6',
+          opacity: 0.35
+        }).bindTooltip(b.name + ' - LoRa relay range ' + km(b.loraRadius), { sticky: true }));
+      }
+      if (b.wifiRadius != null) {
+        var wifi = L.circle([b.lat, b.lng], {
+          radius: b.wifiRadius,
+          color: '#60a5fa',
+          fillColor: '#60a5fa',
+          fillOpacity: 0.14,
+          weight: 1.5,
+          dashArray: '6 4',
+          opacity: 0.55
+        }).bindTooltip(b.name + ' - phone contact range ' + km(b.wifiRadius), { sticky: true });
+        coverageLayer.addLayer(wifi);
+        coverageCircles[b.id] = wifi;
+        coverageCircles[b.name] = wifi;
+      }
+      if (b.isGateway) {
+        meshLayer.addLayer(L.marker([b.lat, b.lng], {
+          icon: L.divIcon({ className: '', html: '<div class="gateway-ring"></div>', iconSize: [44, 44], iconAnchor: [22, 22] })
+        }));
+      }
+    });
+
+    utils.meshLinksFor(network.buoys, network.stations).forEach(function (link) {
+      var a = link[0], b = link[1];
+      meshLayer.addLayer(L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
+        color: '#22d3ee',
+        weight: 2.5,
+        opacity: 0.85,
+        dashArray: '6 6',
+        smoothFactor: 1
+      }).bindTooltip(
+        a.name + ' ↔ ' + b.name + ' · ' + km(utils.metresBetween(a.lat, a.lng, b.lat, b.lng)) + ' LoRa link',
+        { sticky: true, className: 'drift-incident-label' }
+      ));
+      for (var i = 0; i <= 25; i++) {
+        meshPath.push([a.lat + (b.lat - a.lat) * i / 25, a.lng + (b.lng - a.lng) * i / 25]);
+      }
+    });
+    if (meshPath.length) meshLayer.addLayer(meshDot);
+  }
+
+  function pulseCoverageCircle(buoyKey) {
+    var c = coverageCircles[buoyKey];
+    if (!c) return;
+    c.setStyle({ weight: 4, opacity: 0.9, fillOpacity: 0.2 });
+    setTimeout(function () {
+      c.setStyle({ weight: 1.5, opacity: 0.55, fillOpacity: 0.14, dashArray: '6 4' });
+    }, 2500);
+  }
+
   var dotIdx = 0;
-  var meshDotInterval = setInterval(function () {
-    if (!map.hasLayer(meshLayer)) return;
+  setInterval(function () {
+    if (!meshPath.length || !map.hasLayer(meshLayer)) return;
     dotIdx = (dotIdx + 1) % meshPath.length;
     meshDot.setLatLng(meshPath[dotIdx]);
   }, 60);
 
+  function loadNetwork() {
+    return ns.authFetch('/api/public/buoys')
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (payload) {
+        var next = utils.networkFromPublicBuoys(payload);
+        network.buoys = next.buoys;
+        network.stations = next.stations;
+        network.loadedAt = Date.now();
+        network.failed = false;
+      })
+      .catch(function (err) {
+        network.failed = true;
+        console.warn('[AqOne] Buoy network unavailable:', err.message);
+      })
+      .then(function () {
+        drawNetwork();
+        networkListeners.forEach(function (fn) { fn(network); });
+      });
+  }
 
-  // ===== INCIDENT MARKERS =====
-  const incidentDrawerData = [
-    { alertType: 'squall', headerText: 'RETURN NOW — SQUALL NOWCAST',
-      vesselId: 'ALL', owner: 'Broadcast \u2014 all vessels in contact range',
-      position: 'Approach NE \u2014 arrival est. 14:20', lat: 11.7383, lng: 122.5324,
-      buoy: 'Buoy-B / Buoy-C', coverage: 'Alert propagated across LoRa mesh \u2014 waiting at every buoy',
-      confidence: 88, stage: 'Squall nowcast \u2014 45 min lead', nextContact: 'Delivered to phones on next contact',
-      timerBaseline: 12 * 60 },
-  ];
-
-  const incidentMarkers = [];
-
-  incidents.forEach((inc, idx) => {
-    const marker = L.marker([inc.lat, inc.lng], { icon: createMarkerIcon('incident') });
-    const drawerData = incidentDrawerData[idx];
-    if (drawerData) {
-      marker.on('click', function () { ns.openIncidentDrawer(drawerData, marker); });
-    }
-    incidentLayer.addLayer(marker);
-    incidentMarkers.push(marker);
-  });
+  ns.network = network;
+  ns.onNetworkChange = function (fn) { networkListeners.push(fn); };
+  ns.loadNetwork = loadNetwork;
+  loadNetwork();
+  setInterval(loadNetwork, 60000);
 
   let apiBuoys = [];
   var dangerZoneRequestId = 0;
@@ -415,7 +383,6 @@
   ns.createMarkerIcon = createMarkerIcon;
   ns.makePopup = makePopup;
   ns.pulseCoverageCircle = pulseCoverageCircle;
-  ns.incidentDrawerData = incidentDrawerData;
   ns.refreshDangerZones = refreshDangerZones;
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

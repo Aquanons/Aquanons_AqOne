@@ -2,7 +2,6 @@
   'use strict';
   if (!ns.ready) return;
   var authFetch = ns.authFetch;
-  var incidents = ns.incidents;
   var map = ns.map;
   var showToast = ns.showToast || function () {};
   var escapeHtml = ns.escapeHtml;

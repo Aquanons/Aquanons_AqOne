@@ -1,8 +1,6 @@
 (function (ns) {
   'use strict';
   if (!ns.ready) return;
-  var initialBuoys = ns.initialBuoys;
-  var incidents = ns.incidents;
   var map = ns.map;
   var showToast = ns.showToast;
   var btnFinish = ns.btnFinish;

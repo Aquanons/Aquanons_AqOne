@@ -2,9 +2,7 @@
   'use strict';
   if (!ns.ready) return;
   var authFetch = ns.authFetch;
-  var incidents = ns.incidents;
   var map = ns.map;
-  var incidentLayer = ns.incidentLayer;
   var showToast = ns.showToast;
   var pulseCoverageCircle = ns.pulseCoverageCircle;
   var liveSosLayer = ns.liveSosLayer;
@@ -143,10 +141,7 @@
 
     sosDrawer.classList.add('open');
 
-    if (data.alertType === 'overdue' && data.buoy) {
-      var buoyName = data.buoy.split(' ')[0];
-      pulseCoverageCircle(buoyName);
-    }
+    if (data.buoy && typeof pulseCoverageCircle === 'function') pulseCoverageCircle(data.buoy);
   }
 
   function closeSOSDrawer() {
@@ -398,26 +393,7 @@
 
       ackConfirmBtn.disabled = true;
 
-      // Demo rows in alertData have no sosEventId and no backend acknowledge
-      // endpoint to confirm against - they keep the previous local-only
-      // behaviour rather than sitting in a permanent "pending" state.
       if (!eventId) {
-        sosBtnAcknowledge.disabled = true;
-        sosBtnAcknowledge.textContent = 'Acknowledged';
-        if (currentDrawerData && (!target || currentDrawerData.vesselId === target.vesselId)) {
-          currentDrawerData.etaAt = etaMinutes == null ? null : new Date(Date.now() + etaMinutes * 60000).toISOString();
-          currentDrawerData.responderStatus = status;
-          const row = allAlerts().find(function (a) {
-            return a.vesselId === currentDrawerData.vesselId ||
-                   (a.lat === currentDrawerData.lat && a.lng === currentDrawerData.lng);
-          });
-          if (row) {
-            row.status = 'acknowledged';
-            row.etaAt = currentDrawerData.etaAt;
-            syncAlertIndicators();
-          }
-        }
-        closeAckModal();
         ackConfirmBtn.disabled = false;
         return;
       }
@@ -600,23 +576,7 @@
     const target = currentDrawerData ? Object.assign({}, currentDrawerData) : null;
     const eventId = target && target.sosEventId;
 
-    // A demo row has no backend incident to resolve - keep the previous
-    // local-only behaviour for it.
-    if (!eventId) {
-      if (currentDrawerMarker) {
-        incidentLayer.removeLayer(currentDrawerMarker);
-        liveSosLayer.removeLayer(currentDrawerMarker);
-      }
-      if (currentDrawerData && (!target || currentDrawerData.vesselId === target.vesselId)) {
-        const row = allAlerts().find(function (a) {
-          return a.vesselId === currentDrawerData.vesselId ||
-                 (a.lat === currentDrawerData.lat && a.lng === currentDrawerData.lng);
-        });
-        if (row) { row.status = 'resolved'; syncAlertIndicators(); }
-        closeSOSDrawer();
-      }
-      return;
-    }
+    if (!eventId) return;
     openResolveModal(target);
   });
 
@@ -638,9 +598,6 @@
     });
   }
 
-  // A demo row has no backend sos_event to have an audit trail for
-  // (docs/41 Phase 4) - same "no real incident behind this" guard as the
-  // acknowledge/resolve handlers above.
   if (sosBtnActivity) {
     sosBtnActivity.addEventListener('click', function () {
       var eventId = currentDrawerData && currentDrawerData.sosEventId;

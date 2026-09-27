@@ -3,8 +3,6 @@
   if (!ns.ready) return;
   var escapeHtml = ns.escapeHtml;
   var authFetch = ns.authFetch;
-  var incidents = ns.incidents;
-  var incidentDrawerData = ns.incidentDrawerData;
 
   // ===== SAR METRICS TAB =====
   // SAR metrics come from the evaluation scripts via /api/ai/metrics. There is
@@ -94,6 +92,11 @@
       </div>
     `).join('');
 
+    const leadTime = document.getElementById('stat-leadtime');
+    if (leadTime && results.squall && typeof results.squall.mean_lead_time_minutes === 'number') {
+      leadTime.textContent = Math.round(results.squall.mean_lead_time_minutes) + ' min';
+    }
+
     const footer = document.querySelector('.sar-footer');
     const calibration =
       (results.drift && results.drift.calibration) ||
@@ -125,7 +128,6 @@
   }
 
   loadSarMetrics();
-  document.getElementById('badge-sar').textContent = incidentDrawerData.filter(function (d) { return d.alertType === 'overdue' || d.alertType === 'squall'; }).length;
 
 
 })(window.AqOneDashboard = window.AqOneDashboard || {});

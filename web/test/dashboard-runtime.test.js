@@ -14,7 +14,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const { escapeHtml } = require('../js/dashboard-utils.js');
+const dashboardUtils = require('../js/dashboard-utils.js');
+const { escapeHtml } = dashboardUtils;
 const profileApi = require('../js/profile.js');
 
 // Minimal DOM Element stub for component rendering tests
@@ -154,7 +155,7 @@ function createDOMContext(elements = {}, ns = { ready: true }) {
 
   const windowStub = {
     document: documentStub,
-    AqOneDashboardUtils: { escapeHtml },
+    AqOneDashboardUtils: dashboardUtils,
     AqOneDashboard: ns,
     location: { href: 'http://localhost/html/dashboard.html', search: '', replace() {} },
     sessionStorage: {
@@ -1387,16 +1388,10 @@ test('Phase 3 - Safety data freshness, numerical validation, and demo provenance
     assert.ok(feedList.innerHTML.includes('alert-demo-badge'), 'sample alert must render DEMO badge');
     assert.ok(feedList.innerHTML.includes('DEMO'), 'badge text must be DEMO');
 
-    // Verify buoy baseline text in dashboard.html and buoy-health.js
-    const dashboardHtml = fs.readFileSync(path.join(__dirname, '../html/dashboard.html'), 'utf8');
-    assert.ok(
-      dashboardHtml.includes('Sample buoy network baseline (unpolled offline data)'),
-      'dashboard.html must contain honest baseline label instead of fake Last synced ticker'
-    );
-    assert.ok(
-      buoyHealthCode.includes('Sample buoy network baseline (unpolled offline data)'),
-      'dashboard-buoy-health.js must contain honest baseline label'
-    );
+    // docs/72: the buoy panel shows the backend's network or says it is loading;
+    // there is no sample baseline left to label.
+    assert.equal(document.getElementById('buoy-drawer-footer').textContent, 'Loading buoy network...');
+    assert.equal(document.getElementById('stat-buoys').textContent, '--');
   });
 });
 

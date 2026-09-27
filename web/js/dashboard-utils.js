@@ -692,7 +692,123 @@
     return list.map(auditEventRowHtml).join('');
   }
 
+  function finiteOrNull(value) {
+    return typeof value === 'number' && isFinite(value) ? value : null;
+  }
+
+  function positiveOrNull(value) {
+    var n = finiteOrNull(value);
+    return n != null && n > 0 ? n : null;
+  }
+
+  /**
+   * GET /api/public/buoys as the map's network. A buoy with no recorded
+   * position keeps lat/lng null: it is listed, never drawn somewhere plausible.
+   */
+  function networkFromPublicBuoys(payload) {
+    var rawBuoys = payload && Array.isArray(payload.buoys) ? payload.buoys : [];
+    var rawStations = payload && Array.isArray(payload.shore_stations) ? payload.shore_stations : [];
+    var buoys = rawBuoys.map(function (b) {
+      var lat = finiteOrNull(b.latitude);
+      var lng = finiteOrNull(b.longitude);
+      var placed = lat != null && lng != null;
+      return {
+        id: String(b.id),
+        name: b.name || String(b.id),
+        lat: placed ? lat : null,
+        lng: placed ? lng : null,
+        wifiRadius: positiveOrNull(b.coverage_radius_meters),
+        loraRadius: positiveOrNull(b.lora_radius_meters),
+        isGateway: b.is_gateway_linked === true,
+        isSynthetic: b.is_synthetic === true,
+        lastHeardAt: b.last_heard_at || null,
+        status: b.status === 'active' || b.status === 'silent' ? b.status : 'unknown'
+      };
+    });
+    var stations = rawStations.map(function (s) {
+      return { name: s.name, lat: finiteOrNull(s.lat), lng: finiteOrNull(s.lon), type: s.type || '', role: s.role || '' };
+    }).filter(function (s) { return s.lat != null && s.lng != null; });
+    return { buoys: buoys, stations: stations };
+  }
+
+  function metresBetween(aLat, aLng, bLat, bLng) {
+    var dLat = (bLat - aLat) * 110574;
+    var dLng = (bLng - aLng) * 111320 * Math.cos((aLat + bLat) / 2 * Math.PI / 180);
+    return Math.sqrt(dLat * dLat + dLng * dLng);
+  }
+
+  /**
+   * LoRa links between placed buoys, and from each buoy to every shore station
+   * in its range: the lower of the two ranges decides a buoy-to-buoy link, the
+   * same rule the backend connectivity tests use.
+   */
+  function meshLinksFor(buoys, stations) {
+    var placed = (buoys || []).filter(function (b) { return b.lat != null && b.loraRadius != null; });
+    var links = [];
+    for (var i = 0; i < placed.length; i++) {
+      for (var j = i + 1; j < placed.length; j++) {
+        var a = placed[i], b = placed[j];
+        if (metresBetween(a.lat, a.lng, b.lat, b.lng) <= Math.min(a.loraRadius, b.loraRadius)) links.push([a, b]);
+      }
+    }
+    placed.forEach(function (buoy) {
+      (stations || []).forEach(function (station) {
+        if (metresBetween(buoy.lat, buoy.lng, station.lat, station.lng) <= buoy.loraRadius) links.push([buoy, station]);
+      });
+    });
+    return links;
+  }
+
+  function pointInRing(lat, lng, ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var yi = ring[i][0], xi = ring[i][1], yj = ring[j][0], xj = ring[j][1];
+      if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  /**
+   * Share of the service-area water inside some placed buoy's phone (WiFi)
+   * range, sampled on a grid; null when no buoy is placed.
+   * ponytail: a 60x60 grid is about 1.5% resolution; use polygon clipping if
+   * the figure ever needs to be exact.
+   */
+  function phoneCoverageFraction(ring, buoys) {
+    var placed = (buoys || []).filter(function (b) { return b.lat != null && b.wifiRadius != null; });
+    if (!placed.length || !ring || ring.length < 3) return null;
+    var lats = ring.map(function (p) { return p[0]; });
+    var lngs = ring.map(function (p) { return p[1]; });
+    var minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats);
+    var minLng = Math.min.apply(null, lngs), maxLng = Math.max.apply(null, lngs);
+    var steps = 60, water = 0, covered = 0;
+    for (var i = 0; i < steps; i++) {
+      for (var j = 0; j < steps; j++) {
+        var lat = minLat + (maxLat - minLat) * (i + 0.5) / steps;
+        var lng = minLng + (maxLng - minLng) * (j + 0.5) / steps;
+        if (!pointInRing(lat, lng, ring)) continue;
+        water++;
+        if (placed.some(function (b) { return metresBetween(lat, lng, b.lat, b.lng) <= b.wifiRadius; })) covered++;
+      }
+    }
+    return water ? covered / water : null;
+  }
+
+  function buoyHeardText(buoy, nowMs) {
+    var then = buoy && buoy.lastHeardAt ? new Date(buoy.lastHeardAt).getTime() : NaN;
+    if (!isFinite(then)) return 'Never heard';
+    var minutes = Math.max(0, Math.round((nowMs - then) / 60000));
+    var ago = minutes < 60 ? minutes + ' min ago'
+      : (minutes < 48 * 60 ? Math.floor(minutes / 60) + ' h ago' : Math.floor(minutes / 1440) + ' days ago');
+    return (buoy.status === 'active' ? 'Heard ' : 'Silent, last heard ') + ago;
+  }
+
   return {
+    networkFromPublicBuoys: networkFromPublicBuoys,
+    metresBetween: metresBetween,
+    meshLinksFor: meshLinksFor,
+    phoneCoverageFraction: phoneCoverageFraction,
+    buoyHeardText: buoyHeardText,
     escapeHtml: escapeHtml,
     formatLatLon: formatLatLon,
     utf8ByteLength: utf8ByteLength,

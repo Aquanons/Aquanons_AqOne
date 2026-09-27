@@ -464,9 +464,8 @@ body {
 }
 
 #banner-alert-count { color: var(--text); font-weight: 700; }
-.live-alert-banner.has-alerts #banner-alert-count { color: #fff; }
+.live-alert-banner.has-alerts #banner-alert-count { color: #c8383d; }
 .banner-time { color: var(--text); font-weight: 700; }
-.live-alert-banner.has-alerts .banner-time { color: #fff; }
 
 .banner-sep {
   width: 1px;
@@ -4416,7 +4415,6 @@ h3.buoy-drawer-title {
 /* Live banner text */
 .banner-text { display: inline-flex; align-items: center; gap: 5px; }
 .banner-squall-count { color: var(--text); font-weight: 700; }
-.live-alert-banner.has-alerts .banner-squall-count { color: #fff; }
 
 /* Squall Nowcasting card */
 .squall-status {

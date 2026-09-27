@@ -3,9 +3,8 @@
   if (!ns.ready) return;
   var OPS_CENTER = ns.OPS_CENTER;
   var OPS_ZOOM = ns.OPS_ZOOM;
-  var shoreStations = ns.shoreStations;
-  var initialBuoys = ns.initialBuoys;
-  var incidents = ns.incidents;
+  var utils = ns.dashboardUtils || window.AqOneDashboardUtils;
+  var formatLatLon = ns.formatLatLon || function () { return 'unknown position'; };
   var map = ns.map;
   var openPanel = ns.openPanel;
   var closePanel = ns.closePanel;
@@ -99,6 +98,7 @@
 
   // ===== INCIDENT FEED =====
   function renderIncidentFeed() {
+    updateStats();
     var el = document.getElementById('incident-feed-list');
     if (!el) return;
     var active = allAlerts().filter(function (a) { return a.status !== 'resolved'; });
@@ -158,128 +158,96 @@
   }
 
 
-  // ===== BUOY HEALTH MONITOR =====
-  const buoyMonitorData = initialBuoys.map(function (b) {
-    return {
-      id: b.id, name: b.name, status: b.status === 'active' ? 'online' : (b.status === 'danger' ? 'offline' : 'online'),
-      severity: b.pressureTrend != null && b.pressureTrend <= -2.5 ? 'Pressure drop \u2014 squall watch' : 'Nominal',
-      battery: b.battery, lastSignal: b.status === 'danger' ? '2 hours ago' : '1 minute ago',
-      lat: b.lat, lng: b.lng,
-      pressure: b.pressure, pressureTrend: b.pressureTrend,
-      current: b.current, currentDir: b.currentDir,
-      dotClass: b.status === 'active' ? 'dot-green' : (b.status === 'danger' ? 'dot-gray' : 'dot-yellow')
-    };
-  });
-
-  const buoyRailBtn     = document.getElementById('rail-btn-buoy');
+  // ===== BUOY NETWORK PANEL =====
+  // Reads the network dashboard-markers.js loads from GET /api/public/buoys.
+  // A buoy is "active" when the backend heard it within the last hour.
   const buoyRailBadge   = document.getElementById('buoy-rail-badge');
   const buoyDrawerBadge = document.getElementById('buoy-drawer-badge');
   const buoyListEl      = document.getElementById('buoy-list');
   const buoyFooter      = document.getElementById('buoy-drawer-footer');
+  var phoneCoverage = null;
 
-  let buoySyncTime = Date.now();
-
-  var buoyOnlineCount = buoyMonitorData.filter(function (b) { return b.status === 'online'; }).length;
-  var buoyTotal = buoyMonitorData.length;
-  if (buoyRailBadge) buoyRailBadge.textContent = buoyOnlineCount + '/' + buoyTotal;
-  if (buoyDrawerBadge) buoyDrawerBadge.textContent = buoyOnlineCount + '/' + buoyTotal + ' Online';
-  if (buoyOnlineCount < buoyTotal) {
-    if (buoyRailBadge) buoyRailBadge.classList.add('badge-amber');
-    if (buoyDrawerBadge) buoyDrawerBadge.classList.add('badge-amber');
+  function currentNetwork() {
+    return ns.network || { buoys: [], stations: [], loadedAt: null, failed: false };
   }
 
-  function renderBuoyList() {
-    buoyListEl.innerHTML = buoyMonitorData.map(function (b) {
-      var offlineClass = b.status === 'offline' ? ' buoy-offline' : '';
-      var batteryClass = b.battery < 20 ? ' low' : '';
-      var batteryIcon = b.battery < 20
-        ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-        : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="7" width="12" height="14" rx="2"/><path d="M10 7V5a2 2 0 0 1 4 0v2"/></svg>';
-
-      var pressureText = b.pressure != null
-        ? b.pressure.toFixed(1) + ' hPa' + (b.pressureTrend != null ? ' (' + (b.pressureTrend > 0 ? '+' : '') + b.pressureTrend + '/30m)' : '')
-        : 'n/a';
-
-      return '<div class="buoy-row' + offlineClass + '" data-lat="' + b.lat + '" data-lng="' + b.lng + '" data-id="' + b.id + '">' +
-        '<div class="buoy-row-top">' +
-          '<span class="buoy-row-name">' + escapeHtml(b.name) + '</span>' +
-          '<span class="buoy-status-dot ' + b.dotClass + '"></span>' +
-        '</div>' +
-        '<div class="buoy-row-severity">' + escapeHtml(b.severity) + '</div>' +
-        '<div class="buoy-row-meta">' +
-          '<span class="buoy-row-battery' + batteryClass + '">' + batteryIcon + ' ' + b.battery + '%</span>' +
-          '<span class="buoy-row-signal">' + pressureText + '</span>' +
-        '</div>' +
-        '<div class="buoy-row-meta">' +
-          '<span class="buoy-row-signal">Current: ' + escapeHtml(b.current || 'n/a') + ' ' + escapeHtml(b.currentDir || '') + '</span>' +
-          '<span class="buoy-row-signal">' + escapeHtml(b.lastSignal) + '</span>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    buoyListEl.querySelectorAll('.buoy-row').forEach(function (row) {
-      row.addEventListener('click', function () {
-        var lat = parseFloat(row.dataset.lat);
-        var lng = parseFloat(row.dataset.lng);
-        map.setView([lat, lng], 13);
-        console.log('[AqOne] Buoy selected:', row.dataset.id);
-      });
-    });
+  function buoyCounts(net) {
+    var active = net.buoys.filter(function (b) { return b.status === 'active'; }).length;
+    return { active: active, total: net.buoys.length, text: net.loadedAt ? active + '/' + net.buoys.length : '--' };
   }
 
-  function renderBuoyHealthCard() {
-    var online = buoyMonitorData.filter(function (b) { return b.status === 'online'; }).length;
-    var total = buoyMonitorData.length;
-    document.getElementById('buoy-health-badge').textContent = online + '/' + total;
-
-    var list = document.getElementById('buoy-health-list');
-    list.innerHTML = buoyMonitorData.map(function (b) {
-      var dotColor = b.status === 'online' ? '#2ecc71' : '#e74c3c';
-      var offlineTag = b.status === 'offline'
-        ? ' <span class="bh-offline-tag">Offline, last seen ' + escapeHtml(b.lastSignal) + '</span>'
-        : '';
-      var pressTag = b.pressure != null
-        ? ' <span class="bh-press" style="color:' + (b.pressureTrend <= -2.5 ? '#e67e22' : 'inherit') + ';">' + b.pressure.toFixed(1) + ' hPa</span>'
-        : '';
-      return '<div class="bh-row' + (b.status === 'offline' ? ' bh-offline' : '') + '" data-lat="' + b.lat + '" data-lng="' + b.lng + '">' +
-        '<span class="bh-dot" style="background:' + dotColor + ';"></span>' +
-        '<span class="bh-name">' + escapeHtml(b.name) + '</span>' +
-        '<span class="bh-battery">' + b.battery + '%</span>' +
-        pressTag +
-        offlineTag +
-      '</div>';
-    }).join('');
-
-    list.querySelectorAll('.bh-row').forEach(function (row) {
-      row.addEventListener('click', function () {
-        map.setView([parseFloat(row.dataset.lat), parseFloat(row.dataset.lng)], 14, { animate: true, duration: 1 });
-      });
-    });
+  function buoyNameHtml(b) {
+    return (b.isSynthetic ? '<span class="alert-demo-badge">DEMO</span>' : '') + escapeHtml(b.name);
   }
 
-  function renderBuoyHealth() {
-    var sourceBuoys = buoyMonitorData;
-    var activeCount = sourceBuoys.filter(function (b) { return b.status === 'online'; }).length;
-    var totalCount = sourceBuoys.length;
-    var countText = activeCount + '/' + totalCount + ' Online';
+  function buoyRowHtml(b, now) {
+    var placed = b.lat != null;
+    var dot = b.status === 'active' ? 'dot-green' : (b.status === 'silent' ? 'dot-yellow' : 'dot-gray');
+    return '<div class="buoy-row' + (b.status === 'active' ? '' : ' buoy-offline') + '"' +
+      (placed ? ' data-lat="' + b.lat + '" data-lng="' + b.lng + '"' : '') + ' data-id="' + escapeHtml(b.id) + '">' +
+      '<div class="buoy-row-top">' +
+        '<span class="buoy-row-name">' + buoyNameHtml(b) + '</span>' +
+        '<span class="buoy-status-dot ' + dot + '"></span>' +
+      '</div>' +
+      '<div class="buoy-row-severity">' + escapeHtml(utils.buoyHeardText(b, now)) + '</div>' +
+      '<div class="buoy-row-meta">' +
+        '<span class="buoy-row-signal">' + escapeHtml(placed ? formatLatLon(b.lat, b.lng) : 'Position not recorded') + '</span>' +
+        (b.isGateway ? '<span class="buoy-row-signal">Gateway link</span>' : '') +
+      '</div>' +
+    '</div>';
+  }
 
-    var badgeCount = document.getElementById('buoy-health-badge');
-    if (badgeCount) badgeCount.textContent = countText;
-    buoyRailBadge.textContent = activeCount + '/' + totalCount;
-    buoyDrawerBadge.textContent = countText;
+  function panToRow(row, zoom) {
+    if (!row.dataset.lat) return;
+    map.setView([parseFloat(row.dataset.lat), parseFloat(row.dataset.lng)], zoom, { animate: true, duration: 1 });
+  }
 
-    if (activeCount < totalCount) {
-      buoyRailBadge.classList.add('badge-amber');
-      buoyDrawerBadge.classList.add('badge-amber');
-    } else {
-      buoyRailBadge.classList.remove('badge-amber');
-      buoyDrawerBadge.classList.remove('badge-amber');
+  function renderBuoyNetwork() {
+    var net = currentNetwork();
+    var now = Date.now();
+    var counts = buoyCounts(net);
+    var degraded = counts.active < counts.total;
+    if (buoyRailBadge) {
+      buoyRailBadge.textContent = counts.text;
+      buoyRailBadge.classList.toggle('badge-amber', degraded);
     }
-  }
+    if (buoyDrawerBadge) {
+      buoyDrawerBadge.textContent = counts.text + ' active';
+      buoyDrawerBadge.classList.toggle('badge-amber', degraded);
+    }
+    var healthBadge = document.getElementById('buoy-health-badge');
+    if (healthBadge) healthBadge.textContent = counts.text;
 
-  renderBuoyList();
-  renderBuoyHealthCard();
-  renderBuoyHealth();
+    var empty = '<p class="panel-stub-text">' +
+      (net.failed ? 'Buoy network unavailable' : (net.loadedAt ? 'No buoys registered' : 'Loading buoy network...')) + '</p>';
+    if (buoyListEl) {
+      buoyListEl.innerHTML = counts.total ? net.buoys.map(function (b) { return buoyRowHtml(b, now); }).join('') : empty;
+      buoyListEl.querySelectorAll('.buoy-row').forEach(function (row) {
+        row.addEventListener('click', function () { panToRow(row, 13); });
+      });
+    }
+    var healthList = document.getElementById('buoy-health-list');
+    if (healthList) {
+      healthList.innerHTML = counts.total ? net.buoys.map(function (b) {
+        return '<div class="bh-row' + (b.status === 'active' ? '' : ' bh-offline') + '"' +
+          (b.lat != null ? ' data-lat="' + b.lat + '" data-lng="' + b.lng + '"' : '') + '>' +
+          '<span class="bh-dot" style="background:' + (b.status === 'active' ? '#2ecc71' : '#e74c3c') + ';"></span>' +
+          '<span class="bh-name">' + buoyNameHtml(b) + '</span>' +
+          '<span class="bh-offline-tag">' + escapeHtml(utils.buoyHeardText(b, now)) + '</span>' +
+        '</div>';
+      }).join('') : empty;
+      healthList.querySelectorAll('.bh-row').forEach(function (row) {
+        row.addEventListener('click', function () { panToRow(row, 14); });
+      });
+    }
+    if (buoyFooter) {
+      buoyFooter.textContent = net.loadedAt
+        ? 'Registered buoys, checked ' + new Date(net.loadedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : (net.failed ? 'Buoy network unavailable' : 'Loading buoy network...');
+    }
+    phoneCoverage = utils.phoneCoverageFraction(ns.opsBoundary, net.buoys);
+    updateStats();
+  }
 
   document.getElementById('buoy-health-header').addEventListener('click', function (e) {
     if (e.target.closest('#buoy-health-toggle')) return;
@@ -290,31 +258,22 @@
     openPanel('buoys');
   });
 
-  if (buoyFooter) {
-    buoyFooter.textContent = 'Sample buoy network baseline (unpolled offline data)';
+
+  // ===== LIVE OVERVIEW FIGURES =====
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
   }
 
-
-  // ===== VIEWPORT-BASED STATS =====
   function updateStats() {
-    const bounds = map.getBounds();
-    let buoysInView = 0;
-    let incidentsInView = 0;
-
-    initialBuoys.forEach(b => { if (bounds.contains([b.lat, b.lng])) buoysInView++; });
-    incidents.forEach(i => { if (bounds.contains([i.lat, i.lng])) incidentsInView++; });
-
-    document.getElementById('stat-buoys').textContent = Math.max(4, buoysInView) + '/' + initialBuoys.length;
-    document.getElementById('stat-coverage').textContent = (68 + buoysInView * 4) + '%';
-    // No source counts vessels in contact range yet; the sample figure that
-    // stood here came from hard-coded boats (docs/71 RND-04, docs/72).
-    document.getElementById('stat-vessels').textContent = '--';
-    document.getElementById('stat-leadtime').textContent = '45 min';
-    document.getElementById('stat-alerts').textContent = incidentsInView;
+    var counts = buoyCounts(currentNetwork());
+    setText('stat-buoys', counts.total ? counts.text : '--');
+    setText('stat-coverage', phoneCoverage == null ? '--' : Math.round(phoneCoverage * 100) + '%');
+    setText('stat-alerts', String(allAlerts().filter(function (a) { return a.status !== 'resolved'; }).length));
   }
 
-  map.on('moveend', updateStats);
-  map.on('zoomend', updateStats);
+  if (typeof ns.onNetworkChange === 'function') ns.onNetworkChange(renderBuoyNetwork);
+  renderBuoyNetwork();
 
 
   // ===== COORDINATES =====
@@ -362,12 +321,13 @@
 
   // ===== EXPORT =====
   document.getElementById('btn-export').addEventListener('click', function () {
+    var net = currentNetwork();
     const data = {
       center: map.getCenter(),
       zoom: map.getZoom(),
-      gateways: shoreStations.length,
-      buoys: initialBuoys.length,
-      incidents: incidents.length,
+      gateways: net.stations.length,
+      buoys: net.buoys.length,
+      active_alerts: allAlerts().filter(function (a) { return a.status !== 'resolved'; }).length,
       timestamp: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
