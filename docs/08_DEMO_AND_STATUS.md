@@ -20,7 +20,9 @@ Plan [`72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`](72_DASHBOARD_DEMO_MODE_IM
 
 **Changes for other owners:** Jade (handset) - `/api/public/buoys` now omits invented buoys, so the production map shows no buoy until buoys have recorded positions (the handset already skips a buoy without coordinates). Arnold (dashboard) - review the buoy network, tutorial and SAR changes.
 
-**Not verified:** the tutorial on the deployed Render site (local runs only), physical projectors, widths below 1280 px.
+Deployed: `11a0434` on Render; the tutorial ran there with no API traffic (guest entry, lesson 1, lesson 5 SOS arrival).
+
+**Not verified:** physical projectors, widths below 1280 px.
 
 ## 2026-09-27 - Dashboard drift and trip-anomaly fixes: plan 71 on `master`
 

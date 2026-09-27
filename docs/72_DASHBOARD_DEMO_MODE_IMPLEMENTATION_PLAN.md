@@ -75,10 +75,10 @@ Consequences:
 | Phase | Outcome | Commit |
 |---|---|---|
 | 1 | Live honesty: real buoy positions, radii, provenance and last-heard time from `/api/public/buoys`; the map, mesh, coverage and Buoy Network panel from that feed; measured overview figures; white-on-white metric values fixed. | `00527a3` |
-| 2 | Tutorial source: `web/js/tutorial/tutorial-source.js` swaps `window.fetch` first, replays phases, shifts times, refuses unrecorded actions. | Tutorial commit |
-| 3 | Recorder and recordings: `record_tutorial.mjs`, `seed_tutorial.sql`, `/api/demo/squall/buoy/{id}`, seven recordings in `web/data/tutorial/`. | Tutorial commit |
-| 4 | Lessons and coach: `tutorial-lessons.js`, `tutorial-coach.js`, `css/tutorial.css`; Learn AqOne tab; login entry; real-SOS bar. | Tutorial commit |
-| 5 | Offline map fallback, the SAR tab reading the metrics envelope, resolved-call times, and the evidence walkthrough. | Tutorial commit |
+| 2 | Tutorial source: `web/js/tutorial/tutorial-source.js` swaps `window.fetch` first, replays phases, shifts times, refuses unrecorded actions. | `11a0434` |
+| 3 | Recorder and recordings: `record_tutorial.mjs`, `seed_tutorial.sql`, `/api/demo/squall/buoy/{id}`, seven recordings in `web/data/tutorial/`. | `11a0434` |
+| 4 | Lessons and coach: `tutorial-lessons.js`, `tutorial-coach.js`, `css/tutorial.css`; Learn AqOne tab; login entry; real-SOS bar. | `11a0434` |
+| 5 | Offline map fallback, the SAR tab reading the metrics envelope, resolved-call times, and the evidence walkthrough, including the deployed Render site. | `11a0434` |
 
 Evidence: [`demo-mode/EVIDENCE.md`](demo-mode/EVIDENCE.md).
 

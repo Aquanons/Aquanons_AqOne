@@ -44,7 +44,11 @@ Environment unless stated: Windows 11, Python 3.11, Node 24.14, headless Microso
 | `profile-learn-tab.png` | The Learn AqOne tab on the profile page |
 | `real-sos-bar.png` | A signed-in learner told a real SOS is waiting |
 
+## Deployed site
+
+- `11a0434` pushed to `master`; Render reported it on `/health/ready` about a minute later.
+- On `https://aqone-backend.onrender.com/html/login.html`: "Explore the tutorial without an account" opened lesson 1 with the banner, 8/8 buoys heard and a 50 min evaluated lead time; the lesson menu opened lesson 5, whose SOS arrived on cue (open SOS count 1); the page made no `/api/` request on the network.
+
 ## Not verified
 
-- The deployed Render site: this evidence is from local runs; check the tutorial there after the push deploys.
 - Physical projectors, widths below 1280 px, and a real responder using the lessons.
