@@ -1,9 +1,9 @@
 # Implementation Plan: dashboard drift and trip-anomaly render fixes
 
-**Status:** APPROVED - Revision 2; executing in `auto` mode
+**Status:** COMPLETE - Revision 2; Phases 1-7 merged to `master` 2026-09-26 to 2026-09-27
 **Owner:** Lenard (approval; takes the web paths from Arnold for this plan), Claude Code (implementation and tests)
 **Created:** 2026-09-26T22:45:00+08:00
-**Updated:** 2026-09-26T23:10:00+08:00
+**Updated:** 2026-09-27T14:30:00+08:00
 **Related:** `docs/audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md` (findings F1-F11), `docs/38_AUTOMATIC_DISTRESS_DETECTION_IMPLEMENTATION_PLAN.md`, `docs/40_DRIFT_PREDICTION_SEARCH_RETASKING_IMPLEMENTATION_PLAN.md`, `docs/05_PUBLIC_API.md`, `docs/47_VISUAL_DESIGN_GUIDE.md`, `docs/18_BACKEND_STRUCTURE.md`
 
 Revision: 2
@@ -18,7 +18,7 @@ Roles: Claude writes each phase's red tests first, implements, reruns the gate, 
 
 `hard-stop` would be the default by scale (product code, a shared contract, a model's output, more than three phases); Len chose `auto`, so phases run back to back and stop only on a failed gate, a real blocker, or a decision that is Len's.
 Success condition: the dashboard walkthrough in Phase 7 shows every finding F1-F11 fixed on a freshly seeded disposable database, with screenshots, and all gates green.
-Next hard stop: none planned; a failed gate or a decision that is Len's.
+Next hard stop: none; the plan is complete. Follow-up sample data belongs to `docs/72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`.
 
 ## Audit baseline (2026-09-26, `master` at `fc89fe7`)
 
@@ -280,22 +280,22 @@ Continue automatically to the next phase.
 ## Phase 7: walkthrough, evidence and documentation close-out
 
 Requirements: RND-01 to RND-11
-State: Not started
+State: Complete - 2026-09-27, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Fresh disposable database, generator, full demo beats 0 to 6, one escalated trip check, one acknowledged SOS; run the whole render check and save every screenshot to `docs/render-fixes/`.
-- [ ] Mark each audit finding fixed with its evidence line in `docs/render-fixes/EVIDENCE.md`.
-- [ ] Add a dated `docs/08_DEMO_AND_STATUS.md` entry; update the Current Register and `docs/SPEC_INDEX.md`; set this plan to COMPLETE.
-- [ ] Note in `docs/40` that its manual acceptance gap is closed by this plan, linking the evidence.
+- [x] Fresh disposable database, generator, full demo beats 0 to 6, one escalated trip check, one acknowledged SOS; run the whole render check and save every screenshot to `docs/render-fixes/`.
+- [x] Mark each audit finding fixed with its evidence line in `docs/render-fixes/EVIDENCE.md`.
+- [x] Add a dated `docs/08_DEMO_AND_STATUS.md` entry; update the Current Register and `docs/SPEC_INDEX.md`; set this plan to COMPLETE.
+- [x] Note in `docs/40` that its manual acceptance gap is closed by this plan, linking the evidence.
 
 ### Verification
 
-- [ ] Backend gate with probes, web gate, render check all green.
+- [x] Backend gate with probes, web gate, render check all green.
 
 ### Review and checkpoint
 
-- [ ] Review, stage, commit, merge, push.
+- [x] Review, stage, commit, merge, push.
 
 Checkpoint message: `docs: record the dashboard render fixes walkthrough`
 

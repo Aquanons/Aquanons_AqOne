@@ -9,6 +9,7 @@
 Read-only audit.
 No product file was changed.
 The fixes are planned in `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`.
+Resolution (2026-09-27): every finding is fixed and verified; see the table in `docs/render-fixes/EVIDENCE.md` "Phase 7".
 
 ## Environment
 

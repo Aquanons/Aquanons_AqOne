@@ -5,6 +5,19 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-27 - Dashboard drift and trip-anomaly fixes: plan 71 on `master`
+
+Plan [`71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`](71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md) fixed all 11 findings of the 2026-09-26 render check below; evidence and screenshots in [`render-fixes/`](render-fixes/).
+
+**On `master`:**
+- Trip anomalies: every stats tab is visible; trip checks say why they were raised; the vessel risk feed keeps scored boats under its "Not monitoring" notice and badges demo rows; the hard-coded vessels, overdue markers and drawers are gone.
+- Drift: a legend matches the drawn layers; the synthetic-replay badge is readable; insufficiency reasons are sentences; responders open a case from an escalated trip check or an acknowledged SOS, rerun it, and cannot file a search report on a run whose forecast has ended.
+- Model honesty: a labelled ring now holds its labelled mass, and the synthetic replay runs at the span `drift_eval` scores. Synthetic containment is 87.5% (7 of 8), not the previously stored 100%; `docs/16` and `docs/17` corrected.
+- Demo and seed data: demo beats 5 and 6 and the scenario start no longer crash after `app.simulation.generator`.
+- Headless render check in `tools/render-check/`: 11 of 11 checks pass on a fresh disposable database. Gates: backend 591 passed (649 with the database probes), ruff clean, web 193 passed.
+
+**Not verified:** physical devices, widths below 1280 px, and a real responder using the new drift actions; the containment figure is simulator self-consistency on synthetic currents.
+
 ## 2026-09-26 - Dashboard render check: drift prediction and trip anomalies
 
 Len asked how drift prediction and trip anomalies render on the dashboard.

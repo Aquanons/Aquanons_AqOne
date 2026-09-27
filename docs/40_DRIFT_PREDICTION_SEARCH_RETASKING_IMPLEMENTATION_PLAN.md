@@ -262,6 +262,10 @@ The finished loop must meet all of these conditions:
 - Manual acceptance: a responder can open only an eligible case, see an honest
   stable search field or insufficiency reason, record one negative search,
   reload the updated posterior, and review—not auto-dispatch—the next area.
+  Gap found 2026-09-26: the dashboard had no way to open or rerun a case, so
+  this could only be done through the API. Closed 2026-09-27 by
+  `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md` (RND-10),
+  evidence `docs/render-fixes/EVIDENCE.md`.
 
 ### Commit
 

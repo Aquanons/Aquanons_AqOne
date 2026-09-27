@@ -1,9 +1,9 @@
 # Evidence: Plan 71 dashboard render fixes
 
-**Status:** ACTIVE
+**Status:** COMPLETE
 **Owner:** Claude Code (recording), Lenard (review)
 **Created:** 2026-09-26
-**Updated:** 2026-09-26
+**Updated:** 2026-09-27
 **Related:** `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md`, `docs/audits/DASHBOARD_DRIFT_TRIP_RENDER_AUDIT_2026-09-26.md`, `tools/render-check/README.md`
 
 Environment for every phase unless stated: Windows 11, Python 3.11, Node 24.14, a disposable PostgreSQL 18 cluster on port 55432 (`tools/render-check/README.md`), the backend from the `fix/dashboard-render` worktree on port 8765 with `DEMO_MODE=1` and `AQONE_SCHEDULER=0`, the generator at seed 42, `seed_live_currents.sql` applied, and `node render_check.mjs --setup --live-case`.
@@ -82,3 +82,27 @@ Date: 2026-09-27.
 - `tests/test_drift_api.py`'s fake store now answers the existing-case lookup, and its duplicate test checks the named case.
 - Gates: backend 591 passed, 63 skipped, 1 xfailed; with probes 649 passed, 5 skipped, 1 xfailed; ruff clean; web 193 passed, `node --check` clean.
 - Render check (`phase-6/report.json`, freshly seeded): every check PASSES, including RND-10 (the trip check selected case 12, the SOS drawer offered the action, rerun took case 10 from run 1 to run 2) and RND-11c (case 11, whose one-hour forecast ended an hour earlier, refuses a search report). The browser's console line for the designed `409` is counted as expected, not as an error.
+
+## Phase 7: walkthrough and close-out
+
+Date: 2026-09-27.
+
+Fresh disposable database, generator at seed 42, `seed_live_currents.sql`, then `node render_check.mjs --setup --live-case --require RND-01,RND-02,RND-03,RND-04,RND-05,RND-06,RND-07,RND-10,RND-11a,RND-11c,console`: all 11 checks PASS, exit code 0 (`phase-7/report.json`, screenshots in `phase-7/`).
+
+| Finding | Fixed in | Evidence |
+|---|---|---|
+| F1 Trip Checks tab off-screen | Phase 3 | RND-01; `phase-7/tabs-1440.png` |
+| F2 "No reason recorded." | Phase 2 | RND-02; `phase-7/trip-checks.png` |
+| F3 risk rows hidden while not monitoring | Phase 3 | RND-03; `phase-7/vessels.png` |
+| F4 fake vessels and overdue markers | Phase 3 | RND-04; `phase-7/vessels.png`, `phase-7/dashboard-1440.png` |
+| F5 invisible replay badge | Phase 4 | RND-05 (7.26:1 light, 5.72:1 dark); `phase-7/replay-badge-light.png` |
+| F6 no drift legend | Phase 4 | RND-06; `phase-7/drift-map-8.png` |
+| F7 tied rings, 24 h vs 4 h replay | Phase 5 | RND-07; `phase-7/drift-map-8.png`; evaluator 87.5% / 64.46x |
+| F8 demo beats 5 and 6 crash | Phase 1 | `tests/test_demo_pg.py`; `--setup` fired beats 1 to 6 |
+| F9 generator sequences stuck at 1 | Phase 1 | `tests/test_demo_pg.py` |
+| F10 no open-case or rerun UI | Phase 6 | RND-10; `phase-7/open-drift-modal.png`, `phase-7/drift-card-after-rerun.png` |
+| F11 raw reason, flat button, ended runs | Phases 4 and 6 | RND-11a, RND-11c; `phase-7/drift-card-12.png`, `phase-7/drift-card-11.png` |
+
+Found and fixed during the walkthrough: the "Alarm sound is OFF" button covered the "Last updated" card's LIVE freshness pill; it now sits in the notice strip under the header.
+
+Not verified: physical handset, pod and gateway; widths below 1280 px; a real responder using the new drift actions. The drift containment figure is simulator self-consistency on synthetic currents (observed-current fraction 0%).
