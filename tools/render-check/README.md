@@ -35,7 +35,7 @@ node render_check.mjs --setup --live-case --out ../../docs/render-fixes/phase-N 
 ```
 
 - `--setup` runs the presenter scenario (beats 1 to 6) and one anomaly evaluation.
-- `--live-case` also acknowledges the demo SOS and opens a one-hour drift case from it (an `ok` run; it needs `seed_live_currents.sql`), and escalates the first trip check and opens a 24-hour case from it (an insufficient run).
+- `--live-case` also acknowledges the demo SOS and opens a one-hour drift case from it (an `ok` run; it needs `seed_live_currents.sql`), acknowledges a second SOS and opens a one-hour case that ended an hour ago, and escalates the first trip check and opens a 24-hour case from it (an insufficient run).
 - `--require` lists the checks whose failure makes the exit code non-zero; every check is still printed and written to `report.json`.
 - Environment: `AQONE_BASE` (default `http://localhost:8765`), `AQONE_EMAIL`, `AQONE_PASSWORD`, `AQONE_DEMO_KEY` (default `demo`).
 
@@ -50,6 +50,7 @@ node render_check.mjs --setup --live-case --out ../../docs/render-fixes/phase-N 
 | RND-05 | The synthetic-replay badge has at least 4.5:1 contrast in the light and dark themes. |
 | RND-06 | The drift legend is visible with rows whenever contours are drawn, and hidden otherwise. |
 | RND-07 | The synthetic replay has three distinct rings and `forecast_hours` equal to its truth track's span. |
-| RND-10 | An escalated trip check offers "Open drift case". |
+| RND-10 | From the UI: an escalated trip check opens or selects its drift case, the SOS drawer offers "Open drift case" for an acknowledged SOS, and "Rerun drift" adds the next run. |
+| RND-11c | A live case whose forecast window has ended refuses a search report. |
 | RND-11a | No drift card prints a raw `insufficient_*` code. |
 | console | No console error and no 5xx response during the run. |

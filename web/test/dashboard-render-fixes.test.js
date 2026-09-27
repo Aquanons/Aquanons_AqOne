@@ -11,7 +11,10 @@ const assert = require('node:assert/strict');
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { tripCheckRowHtml, riskFeedHtml, driftLegendItems, driftLegendHtml, insufficiencyText, DRIFT_COLORS } = require('../js/dashboard-utils.js');
+const {
+  tripCheckRowHtml, riskFeedHtml, driftLegendItems, driftLegendHtml, insufficiencyText, DRIFT_COLORS,
+  eligibleForSearchReport, sosDriftCaseEligible
+} = require('../js/dashboard-utils.js');
 
 // The docs/05 "Factor object" example.
 const OVERDUE = { code: 'overdue', value: 1.0, weight: 0.85, contribution: 0.85, description: 'Late beyond the expected-contact window.' };
@@ -152,4 +155,34 @@ test('RND-11: every insufficiency code the backend emits reads as a sentence', (
 test('RND-11: the drift card prints the sentence, not the code', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/dashboard/dashboard-ai-ops.js'), 'utf8');
   assert.ok(source.includes('insufficiencyText(payload.insufficiency_reason)'));
+});
+
+test('RND-10: an escalated, open trip check offers Open drift case', () => {
+  const base = { id: 7, vessel_id: 'V001', case_type: 'responder_attention', score: 0.9, reasons: [OVERDUE], source: 'live' };
+  assert.ok(tripCheckRowHtml(Object.assign({ escalated_at: '2026-09-26T12:00:00Z' }, base)).includes('data-case-action="open-drift" data-case-id="7"'));
+  assert.ok(!tripCheckRowHtml(base).includes('open-drift'));
+  assert.ok(!tripCheckRowHtml(Object.assign({ escalated_at: '2026-09-26T12:00:00Z', resolved_at: '2026-09-26T13:00:00Z' }, base)).includes('open-drift'));
+});
+
+test('RND-10: only an acknowledged SOS with a position can open a drift case', () => {
+  const sos = { alertType: 'sos', sosEventId: 12, acknowledgedAt: '2026-09-26T12:00:00Z', lat: 11.7, lng: 122.5 };
+  assert.deepEqual(sosDriftCaseEligible(sos), { ok: true, sourceType: 'sos', sourceId: 12 });
+  assert.equal(sosDriftCaseEligible(Object.assign({}, sos, { acknowledgedAt: null })).ok, false);
+  assert.equal(sosDriftCaseEligible(Object.assign({}, sos, { lat: null })).ok, false);
+  assert.equal(sosDriftCaseEligible(Object.assign({}, sos, { alertType: 'squall' })).ok, false);
+  assert.equal(sosDriftCaseEligible(null).ok, false);
+});
+
+test('RND-11: a run whose forecast has ended refuses a search report', () => {
+  const payload = {
+    incident: { id: 10, is_synthetic: false, case_state: 'confirmed' },
+    environmental_status: 'ok',
+    forecast_ends_at: '2026-09-26T12:00:00Z'
+  };
+  const before = Date.parse('2026-09-26T11:30:00Z');
+  const after = Date.parse('2026-09-26T12:30:00Z');
+  assert.equal(eligibleForSearchReport(payload, before).ok, true);
+  const ended = eligibleForSearchReport(payload, after);
+  assert.equal(ended.ok, false);
+  assert.equal(ended.reason, "This run's forecast has ended - rerun the case first.");
 });

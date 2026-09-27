@@ -127,7 +127,14 @@ class _FakePool:
     async def close(self) -> None:
         return None
 
-    async def fetchval(self, _query: str, *_args):
+    async def fetchval(self, query: str, *args):
+        if 'FROM incidents WHERE source_sos_event_id' in query:
+            sos_id, anomaly_id = args
+            return next((
+                row['id'] for row in self.incidents.values()
+                if (sos_id is not None and row['source_sos_event_id'] == sos_id)
+                or (anomaly_id is not None and row['source_anomaly_case_id'] == anomaly_id)
+            ), None)
         return 1
 
     async def fetchrow(self, query: str, *args):
@@ -470,6 +477,7 @@ def test_duplicate_case_creation_is_rejected(pool):
         )
     assert first.status_code == 200
     assert second.status_code == 409
+    assert second.json()['incident_id'] == first.json()['id']
 
 
 def test_unescalated_anomaly_cannot_open_a_case(pool):

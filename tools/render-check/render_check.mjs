@@ -67,6 +67,17 @@ async function setup() {
       body: { source_type: 'sos', source_id: sos.id, object_class: 'swamped_banca', forecast_hours: 1, datum_at: datumAt },
     });
     console.log(`live case: ${opened.status} ${JSON.stringify(opened.json).slice(0, 200)}`);
+    // A second ok case whose one-hour forecast ended an hour ago: search
+    // reporting must be refused on it (RND-11c).
+    const other = (recent.json.events || []).find((event) => event.id !== sos.id && event.latitude != null);
+    if (other) {
+      await api(`/api/sos/${other.id}/acknowledge`, { method: 'POST', token, body: {} });
+      const ended = await api('/api/ai/drift/cases', {
+        method: 'POST', token,
+        body: { source_type: 'sos', source_id: other.id, object_class: 'person_in_water', forecast_hours: 1, datum_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString() },
+      });
+      console.log(`ended case: ${ended.status} ${JSON.stringify(ended.json).slice(0, 160)}`);
+    }
     // The overdue trip's last contact is hours old, so a 24 h case from it
     // cannot pass the environmental gate: the honest insufficient state.
     const open = await api('/api/ai/anomaly/cases/open', { token });
@@ -135,7 +146,18 @@ async function main() {
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const consoleErrors = [];
-  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  // The browser logs every 409 as a console error; opening a drift case for
+  // a source that already has one answers 409 by design (RND-10), which the
+  // dashboard handles by selecting that case.
+  let expectedConflicts = 0;
+  page.on('response', (response) => {
+    if (response.status() === 409 && response.url().endsWith('/api/ai/drift/cases')) expectedConflicts += 1;
+  });
+  page.on('console', (message) => {
+    if (message.type() !== 'error') return;
+    if (/status of 409/.test(message.text()) && expectedConflicts > 0) { expectedConflicts -= 1; return; }
+    consoleErrors.push(message.text());
+  });
   page.on('pageerror', (error) => consoleErrors.push('pageerror: ' + error.message));
   page.on('response', (response) => {
     if (response.status() >= 500) consoleErrors.push(`HTTP ${response.status()} ${response.url()}`);
@@ -262,11 +284,57 @@ async function main() {
     record('RND-07', false, 'no synthetic replay in the selector');
   }
 
-  // RND-10: an escalated trip check offers "Open drift case".
+  // RND-11c: a run whose forecast has ended refuses a search report.
+  const endedCase = [];
+  for (const entry of drift.filter((item) => !item.synthetic)) {
+    await page.selectOption('#ai-drift-select', String(entry.id));
+    await page.waitForTimeout(2500);
+    const searchText = await page.$eval('#ai-drift-search', (el) => el.innerText);
+    if (searchText.includes('forecast has ended')) endedCase.push(entry.id);
+  }
+  record('RND-11c', endedCase.length > 0, `cases refusing reports after their forecast: ${endedCase.join(',') || 'none'}`);
+
+  // RND-10: an escalated trip check opens (or selects) its drift case through
+  // the UI, the SOS drawer offers the action, and Rerun adds a run.
   await page.click('.stats-tab[data-tab="tripchecks"]').catch(() => {});
   await page.waitForTimeout(500);
-  const openButtons = await page.$$eval('[data-case-action="open-drift"]', (els) => els.length).catch(() => 0);
-  record('RND-10', openButtons > 0, `open-drift buttons: ${openButtons}`);
+  const openButton = await page.$('[data-case-action="open-drift"]');
+  let openedId = null;
+  if (openButton) {
+    await openButton.click();
+    await page.waitForSelector('#drift-open-modal-overlay:not([hidden])', { timeout: 5000 });
+    await page.screenshot({ path: join(OUT, 'open-drift-modal.png') });
+    await page.click('#drift-open-confirm');
+    await page.waitForSelector('#drift-open-modal-overlay[hidden]', { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(3000);
+    openedId = await page.$eval('#ai-drift-select', (el) => el.value);
+  }
+  const openedSource = (await pageApi(page, '/api/ai/drift/incidents')).find((item) => String(item.id) === String(openedId));
+  const drawerButton = await page.evaluate(() => {
+    const ns = window.AqOneDashboard;
+    const alert = ns.allAlerts().find((a) => a.drawerData && a.drawerData.acknowledgedAt && a.lat != null);
+    if (!alert) return 'no acknowledged SOS';
+    ns.openIncidentDrawer(alert.drawerData, null);
+    const visible = !document.getElementById('sos-btn-open-drift').hidden;
+    ns.closeSOSDrawer();
+    return visible;
+  });
+  let rerunDetail = 'no confirmed ok case';
+  let rerunAdded = false;
+  const okCase = drift.find((item) => !item.synthetic && item.paths > 0 && !endedCase.includes(item.id));
+  if (okCase) {
+    await page.selectOption('#ai-drift-select', String(okCase.id));
+    await page.waitForTimeout(2500);
+    const before = await page.$eval('#ai-drift-meta', (el) => (el.innerText.match(/run (\d+)/) || [])[1]);
+    await page.click('#ai-drift-search [data-action="rerun-case"]');
+    await page.waitForTimeout(6000);
+    const after = await page.$eval('#ai-drift-meta', (el) => (el.innerText.match(/run (\d+)/) || [])[1]);
+    rerunDetail = `case ${okCase.id}: run ${before} -> ${after}`;
+    rerunAdded = Number(after) === Number(before) + 1;
+    await card.screenshot({ path: join(OUT, 'drift-card-after-rerun.png') });
+  }
+  record('RND-10', Boolean(openedSource && openedSource.source_type === 'anomaly') && drawerButton === true && rerunAdded,
+    { openedId, openedSource: openedSource && openedSource.source_type, drawerButton, rerun: rerunDetail });
 
   record('console', consoleErrors.length === 0, consoleErrors.slice(0, 8));
   writeFileSync(join(OUT, 'report.json'), JSON.stringify(results, null, 2));

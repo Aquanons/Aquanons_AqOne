@@ -415,13 +415,40 @@
     }
 
     var eligibility = eligibleForSearchReport(payload);
-    if (!eligibility.ok) {
-      container.innerHTML = '<div class="ai-search-disabled-note">Search reporting unavailable — ' + escapeHtml(eligibility.reason) + '</div>';
-      return;
-    }
+    var search = eligibility.ok
+      ? '<button type="button" class="ai-drift-search-btn" data-action="start-search">Mark a searched area</button>'
+      : '<div class="ai-search-disabled-note">Search reporting unavailable - ' + escapeHtml(eligibility.reason) + '</div>';
+    // A new run is a deliberate responder action on an open, real case
+    // (docs/40 Phase 2 item 4); a synthetic replay has no stored run.
+    var isOpenRealCase = payload && typeof payload.environmental_status === 'string' &&
+      payload.incident && payload.incident.case_state === 'confirmed';
+    var rerun = isOpenRealCase
+      ? '<button type="button" class="ai-drift-search-btn ai-drift-search-btn-cancel" data-action="rerun-case">Rerun drift</button>'
+      : '';
+    container.innerHTML = search + rerun;
+  }
 
-    container.innerHTML =
-      '<button type="button" class="ai-drift-search-btn" data-action="start-search">Mark a searched area</button>';
+  function rerunCase(button) {
+    if (!currentDriftPayload || !currentDriftPayload.incident) return;
+    var incidentId = currentDriftPayload.incident.id;
+    button.disabled = true;
+    button.textContent = 'Rerunning…';
+    authFetch('/api/ai/drift/cases/' + encodeURIComponent(incidentId) + '/rerun', { method: 'POST' })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok) throw new Error(body.detail || ('HTTP ' + res.status));
+          return body;
+        });
+      })
+      .then(function (body) {
+        showToast('Drift rerun', 'Run ' + body.run_number + ' is now the current run of case #' + incidentId + '.', false);
+        loadDriftIncidentDetail(incidentId);
+      })
+      .catch(function (err) {
+        showToast('Rerun failed', err.message, true);
+        button.disabled = false;
+        button.textContent = 'Rerun drift';
+      });
   }
 
   function cancelSectorDraw() {
@@ -580,7 +607,81 @@
     if (action === 'start-search') startSectorDraw();
     else if (action === 'cancel-search') cancelSectorDraw();
     else if (action === 'submit-search') submitSectorReport();
+    else if (action === 'rerun-case') rerunCase(button);
   });
+
+  // ===== OPEN A DRIFT CASE (docs/71 RND-10) =====
+  //
+  // From an escalated trip check or an acknowledged SOS: the responder picks
+  // the object class (docs/40 Phase 1 item 4 - never inferred), the backend
+  // opens the case and computes run 1, and the drift card selects it.
+  var openModal = document.getElementById('drift-open-modal-overlay');
+  var openSource = null;
+
+  function closeOpenModal() {
+    if (openModal) openModal.hidden = true;
+    openSource = null;
+  }
+
+  function reloadDriftIncidents(selectId) {
+    return aiFetchJson('/api/ai/drift/incidents').then(function (items) {
+      renderDriftIncidentList(items || []);
+      var select = document.getElementById('ai-drift-select');
+      if (select) select.value = String(selectId);
+      var card = document.getElementById('drift-card');
+      if (card && typeof card.scrollIntoView === 'function') card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return loadDriftIncidentDetail(selectId);
+    });
+  }
+
+  function openDriftCase(sourceType, sourceId, label) {
+    if (!openModal) return;
+    openSource = { sourceType: sourceType, sourceId: Number(sourceId) };
+    var title = document.getElementById('drift-open-source');
+    if (title) title.textContent = label || '';
+    var error = document.getElementById('drift-open-error');
+    if (error) { error.hidden = true; error.textContent = ''; }
+    var confirm = document.getElementById('drift-open-confirm');
+    if (confirm) { confirm.disabled = false; confirm.textContent = 'Open case'; }
+    openModal.hidden = false;
+  }
+
+  function submitOpenCase() {
+    if (!openSource) return;
+    var source = openSource;
+    var classSelect = document.getElementById('drift-open-class');
+    var confirm = document.getElementById('drift-open-confirm');
+    var error = document.getElementById('drift-open-error');
+    if (confirm) { confirm.disabled = true; confirm.textContent = 'Opening…'; }
+    authFetch('/api/ai/drift/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_type: source.sourceType, source_id: source.sourceId, object_class: classSelect ? classSelect.value : 'person_in_water' })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (res.ok) return { id: body.id, existed: false };
+        if (res.status === 409 && body.incident_id != null) return { id: body.incident_id, existed: true };
+        throw new Error(body.detail || ('HTTP ' + res.status));
+      });
+    }).then(function (opened) {
+      closeOpenModal();
+      showToast(opened.existed ? 'Drift case already open' : 'Drift case opened',
+        opened.existed ? 'Showing the existing case #' + opened.id + '.' : 'Case #' + opened.id + ' is on the map.', false);
+      return reloadDriftIncidents(opened.id);
+    }).catch(function (err) {
+      if (error) { error.textContent = 'Not opened: ' + err.message; error.hidden = false; }
+      if (confirm) { confirm.disabled = false; confirm.textContent = 'Open case'; }
+    });
+  }
+
+  ['drift-open-close', 'drift-open-cancel'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', closeOpenModal);
+  });
+  var openConfirm = document.getElementById('drift-open-confirm');
+  if (openConfirm) openConfirm.addEventListener('click', submitOpenCase);
+
+  ns.openDriftCase = openDriftCase;
 
   function renderDriftIncidentList(items) {
     var select = document.getElementById('ai-drift-select');

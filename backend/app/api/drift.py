@@ -7,6 +7,7 @@ from typing import Any, Literal
 import asyncpg
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
 from app.ai import environment
@@ -143,6 +144,15 @@ def _source_type(row) -> str:
     if row['source_anomaly_case_id'] is not None:
         return 'anomaly'
     return 'synthetic'
+
+
+def _forecast_ends_at(run) -> str | None:
+    """The last step of a stored run's trajectory: after it a searched sector
+    can no longer be assimilated (app/ai/search.py), so the dashboard stops
+    offering the report (docs/71 RND-11)."""
+    trajectory = _grid(run.get('trajectory_data'))
+    steps = (trajectory or {}).get('step_times') or []
+    return str(steps[-1]) if steps else None
 
 
 def _grid(value) -> dict | None:
@@ -575,8 +585,8 @@ async def _anomaly_case_inputs(
     return row['vessel_id'], float(position['latitude']), float(position['longitude']), datum_at, datum_meta
 
 
-@router.post('/cases')
-async def open_case(body: OpenCaseRequest, user: dict = require_responder_roles) -> dict[str, object]:
+@router.post('/cases', response_model=None)
+async def open_case(body: OpenCaseRequest, user: dict = require_responder_roles) -> dict[str, object] | JSONResponse:
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
         if body.source_type == 'sos':
@@ -585,6 +595,18 @@ async def open_case(body: OpenCaseRequest, user: dict = require_responder_roles)
         else:
             vessel_id, lat, lon, at, datum_meta = await _anomaly_case_inputs(conn, body.source_id, body.datum_at)
             reason, sos_id, anomaly_id = ANOMALY_OPEN_REASON, None, body.source_id
+
+        # One case per source; the 409 names it so the dashboard can open it
+        # instead (docs/71 RND-10).
+        existing_id = await conn.fetchval(
+            'SELECT id FROM incidents WHERE source_sos_event_id = $1 OR source_anomaly_case_id = $2',
+            sos_id, anomaly_id,
+        )
+        if existing_id is not None:
+            return JSONResponse(
+                status_code=409,
+                content={'detail': 'a case already exists for this source', 'incident_id': existing_id},
+            )
 
         try:
             row = await conn.fetchrow(
@@ -859,6 +881,7 @@ async def incident_prediction(incident_id: int, forecast_hours: float = 24.0) ->
             'contours': contours_from_grid(_grid(run['posterior_grid'])) if is_ok else [],
             'next_area': recommend_next_area(_grid(run['posterior_grid'])) if is_ok else None,
             'search_sectors': await _fetch_sectors(pool, incident_id),
+            'forecast_ends_at': _forecast_ends_at(run) if is_ok else None,
         }
         return response
 

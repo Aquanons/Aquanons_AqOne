@@ -70,3 +70,15 @@ Date: 2026-09-27.
   The stored file had said 100%, 1.40x and 100% observed currents (2026-08-04, older code); it now holds the "after" row. `docs/16`, `docs/17` and a dated correction in `docs/audits/AI_LAYER_DATA_SUFFICIENCY_AUDIT_2026-09-14.md` carry the new figures.
 - Gates: backend 590 passed, 62 skipped, 1 xfailed; with probes 647 passed, 5 skipped, 1 xfailed; ruff clean.
 - Render check (`phase-5/report.json`): RND-07 PASS (three distinct rings; the replay horizon equals the truth track's span); every earlier check still PASSES.
+
+## Phase 6: responders open and rerun cases; ended runs refuse reports
+
+Date: 2026-09-27.
+
+- `docs/05_PUBLIC_API.md` amended first: the "already has a case" `409` names the case (`incident_id`), and a real-case payload carries `forecast_ends_at`.
+- Red first: the two probe tests in `tests/test_demo_pg.py` failed (`KeyError: 'incident_id'`; `_forecast_ends_at` missing) and three web tests failed (no "Open drift case" on an escalated trip check, no `sosDriftCaseEligible`, no ended-run refusal).
+- The dashboard opens a case from an escalated trip check (`data-case-action="open-drift"`) or from the SOS drawer (acknowledged, with a position), always asking the responder for the object class in a modal that states it dispatches no one; a `409` selects the existing case. "Rerun drift" appears on open real cases.
+- The modal lives outside the SOS drawer: inside it, the closed drawer's off-screen box captured the modal and a map path intercepted the click (found by the render check).
+- `tests/test_drift_api.py`'s fake store now answers the existing-case lookup, and its duplicate test checks the named case.
+- Gates: backend 591 passed, 63 skipped, 1 xfailed; with probes 649 passed, 5 skipped, 1 xfailed; ruff clean; web 193 passed, `node --check` clean.
+- Render check (`phase-6/report.json`, freshly seeded): every check PASSES, including RND-10 (the trip check selected case 12, the SOS drawer offered the action, rerun took case 10 from run 1 to run 2) and RND-11c (case 11, whose one-hour forecast ended an hour earlier, refuses a search report). The browser's console line for the designed `409` is counted as expected, not as an error.

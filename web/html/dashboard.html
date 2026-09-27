@@ -897,6 +897,7 @@
         <button class="sos-btn" id="sos-btn-confirm-vessel" hidden>Confirm vessel</button>
         <button class="sos-btn sos-btn-broadcast" id="sos-btn-broadcast" disabled title="Broadcast to nearby vessels is not supported in this release">Broadcast to Nearby Vessels (Unavailable)</button>
         <button class="sos-btn sos-btn-checkin" id="sos-btn-checkin" disabled title="Silent check-in is not supported in this release">Request Silent Check-in (Unavailable)</button>
+        <button class="sos-btn" id="sos-btn-open-drift" hidden>Open drift case</button>
         <button class="sos-btn sos-btn-activity" id="sos-btn-activity">View Activity</button>
         <div class="sos-broadcast-msg" id="sos-broadcast-msg"></div>
       </div>
@@ -977,6 +978,33 @@
           <button type="button" class="sos-btn ack-btn-cancel" id="ack-btn-cancel">Cancel</button>
           <button type="button" class="sos-btn sos-btn-acknowledge" id="ack-btn-confirm">Send acknowledgement</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open a drift/search case from an escalated trip check or an
+       acknowledged SOS (docs/71 RND-10). The object class is always the
+       responder's choice, never inferred (docs/40 Phase 1 item 4). -->
+  <div class="ack-modal-overlay" id="drift-open-modal-overlay" hidden>
+    <div class="ack-modal" role="dialog" aria-modal="true" aria-labelledby="drift-open-title">
+      <div class="ack-modal-header">
+        <span id="drift-open-title">Open drift case</span>
+        <button type="button" class="ack-modal-close" id="drift-open-close" aria-label="Close open drift case">&times;</button>
+      </div>
+      <div class="ack-modal-body">
+        <p id="drift-open-source"></p>
+        <label class="drift-open-label" for="drift-open-class">What is in the water?</label>
+        <select id="drift-open-class" class="ai-drift-select">
+          <option value="person_in_water">Person in the water</option>
+          <option value="swamped_banca">Swamped banca</option>
+          <option value="intact_hull_adrift">Intact hull adrift</option>
+        </select>
+        <p class="drift-open-note">This runs the drift model from the last known position. It does not dispatch anyone.</p>
+        <p id="drift-open-error" role="alert" hidden></p>
+      </div>
+      <div class="ack-modal-actions">
+        <button type="button" class="sos-btn ack-btn-cancel" id="drift-open-cancel">Cancel</button>
+        <button type="button" class="sos-btn sos-btn-acknowledge" id="drift-open-confirm">Open case</button>
       </div>
     </div>
   </div>

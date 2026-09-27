@@ -255,24 +255,24 @@ Continue automatically to the next phase.
 ## Phase 6: responders open and rerun cases; ended runs refuse reports
 
 Requirements: RND-10, RND-11 (ended runs)
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Amend `docs/05`: the real-case drift payload adds `forecast_ends_at` (datum plus the run's horizon).
-- [ ] Red tests: pure open-case eligibility for an escalated trip check and an acknowledged, unresolved SOS with a position; `eligibleForSearchReport` refuses an ended run; API test for `forecast_ends_at`.
-- [ ] "Open drift case" on eligible trip-check rows and in the SOS drawer: object-class choice, `POST /api/ai/drift/cases`, then select the new case in the drift card; a 409 for an existing case selects that case instead.
-- [ ] "Rerun" on an open, confirmed case: `POST /api/ai/drift/cases/{id}/rerun`, then reload the case.
-- [ ] `drift.py` adds `forecast_ends_at` to the real-case payload.
+- [x] Amend `docs/05`: the real-case drift payload adds `forecast_ends_at` (datum plus the run's horizon).
+- [x] Red tests: pure open-case eligibility for an escalated trip check and an acknowledged, unresolved SOS with a position; `eligibleForSearchReport` refuses an ended run; API test for `forecast_ends_at`.
+- [x] "Open drift case" on eligible trip-check rows and in the SOS drawer: object-class choice, `POST /api/ai/drift/cases`, then select the new case in the drift card; a 409 for an existing case selects that case instead.
+- [x] "Rerun" on an open, confirmed case: `POST /api/ai/drift/cases/{id}/rerun`, then reload the case.
+- [x] `drift.py` adds `forecast_ends_at` to the real-case payload.
 
 ### Verification
 
-- [ ] Backend and web gates.
-- [ ] Render check: open a case from each source through the UI, rerun it, and see search reporting disabled on an ended run with the new reason.
+- [x] Backend and web gates.
+- [x] Render check: open a case from each source through the UI, rerun it, and see search reporting disabled on an ended run with the new reason.
 
 ### Review and checkpoint
 
-- [ ] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
+- [x] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
 
 Checkpoint message: `feat(dashboard): open and rerun drift cases, refuse reports on ended runs`
 Continue automatically to the next phase.

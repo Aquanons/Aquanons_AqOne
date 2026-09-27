@@ -5496,6 +5496,23 @@ h3.buoy-drawer-title {
 
 /* "View Activity" sits in the light meta box; the default .action-btn is
    styled for the dark theme and read as plain text here. */
+.drift-open-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.drift-open-note {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+#drift-open-error { margin-top: 8px; color: #dc2626; font-size: 12px; }
+
+.trip-check-action-drift { border-color: #38bdf8; color: #0369a1; }
+
 .ai-meta-line .ai-drift-activity-btn {
   display: inline-flex;
   width: auto;
@@ -5567,6 +5584,10 @@ h3.buoy-drawer-title {
 }
 
 .ai-drift-search-btn-cancel:hover { background: rgba(148,163,184,0.22); }
+
+/* Under a disabled-reporting note the button starts a new line; the gap is
+   only for sitting beside another button. */
+.ai-search-disabled-note + .ai-drift-search-btn-cancel { margin-left: 0; margin-top: 4px; }
 
 .ai-search-disabled-note {
   font-size: 11px;

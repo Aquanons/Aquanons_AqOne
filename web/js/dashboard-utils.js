@@ -322,6 +322,11 @@
         '<button class="trip-check-action" data-case-action="dismiss" data-case-id="' + caseId + '">Dismiss</button>' +
         '<button class="trip-check-action" data-case-action="escalate" data-case-id="' + caseId + '">Escalate</button>' +
         '<button class="trip-check-action trip-check-action-resolve" data-case-action="resolve" data-case-id="' + caseId + '">Resolve</button>';
+      // A drift/search case opens only from a responder's escalation
+      // (docs/40 Phase 1); the backend rejects anything else.
+      if (c.escalated_at) {
+        actions += '<button class="trip-check-action trip-check-action-drift" data-case-action="open-drift" data-case-id="' + caseId + '">Open drift case</button>';
+      }
     }
 
     return (
@@ -506,7 +511,20 @@
    * Returns `{ ok: true }` or `{ ok: false, reason: string }` - never a bare
    * boolean, so a caller always has something to show a responder.
    */
-  function eligibleForSearchReport(payload) {
+  /**
+   * Whether an SOS drawer may offer "Open drift case": the backend opens a
+   * case only from an acknowledged SOS with a last-known position (docs/40
+   * Phase 1, docs/05 `POST /api/ai/drift/cases`).
+   */
+  function sosDriftCaseEligible(drawer) {
+    var d = drawer || {};
+    if (d.alertType !== 'sos' || d.sosEventId == null) return { ok: false, reason: 'Not an SOS.' };
+    if (!d.acknowledgedAt) return { ok: false, reason: 'Acknowledge the SOS first.' };
+    if (d.lat == null || d.lng == null) return { ok: false, reason: 'The SOS has no position.' };
+    return { ok: true, sourceType: 'sos', sourceId: d.sosEventId };
+  }
+
+  function eligibleForSearchReport(payload, nowMs) {
     if (!payload || !payload.incident) {
       return { ok: false, reason: 'No eligible case selected.' };
     }
@@ -519,6 +537,12 @@
     }
     if (payload.environmental_status !== 'ok') {
       return { ok: false, reason: 'Environmental inputs are insufficient for this run.' };
+    }
+    // After its last trajectory step a run cannot place a search in time
+    // (app/ai/search.py rejects it), so the report is refused up front.
+    var endsAt = payload.forecast_ends_at ? Date.parse(payload.forecast_ends_at) : NaN;
+    if (!isNaN(endsAt) && (nowMs == null ? Date.now() : nowMs) > endsAt) {
+      return { ok: false, reason: "This run's forecast has ended - rerun the case first." };
     }
     return { ok: true };
   }
@@ -693,6 +717,7 @@
     driftLegendHtml: driftLegendHtml,
     insufficiencyText: insufficiencyText,
     eligibleForSearchReport: eligibleForSearchReport,
+    sosDriftCaseEligible: sosDriftCaseEligible,
     squallStatusHtml: squallStatusHtml,
     formatAuditAction: formatAuditAction,
     auditEventRowHtml: auditEventRowHtml,

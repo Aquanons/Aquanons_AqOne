@@ -86,3 +86,46 @@ def test_a_synthetic_replay_is_shown_at_its_evaluated_horizon(probe_db):
     assert body['forecast_hours'] == replay_horizon_hours(track)
     assert body['forecast_hours'] < 24
     assert len({json.dumps(contour['geometry']['coordinates']) for contour in body['contours']}) == 3
+
+
+def test_opening_a_case_twice_names_the_existing_case(probe_db):
+    # docs/71 RND-10: the dashboard selects the case that already exists
+    # instead of showing a bare 409.
+    from fastapi.testclient import TestClient
+
+    from app.auth import create_token
+    from app.main import app
+
+    async def seed():
+        await regenerate(probe_db, build_plan(days=14, seed=42))
+        conn = await asyncpg.connect(probe_db)
+        try:
+            return await conn.fetchval(
+                'UPDATE sos_events SET acknowledged_at = NOW() WHERE id = (SELECT MIN(id) FROM sos_events) RETURNING id'
+            )
+        finally:
+            await conn.close()
+
+    sos_id = asyncio.run(seed())
+    token = create_token(1, 'probe.mdrrmo@example.invalid', 'mdrrmo')
+    body = {'source_type': 'sos', 'source_id': sos_id, 'object_class': 'swamped_banca'}
+    with TestClient(app) as client:
+        headers = {'Authorization': f'Bearer {token}'}
+        first = client.post('/api/ai/drift/cases', json=body, headers=headers)
+        second = client.post('/api/ai/drift/cases', json=body, headers=headers)
+        case = client.get(f"/api/ai/drift/incident/{first.json()['id']}", headers=headers)
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert second.json()['incident_id'] == first.json()['id']
+    assert 'forecast_ends_at' in case.json()
+
+
+def test_the_forecast_ends_with_the_run_trajectory():
+    import json
+
+    from app.api.drift import _forecast_ends_at
+
+    steps = ['2026-09-26T11:08:00+00:00', '2026-09-26T12:08:00+00:00']
+    assert _forecast_ends_at({'trajectory_data': json.dumps({'step_times': steps})}) == steps[-1]
+    assert _forecast_ends_at({'trajectory_data': {'step_times': steps}}) == steps[-1]
+    assert _forecast_ends_at({'trajectory_data': None}) is None

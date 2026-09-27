@@ -40,6 +40,7 @@
   const sosBtnBroadcast    = document.getElementById('sos-btn-broadcast');
   const sosBtnCheckin      = document.getElementById('sos-btn-checkin');
   const sosBtnActivity     = document.getElementById('sos-btn-activity');
+  const sosBtnOpenDrift    = document.getElementById('sos-btn-open-drift');
   const sosBroadcastMsg    = document.getElementById('sos-broadcast-msg');
   const ackOverlay         = document.getElementById('ack-modal-overlay');
   if (ackOverlay) {
@@ -160,8 +161,18 @@
   // responderStatusHtml() in web/js/dashboard-utils.js for the pure part.
   function renderResponderSection(data) {
     var el = document.getElementById('sos-responder-block');
-    if (!el) return;
-    el.innerHTML = responderStatusHtml(data);
+    if (el) el.innerHTML = responderStatusHtml(data);
+    renderDriftAction(data);
+  }
+
+  // "Open drift case" only for an acknowledged SOS with a position
+  // (docs/71 RND-10); the rule is pure, in dashboard-utils.js.
+  function renderDriftAction(data) {
+    if (!sosBtnOpenDrift) return;
+    var eligible = ns.dashboardUtils && ns.dashboardUtils.sosDriftCaseEligible
+      ? ns.dashboardUtils.sosDriftCaseEligible(data)
+      : { ok: false };
+    sosBtnOpenDrift.hidden = !eligible.ok;
   }
 
   function renderVesselIdentity(data) {
@@ -635,6 +646,14 @@
       var eventId = currentDrawerData && currentDrawerData.sosEventId;
       if (!eventId || !ns.openActivityDrawer) return;
       ns.openActivityDrawer('sos_event', eventId, 'SOS Case Activity');
+    });
+  }
+
+  if (sosBtnOpenDrift) {
+    sosBtnOpenDrift.addEventListener('click', function () {
+      var eligible = ns.dashboardUtils.sosDriftCaseEligible(currentDrawerData);
+      if (!eligible.ok || !ns.openDriftCase) return;
+      ns.openDriftCase('sos', eligible.sourceId, 'SOS #' + eligible.sourceId + ' - ' + (currentDrawerData.vesselId || ''));
     });
   }
 

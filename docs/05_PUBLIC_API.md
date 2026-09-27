@@ -1173,6 +1173,9 @@ Fails with `404` if the source doesn't exist, `409` if the source is not yet
 confirmed (not acknowledged / not escalated), already resolved, or already
 has a case open (one case per source — a retry does not fork a second search
 effort), and `422` if the source has no recorded position yet.
+The "already has a case" `409` names that case (amended 2026-09-26, `docs/71`
+RND-10), so a client can open it instead:
+`{ "detail": "a case already exists for this source", "incident_id": 101 }`.
 
 Opening a case immediately computes and persists **run 1** against the
 quality policy above — this is the only time a real case's prediction is
@@ -1207,9 +1210,15 @@ environmental inputs. Response shape for a real case:
   "posterior_grid": { "...": "DensityGrid" },
   "contours": [ "...": "50/75/95% GeoJSON polygons" ],
   "next_area": { "label": "recommendation for responder review", "bounds": { "...": "..." }, "centroid": { "...": "..." }, "remaining_mass": 0.71 },
-  "search_sectors": [ "..." ]
+  "search_sectors": [ "..." ],
+  "forecast_ends_at": "2026-08-31T05:10:00+00:00"
 }
 ```
+
+`forecast_ends_at` (amended 2026-09-26, `docs/71` RND-11) is the last step of
+the run's stored trajectory; a searched sector after it cannot be placed in
+time and is rejected, so the dashboard stops offering the report and asks for
+a rerun. It is `null` when the run is insufficient or has no trajectory.
 
 When `environmental_status` is `insufficient_environmental_data`,
 `prediction`/`posterior_grid` are `null` and `contours` is `[]` — never a

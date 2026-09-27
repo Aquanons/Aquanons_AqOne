@@ -120,6 +120,11 @@
         if (ns.openActivityDrawer) ns.openActivityDrawer('anomaly_case', caseId, 'Anomaly Case Activity');
         return;
       }
+      if (action === 'open-drift') {
+        var vessel = button.closest('.trip-check-row').querySelector('.trip-check-vessel');
+        if (ns.openDriftCase) ns.openDriftCase('anomaly', caseId, 'Trip check #' + caseId + (vessel ? ' - ' + vessel.textContent : ''));
+        return;
+      }
 
       let body = null;
       if (action === 'dismiss' || action === 'escalate') {
