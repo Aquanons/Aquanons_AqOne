@@ -337,6 +337,15 @@ applies a searched sector's detection probability to the posterior probability
 grid, renormalises, persists it, and returns updated contours. A negative search
 result therefore *moves* the search area instead of leaving it static.
 
+**Drift containment, corrected 2026-09-26.** The stored synthetic figure of
+100% containment was measured on a "95%" ring that tied grid densities could
+turn into the 100% ring. With rings now built from the smallest set of cells
+holding their mass (`docs/71` RND-07), the same 8 synthetic incidents give
+87.5% containment (7 of 8) and a 64.5x area reduction against the independent
+maximum-speed envelope (was 100% and 55.0x on the same data and code before the
+fix). The evaluation ran on the synthetic current field (observed-current
+fraction 0%), so it checks the simulator against itself, not real-world skill.
+
 **Uncertainty calibration in drift.** Each particle draws a current bias and a
 leeway scale factor once at seeding, so the ensemble spreads realistically
 instead of collapsing to a single ellipse. Crosswind leeway is assigned

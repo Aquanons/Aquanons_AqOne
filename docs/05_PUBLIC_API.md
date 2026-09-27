@@ -1222,6 +1222,16 @@ A legacy/demo-fixture incident (created by the simulator or the demo
 scenario engine, never by `POST /cases`) has no stored run and keeps the
 pre-Phase-2 behaviour: `prediction` is a live-recomputed `DriftResult`, not a
 stored run snapshot.
+Such a payload also carries `forecast_hours`, the horizon actually used
+(amended 2026-09-26, `docs/71` RND-07): for a synthetic incident with a truth
+track it is that track's span, with the evaluator's synthetic wind, whatever
+the `forecast_hours` query asks for, so the replay shows exactly the run
+`app/ai/drift_eval.py` scores; otherwise it is the query value.
+
+Every contour is the smallest set of grid cells, taken in descending density,
+whose probability reaches its `mass` (0.50, 0.75, 0.95), so the rings nest and
+none holds more than its label plus one cell (amended 2026-09-26, `docs/71`
+RND-07; before that tied densities could make every ring the 100% area).
 
 ### `POST /api/ai/drift/cases/{id}/rerun` — explicit new drift run (Phase 2)
 

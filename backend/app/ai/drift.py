@@ -342,6 +342,32 @@ def _ensure_ring_closed(coords: list[list[float]]) -> list[list[float]]:
     return coords
 
 
+def _mass_cells(values: np.ndarray, mass_target: float) -> np.ndarray:
+    """The (row, col) cells of the smallest highest-density set holding
+    `mass_target` of the grid's mass.
+
+    Cells are taken one at a time in descending density, so a lower mass is
+    always a subset of a higher one. With a few thousand particles most cells
+    hold one or two, so densities tie; ties are broken by distance from the
+    density-weighted centre, which keeps a ring compact instead of letting a
+    `density >= cutoff` test pull every tied cell into it (docs/71 RND-07).
+    """
+    flat = values.ravel()
+    rows, cols = np.indices(values.shape)
+    total = float(flat.sum())
+    if total <= 0.0:
+        return np.empty((0, 2), dtype=int)
+    centre_row = float((rows.ravel() * flat).sum() / total)
+    centre_col = float((cols.ravel() * flat).sum() / total)
+    distance = np.hypot(rows.ravel() - centre_row, cols.ravel() - centre_col)
+    order = np.lexsort((distance, -flat))
+    cumulative = np.cumsum(flat[order]) / total
+    count = min(int(np.searchsorted(cumulative, mass_target - 1e-12, side='left')) + 1, len(order))
+    chosen = order[:count]
+    chosen = chosen[flat[chosen] > 0]
+    return np.column_stack(np.unravel_index(chosen, values.shape))
+
+
 def _contour_polygon(
     x_centers: np.ndarray,
     y_centers: np.ndarray,
@@ -352,7 +378,6 @@ def _contour_polygon(
 ) -> dict[str, object]:
     flat = values.ravel()
     order = np.argsort(flat)[::-1]
-    cumulative = np.cumsum(flat[order])
     if not len(order):
         ring = [
             [origin_lon - 0.001, origin_lat - 0.001],
@@ -366,26 +391,21 @@ def _contour_polygon(
             'geometry': {'type': 'Polygon', 'coordinates': [ring]},
             'properties': {'mass': mass_target},
         }
-    cutoff = flat[order[np.searchsorted(cumulative, mass_target, side='left')]]
-    selected = np.argwhere(values >= cutoff)
-    if len(selected) < 3:
+    selected = _mass_cells(values, mass_target)
+    if not len(selected):
         idx = int(order[0])
-        row = idx // values.shape[1]
-        col = idx % values.shape[1]
-        x0 = float(x_centers[min(col, len(x_centers) - 1)])
-        y0 = float(y_centers[min(row, len(y_centers) - 1)])
-        half_x = (float(np.diff(x_centers).mean()) if len(x_centers) > 1 else 500.0) / 2.0
-        half_y = (float(np.diff(y_centers).mean()) if len(y_centers) > 1 else 500.0) / 2.0
-        coords_m = np.array(
-            [
-                [x0 - half_x, y0 - half_y],
-                [x0 + half_x, y0 - half_y],
-                [x0 + half_x, y0 + half_y],
-                [x0 - half_x, y0 + half_y],
-            ]
-        )
-    else:
-        coords_m = np.column_stack((x_centers[selected[:, 1]], y_centers[selected[:, 0]]))
+        selected = np.array([[idx // values.shape[1], idx % values.shape[1]]])
+    # The hull of each chosen cell's corners, not its centre, so a ring
+    # encloses all of the probability it claims - a ring through cell centres
+    # left half of every edge cell outside it.
+    half_x = (float(np.diff(x_centers).mean()) if len(x_centers) > 1 else 500.0) / 2.0
+    half_y = (float(np.diff(y_centers).mean()) if len(y_centers) > 1 else 500.0) / 2.0
+    cx = x_centers[np.minimum(selected[:, 1], len(x_centers) - 1)]
+    cy = y_centers[np.minimum(selected[:, 0], len(y_centers) - 1)]
+    coords_m = np.concatenate([
+        np.column_stack((cx + dx, cy + dy))
+        for dx in (-half_x, half_x) for dy in (-half_y, half_y)
+    ])
     hull = _convex_hull(coords_m)
     if len(hull) < 3:
         xs = coords_m[:, 0]

@@ -187,3 +187,10 @@ Net: no production code or dependencies changed in this read-only audit.
 - `docs/39_SQUALL_NOWCASTING_IMPLEMENTATION_PLAN.md`
 - `docs/40_DRIFT_PREDICTION_SEARCH_RETASKING_IMPLEMENTATION_PLAN.md`
 - `docs/42_DATA_STRATEGY_RESPONSIBLE_AI_IMPLEMENTATION_PLAN.md`
+
+## Correction (2026-09-26)
+
+The drift row above quotes 100% containment and a 1.40x area reduction from `backend/app/ai/models/eval_results.json` (2026-08-04).
+That containment was measured on a "95%" ring that tied grid densities could turn into the 100% ring.
+After the fix in `docs/71_DASHBOARD_DRIFT_TRIP_RENDER_FIXES_IMPLEMENTATION_PLAN.md` (RND-07), the same 8 synthetic incidents give 87.5% containment and a 64.5x area reduction, with an observed-current fraction of 0%; see `docs/render-fixes/EVIDENCE.md`.
+The conclusion of this audit is unchanged: the drift figure is simulator self-consistency, not real-world containment.

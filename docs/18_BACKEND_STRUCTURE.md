@@ -73,6 +73,7 @@ The models and the scripts that score them.
 | `drift.py` | Drift prediction. Where does someone in the water end up? **Biggest single model file (500 lines).** |
 | `squall.py` | Storm nowcasting from buoy pressure. Belongs to the retired buoy-barometer design; squall alerts now come from the PAGASA weather API. |
 | `trip_profile.py` | Learns each boat's habits, flags overdue vessels. |
+| `drift_replay.py` | Replays a stored synthetic incident at its truth track's span with the evaluator's inputs. `drift_eval` and the dashboard's synthetic replay both call it, so the map shows what was scored. |
 | `search.py` | Bayesian re-tasking — "we searched here and found nothing," update the map. |
 | `current_field.py` | Turns real buoy current readings into a current map the drift model can use. Falls back to simulated data when there are no readings. |
 | `coverage.py` | Works out how much water the buoy array actually covers. **Built but not yet connected to any URL.** |

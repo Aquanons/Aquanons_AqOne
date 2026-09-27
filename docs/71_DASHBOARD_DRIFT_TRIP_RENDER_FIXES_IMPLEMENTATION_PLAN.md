@@ -229,25 +229,25 @@ Continue automatically to the next phase.
 ## Phase 5: drift rings are honest and the replay matches its evaluation
 
 Requirements: RND-07
-State: Not started
+State: Complete - 2026-09-26, evidence `docs/render-fixes/EVIDENCE.md`
 
 ### Tasks
 
-- [ ] Record the current `python -m app.ai.drift_eval` output on a freshly generated disposable database (seed 42) before any change.
-- [ ] Red tests: tied sparse histogram in `test_drift*.py` (the audit's 500-particle, 250 m case selects 100% for every target today); API test for the replay `forecast_hours`.
-- [ ] `_contour_polygon`: select the top cells in descending density up to the index `searchsorted` already finds, instead of `values >= cutoff`; `contours_from_grid` inherits it.
-- [ ] One replay function in `app/ai/drift_eval.py` (horizon from the truth track, the evaluator's wind and current inputs) called by `drift_eval` and by the legacy branch of `GET /api/ai/drift/incident/{id}`; the payload adds `forecast_hours`.
-- [ ] Rerun `drift_eval`; update `eval_results.json` through the evaluator only; correct `docs/16`, `docs/17` and the quoted figure in `docs/audits/AI_LAYER_DATA_SUFFICIENCY_AUDIT_2026-09-14.md` (append a dated correction, do not rewrite history).
-- [ ] Amend `docs/05` for `forecast_hours` on the replay payload.
+- [x] Record the current `python -m app.ai.drift_eval` output on a freshly generated disposable database (seed 42) before any change.
+- [x] Red tests: tied sparse histogram in `test_drift*.py` (the audit's 500-particle, 250 m case selects 100% for every target today); API test for the replay `forecast_hours`.
+- [x] `_contour_polygon`: select the top cells in descending density up to the index `searchsorted` already finds, instead of `values >= cutoff`; `contours_from_grid` inherits it.
+- [x] One replay function in `app/ai/drift_eval.py` (horizon from the truth track, the evaluator's wind and current inputs) called by `drift_eval` and by the legacy branch of `GET /api/ai/drift/incident/{id}`; the payload adds `forecast_hours`.
+- [x] Rerun `drift_eval`; update `eval_results.json` through the evaluator only; correct `docs/16`, `docs/17` and the quoted figure in `docs/audits/AI_LAYER_DATA_SUFFICIENCY_AUDIT_2026-09-14.md` (append a dated correction, do not rewrite history).
+- [x] Amend `docs/05` for `forecast_hours` on the replay payload.
 
 ### Verification
 
-- [ ] Backend gate with probes; before and after evaluator output in the evidence.
-- [ ] Render check: the synthetic replay shows three distinct rings and the ground-truth track ends inside the displayed horizon's rings or the evidence says plainly that it does not.
+- [x] Backend gate with probes; before and after evaluator output in the evidence.
+- [x] Render check: the synthetic replay shows three distinct rings and the ground-truth track ends inside the displayed horizon's rings or the evidence says plainly that it does not.
 
 ### Review and checkpoint
 
-- [ ] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
+- [x] Review, update plan, evidence, register and handoff; stage, commit, merge, push.
 
 Checkpoint message: `fix(drift): honest contour masses and replay at the evaluated horizon`
 Continue automatically to the next phase.

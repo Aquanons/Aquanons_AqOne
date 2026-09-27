@@ -9,19 +9,9 @@ from typing import Any
 import asyncpg
 
 from app.ai.current_field import create_current_field_factory
-from app.ai.drift import (
-    ObjectClass,
-    _synthetic_wind_series,
-    contour_contains,
-    predict_drift,
-)
+from app.ai.drift import contour_contains
+from app.ai.drift_replay import replay_prediction, resolved_object_class
 from app.ai.eval_store import write_section
-
-
-def _incident_class(abnormal_reason: str) -> ObjectClass:
-    if abnormal_reason in {'capsize', 'adverse_weather'}:
-        return ObjectClass.swamped_banca
-    return ObjectClass.intact_hull_adrift
 
 
 async def _load_incidents(database_url: str) -> list[asyncpg.Record]:
@@ -30,7 +20,7 @@ async def _load_incidents(database_url: str) -> list[asyncpg.Record]:
         rows = await conn.fetch(
             '''
             SELECT id, vessel_id, last_contact_at, last_contact_lat, last_contact_lon,
-                   abnormal_reason, true_track
+                   abnormal_reason, object_class, true_track
             FROM incidents
             WHERE is_synthetic = TRUE
             ORDER BY id
@@ -74,7 +64,16 @@ async def main() -> None:
         track = row['true_track']
         if isinstance(track, str):
             track = json.loads(track)
-        if len(track) < 2:
+        # The same replay the dashboard shows (app/ai/drift_replay.py).
+        replay = replay_prediction(
+            last_lat=float(row['last_contact_lat']),
+            last_lon=float(row['last_contact_lon']),
+            observed_at=row['last_contact_at'],
+            object_class=resolved_object_class(row['object_class'], row['abnormal_reason']),
+            true_track=track,
+            current_vector_fn=current_fn,
+        )
+        if replay is None:
             # A single-point track carries no drift distance to evaluate
             # containment or area reduction against - not evidence either
             # way, so it is excluded rather than silently dropped from the
@@ -82,21 +81,7 @@ async def main() -> None:
             # runs").
             excluded_low_quality += 1
             continue
-
-        forecast_hours = (len(track) - 1) * 0.5
-
-        predict_kwargs: dict[str, object] = dict(
-            last_lat=float(row['last_contact_lat']),
-            last_lon=float(row['last_contact_lon']),
-            observed_at=row['last_contact_at'],
-            object_class=_incident_class(str(row['abnormal_reason'])),
-            forecast_hours=forecast_hours,
-            wind_provider=_synthetic_wind_series,
-        )
-        if current_fn is not None:
-            predict_kwargs['current_vector_fn'] = current_fn
-
-        prediction = predict_drift(**predict_kwargs)  # type: ignore[arg-type]
+        prediction, forecast_hours = replay
         runtimes.append(prediction.runtime_ms)
         true_point = track[-1]
         if contour_contains(prediction.contours[-1], float(true_point['lat']), float(true_point['lon'])):

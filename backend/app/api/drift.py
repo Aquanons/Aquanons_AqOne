@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, model_validator
 from app.ai import environment
 from app.ai.current_field import count_nearby_fresh_buoys, create_current_field_factory
 from app.ai.drift import MODEL_VERSION, ObjectClass, _to_xy, predict_drift
+from app.ai.drift_replay import replay_prediction, resolved_object_class
 from app.ai.search import (
     contours_from_grid,
     grid_from_trajectories,
@@ -96,14 +97,36 @@ class SectorReportRequest(BaseModel):
 
 
 def _resolved_object_class(row) -> ObjectClass:
-    stored = row['object_class']
-    if stored:
-        return ObjectClass(stored)
-    # Legacy synthetic rows predating this column fall back to the old
-    # heuristic derived from abnormal_reason.
-    if str(row['abnormal_reason']) in {'capsize', 'adverse_weather'}:
-        return ObjectClass.swamped_banca
-    return ObjectClass.intact_hull_adrift
+    return resolved_object_class(row['object_class'], row['abnormal_reason'])
+
+
+def _legacy_prediction(row, current_fn, forecast_hours: float):
+    """The prediction and horizon for an incident without a stored run.
+
+    A synthetic incident with a truth track replays at that track's span with
+    the evaluator's inputs, so the map shows exactly what drift_eval scores
+    (docs/71 RND-07); anything else uses the requested horizon.
+    """
+    if row['is_synthetic']:
+        replay = replay_prediction(
+            last_lat=float(row['last_contact_lat']),
+            last_lon=float(row['last_contact_lon']),
+            observed_at=row['last_contact_at'],
+            object_class=_resolved_object_class(row),
+            true_track=_grid(row['true_track']),
+            current_vector_fn=current_fn,
+        )
+        if replay is not None:
+            return replay
+    result = predict_drift(
+        last_lat=float(row['last_contact_lat']),
+        last_lon=float(row['last_contact_lon']),
+        observed_at=row['last_contact_at'],
+        object_class=_resolved_object_class(row),
+        forecast_hours=forecast_hours,
+        current_vector_fn=current_fn,
+    )
+    return result, forecast_hours
 
 
 def _case_state(row) -> str:
@@ -198,14 +221,7 @@ async def _get_or_compute_prior(
     if prior_grid is not None:
         return json.loads(prior_grid) if isinstance(prior_grid, str) else prior_grid
 
-    result = predict_drift(
-        last_lat=float(row['last_contact_lat']),
-        last_lon=float(row['last_contact_lon']),
-        observed_at=row['last_contact_at'],
-        object_class=_resolved_object_class(row),
-        forecast_hours=forecast_hours,
-        current_vector_fn=current_fn,
-    )
+    result, _ = _legacy_prediction(row, current_fn, forecast_hours)
     async with pool.acquire() as conn:
         await conn.execute(
             'UPDATE incidents SET prior_grid = $1, posterior_grid = $1 WHERE id = $2',
@@ -851,18 +867,12 @@ async def incident_prediction(incident_id: int, forecast_hours: float = 24.0) ->
     # posterior_grid directly and never create a drift_runs row, so this
     # keeps their exact pre-Phase-2 behaviour unchanged.
     current_fn = await create_current_field_factory(pool)
-    result = predict_drift(
-        last_lat=float(row['last_contact_lat']),
-        last_lon=float(row['last_contact_lon']),
-        observed_at=row['last_contact_at'],
-        object_class=_resolved_object_class(row),
-        forecast_hours=forecast_hours,
-        current_vector_fn=current_fn,
-    )
+    result, used_hours = _legacy_prediction(row, current_fn, forecast_hours)
     posterior_grid = _grid(row['posterior_grid']) or result.grid
 
     response = {
         'incident': incident_summary,
+        'forecast_hours': used_hours,
         'prediction': result.to_dict(),
         'posterior_grid': posterior_grid,
         'contours': contours_from_grid(posterior_grid),
@@ -910,7 +920,8 @@ async def record_legacy_search_sector(
         row = await conn.fetchrow(
             '''
             SELECT id, last_contact_at, last_contact_lat, last_contact_lon,
-                   abnormal_reason, object_class, prior_grid, posterior_grid
+                   abnormal_reason, object_class, prior_grid, posterior_grid,
+                   is_synthetic, true_track
             FROM incidents WHERE id = $1
             ''',
             incident_id,

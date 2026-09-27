@@ -89,7 +89,10 @@ with slightly different assumptions. Where most of them end up is where we
 search.
 
 The result isn't a dot on a map. It's a **shape** — the 50%, 75% and 95% zones.
-"There's a 95% chance they're inside this outline."
+"There's a 95% chance they're inside this outline" - if the model's assumptions hold.
+Each zone is the smallest patch holding that share of the simulated particles, so the three always nest.
+Until 2026-09-26 a counting quirk could make all three zones the same, larger shape; that is fixed (`docs/71`).
+On the simulator's own 8 incidents the 95% zone contains the true end position 7 times out of 8 (87.5%, measured 2026-09-26); that is a self-consistency check, not real-world accuracy.
 
 **One thing that matters a lot:** as the Coast Guard searches an area and finds
 nothing, we feed that back. "Not here" is information. The map updates and the

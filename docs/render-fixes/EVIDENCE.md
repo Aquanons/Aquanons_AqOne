@@ -52,3 +52,21 @@ Date: 2026-09-26.
 - The replay badge text is `#334155` in the light theme (7.26:1, was 1.04:1) and keeps `#cbd5e1` in the dark theme (5.72:1). "View Activity" has a light-card button style.
 - Gates: web 190 passed, `node --check` clean.
 - Render check (`phase-4/report.json`): RND-01 to -06, RND-11a and console PASS; RND-07 and RND-10 are the remaining phases.
+
+## Phase 5: drift rings are honest and the replay matches its evaluation
+
+Date: 2026-09-27.
+
+- Red first: `tests/test_drift_contour_mass.py::test_tied_cells_do_not_inflate_a_ring_to_the_whole_plume` failed on the unchanged `app/ai/drift.py` with `assert 268.04 < 268.04` (the 50% and 75% rings were the same area); the replay tests failed on the missing `app/ai/drift_replay.py`; the replay probe test had no `forecast_hours` in the payload.
+- `_mass_cells` takes cells in descending density, breaking ties by distance from the density-weighted centre, until the target mass is reached; rings nest by construction. Each ring is the hull of its cells' corners, so it encloses every cell it counts (a ring through centres left half of each edge cell outside).
+- `app/ai/drift_replay.py` is the one replay: horizon from the truth track's timestamps, the evaluator's synthetic wind, one object-class rule. `drift_eval` and the legacy branch of `GET /api/ai/drift/incident/{id}` (and the demo's cached prior) call it; the payload states `forecast_hours`.
+- `python -m app.ai.drift_eval` on a freshly generated database (seed 42), same data before and after:
+
+  | | containment | area reduction | observed-current fraction |
+  |---|---|---|---|
+  | Before (`f2843fe`) | 100.0% (8/8) | 55.04x | 0% |
+  | After | 87.5% (7/8) | 64.46x | 0% |
+
+  The stored file had said 100%, 1.40x and 100% observed currents (2026-08-04, older code); it now holds the "after" row. `docs/16`, `docs/17` and a dated correction in `docs/audits/AI_LAYER_DATA_SUFFICIENCY_AUDIT_2026-09-14.md` carry the new figures.
+- Gates: backend 590 passed, 62 skipped, 1 xfailed; with probes 647 passed, 5 skipped, 1 xfailed; ruff clean.
+- Render check (`phase-5/report.json`): RND-07 PASS (three distinct rings; the replay horizon equals the truth track's span); every earlier check still PASSES.

@@ -1,12 +1,13 @@
 {
   "drift": {
     "calibration": "synthetic",
-    "containment_rate": 1.0,
-    "generated_at": "2026-08-04T20:47:52.515690+00:00",
+    "containment_rate": 0.875,
+    "excluded_low_quality_runs": 0,
+    "generated_at": "2026-09-27T05:51:43.828854+00:00",
     "incidents_evaluated": 8,
-    "observation_fraction": 1.0,
-    "prediction_runtime_ms": 131.0096999995949,
-    "search_area_reduction_factor": 1.40129430617759
+    "observation_fraction": 0.0,
+    "prediction_runtime_ms": 18.773937499929616,
+    "search_area_reduction_factor": 64.46098127107874
   },
   "squall": {
     "calibration": "synthetic",
