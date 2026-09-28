@@ -4952,7 +4952,7 @@ h3.buoy-drawer-title {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 10px;
-  padding: 10px 24px;
+  padding: 10px 24px 4px;
   background: var(--bg);
   border: 0;
   color: var(--text);
@@ -5046,7 +5046,7 @@ h3.buoy-drawer-title {
 
 /* Dashboard layout refresh: danger scan and map card */
 .map-column {
-  padding: 10px 10px 10px 12px;
+  padding: 4px 10px 10px 12px;
   background: var(--bg);
 }
 
@@ -5133,7 +5133,7 @@ h3.buoy-drawer-title {
 .panel-column {
   width: var(--panel-w);
   gap: 10px;
-  padding: 10px 12px 10px 0;
+  padding: 4px 12px 10px 0;
   background: var(--bg);
   border-left: 0;
   scrollbar-color: #c9d3df transparent;
