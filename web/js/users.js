@@ -64,7 +64,7 @@
       ? escapeHtml((v.license_type || '').toUpperCase() + ' ' + v.license_number)
       : '<span class="users-sub">Unregistered</span>';
     var phone = v.phone ? escapeHtml(v.phone) : '<span class="users-sub">—</span>';
-    var status = v.handset_active
+    var status = v.vessel_active
       ? '<span class="users-pill users-pill-active">ACTIVE</span>'
       : '<span class="users-pill users-pill-inactive">INACTIVE</span>';
     return '<tr>' +
@@ -83,12 +83,12 @@
     var countEl = document.getElementById('users-count');
     if (!el) return;
     var shown = allVessels.filter(function (v) {
-      if (currentFilter === 'active') return v.handset_active;
-      if (currentFilter === 'inactive') return !v.handset_active;
+      if (currentFilter === 'active') return v.vessel_active;
+      if (currentFilter === 'inactive') return !v.vessel_active;
       if (currentFilter === 'atsea') return wentToSea(v);
       return true;
     });
-    var activeCount = allVessels.filter(function (v) { return v.handset_active; }).length;
+    var activeCount = allVessels.filter(function (v) { return v.vessel_active; }).length;
     if (countEl) countEl.textContent = allVessels.length + ' total · ' + activeCount + ' active';
     if (shown.length === 0) {
       el.innerHTML = '<p class="panel-stub-text">No users match this filter</p>';

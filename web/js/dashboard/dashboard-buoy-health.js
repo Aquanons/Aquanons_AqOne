@@ -131,7 +131,7 @@
         }
         if (captionEl) {
           captionEl.textContent = data.active_operators_2m + ' operators · ' +
-            data.active_handsets_15m + ' handsets · ' + data.total_users + ' registered';
+            data.active_vessels_15m + ' vessels · ' + data.total_users + ' registered';
         }
       })
       .catch(function (err) {
