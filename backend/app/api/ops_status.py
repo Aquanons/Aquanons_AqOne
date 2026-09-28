@@ -36,15 +36,24 @@ async def ops_status(_: dict = Depends(require_user)) -> dict[str, object]:
 
 
 @router.get('/presence')
-async def ops_presence(_: dict = Depends(require_user)) -> dict[str, object]:
+async def ops_presence(user: dict = Depends(require_user)) -> dict[str, object]:
     pool = get_pool()
     async with pool.acquire() as conn:
+        await conn.execute(
+            'UPDATE users SET last_seen_at = NOW() WHERE id = $1',
+            int(user['id']),
+        )
         total_users = await conn.fetchval('SELECT COUNT(*) FROM users')
+        active_operators = await conn.fetchval(
+            "SELECT COUNT(*) FROM users WHERE last_seen_at > NOW() - INTERVAL '2 minutes'"
+        )
         active_handsets = await conn.fetchval(
             "SELECT COUNT(*) FROM vessel_devices"
             " WHERE revoked_at IS NULL AND last_seen_at > NOW() - INTERVAL '15 minutes'"
         )
     return {
         'total_users': total_users,
+        'active_operators_2m': active_operators,
         'active_handsets_15m': active_handsets,
+        'active_total': active_operators + active_handsets,
     }

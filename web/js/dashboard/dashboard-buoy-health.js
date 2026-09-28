@@ -124,12 +124,15 @@
         var countEl = document.getElementById('banner-users-count');
         var statusEl = document.getElementById('stats-users-status');
         var captionEl = document.getElementById('banner-users-caption');
-        if (countEl) countEl.textContent = data.active_handsets_15m;
+        if (countEl) countEl.textContent = data.active_total;
         if (statusEl) {
           statusEl.textContent = 'LIVE';
           statusEl.className = 'metric-status metric-status-feed metric-status-clear';
         }
-        if (captionEl) captionEl.textContent = data.total_users + ' registered users · active last 15 min';
+        if (captionEl) {
+          captionEl.textContent = data.active_operators_2m + ' operators · ' +
+            data.active_handsets_15m + ' handsets · ' + data.total_users + ' registered';
+        }
       })
       .catch(function (err) {
         var statusEl = document.getElementById('stats-users-status');
