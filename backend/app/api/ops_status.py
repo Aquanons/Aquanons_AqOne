@@ -57,3 +57,66 @@ async def ops_presence(user: dict = Depends(require_user)) -> dict[str, object]:
         'active_handsets_15m': active_handsets,
         'active_total': active_operators + active_handsets,
     }
+
+
+@router.get('/roster')
+async def ops_roster(_: dict = Depends(require_user)) -> dict[str, object]:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''
+            SELECT v.id AS vessel_id, v.boat_name, v.skipper_name,
+                   v.license_type, v.license_number, v.phone,
+                   EXISTS(
+                     SELECT 1 FROM vessel_devices d
+                      WHERE d.vessel_id = v.id
+                        AND d.revoked_at IS NULL
+                        AND d.last_seen_at > NOW() - INTERVAL '15 minutes'
+                   ) AS handset_active,
+                   (SELECT t.status FROM vessel_trips t
+                     WHERE t.vessel_id = v.id
+                     ORDER BY t.created_at DESC LIMIT 1) AS last_trip_status,
+                   f.latitude AS last_lat, f.longitude AS last_lon,
+                   f.observed_at AS last_fix_at, f.source AS last_fix_source
+              FROM vessels v
+         LEFT JOIN LATERAL (
+                   SELECT latitude, longitude, observed_at, source FROM (
+                     SELECT latitude, longitude, created_at AS observed_at, 'sos' AS source
+                       FROM sos_events WHERE vessel_id = v.id
+                        AND latitude IS NOT NULL AND longitude IS NOT NULL
+                      UNION ALL
+                     SELECT latitude, longitude, observed_at, 'buoy'
+                       FROM buoy_contacts WHERE vessel_id = v.id
+                        AND latitude IS NOT NULL AND longitude IS NOT NULL
+                      UNION ALL
+                     SELECT latitude, longitude, created_at, 'catch'
+                       FROM catch_logs WHERE vessel_id = v.id
+                        AND latitude IS NOT NULL AND longitude IS NOT NULL
+                      UNION ALL
+                     SELECT latitude, longitude, created_at, 'spot'
+                       FROM fishing_spots WHERE vessel_id = v.id
+                   ) fixes
+                   ORDER BY observed_at DESC LIMIT 1
+                 ) f ON true
+             ORDER BY v.boat_name
+            '''
+        )
+    return {
+        'vessels': [
+            {
+                'vessel_id': row['vessel_id'],
+                'boat_name': row['boat_name'],
+                'skipper_name': row['skipper_name'],
+                'license_type': row['license_type'],
+                'license_number': row['license_number'],
+                'phone': row['phone'],
+                'handset_active': bool(row['handset_active']),
+                'last_trip_status': row['last_trip_status'],
+                'last_lat': row['last_lat'],
+                'last_lon': row['last_lon'],
+                'last_fix_at': row['last_fix_at'].isoformat() if row['last_fix_at'] else None,
+                'last_fix_source': row['last_fix_source'],
+            }
+            for row in rows
+        ],
+    }

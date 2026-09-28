@@ -202,6 +202,12 @@
   renderIncidentFeed();
   loadResolvedSos();
   loadPresence();
+  var usersCard = document.getElementById('metric-users-card');
+  if (usersCard) {
+    usersCard.addEventListener('click', function () {
+      window.location.href = 'users.html';
+    });
+  }
   var resolvedToggle = document.getElementById('resolved-view-toggle');
   if (resolvedToggle) {
     resolvedToggle.addEventListener('click', function () {

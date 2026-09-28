@@ -5044,6 +5044,10 @@ h3.buoy-drawer-title {
 .metric-sparkline path { fill: none; stroke: var(--blue-primary); stroke-width: 2; stroke-linecap: round; }
 .metric-caption { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; }
 
+.metric-card-link {
+  cursor: pointer;
+}
+
 /* Dashboard layout refresh: danger scan and map card */
 .map-column {
   padding: 1px 10px 10px 12px;
