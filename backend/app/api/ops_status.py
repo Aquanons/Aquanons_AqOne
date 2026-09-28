@@ -33,3 +33,18 @@ async def ops_status(_: dict = Depends(require_user)) -> dict[str, object]:
         'db_days_left': (expiry - now.date()).days if expiry else None,
         'scheduler_last_run': {row['job']: row['last_run_at'].isoformat() for row in last_runs},
     }
+
+
+@router.get('/presence')
+async def ops_presence(_: dict = Depends(require_user)) -> dict[str, object]:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        total_users = await conn.fetchval('SELECT COUNT(*) FROM users')
+        active_handsets = await conn.fetchval(
+            "SELECT COUNT(*) FROM vessel_devices"
+            " WHERE revoked_at IS NULL AND last_seen_at > NOW() - INTERVAL '15 minutes'"
+        )
+    return {
+        'total_users': total_users,
+        'active_handsets_15m': active_handsets,
+    }

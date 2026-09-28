@@ -113,6 +113,34 @@
       });
   }
 
+  function loadPresence() {
+    if (typeof ns.authFetch !== 'function') return Promise.resolve();
+    return ns.authFetch('/api/ops/presence')
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var countEl = document.getElementById('banner-users-count');
+        var statusEl = document.getElementById('stats-users-status');
+        var captionEl = document.getElementById('banner-users-caption');
+        if (countEl) countEl.textContent = data.active_handsets_15m;
+        if (statusEl) {
+          statusEl.textContent = 'LIVE';
+          statusEl.className = 'metric-status metric-status-feed metric-status-clear';
+        }
+        if (captionEl) captionEl.textContent = data.total_users + ' registered users · active last 15 min';
+      })
+      .catch(function (err) {
+        var statusEl = document.getElementById('stats-users-status');
+        if (statusEl) {
+          statusEl.textContent = 'OFFLINE';
+          statusEl.className = 'metric-status metric-status-feed metric-status-offline';
+        }
+        console.warn('[AqOne] Presence poll failed:', err.message);
+      });
+  }
+
   // ===== INCIDENT FEED =====
   function renderIncidentFeed() {
     updateStats();
@@ -170,6 +198,7 @@
   }
   renderIncidentFeed();
   loadResolvedSos();
+  loadPresence();
   var resolvedToggle = document.getElementById('resolved-view-toggle');
   if (resolvedToggle) {
     resolvedToggle.addEventListener('click', function () {
@@ -179,6 +208,7 @@
   }
   if (typeof setInterval === 'function') {
     setInterval(loadResolvedSos, 10000);
+    setInterval(loadPresence, 30000);
   }
 
 
@@ -366,6 +396,7 @@
   ns.renderIncidentFeed = renderIncidentFeed;
   ns.renderResolvedFeed = renderResolvedFeed;
   ns.loadResolvedSos = loadResolvedSos;
+  ns.loadPresence = loadPresence;
   ns.reopenIncident = reopenIncident;
   ns.updateStats = updateStats;
 

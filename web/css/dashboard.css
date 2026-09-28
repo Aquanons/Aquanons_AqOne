@@ -4949,7 +4949,7 @@ h3.buoy-drawer-title {
   top: calc(var(--header-h) + var(--banner-h) + var(--demo-banner-h));
   height: var(--stats-h);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
   gap: 10px;
   padding: 10px 24px 0;
