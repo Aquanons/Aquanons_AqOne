@@ -4939,7 +4939,7 @@ h3.buoy-drawer-title {
 }
 
 /* Dashboard layout refresh: three live metric cards */
-:root { --banner-h: 0px; --stats-h: 104px; }
+:root { --banner-h: 0px; --stats-h: 118px; }
 
 .app-body {
   margin-top: calc(var(--header-h) + var(--banner-h) + var(--demo-banner-h) + var(--stats-h));
@@ -4966,6 +4966,7 @@ h3.buoy-drawer-title {
 
 .metric-card {
   min-width: 0;
+  overflow: hidden;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -4976,22 +4977,28 @@ h3.buoy-drawer-title {
 .metric-card-topline,
 .metric-card-main {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
 .metric-label {
+  overflow: hidden;
   color: var(--text-secondary);
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .metric-status {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   min-height: 20px;
+  max-width: 100%;
   padding: 2px 8px;
   border: 1px solid #d4f0de;
   border-radius: 20px;
@@ -5000,6 +5007,7 @@ h3.buoy-drawer-title {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.35px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -5032,7 +5040,7 @@ h3.buoy-drawer-title {
 }
 
 .metric-value-time { font-size: 22px; }
-.metric-sparkline { width: 92px; height: 24px; opacity: 0.65; }
+.metric-sparkline { width: 92px; max-width: 35%; min-width: 0; flex-shrink: 1; height: 24px; opacity: 0.65; }
 .metric-sparkline path { fill: none; stroke: var(--blue-primary); stroke-width: 2; stroke-linecap: round; }
 .metric-caption { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; }
 
