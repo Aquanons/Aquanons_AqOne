@@ -17,6 +17,8 @@
   };
 
   // ===== RESOLVED INCIDENTS =====
+  var resolvedAll = [];
+  var resolvedExpanded = false;
   function resolvedRowHtml(ev) {
     var name = ev.skipper_name || ev.boat || ev.vessel_id || 'Unidentified vessel';
     var sender = (ev.skipper_name || ev.phone)
@@ -50,20 +52,32 @@
   }
 
   function renderResolvedFeed(events) {
+    resolvedAll = Array.isArray(events) ? events : [];
+    renderResolvedVisible();
+  }
+
+  function renderResolvedVisible() {
     var el = document.getElementById('resolved-feed-list');
     if (!el) return;
-    var list = Array.isArray(events) ? events : [];
-    if (list.length === 0) {
+    var toggle = document.getElementById('resolved-view-toggle');
+    if (resolvedAll.length === 0) {
       el.innerHTML = '<p class="panel-stub-text">No resolved incidents yet</p>';
+      if (toggle) toggle.hidden = true;
       return;
     }
-    el.innerHTML = list.map(resolvedRowHtml).join('');
+    var visible = resolvedExpanded ? resolvedAll : resolvedAll.slice(0, 5);
+    el.innerHTML = visible.map(resolvedRowHtml).join('');
     el.querySelectorAll('.incident-feed-reopen').forEach(function (btn) {
       btn.addEventListener('click', function (event) {
         event.stopPropagation();
         reopenIncident(btn.getAttribute('data-event-id'));
       });
     });
+    if (toggle) {
+      toggle.hidden = resolvedAll.length <= 5;
+      toggle.textContent = resolvedExpanded ? 'Show less' : 'View all (' + resolvedAll.length + ')';
+      toggle.title = resolvedExpanded ? 'Show fewer resolved incidents' : 'View all resolved incidents';
+    }
   }
 
   function reopenIncident(eventId) {
@@ -156,6 +170,13 @@
   }
   renderIncidentFeed();
   loadResolvedSos();
+  var resolvedToggle = document.getElementById('resolved-view-toggle');
+  if (resolvedToggle) {
+    resolvedToggle.addEventListener('click', function () {
+      resolvedExpanded = !resolvedExpanded;
+      renderResolvedVisible();
+    });
+  }
   if (typeof setInterval === 'function') {
     setInterval(loadResolvedSos, 10000);
   }

@@ -1856,6 +1856,13 @@ body {
 
 .panel-card-toggle:hover { opacity: 1; }
 
+.panel-card-view-toggle {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
 .map-legend.collapsed > .panel-card-body,
 .map-legend.collapsed > .sidebar-section {
   display: none;
