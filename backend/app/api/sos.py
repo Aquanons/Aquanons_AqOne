@@ -9,7 +9,13 @@ from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
 from app.api.contacts import is_valid_gateway_key, require_gateway_key
 from app.audit import record_audit_event
-from app.auth import get_optional_vessel_device, require_responder_roles, require_user, require_vessel_device
+from app.auth import (
+    get_optional_vessel_device,
+    require_responder_roles,
+    require_user,
+    require_vessel_device,
+    touch_vessel,
+)
 from app.db import get_pool
 from app.geo import SHORE_STATIONS, distance_km
 from app.incidents.delivery import delivery_state
@@ -150,6 +156,7 @@ async def ingest_sos(
     pool = get_pool()
     async with pool.acquire() as conn, conn.transaction():
         row = await record_sos(conn, payload, provenance)
+        await touch_vessel(conn, row['vessel_id'])
 
     return {
         'id': row['id'],

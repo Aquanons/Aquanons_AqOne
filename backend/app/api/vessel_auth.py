@@ -15,6 +15,7 @@ from app.auth import (
     hash_password,
     require_device_admin_roles,
     require_vessel_device,
+    touch_vessel,
     verify_password,
 )
 from app.db import get_pool
@@ -156,6 +157,7 @@ async def enroll_device(payload: EnrollIn) -> dict[str, object]:
             vessel_id,
             payload.device_label.strip() or 'Fisher handset',
         )
+        await touch_vessel(conn, vessel_id)
 
     token = create_vessel_device_token(row['id'], row['vessel_id'])
     expires_at = datetime.now(UTC) + timedelta(hours=24)

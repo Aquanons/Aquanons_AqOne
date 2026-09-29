@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from app.audit import record_audit_event
-from app.auth import get_optional_vessel_device, require_responder_roles
+from app.auth import get_optional_vessel_device, require_responder_roles, touch_vessel
 from app.db import get_pool
 
 # Unenrolled vessels may create a self-declared profile. Once a vessel has an
@@ -51,9 +51,11 @@ async def register_vessel_profile(
 ) -> dict[str, object]:
     """Declare/refresh this vessel's owner identity. Idempotent upsert.
 
-    Unenrolled vessels may create a profile or fill blank fields anonymously.
-    A vessel with an active device requires that device's bearer for every write.
-    Anonymous callers cannot change existing non-blank identity fields.
+    Unenrolled vessels may create a profile or refresh it anonymously, last
+    write wins: the vessel_id is unguessable, so presenting it is ownership
+    on the self-declared tier, the same basis SOS ingest already trusts.
+    A vessel with an active device requires that device's bearer for every
+    write, enforced above.
     """
     is_authorized = (
         vessel_device is not None
@@ -80,37 +82,7 @@ async def register_vessel_profile(
                 raise HTTPException(status_code=401, detail='vessel device credential required')
             raise HTTPException(status_code=403, detail='device is paired for another vessel')
 
-        if existing is not None and not is_authorized:
-            ex_skipper = existing['skipper_name'] or ''
-            ex_lic_num = existing['license_number'] or ''
-            ex_phone = existing['phone'] or ''
-            ex_lic_type = existing['license_type'] or ''
-            if ex_lic_type == 'none':
-                ex_lic_type = ''
-            ex_boat = existing['boat_name'] or ''
-            if ex_boat == existing['id']:
-                ex_boat = ''
-            ex_shore_name = existing.get('shore_contact_name') or ''
-            ex_shore_phone = existing.get('shore_contact_phone') or ''
-
-            if (
-                (ex_skipper and payload.skipper_name and payload.skipper_name != ex_skipper)
-                or (ex_lic_num and payload.license_number and payload.license_number != ex_lic_num)
-                or (ex_phone and payload.phone and payload.phone != ex_phone)
-                or (
-                    ex_lic_type
-                    and payload.license_type
-                    and payload.license_type != 'none'
-                    and payload.license_type != ex_lic_type
-                )
-                or (ex_boat and payload.boat and payload.boat != ex_boat)
-                or (ex_shore_name and payload.shore_contact_name and payload.shore_contact_name != ex_shore_name)
-                or (ex_shore_phone and payload.shore_contact_phone and payload.shore_contact_phone != ex_shore_phone)
-            ):
-                raise HTTPException(
-                    status_code=409,
-                    detail='modifying existing vessel identity requires vessel device authentication',
-                )
+        can_overwrite = is_authorized or not has_active_device
 
         row = await conn.fetchrow(
             """
@@ -180,11 +152,12 @@ async def register_vessel_profile(
             payload.license_type,
             payload.license_number,
             payload.phone,
-            is_authorized,
+            can_overwrite,
             'device' if is_authorized else 'anonymous',
             payload.shore_contact_name,
             payload.shore_contact_phone,
         )
+        await touch_vessel(conn, row['id'])
     data = dict(row)
     return {
         'vessel_id': data['id'],

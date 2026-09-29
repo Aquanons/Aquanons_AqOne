@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AqOne - App Users</title>
+  <link rel="icon" href="../assets/icons/favicon.png" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    .users-shell {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 84px 24px 24px;
+      background: var(--bg);
+    }
+    .users-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .users-filter-btn {
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .users-filter-btn.active {
+      border-color: var(--blue-primary);
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--blue-primary);
+    }
+    .users-count {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .users-table th {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 10px;
+      letter-spacing: 0.6px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .users-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--glass-border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    .users-name {
+      font-weight: 700;
+    }
+    .users-sub {
+      color: var(--text-dim);
+      font-size: 10px;
+    }
+    .users-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .users-pill-active {
+      background: #eefbf2;
+      color: #16a34a;
+    }
+    .users-pill-inactive {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .users-pill-sea {
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--blue-primary);
+    }
+    .users-pill-nofix {
+      background: #fdeced;
+      color: #c8383d;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="app-header">
+    <a href="dashboard.html" class="back-btn back-btn-drop" title="Back to Dashboard" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;color:var(--text-secondary);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </a>
+    <div class="header-brand">
+      <img class="top-logo" src="../assets/icons/aqoneLogo2.png" alt="AqOne" />
+      <div class="header-brand-text">
+        <span class="top-title">AqOne</span>
+        <span class="top-subtitle">App Users</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="users-shell">
+    <div class="panel-card">
+      <div class="panel-card-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        <span>Total Users</span>
+        <span class="users-count" id="users-count"></span>
+        <div class="users-filter-row">
+          <button class="users-filter-btn active" data-filter="all">All</button>
+          <button class="users-filter-btn" data-filter="active">Active</button>
+          <button class="users-filter-btn" data-filter="inactive">Inactive</button>
+          <button class="users-filter-btn" data-filter="atsea">At sea</button>
+        </div>
+      </div>
+      <div class="panel-card-body">
+        <div id="users-list">
+          <p class="panel-stub-text">Loading users...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/users.js"></script>
+</body>
+
+</html>

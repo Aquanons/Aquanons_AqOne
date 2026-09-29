@@ -15,6 +15,7 @@ from app.auth import (
     decode_token,
     get_vessel_device_from_token,
     require_user,
+    touch_vessel,
 )
 from app.db import get_pool
 
@@ -180,6 +181,7 @@ async def create_or_register_trip(
             payload.vessel_length_m,
             payload.vessel_draft_m,
         )
+        await touch_vessel(conn, payload.vessel_id)
 
         created = True
         if row is None:
@@ -264,6 +266,7 @@ async def update_trip(
             now,
             json.dumps(new_amendments),
         )
+        await touch_vessel(conn, existing['vessel_id'])
 
     return {'trip': _serialise_trip(updated_row)}
 
