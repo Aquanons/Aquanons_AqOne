@@ -1,3 +1,9 @@
+> **Status:** SUPERSEDED on 2026-09-29.
+> Archived because this Philippine Startup Challenge XI concept note cites the old PHP 808,448.55 one-year request, as do the two .docx files in this folder.
+> The current DOST request is PHP 1,705,525.37, in [`Aquanons_Master_Budget.xlsx`](../../../funding/Aquanons_Master_Budget.xlsx).
+> The current business model and investor deal are in [`AqOne_Handoff_Doreen.md`](../../../funding/AqOne_Handoff_Doreen.md) and [`AqOne_Budget_and_Investor_Summary.md`](../../../funding/AqOne_Budget_and_Investor_Summary.md).
+> Kept as the historical record only; do not quote its figures.
+
 # Philippine Startup Challenge XI
 
 **Team:** Aquanons  
