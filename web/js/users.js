@@ -32,22 +32,30 @@
   var allVessels = [];
   var currentFilter = 'all';
 
-  function wentToSea(v) {
+  function hasFix(v) {
     return v.last_lat != null && v.last_lon != null;
+  }
+
+  function wentToSea(v) {
+    if (v.last_trip_status === 'open') return true;
+    return hasFix(v) && v.last_fix_on_water !== false;
   }
 
   function seaPill(v) {
     if (v.last_trip_status === 'open') {
       return '<span class="users-pill users-pill-sea">AT SEA</span>';
     }
-    if (wentToSea(v)) {
-      return '<span class="users-pill users-pill-sea">WENT TO SEA</span>';
+    if (!hasFix(v)) {
+      return '<span class="users-pill users-pill-nofix">NO SEA RECORD</span>';
     }
-    return '<span class="users-pill users-pill-nofix">NO SEA RECORD</span>';
+    if (v.last_fix_on_water === false) {
+      return '<span class="users-pill users-pill-inactive">ON LAND</span>';
+    }
+    return '<span class="users-pill users-pill-sea">WENT TO SEA</span>';
   }
 
   function fixText(v) {
-    if (!wentToSea(v)) return '<span class="users-sub">No GPS fix recorded</span>';
+    if (!hasFix(v)) return '<span class="users-sub">No GPS fix recorded</span>';
     var lat = Number(v.last_lat).toFixed(4) + '° ' + (Number(v.last_lat) >= 0 ? 'N' : 'S');
     var lon = Number(v.last_lon).toFixed(4) + '° ' + (Number(v.last_lon) >= 0 ? 'E' : 'W');
     var when = '';

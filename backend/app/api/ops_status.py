@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 
 from app.auth import require_user
 from app.db import get_pool
+from app.geo import point_in_water
 from app.notify import sms_configured
 
 router = APIRouter(prefix='/api/ops', tags=['operations'])
@@ -128,6 +129,10 @@ async def ops_roster(_: dict = Depends(require_user)) -> dict[str, object]:
                 'last_lon': row['last_lon'],
                 'last_fix_at': row['last_fix_at'].isoformat() if row['last_fix_at'] else None,
                 'last_fix_source': row['last_fix_source'],
+                'last_fix_on_water': (
+                    None if row['last_lat'] is None or row['last_lon'] is None
+                    else bool(point_in_water(float(row['last_lat']), float(row['last_lon'])))
+                ),
             }
             for row in rows
         ],
