@@ -1856,6 +1856,13 @@ body {
 
 .panel-card-toggle:hover { opacity: 1; }
 
+.panel-card-view-toggle {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
 .map-legend.collapsed > .panel-card-body,
 .map-legend.collapsed > .sidebar-section {
   display: none;
@@ -4932,7 +4939,7 @@ h3.buoy-drawer-title {
 }
 
 /* Dashboard layout refresh: three live metric cards */
-:root { --banner-h: 0px; --stats-h: 104px; }
+:root { --banner-h: 0px; --stats-h: 96px; }
 
 .app-body {
   margin-top: calc(var(--header-h) + var(--banner-h) + var(--demo-banner-h) + var(--stats-h));
@@ -4942,10 +4949,10 @@ h3.buoy-drawer-title {
   top: calc(var(--header-h) + var(--banner-h) + var(--demo-banner-h));
   height: var(--stats-h);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
   gap: 10px;
-  padding: 10px 24px;
+  padding: 10px 24px 0;
   background: var(--bg);
   border: 0;
   color: var(--text);
@@ -4959,6 +4966,7 @@ h3.buoy-drawer-title {
 
 .metric-card {
   min-width: 0;
+  overflow: hidden;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -4969,22 +4977,28 @@ h3.buoy-drawer-title {
 .metric-card-topline,
 .metric-card-main {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
 .metric-label {
+  overflow: hidden;
   color: var(--text-secondary);
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .metric-status {
   display: inline-flex;
+  overflow: hidden;
   align-items: center;
   min-height: 20px;
+  max-width: 100%;
   padding: 2px 8px;
   border: 1px solid #d4f0de;
   border-radius: 20px;
@@ -4993,6 +5007,7 @@ h3.buoy-drawer-title {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.35px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -5025,13 +5040,17 @@ h3.buoy-drawer-title {
 }
 
 .metric-value-time { font-size: 22px; }
-.metric-sparkline { width: 92px; height: 24px; opacity: 0.65; }
+.metric-sparkline { width: 92px; max-width: 35%; min-width: 0; flex-shrink: 1; height: 24px; opacity: 0.65; }
 .metric-sparkline path { fill: none; stroke: var(--blue-primary); stroke-width: 2; stroke-linecap: round; }
 .metric-caption { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; }
 
+.metric-card-link {
+  cursor: pointer;
+}
+
 /* Dashboard layout refresh: danger scan and map card */
 .map-column {
-  padding: 10px 10px 10px 12px;
+  padding: 1px 10px 10px 12px;
   background: var(--bg);
 }
 
@@ -5098,11 +5117,27 @@ h3.buoy-drawer-title {
   color: #c8383d;
 }
 
+.map-card:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+}
+
+.map-card.map-card-fullscreen-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
 /* Dashboard layout refresh: toolbox and inline tool panel */
 .panel-column {
   width: var(--panel-w);
   gap: 10px;
-  padding: 10px 12px 10px 0;
+  padding: 1px 12px 10px 0;
   background: var(--bg);
   border-left: 0;
   scrollbar-color: #c9d3df transparent;

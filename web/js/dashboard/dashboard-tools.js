@@ -522,6 +522,33 @@
     });
   }
 
+  var dangerZoneExpand = document.getElementById('danger-zone-expand');
+  if (dangerZoneExpand) {
+    dangerZoneExpand.addEventListener('click', function () {
+      var mapCard = dangerZoneExpand.closest('.map-card');
+      if (!mapCard) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(function () {});
+        return;
+      }
+      if (mapCard.requestFullscreen) {
+        mapCard.requestFullscreen().catch(function () {
+          mapCard.classList.toggle('map-card-fullscreen-fallback');
+          if (map && map.invalidateSize) setTimeout(function () { map.invalidateSize(); }, 60);
+        });
+      } else {
+        mapCard.classList.toggle('map-card-fullscreen-fallback');
+        if (map && map.invalidateSize) setTimeout(function () { map.invalidateSize(); }, 60);
+      }
+    });
+    document.addEventListener('fullscreenchange', function () {
+      if (map && map.invalidateSize) setTimeout(function () { map.invalidateSize(); }, 60);
+      var mapCard = dangerZoneExpand.closest('.map-card');
+      if (mapCard) mapCard.classList.remove('map-card-fullscreen-fallback');
+      dangerZoneExpand.title = document.fullscreenElement ? 'Exit fullscreen map' : 'Expand map to fullscreen';
+    });
+  }
+
   Object.defineProperties(ns, {
     pinModeActive: { get: function () { return pinModeActive; } },
     panModeActive: { get: function () { return panModeActive; } },

@@ -17,6 +17,8 @@
   };
 
   // ===== RESOLVED INCIDENTS =====
+  var resolvedAll = [];
+  var resolvedExpanded = false;
   function resolvedRowHtml(ev) {
     var name = ev.skipper_name || ev.boat || ev.vessel_id || 'Unidentified vessel';
     var sender = (ev.skipper_name || ev.phone)
@@ -50,20 +52,32 @@
   }
 
   function renderResolvedFeed(events) {
+    resolvedAll = Array.isArray(events) ? events : [];
+    renderResolvedVisible();
+  }
+
+  function renderResolvedVisible() {
     var el = document.getElementById('resolved-feed-list');
     if (!el) return;
-    var list = Array.isArray(events) ? events : [];
-    if (list.length === 0) {
+    var toggle = document.getElementById('resolved-view-toggle');
+    if (resolvedAll.length === 0) {
       el.innerHTML = '<p class="panel-stub-text">No resolved incidents yet</p>';
+      if (toggle) toggle.hidden = true;
       return;
     }
-    el.innerHTML = list.map(resolvedRowHtml).join('');
+    var visible = resolvedExpanded ? resolvedAll : resolvedAll.slice(0, 5);
+    el.innerHTML = visible.map(resolvedRowHtml).join('');
     el.querySelectorAll('.incident-feed-reopen').forEach(function (btn) {
       btn.addEventListener('click', function (event) {
         event.stopPropagation();
         reopenIncident(btn.getAttribute('data-event-id'));
       });
     });
+    if (toggle) {
+      toggle.hidden = resolvedAll.length <= 5;
+      toggle.textContent = resolvedExpanded ? 'Show less' : 'View all (' + resolvedAll.length + ')';
+      toggle.title = resolvedExpanded ? 'Show fewer resolved incidents' : 'View all resolved incidents';
+    }
   }
 
   function reopenIncident(eventId) {
@@ -96,6 +110,37 @@
       })
       .catch(function (err) {
         console.warn('[AqOne] Resolved SOS poll failed:', err.message);
+      });
+  }
+
+  function loadPresence() {
+    if (typeof ns.authFetch !== 'function') return Promise.resolve();
+    return ns.authFetch('/api/ops/presence')
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var countEl = document.getElementById('banner-users-count');
+        var statusEl = document.getElementById('stats-users-status');
+        var captionEl = document.getElementById('banner-users-caption');
+        if (countEl) countEl.textContent = data.active_total;
+        if (statusEl) {
+          statusEl.textContent = 'LIVE';
+          statusEl.className = 'metric-status metric-status-feed metric-status-clear';
+        }
+        if (captionEl) {
+          captionEl.textContent = data.active_operators_2m + ' operators · ' +
+            data.active_vessels_15m + ' vessels · ' + data.total_users + ' registered';
+        }
+      })
+      .catch(function (err) {
+        var statusEl = document.getElementById('stats-users-status');
+        if (statusEl) {
+          statusEl.textContent = 'OFFLINE';
+          statusEl.className = 'metric-status metric-status-feed metric-status-offline';
+        }
+        console.warn('[AqOne] Presence poll failed:', err.message);
       });
   }
 
@@ -156,8 +201,23 @@
   }
   renderIncidentFeed();
   loadResolvedSos();
+  loadPresence();
+  var usersCard = document.getElementById('metric-users-card');
+  if (usersCard) {
+    usersCard.addEventListener('click', function () {
+      window.location.href = 'users.html';
+    });
+  }
+  var resolvedToggle = document.getElementById('resolved-view-toggle');
+  if (resolvedToggle) {
+    resolvedToggle.addEventListener('click', function () {
+      resolvedExpanded = !resolvedExpanded;
+      renderResolvedVisible();
+    });
+  }
   if (typeof setInterval === 'function') {
     setInterval(loadResolvedSos, 10000);
+    setInterval(loadPresence, 30000);
   }
 
 
@@ -345,6 +405,7 @@
   ns.renderIncidentFeed = renderIncidentFeed;
   ns.renderResolvedFeed = renderResolvedFeed;
   ns.loadResolvedSos = loadResolvedSos;
+  ns.loadPresence = loadPresence;
   ns.reopenIncident = reopenIncident;
   ns.updateStats = updateStats;
 
