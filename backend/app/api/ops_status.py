@@ -15,6 +15,7 @@ VESSEL_ACTIVE_15M = """(
           WHERE d.vessel_id = v.id
             AND d.revoked_at IS NULL
             AND d.last_seen_at > NOW() - INTERVAL '15 minutes')
+  OR v.last_seen_at > NOW() - INTERVAL '15 minutes'
   OR EXISTS(SELECT 1 FROM sos_events s
              WHERE s.vessel_id = v.id
                AND s.created_at > NOW() - INTERVAL '15 minutes')

@@ -297,3 +297,7 @@ async def get_optional_vessel_device(
     if credentials is None or not credentials.credentials:
         return None
     return await get_vessel_device_from_token(credentials.credentials)
+
+
+async def touch_vessel(conn, vessel_id: str) -> None:
+    await conn.execute('UPDATE vessels SET last_seen_at = NOW() WHERE id = $1', vessel_id)

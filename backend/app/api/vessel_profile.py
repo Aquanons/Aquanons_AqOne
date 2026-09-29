@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from app.audit import record_audit_event
-from app.auth import get_optional_vessel_device, require_responder_roles
+from app.auth import get_optional_vessel_device, require_responder_roles, touch_vessel
 from app.db import get_pool
 
 # Unenrolled vessels may create a self-declared profile. Once a vessel has an
@@ -185,6 +185,7 @@ async def register_vessel_profile(
             payload.shore_contact_name,
             payload.shore_contact_phone,
         )
+        await touch_vessel(conn, row['id'])
     data = dict(row)
     return {
         'vessel_id': data['id'],

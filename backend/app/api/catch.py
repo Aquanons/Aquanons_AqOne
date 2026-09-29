@@ -5,7 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.auth import require_user, require_vessel_device
+from app.auth import require_user, require_vessel_device, touch_vessel
 from app.db import get_pool
 
 # Routes stay on their own router rather than under the blanket operator auth
@@ -115,6 +115,7 @@ async def ingest_catch_log(
             payload.notes,
             payload.share_for_hotspots,
         )
+        await touch_vessel(conn, owned_vessel_id)
 
     return {
         'catch_log': {
