@@ -1,0 +1,190 @@
+AqOne — Line Item Budget (DOST Format),,,,,
+"Aquanons / Aklan State University · 1-Year Project Duration · Prepared August 2026, revised 28 September 2026 · DRAFT for ASU Research Department review",,,,,
+,,,,,
+"USD → PHP exchange rate (BSP reference, 25 Sep 2026)",62.75,← Edit this cell; all USD lines recalculate,,,
+"Hourly labor rate (PHP/hr, RBVI-29)",65.63,← Region VI minimum wage: ₱525/day ÷ 8 hrs. Drives all PS lines.,,,
+Buoy relay nodes (units),3,← Planning assumption pending LGU consultation. Drives B.1.1-B.1.7.,,,
+Boat pods (units),22,← 20 deployed + 2 spares (at least 20 participating boats). Drives B.1.8.,,,
+Shore gateways (units),2,← Primary + redundant site. Drives B.1.9 and the gateway SIMs.,,,
+,,,,,
+A. PERSONAL SERVICES (PS),,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+"Lead student researcher stipend (technical lead: backend, architecture, and deployment)","1 lead student researcher × 20 hrs/week × 52 weeks = 1,040 hours at the hourly labor rate in B5 (≈₱5,688/month). Lenard: backend, architecture, and deployment, plus technical integration and overall project leadership. Double the member allocation reflects the added integration and leadership scope.","1,040.00",65.63,PHP,"₱68,255"
+Student researcher stipends (technical + business),"5 student researchers × 10 hrs/week × 52 weeks = 2,600 hours at the hourly labor rate in B5 (≈₱2,844/month each). Technical: Arnold (website dashboard), Daniel (hardware and buoy firmware), Jade (Flutter application). Business: Doreen Kay (pitching, company branding, and business direction), KC Condes (pitching and business development support). With the lead student researcher, the team is 4 technical + 2 business members.","2,600.00",65.63,PHP,"₱170,638"
+Subtotal — Personal Services,,,,,"₱238,893"
+"REVISED FROM PRIOR DRAFT (28 Sep 2026): the flat ₱3,000/month × 6 members × 12 months is replaced with an hourly valuation. BASIS: Region VI minimum wage under Wage Order No. RBVI-29 (effective 19 Nov 2025, covers Aklan), ₱525/day for non-agricultural establishments with 10 or fewer workers ÷ 8 hours = ₱65.625/hr, rounded to ₱65.63 (cell B5). Hours are assumed yearly averages; actual hours will be tracked in a contribution log. ASSUMPTION TO CONFIRM: that this rate basis, the lead student researcher differential, and the two business-side roles are allowable under DOST/ASU personnel rules.",,,,,
+,,,,,
+B. MAINTENANCE AND OTHER OPERATING EXPENSES (MOOE),,,,,
+"B.1  Supplies and Materials - Buoy Relay Nodes, Boat Pods, and Shore Gateways",,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+B.1.1  BUOY RELAY NODE - POWER,"Subsystem note: charges and stores energy for the node. Solar + battery is the only power source on a buoy (~4 days without sun). Cost per node: ₱24,700. Prices: Clip-on Node BOM, PH supplier estimates, Sep 2026.",,,,
+1.1  Solar panel — 100 W marine monocrystalline,Main energy source for the buoy node. 1 per node.,3.00,"5,500.00",PHP,"₱16,500"
+1.2  MPPT charge controller — Victron SmartSolar MPPT 75/10,Charges the battery from solar; low-voltage load disconnect protects the battery. 1 per node.,3.00,"5,500.00",PHP,"₱16,500"
+1.3  Battery — 12V 50Ah LiFePO4 with built-in BMS,Stores energy for ~4 days without sun; tolerates heat. 1 per node.,3.00,"12,000.00",PHP,"₱36,000"
+1.4  Waterproof inline fuse holder + fuse,Protects the panel (10A) and load (5A) circuits. 2 per node.,6.00,250.00,PHP,"₱1,500"
+"1.5  DC-DC buck converter — 12V to 5V, 3A, waterproof",Supplies the LoRa node and GPS from the 12V system. 1 per node.,3.00,400.00,PHP,"₱1,200"
+"1.6  Marine wiring set — tinned 14/16 AWG wire, lugs, heat-shrink",Corrosion-resistant internal wiring. 1 set per node.,3.00,800.00,PHP,"₱2,400"
+B.1.2  BUOY RELAY NODE - COMMUNICATIONS,"Subsystem note: Wi-Fi hotspot for fishermen's phones plus the LoRa relay link to shore and other nodes. Replaces the prior Heltec V3 and 915 MHz antenna lines. Cost per node: ₱21,400. CONFIRM the operational purpose of the buoy Wi-Fi package (2.1-2.5, ₱14,100 per node, ₱42,300 for 3) before procurement: it serves phones on nearby boats that have no pod. Review after the coverage survey.",,,,
+2.1  Wi-Fi access point — MikroTik BaseBox 2 (RB912UAG-2HPnD-OUT),Outdoor 2.4 GHz hotspot with external antenna ports. 1 per node.,3.00,"6,500.00",PHP,"₱19,500"
+2.2  Passive PoE injector — 12V,Powers the access point from the 12V load output. 1 per node.,3.00,400.00,PHP,"₱1,200"
+"2.3  2.4 GHz omni antenna — 8 dBi fiberglass, N-type",Roughly doubles phone reach vs the built-in antenna. 2 per node (MIMO).,6.00,"2,000.00",PHP,"₱12,000"
+"2.4  Antenna pigtail — RP-SMA to N-female, low-loss",Connects the access point to the external antennas. 2 per node.,6.00,400.00,PHP,"₱2,400"
+"2.5  Surge arrestor — 2.4 GHz, N-type",Lightning protection on the Wi-Fi antenna lines. 2 per node.,6.00,"1,200.00",PHP,"₱7,200"
+"2.6  LoRa node — RAKwireless WisBlock (RAK19007 base + RAK11200 ESP32 + RAK13300 SX1262), 915 MHz","LoRa radio and Wi-Fi-to-LoRa bridge, AS923-3 band. 1 per node.",3.00,"3,000.00",PHP,"₱9,000"
+"2.7  LoRa antenna — 915 MHz, 3–5 dBi fiberglass, N-type",Wide beam stays aimed at shore when the buoy rolls. 1 per node.,3.00,"2,000.00",PHP,"₱6,000"
+2.8  RF pigtail — IPEX to N bulkhead,Connects the LoRa board to the antenna through the enclosure wall. 1 per node.,3.00,800.00,PHP,"₱2,400"
+"2.9  Surge arrestor — 915 MHz, N-type",Lightning protection on the LoRa antenna line. 1 per node.,3.00,"1,500.00",PHP,"₱4,500"
+B.1.3  BUOY RELAY NODE - GPS,"Subsystem note: node position is sent over LoRa (~12-byte packet) so shore knows where each relay is, and to detect drift or theft. Replaces the prior NEO-M8N line. Cost per node: ₱1,750.",,,,
+3.1  GNSS module — RAK12500 (u-blox ZOE-M8Q),Plugs into the WisBlock base board. 1 per node.,3.00,"1,200.00",PHP,"₱3,600"
+3.2  Active GNSS patch antenna,Mounted under the enclosure lid. 1 per node.,3.00,400.00,PHP,"₱1,200"
+3.3  GNSS backup cell,Faster position fix after power dips. 1 per node.,3.00,150.00,PHP,₱450
+B.1.4  BUOY RELAY NODE - CONTROL AND MONITORING,Subsystem note: keeps the node running unattended offshore and reports its health to shore. Cost per node: ₱800.,,,,
+4.1  Hardware watchdog — TPL5010,Automatically resets the node if the firmware hangs. 1 per node.,3.00,300.00,PHP,₱900
+4.2  Enclosure health sensor — BME280,Detects seal failure (humidity inside the box); pressure fallback. 1 per node.,3.00,250.00,PHP,₱750
+4.3  Power monitor — INA226,Reports battery voltage and current to shore. 1 per node.,3.00,250.00,PHP,₱750
+B.1.5  BUOY RELAY NODE - ENCLOSURE AND SEALING,"Subsystem note: protects the electronics from salt, heat and moisture. Cost per node: ₱5,700.",,,,
+"5.1  Enclosure — IP67 polycarbonate, ~400×300×180 mm, UV-stabilized",Houses all electronics and the battery. 1 per node.,3.00,"3,500.00",PHP,"₱10,500"
+5.2  Breather vent — M12 pressure-equalizing,Stops the box drawing salt air through its seals as it heats and cools. 1 per node.,3.00,300.00,PHP,₱900
+5.3  Cable glands — IP68 (set),Sealed entry for every cable. 1 set per node.,3.00,400.00,PHP,"₱1,200"
+5.4  Silica gel desiccant (set),Absorbs trapped moisture; replaced every maintenance visit. 1 set per node.,3.00,200.00,PHP,₱600
+5.5  Conformal coating — acrylic spray,Protects circuit boards from condensation and salt. 1 can per node.,3.00,900.00,PHP,"₱2,700"
+"5.6  Internal mounting set — backplate, battery strap, standoffs",Keeps parts secure under wave motion. 1 set per node.,3.00,400.00,PHP,"₱1,200"
+B.1.6  BUOY RELAY NODE - QUICK-RELEASE MOUNTING,"Subsystem note: lets the node clip onto an LGU host buoy and come off without tools for maintenance. Cost per node: ₱8,300.",,,,
+6.1  Quick-release clamp — heavy-duty 316 stainless,Tool-free attach/detach; rated for ~25 kg plus wind load. 1 per node.,3.00,"3,500.00",PHP,"₱10,500"
+6.2  Buoy adapter bracket — stainless,Fixed on the host buoy so the node drops into the same spot. 1 per node.,3.00,"1,500.00",PHP,"₱4,500"
+"6.3  Antenna mast — folding 316 stainless, ~1 m",Raises the antennas for range. 1 per node.,3.00,"1,500.00",PHP,"₱4,500"
+6.4  Safety tether — stainless lanyard + locking carabiner,Saves the node if the clamp fails in waves. 1 per node.,3.00,600.00,PHP,"₱1,800"
+6.5  Anti-theft lock — locking pin + marine padlock,Deters theft of an easily detachable unit. 1 per node.,3.00,800.00,PHP,"₱2,400"
+6.6  Fasteners — 316 stainless bolts and nuts (set),Corrosion-resistant hardware. 1 set per node.,3.00,400.00,PHP,"₱1,200"
+B.1.7  BUOY RELAY NODE - SAFETY LIGHTING (OPTIONAL),"Subsystem note: remove this line if host buoys already have a navigation light. Cost per node: ₱1,500.",,,,
+7.1  Solar LED marine beacon — flashing,Night visibility when mounted on an unlit buoy. 1 per node.,3.00,"1,500.00",PHP,"₱4,500"
+B.1.8  BOAT POD (STRAP-ON),"Subsystem note: lightweight strap-on unit for fishers' own boats, maintained and shared by fishing families. Recharged at home over USB-C; no solar panel. Quantity: boat pods in B7. Cost per pod: ₱17,500.",,,,
+"8.1  LoRa node - RAK WisBlock (RAK19007 + RAK11200 ESP32 + RAK13300 SX1262), 915 MHz","LoRa radio; the ESP32's built-in Wi-Fi serves the fisher's phone on the same boat, so no external access point is needed. 1 per pod.",22.00,"3,000.00",PHP,"₱66,000"
+8.2  GNSS set - RAK12500 module + active patch antenna + backup cell,Boat position for SOS and drift search. 1 set per pod.,22.00,"1,750.00",PHP,"₱38,500"
+"8.3  LoRa antenna - 915 MHz, 3-5 dBi fiberglass, N-type",Link to the shore gateway or a buoy relay. 1 per pod.,22.00,"2,000.00",PHP,"₱44,000"
+8.4  RF pigtail - IPEX to N bulkhead,Connects the LoRa board to the antenna. 1 per pod.,22.00,800.00,PHP,"₱17,600"
+"8.5  Battery cells - LiFePO4 32700, 3.2 V 6 Ah","4 cells per pod (~76 Wh), about 2 days per charge: an overnight trip plus a missed charge during brownouts. LiFePO4 tolerates heat on deck. Estimate.",88.00,750.00,PHP,"₱66,000"
+8.6  USB-C charging and protection board (2 A),Fishers recharge the pod at home with an ordinary USB-C phone charger; boat pods have no solar panel. 1 per pod. Estimate.,22.00,500.00,PHP,"₱11,000"
+8.7  Waterproof USB-C panel connector with cap,Charges the pod without opening the sealed enclosure. 1 per pod. Estimate.,22.00,400.00,PHP,"₱8,800"
+"8.8  Enclosure - IP67 polycarbonate, ~200×150×100 mm",Houses the electronics and battery. 1 per pod. Estimate.,22.00,"1,200.00",PHP,"₱26,400"
+"8.9  Sealing set - breather vent, cable glands, desiccant, conformal coating",Same sealing parts as the buoy node (5.2-5.5). 1 set per pod.,22.00,"1,800.00",PHP,"₱39,600"
+8.10  Strap-on mount kit + safety tether,Straps to the fisher's banca and moves between relatives' boats without tools; the tether keeps it aboard. 1 per pod. Estimate.,22.00,"1,500.00",PHP,"₱33,000"
+8.11  Watchdog (TPL5010) + power monitor (INA226),"Auto-reset, plus battery level shown in the app so fishers know when to charge. 1 set per pod.",22.00,550.00,PHP,"₱12,100"
+8.12  Wiring set,"Internal wiring, connectors and heat-shrink. 1 set per pod. Estimate.",22.00,650.00,PHP,"₱14,300"
+8.13  Physical SOS button - IP67 momentary switch with guard cover,"Sends an SOS without the phone, as the pod design requires. The guard prevents accidental presses. 1 per pod. Estimate.",22.00,350.00,PHP,"₱7,700"
+B.1.9  SHORE GATEWAY,"Subsystem note: the tall shoreline gateway that receives LoRa frames and posts them to the backend. Mounted on an LGU-provided structure (see the counterpart note). Quantity: gateways in B8. Cost per gateway: ₱37,400.",,,,
+"9.1  LoRa node - RAK WisBlock stack, 915 MHz","Same board as the nodes and pods, so every device runs the same radio firmware. 1 per gateway.",2.00,"3,000.00",PHP,"₱6,000"
+"9.2  Gateway antenna - 915 MHz fiberglass omni, 6-8 dBi, N-type",Higher gain for the long shore link. 1 per gateway. Estimate.,2.00,"3,500.00",PHP,"₱7,000"
+"9.3  Low-loss coax jumper - LMR-400, ~2 m, N-N",Antenna to enclosure. 1 per gateway. Estimate.,2.00,"1,500.00",PHP,"₱3,000"
+9.4  RF pigtail - IPEX to N bulkhead,1 per gateway.,2.00,800.00,PHP,"₱1,600"
+"9.5  Surge arrestor - 915 MHz, N-type",Lightning protection on the antenna line. 1 per gateway.,2.00,"1,500.00",PHP,"₱3,000"
+"9.6  Grounding kit - ground rod, cable, clamps",Grounds the pole and surge arrestor. 1 per gateway. Estimate.,2.00,"1,500.00",PHP,"₱3,000"
+"9.7  Rooftop pole - galvanized, 3-6 m, clamps + guy kit",Mounted on an LGU-provided tall structure to reach the 15-20 m antenna height the RF plan assumes. 1 per gateway. Estimate.,2.00,"6,000.00",PHP,"₱12,000"
+"9.8  Enclosure - IP67 polycarbonate, ~400×300×180 mm","Houses the board, router and backup battery. 1 per gateway.",2.00,"3,500.00",PHP,"₱7,000"
+"9.9  Sealing set - breather vent, cable glands, conformal coating",1 set per gateway.,2.00,"1,600.00",PHP,"₱3,200"
+"9.10  LTE router with Wi-Fi, 12 V",Internet uplink; the gateway firmware joins its Wi-Fi. 1 per gateway. Estimate.,2.00,"3,500.00",PHP,"₱7,000"
+9.11  Backup battery - LiFePO4 12 V 20 Ah,About 50 hours of backup for the board and router through brownouts. 1 per gateway. Estimate.,2.00,"6,000.00",PHP,"₱12,000"
+9.12  Mains smart charger - 12 V LiFePO4,Keeps the backup battery charged from grid power. 1 per gateway. Estimate.,2.00,"2,500.00",PHP,"₱5,000"
+"9.13  Power wiring set - 12 V to 5 V converter, fuses, wiring",1 set per gateway.,2.00,"1,700.00",PHP,"₱3,400"
+"9.14  Health monitoring - watchdog, power monitor, enclosure sensor",Reports gateway health to the backend. 1 set per gateway.,2.00,800.00,PHP,"₱1,600"
+"B.1.10  BENCH PROTOTYPING, TOOLS, AND CONSUMABLES","Subsystem note: shared lab items for assembly and testing — bought once, not per node.",,,,
+10.1  Inertial measurement unit (MPU6050),"10 pcs bundle. Wave motion and buoy attitude sensing for sea-state estimation. Source: Shopee, Aug 2026.",1.00,"2,000.00",PHP,"₱2,000"
+10.2  PCB protoboard (FR4),10 pcs bundle. Node assembly and sensor integration.,1.00,"1,500.00",PHP,"₱1,500"
+10.3  Breadboard,5 pcs bundle. Bench prototyping prior to permanent assembly.,1.00,600.00,PHP,₱600
+10.4  Soldering rework station (YIHUA 982D-SE),"Semi-expendable property — unit cost below the ₱50,000 COA capitalization threshold, therefore charged to MOOE rather than Equipment Outlay. Required for node assembly and field repair.",1.00,"8,500.00",PHP,"₱8,500"
+"10.5  Portable monitor - Nvision 15.6"" FHD 60Hz IPS","Second screen for the 2 development laptops during bench testing, field deployment, and on-site demos with MDRRMO/BFAR. Source: online marketplace listing, Sep 2026.",2.00,"4,199.00",PHP,"₱8,398"
+10.6  Soldering consumables,"Solder wire 500 g, flux pens, desoldering wick, 99% isopropyl alcohol, lint-free wipes. Estimate.",1.00,"4,150.00",PHP,"₱4,150"
+10.7  Sealing and adhesives,"Marine silicone sealant, two-part marine epoxy, glue gun and CA glue, self-amalgamating tape for RF connectors, dielectric grease, thread locker. Keeps salt water out of connectors and enclosures. Estimate.",1.00,"8,100.00",PHP,"₱8,100"
+10.8  Wiring and connector consumables,"Heat-shrink (including adhesive-lined marine type), crimp terminals, JST/Dupont connector kit, UV-resistant cable ties. Estimate.",1.00,"4,200.00",PHP,"₱4,200"
+10.9  Anti-corrosion spray,For connectors and terminals. Estimate.,2.00,500.00,PHP,"₱1,000"
+10.10  Hand tools,"Wire strippers, flush cutters, pliers, ratcheting crimper set, wrench and hex key set. The team owns none of these. Estimate.",1.00,"5,500.00",PHP,"₱5,500"
+10.11  Power tools,"Heat gun and cordless drill with step bits, for heat-shrink work and cable-gland holes in enclosures. Estimate.",1.00,"6,000.00",PHP,"₱6,000"
+10.12  Test equipment,"Digital multimeter, bench power supply 0-30 V 5 A, USB-C power meter, and a NanoVNA to check the 915 MHz antennas and cables before range tests. Estimate.",1.00,"11,500.00",PHP,"₱11,500"
+10.13  Bench safety and ESD,"Solder fume extractor, anti-static mat and wrist strap, safety glasses and gloves, helping hands. Estimate.",1.00,"4,800.00",PHP,"₱4,800"
+10.14  Labels and storage,"Waterproof device labels and ASU property tags, parts organizers. Estimate.",1.00,"2,300.00",PHP,"₱2,300"
+10.15  3D printing service - ASU printer (per kg printed),"Mounts, internal trays and adapter parts for all devices plus prototypes, ~6 kg in UV-resistant PETG or ASA (PLA degrades in sun). ASU charges per use; ~₱5/g is an estimate. CONFIRM the university's rate.",6.00,"5,000.00",PHP,"₱30,000"
+Subtotal — Supplies and Materials,,,,,"₱750,798"
+"REVISED FROM PRIOR DRAFT (28 Sep 2026): B.1 is restructured into three device types. Buoy relay nodes (B.1.1-B.1.7) mount on LGU buoys only, so the ship-power charger, ship adapter bracket and ship-input fuse are removed (₱72,400 → ₱64,150 per node). Boat pods (B.1.8) are a new lightweight strap-on unit for fishers' own boats. Shore gateways (B.1.9) are new; before, only the gateway's data SIM was budgeted. Device counts in B6-B8 are planning assumptions pending LGU and fisherfolk consultation, and lines marked 'Estimate' need a local canvass. Later revision (28 Sep 2026): pods raised to 22 (20 deployed + 2 spares) and a physical SOS button added (₱17,500 per pod). Weather-tiered check-ins need a second shore receiver (max 80 pods per receiver) and are outside the Year 1 SOS scope, so they are not budgeted. MPU6050 quantity was ""x"" (broke every total downstream) - set to 1 bundle; confirm.",,,,,
+"CAPITALIZATION CHECK: One assembled buoy relay node costs ~₱64,150, above the ₱50,000 COA threshold. Lines are itemized by subsystem (each below ₱50,000 per unit), but confirm with ASU Accounting whether assembled buoy nodes must be recorded under Equipment Outlay instead of MOOE. Boat pods (~₱17,500) and shore gateways (~₱37,400) are below the threshold.",,,,,
+,,,,,
+B.2  Software Subscriptions and Licenses,,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+"AI development tooling - ChatGPT Pro ($100 tier), 1 seat","$100/month × 12 months. Held by Lenard (lead student researcher: backend, architecture, deployment). Single-user plan; not shared.",1.00,"1,200.00",USD,"₱75,300"
+"AI development tooling - Claude Pro, 3 seats (annual billing)","$200/seat/year (billed annually, $17/month). Held by Arnold (website dashboard), Daniel (hardware and buoy firmware) and Jade (Flutter application). Single-user plans; not shared.",3.00,200.00,USD,"₱37,650"
+12% VAT on foreign digital services,"Philippine 12% VAT on digital services from nonresident providers (RA 12023, in force since June 2025), applied to the subscriptions above.",12%,"112,950.00",PHP,"₱13,554"
+Subtotal — Software Subscriptions,,,,,"₱126,504"
+,,,,,
+B.3  Cloud Infrastructure and Hosting,,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+"Render web service - Standard (1 CPU, 2 GB RAM)","Hosts the FastAPI backend and the regulator dashboard for the New Washington pilot, always on so an SOS never waits on a cold start. $25/month × 12 months.",12.00,25.00,USD,"₱18,825"
+Render PostgreSQL - Basic-1gb,"Pilot database for SOS records, vessel profiles, operator accounts and the audit trail. The paid plan includes point-in-time recovery; the free tier used today expires every 30 days with no backups. $19/month × 12 months.",12.00,19.00,USD,"₱14,307"
+Database storage (~20 GB),$0.30/GB/month × 20 GB × 12 months.,12.00,6.00,USD,"₱4,518"
+Bandwidth overage buffer,Traffic beyond the included bandwidth at $0.15/GB; ~$5/month × 12 months.,12.00,5.00,USD,"₱3,765"
+Staging environment - Render Starter web + Basic-256mb PostgreSQL,Separate copy for testing changes before they reach live SOS traffic. $7 + $6 per month × 12 months.,12.00,13.00,USD,"₱9,789"
+Domain registration,Annual renewal.,1.00,15.00,USD,₱941
+Google Play developer registration,One-time fee to publish the AqOne Android app for fisherfolk.,1.00,25.00,USD,"₱1,569"
+12% VAT on foreign digital services,"RA 12023, applied to the USD hosting, domain and app store lines above.",12%,"53,714.00",PHP,"₱6,446"
+Foreign exchange spread buffer,"5% of all USD-denominated lines in B.2 and B.3 (before VAT), to absorb card issuer FX spread and peso movement over the project year.",5%,"166,664.00",PHP,"₱8,333"
+Subtotal — Cloud Infrastructure,,,,,"₱68,493"
+"REVISED FROM PRIOR DRAFT (28 Sep 2026): the Railway pilot phase and the AWS ""Panay-wide"" scaling phase are replaced with Render for the full project year, sized to the New Washington pilot. AqOne already runs on Render's free tier, whose database expires every 30 days with no backups; paid plans remove that risk. Scale-up beyond New Washington is a follow-on phase and is not part of this request, so the AWS Activate credit note is withdrawn.",,,,,
+,,,,,
+B.4  Communication Expenses,,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+SMS gateway - SOS and advisory alerts (Semaphore),"Semaphore at ₱0.56/text + 12% VAT = ₱0.627/text; 1,000-3,000 texts/month × 12 months (midpoint 2,000 used). Advisories over 160 characters bill as 2+ texts, so keep templates short. Delivers emergency alerts to fisherfolk without smartphone access.","24,000.00",0.63,PHP,"₱15,053"
+Shore gateway data SIMs (LTE uplink),"1 prepaid data SIM per shore gateway (B8), on different networks (Globe and Smart) so one carrier outage cannot cut both; ~₱1,000/month × 12 months each.",2.00,"12,000.00",PHP,"₱24,000"
+Pocket Wi-Fi units - prepaid LTE/5G,"For field testing where Wi-Fi is unreliable: one on Smart, one on GOMO (Globe network), so one network covers dead spots in the other. Project-owned; SIMs registered under the project's responsible person at ASU. Estimate.",2.00,"2,000.00",PHP,"₱4,000"
+Field testing data - Smart Magic Data (no expiry),"~200 GB on the main SIM: Magic Data 988 + 749 + 649 (88 + 65 + 50 GB = 203 GB), bought in tranches during fieldwork; the data does not expire while the SIM stays active.",1.00,"2,386.00",PHP,"₱2,386"
+Field testing data - GOMO (no expiry),"~200 GB on the backup SIM: 7 × GOMO 449 (30 GB each = 210 GB), bought in tranches during fieldwork.",7.00,449.00,PHP,"₱3,143"
+Subtotal — Communication,,,,,"₱48,582"
+,,,,,
+B.5  Travel and Transportation,,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+Field travel and transportation - ASU Kalibo Campus to New Washington (land),"48 round trips (≈4/month × 12 months) from ASU Kalibo Campus to the New Washington pilot site with a crew of 3-5, for deployment, retrieval, maintenance and fisherfolk data collection. Budgeted at the equivalent customary public transport cost (≈₱1,250 per trip for the crew, estimate), not private-car fuel: government travel rules exclude gasoline reimbursement for private vehicles (EO 77, Sec. 5(a)). CONFIRM the treatment for student participants with ASU Accounting. Reimbursed against approved travel orders and receipts per COA rules.",48.00,"1,250.00",PHP,"₱60,000"
+Sea access - pumpboat hire with boatman and fuel,"16 sea trips: ~4 for deployment and commissioning, 9 monthly inspections (months 4-12), ~3 after damaging weather when safe. ~₱2,500 per half-day trip (estimate; get a local quote). Reduce or drop if the New Washington LGU provides boat access under the MOA.",16.00,"2,500.00",PHP,"₱40,000"
+Research dissemination travel,"One national conference or research forum for presentation of results — registration, transportation, and accommodation for two delegates.",1.00,"30,000.00",PHP,"₱30,000"
+Subtotal — Travel and Transportation,,,,,"₱130,000"
+"REVISED FROM PRIOR DRAFT: previously budgeted as a flat ₱5,000/month fuel allowance for a privately-owned vehicle. Restated on a per-trip basis to comply with government travel expense rules.",,,,,
+,,,,,
+"B.6  Project Dissemination, Community Engagement, and Business/Design Support",,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+Pilot community outreach (New Washington),"Printed orientation materials, training sessions for fisherfolk and MDRRMO/BFAR personnel, and local transport. One-time.",1.00,"8,000.00",PHP,"₱8,000"
+Publication and documentation costs,"Journal submission and page charges, poster and technical report production, and final project documentation.",1.00,"15,000.00",PHP,"₱15,000"
+Business/design devices - 2 project-owned laptops or tablets,"Two project-owned devices for Doreen Kay and KC Condes (pitch decks, Canva/Figma design, business development and stakeholder materials); their current laptops are old. Laptop or tablet to be chosen from documented work requirements and quotations. ₱35,000 per unit, below the ₱50,000 COA capitalization threshold, so MOOE.",2.00,"35,000.00",PHP,"₱70,000"
+"Subtotal — Dissemination, Engagement, and Business/Design Support",,,,,"₱93,000"
+,,,,,
+"B.7  Field Safety, Insurance, and Maintenance",,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+"Life vests - adult, MARINA-approved type",Field crew of up to 5 plus 1 spare. Estimate.,6.00,"1,200.00",PHP,"₱7,200"
+Marine first aid kit,Carried on every sea trip. Estimate.,1.00,"1,500.00",PHP,"₱1,500"
+Personal accident insurance - field crew,"6 student researchers + 1 faculty adviser, covering work at sea for the project year. CONFIRM whether ASU's existing student accident insurance already covers fieldwork at sea; this line is a top-up. Estimate.",7.00,"1,000.00",PHP,"₱7,000"
+Buoy relay node spares kit,"1 battery (₱12,000), 1 MPPT controller (₱5,500), 2 LoRa antennas (₱4,000), 2 surge arrestors (₱3,000), 1 RAK WisBlock (₱3,000), seals and desiccant (₱2,000). Replaces failed parts without waiting on orders.",1.00,"29,500.00",PHP,"₱29,500"
+Boat pod repair parts,"10 LiFePO4 cells (₱7,500), 4 charging boards (₱2,000), 4 USB-C ports (₱1,600), 5 SOS buttons (₱1,750). The 2 spare pods are counted once, in B.1.8.",1.00,"12,850.00",PHP,"₱12,850"
+"Subtotal — Field Safety, Insurance, and Maintenance",,,,,"₱58,050"
+"NEW (28 Sep 2026): field safety and upkeep were missing from the prior draft. Maintenance labor is covered by the student researchers, with Daniel leading hardware upkeep and other members trained as backups.",,,,,
+,,,,,
+C. EQUIPMENT OUTLAY (EO),,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+"Development laptop — 15.6"" workstation class","2 units for backend and application work. Minimum specification: 15.6"" FHD, 16GB RAM (expandable), 512GB NVMe SSD, discrete GPU for local model training and inference. Unit cost exceeds the ₱50,000 COA capitalization threshold; recorded as PPE and turned over to the institution at project end. Canvass reference: MSI Thin 15 B12UC-1435PH @ ₱54,995 (Kalibo, on-site warranty service).",2.00,"54,995.00",PHP,"₱109,990"
+Subtotal — Equipment Outlay,,,,,"₱109,990"
+"PROCUREMENT NOTE: Specification is written to technical requirements, not to a brand. Final unit selection is subject to ASU canvassing and procurement rules. Alternative canvass: HP OmniBook 5 16"" (Ryzen AI 7 350, 16GB/512GB) @ ₱52,990 — newer processor generation, but no local Aklan service centre.",,,,,
+,,,,,
+SUMMARY BY EXPENSE CLASS,,,,,
+Item,Justification / Basis,Qty,Unit Cost,Currency,Total (PHP)
+A. Personal Services (PS),Stipends for the lead student researcher and 5 student researchers.,,,,"₱238,893"
+B. Maintenance and Other Operating Expenses (MOOE),"Supplies, software, cloud hosting, communication, travel, dissemination, field safety, and maintenance.",,,,"₱1,275,427"
+C. Equipment Outlay (EO),Capitalized development workstations.,,,,"₱109,990"
+Subtotal — Direct Project Costs,,,,,"₱1,624,310"
+Contingency,"Applied to direct project costs to absorb price movement, exchange rate variation, and hardware failure replacement over the project year.",5.0%,,,"₱81,215"
+GRAND TOTAL — 1-YEAR FUNDING REQUEST,,,,,"₱1,705,525"
+"LGU AND COMMUNITY COUNTERPART (in-kind, not included in the totals above; subject to a Memorandum of Agreement with the New Washington LGU): host buoys (the LGU provides existing buoys or procures its own), boat access for node deployment and maintenance, rooftop sites for the shore gateways, coordination of Coast Guard and LGU permits, and fishers' own boats and USB-C phone chargers for the boat pods.",,,,,
+,,,,,
+LEGEND AND NOTES,,,,,
+"Blue text = editable input. Edit Qty, Unit Cost, Currency, the exchange rate (B4), the hourly labor rate (B5), the device counts (B6-B8), and the contingency percentage. All totals recalculate automatically.",,,,,
+Yellow fill = key assumption requiring confirmation before submission.,,,,,
+"Red italic text = note flagging a revision, an unconfirmed assumption, or a procurement consideration.",,,,,
+Currency column accepts PHP or USD. USD lines are converted at the rate in cell B4.,,,,,
+"Expense classes follow standard government budget structure: Personal Services (PS), Maintenance and Other Operating Expenses (MOOE), and Equipment Outlay (EO).",,,,,
+"COA capitalization threshold of ₱50,000 per unit determines whether an item is charged to Equipment Outlay or treated as semi-expendable under MOOE.",,,,,
+Equipment procured under this project is recorded as institutional property of Aklan State University and is subject to turnover at project completion.,,,,,
+"REMOVED FROM PRIOR DRAFT: AWS certification and training costs (₱68,177). Team members are identifying the specific certifications required for deployment; these will be re-costed and justified against project deliverables if reinstated.",,,,,
+All figures are estimates compiled from current (August-September 2026) supplier pricing. Confirm exact costs at time of procurement.,,,,,

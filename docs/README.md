@@ -133,6 +133,7 @@ Use those records to confirm the current state of the full phone-to-dashboard pa
 | Hybrid transport decision and technical architecture spec | `55`, `56` |
 | Draft plans not yet started | `67` (stagnant mode) |
 | Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
+| DOST budget, investor model and funding handoffs | [`funding/`](funding/) |
 | Canonical PRD | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) |
 
 `Aqone_PRD (2).md` retains its supplied filename because it is the canonical PRD.
