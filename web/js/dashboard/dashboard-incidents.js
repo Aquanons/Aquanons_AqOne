@@ -137,6 +137,7 @@
       sosBtnAcknowledge.textContent = 'Acknowledge';
     }
     renderResponderSection(data);
+    renderBroadcastButton(data);
     sosBroadcastMsg.textContent = '';
 
     sosDrawer.classList.add('open');
@@ -186,6 +187,32 @@
   // sos.js) so an open drawer picks up a fisher's STILL_IN_DANGER / SAFE_NOW
   // reply, a status change, or a corrected ETA without the dispatcher having
   // to close and reopen it.
+  // Nearby broadcast state: created on ACK, expired on resolve.
+  // The button alerts nearby vessels without changing the ETA when the
+  // dispatcher presses it after acknowledging.
+  function renderBroadcastButton(data) {
+    if (!sosBtnBroadcast) return;
+    var state = data && data.broadcastState ? data.broadcastState : 'off';
+    if (!data || data.alertType !== 'sos') {
+      sosBtnBroadcast.disabled = true;
+      sosBtnBroadcast.textContent = 'Broadcast to Nearby Vessels';
+      return;
+    }
+    if (state === 'active') {
+      sosBtnBroadcast.disabled = true;
+      sosBtnBroadcast.textContent = 'Nearby Vessels Alerted';
+      if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast ACTIVE - nearby boats can see this call.';
+    } else if (!data.acknowledgedAt) {
+      sosBtnBroadcast.disabled = true;
+      sosBtnBroadcast.textContent = 'Broadcast to Nearby Vessels';
+      if (sosBroadcastMsg) sosBroadcastMsg.textContent = '';
+    } else {
+      sosBtnBroadcast.disabled = false;
+      sosBtnBroadcast.textContent = 'Alert Nearby Vessels';
+      if (sosBroadcastMsg) sosBroadcastMsg.textContent = '';
+    }
+  }
+
   function refreshOpenDrawer() {
     if (!currentDrawerData || currentDrawerData.alertType !== 'sos' || currentDrawerData.sosEventId == null) {
       return;
@@ -210,6 +237,7 @@
       sosBtnAcknowledge.textContent = 'Acknowledge';
     }
     renderResponderSection(currentDrawerData);
+    renderBroadcastButton(currentDrawerData);
   }
 
   function sosTickTimer() {
@@ -245,6 +273,8 @@
   const ackEtaPreviewEl = document.getElementById('ack-eta-preview');
   const ackNoteCountEl = document.getElementById('ack-note-count');
   const ackConflictEl = document.getElementById('ack-conflict');
+  const ackBroadcastEl = document.getElementById('ack-broadcast');
+  const ackRadiusEl = document.getElementById('ack-radius');
 
   let ackTriggerEl = null;
   let ackTargetData = null;
@@ -384,6 +414,9 @@
       const etaMinutes = Number.isFinite(parsedEta) && parsedEta > 0 ? Math.min(720, parsedEta) : null;
       const status = parseInt(ackStatusEl && ackStatusEl.value, 10) || 1;
       const note = (ackNoteEl && ackNoteEl.value.trim()) || null;
+      const broadcastEnabled = !ackBroadcastEl || ackBroadcastEl.checked !== false;
+      const parsedRadius = parseInt(ackRadiusEl && ackRadiusEl.value, 10);
+      const broadcastRadius = Number.isFinite(parsedRadius) ? Math.min(20, Math.max(5, parsedRadius)) : 10;
       if (note && utf8ByteLength(note) > 40) {
         updateAckNoteCount();
         return;
@@ -412,6 +445,8 @@
           eta_minutes: etaMinutes,
           responder_status: status,
           responder_note: note,
+          broadcast_enabled: broadcastEnabled,
+          broadcast_radius_km: broadcastRadius,
           expected_version: target.version
         })
       })
@@ -581,11 +616,31 @@
   });
 
   if (sosBtnBroadcast) {
-    sosBtnBroadcast.disabled = true;
     sosBtnBroadcast.addEventListener('click', function () {
-      if (sosBroadcastMsg) {
-        sosBroadcastMsg.textContent = 'Broadcast unavailable: LoRa downlink to vessels is not supported.';
-      }
+      var data = currentDrawerData;
+      var eventId = data && data.sosEventId;
+      if (!eventId || sosBtnBroadcast.disabled) return;
+      sosBtnBroadcast.disabled = true;
+      sosBtnBroadcast.textContent = 'Alerting…';
+      authFetch('/api/sos/' + encodeURIComponent(eventId) + '/acknowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responder_status: (data && data.responderStatus) || 4,
+          broadcast_enabled: true,
+          broadcast_radius_km: 10,
+          expected_version: data.version
+        })
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      }).then(function () {
+        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast ACTIVE - nearby boats can see this call.';
+        return loadActiveSos();
+      }).catch(function () {
+        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast not delivered - try again.';
+        if (currentDrawerData && currentDrawerData.sosEventId === eventId) renderBroadcastButton(currentDrawerData);
+      });
     });
   }
 

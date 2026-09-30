@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AqOne Venture - Nearby SOS container mockup (73)</title>
+<style>
+  body{font-family:system-ui,Arial,sans-serif;background:#0f172a;color:#111;margin:0;padding:24px;display:flex;gap:24px;flex-wrap:wrap}
+  .phone{width:360px;background:#e5e7eb;border-radius:28px;padding:12px}
+  .screen{background:#f8fafc;border-radius:20px;overflow:hidden;position:relative;height:720px;display:flex;flex-direction:column}
+  .map{flex:1;background:linear-gradient(#dbeafe,#f1f5f9);position:relative}
+  .grid{position:absolute;inset:0;background-image:linear-gradient(#cbd5e155 1px,transparent 1px),linear-gradient(90deg,#cbd5e155 1px,transparent 1px);background-size:36px 36px}
+  .top{position:absolute;top:12px;left:0;right:0;padding:0 14px;display:flex;flex-direction:column;gap:8px}
+  .capsule{background:rgba(244,248,250,.95);border:1px solid #fff;border-radius:30px;padding:8px 16px;display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:#0b4c8c}
+  .nearby{background:#fef2f2;border:2px solid #dc2626;border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+  .nearby .icon{width:36px;height:36px;border-radius:50%;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
+  .nearby .title{color:#dc2626;font-weight:800;font-size:13.5px}
+  .nearby .sub{font-size:12px;color:#475569}
+  .nearby .eta{font-size:12px;font-weight:800;color:#dc2626}
+  .nearby .chev{color:#dc2626;font-weight:900}
+  .mysos{background:rgba(244,248,250,.95);border:1px solid #fff;border-radius:30px;padding:8px 14px;font-size:12px;color:#475569}
+  .marker{position:absolute;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px #0005}
+  .me{left:170px;top:380px;background:#0284c7}
+  .sos1{left:220px;top:300px;background:#dc2626;width:22px;height:22px}
+  .sos2{left:120px;top:250px;background:#dc2626}
+  .rail{position:absolute;right:12px;bottom:70px;display:flex;flex-direction:column;gap:10px;align-items:end}
+  .sosbtn{background:#dc2626;color:#fff;border-radius:20px;padding:10px 18px;font-weight:800}
+  .round{width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #0f69c9;display:flex;align-items:center;justify-content:center}
+  .note{max-width:420px;background:#fff;border-radius:12px;padding:16px}
+  .note h2{margin:0 0 8px;font-size:18px}
+  .note li{font-size:14px;margin:6px 0}
+  .alarm{border:2px solid #dc2626;background:#fff;border-radius:12px;padding:12px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="phone"><div class="screen"><div class="map"><div class="grid"></div>
+<div class="marker me"></div><div class="marker sos1"></div>
+<div class="top">
+<div class="capsule"><span>⛅ Partly cloudy</span><span>29°C</span></div>
+<div class="nearby"><div class="icon">!</div><div style="flex:1"><div class="title">Fisher needs help - 2.3 km away</div><div class="sub">MDRRMO ETA 18:42 - engine trouble</div><div class="eta">Respond &gt;</div></div><div class="chev">›</div></div>
+<div class="mysos">SOS: Help coming - rescue centre has it</div>
+</div>
+<div class="rail"><div class="round">◎</div><div class="round">💬</div><div class="sosbtn">⚠ SOS</div></div>
+</div></div></div>
+
+<div class="phone"><div class="screen"><div class="map"><div class="grid"></div>
+<div class="marker me"></div><div class="marker sos1"></div><div class="marker sos2"></div>
+<div class="top">
+<div class="capsule"><span>⛅ Partly cloudy</span><span>29°C</span></div>
+<div class="nearby"><div class="icon">!</div><div style="flex:1"><div class="title">Fisher needs help - 450 m away</div><div class="sub">MDRRMO ETA 12:05 - capsizing</div><div class="eta">Respond &gt;</div></div><div class="chev">›</div></div>
+<div class="nearby"><div class="icon">!</div><div style="flex:1"><div class="title">Fisher needs help - distance unknown</div><div class="sub">No GPS - showing emergency anyway</div></div><div class="chev">›</div></div>
+<div class="nearby" style="justify-content:center;font-size:13px;font-weight:700;color:#dc2626">+2 more - View all</div>
+</div>
+<div class="rail"><div class="round">◎</div><div class="round">💬</div><div class="sosbtn">⚠ SOS</div></div>
+</div></div></div>
+
+<div class="note">
+<h2>73 mockup - Venture nearby container</h2>
+<ul>
+<li>Single case (left): red container pinned under weather capsule, above my-own SOS status.</li>
+<li>Shows distance (2.3 km), MDRRMO ETA, type. Tap recenters map on red marker.</li>
+<li>Multiple case (right): nearest first, max 3 plus +N more. Unknown GPS still shows row.</li>
+<li>Sound: looping <code>mobile/assets/audio/broadcastalarm.mp3</code> + vibration via new NearbyAlarm.</li>
+<li>Dismiss stops sound but keeps container until resolve or expire.</li>
+<li>Privacy: no name, phone, license. Position rounded to 500 m.</li>
+</ul>
+<div class="alarm"><b>First-sighting dialog + notification:</b> full-screen NearbyHelpDialog with Respond / Dismiss, plus system notification on channel <code>nearby_help</code> once per broadcast id.</div>
+<p style="font-size:13px;color:#475569">File: docs/73_MOCKUP_venture-nearby-container.html. Open in browser. No backend needed.</p>
+</div>
+</body>
+</html>

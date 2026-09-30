@@ -14,8 +14,8 @@ import 'package:aqone/services/location_service.dart';
 import 'package:aqone/services/sos_alarm.dart';
 import 'package:aqone/services/sos_service.dart';
 import 'package:aqone/services/venture_feeds.dart';
-import 'package:aqone/ui/home_page.dart';
 import 'package:aqone/ui/sos_flow.dart';
+import 'package:aqone/ui/venture_page.dart';
 import 'package:aqone/ui/widgets/action_pill.dart';
 import 'package:aqone/ui/widgets/responder_eta_dialog.dart';
 import 'package:flutter/material.dart';
@@ -456,21 +456,28 @@ void main() {
       expect(find.text(t.sosNoEtaYet), findsOneWidget);
     });
 
-    testWidgets('HomePage displays SOS action pill', (tester) async {
+    testWidgets('VenturePage displays SOS action pill', (tester) async {
       await tester.pumpWidget(
         _hostPage(
-          HomePage(
-            service: _DummySosService(),
+          VenturePage(
+            sos: _DummySosService(),
             identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
             feeds: VentureFeeds(backend: BackendClient()),
-            location: LocationService(),
+            location: _FakeLocationService(),
           ),
         ),
       );
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextButton),
+      ));
+      await tester.pump();
 
       expect(find.byType(ActionPill), findsOneWidget);
       expect(find.text('SOS'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
     });
 
     testWidgets('silent SOS starts no alarm', (tester) async {
@@ -478,21 +485,28 @@ void main() {
       final alarm = _TrackingSosAlarm();
       await tester.pumpWidget(
         _hostPage(
-          HomePage(
-            service: _DummySosService(),
+          VenturePage(
+            sos: _DummySosService(),
             identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
             feeds: VentureFeeds(backend: BackendClient()),
-            location: LocationService(),
+            location: _FakeLocationService(),
             sosAlarm: alarm,
           ),
         ),
       );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextButton),
+      ));
       await tester.pump();
 
       await tester.tap(find.text('SOS'));
       await tester.pump();
 
       expect(alarm.startCalled, isFalse);
+      await tester.pumpWidget(const SizedBox());
     });
 
     // docs/64 FFR-02 (finding F2): a long, hard press from a panicking user
@@ -502,15 +516,21 @@ void main() {
       final alarm = _TrackingSosAlarm();
       await tester.pumpWidget(
         _hostPage(
-          HomePage(
-            service: _DummySosService(),
+          VenturePage(
+            sos: _DummySosService(),
             identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
             feeds: VentureFeeds(backend: BackendClient()),
-            location: LocationService(),
+            location: _FakeLocationService(),
             sosAlarm: alarm,
           ),
         ),
       );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextButton),
+      ));
       await tester.pump();
 
       final gesture =
@@ -522,6 +542,7 @@ void main() {
 
       expect(alarm.startCalled, isTrue);
       expect(find.byType(SosCountdownScreen), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }
@@ -539,6 +560,26 @@ class _TrackingSosAlarm extends SosAlarm {
 
   @override
   Future<void> dispose() async {}
+}
+
+class _FakeLocationService extends LocationService {
+  @override
+  Future<Fix?> cachedFixIfPermitted() async => Fix(
+        lat: 11.70,
+        lon: 122.44,
+        accuracy: 5,
+        at: DateTime.now().toUtc(),
+      );
+
+  @override
+  Future<LocationResult> locate() async => LocationResult.success(
+        Fix(
+          lat: 11.70,
+          lon: 122.44,
+          accuracy: 5,
+          at: DateTime.now().toUtc(),
+        ),
+      );
 }
 
 class _DummySosService extends SosService {

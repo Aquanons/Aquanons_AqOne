@@ -470,3 +470,73 @@ async def public_squall() -> dict[str, object]:
     status['signal_type'] = 'pressure_pattern_research'
     status['is_calibrated'] = False
     return status
+
+
+@router.get('/sos-nearby')
+async def public_sos_nearby(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    radius_km: float = Query(default=10, ge=1, le=50),
+    vessel_id: str | None = Query(default=None, max_length=32),
+) -> dict[str, object]:
+    """Active SOS broadcasts near the caller, for nearby helpers.
+
+    Unauthenticated like the other handset safety feeds: a fisher at sea
+    holds no account. Privacy is in the shape, not the auth: rounded
+    position only, no owner, phone, license, note, or exact GPS.
+    Synthetic and demo incidents never appear here.
+    Caller filters its own vessel via optional vessel_id.
+    """
+    import math as _math
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        try:
+            rows = await conn.fetch(
+                '''
+                SELECT b.id AS broadcast_id, b.sos_event_id, b.center_lat,
+                       b.center_lon, b.radius_km, b.eta_at, b.responder_status,
+                       b.state, b.created_at,
+                       e.vessel_id, e.boat, e.note, e.resolved_at, e.is_synthetic
+                FROM sos_broadcasts b
+                JOIN sos_events e ON e.id = b.sos_event_id
+                WHERE b.state = 'active'
+                  AND e.resolved_at IS NULL
+                  AND e.is_synthetic IS FALSE
+                ORDER BY b.created_at DESC
+                LIMIT 50
+                ''',
+            )
+        except Exception:
+            return {'broadcasts': []}
+    out: list[dict[str, object]] = []
+    for row in rows:
+        data = dict(row)
+        if vessel_id and data.get('vessel_id') == vessel_id:
+            continue
+        try:
+            clat = float(data['center_lat'])
+            clon = float(data['center_lon'])
+        except (TypeError, ValueError):
+            continue
+        north = (clat - lat) * 110.574
+        east = (clon - lon) * 111.320 * _math.cos(_math.radians((clat + lat) / 2))
+        dist = _math.hypot(north, east)
+        limit = float(data.get('radius_km') or radius_km)
+        if dist > min(limit, float(radius_km)):
+            continue
+        eta = data.get('eta_at')
+        out.append({
+            'broadcast_id': data.get('broadcast_id'),
+            'sos_event_id': data.get('sos_event_id'),
+            'center_lat': clat,
+            'center_lon': clon,
+            'distance_km': round(dist, 2),
+            'radius_km': data.get('radius_km'),
+            'eta_at': eta.isoformat() if hasattr(eta, 'isoformat') else eta,
+            'responder_status': data.get('responder_status'),
+            'created_at': data.get('created_at').isoformat()
+            if hasattr(data.get('created_at'), 'isoformat') else data.get('created_at'),
+        })
+    out.sort(key=lambda item: float(item.get('distance_km') or 1e9))
+    return {'broadcasts': out}

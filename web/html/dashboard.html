@@ -906,7 +906,7 @@
         <button class="sos-btn sos-btn-acknowledge" id="sos-btn-acknowledge">Acknowledge</button>
         <button class="sos-btn sos-btn-resolve" id="sos-btn-resolve">Resolve Incident</button>
         <button class="sos-btn" id="sos-btn-confirm-vessel" hidden>Confirm vessel</button>
-        <button class="sos-btn sos-btn-broadcast" id="sos-btn-broadcast" disabled title="Broadcast to nearby vessels is not supported in this release">Broadcast to Nearby Vessels (Unavailable)</button>
+        <button class="sos-btn sos-btn-broadcast" id="sos-btn-broadcast" title="Alert nearby vessels once acknowledged">Broadcast to Nearby Vessels</button>
         <button class="sos-btn sos-btn-checkin" id="sos-btn-checkin" disabled title="Silent check-in is not supported in this release">Request Silent Check-in (Unavailable)</button>
         <button class="sos-btn" id="sos-btn-open-drift" hidden>Open drift case</button>
         <button class="sos-btn sos-btn-activity" id="sos-btn-activity">View Activity</button>
@@ -983,6 +983,16 @@
           <input class="ack-input" id="ack-note" type="text" maxlength="120"
                  placeholder="e.g. Stay with the boat, keep your light on" />
           <p class="ack-note-count" id="ack-note-count" role="status">0 / 40 bytes</p>
+          <label class="ack-label" for="ack-broadcast">
+            <input type="checkbox" id="ack-broadcast" checked />
+            Also alert nearby vessels that help is needed
+          </label>
+          <label class="ack-label" for="ack-radius">Nearby alert radius</label>
+          <select class="ack-select" id="ack-radius">
+            <option value="5">5 km</option>
+            <option value="10" selected>10 km</option>
+            <option value="20">20 km</option>
+          </select>
           <p id="ack-conflict" role="alert" hidden></p>
         </div>
         <div class="ack-modal-actions">

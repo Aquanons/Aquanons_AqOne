@@ -294,6 +294,17 @@ async def active_sos(
 
     now = datetime.now(UTC)
     events = [_enrich(row, now) for row in rows]
+    try:
+        async with pool.acquire() as conn2:
+            brows = await conn2.fetch(
+                'SELECT sos_event_id, state FROM sos_broadcasts WHERE state = \'active\'',
+            )
+        bstates = {int(r['sos_event_id']): r['state'] for r in brows}
+        for event in events:
+            event['broadcast_state'] = bstates.get(int(event['id']), 'off')
+    except Exception:
+        for event in events:
+            event.setdefault('broadcast_state', 'off')
     flood = flood_status(events, now)
     events.sort(key=triage_key)
     for event in events:
@@ -438,6 +449,101 @@ async def sos_downlink() -> dict[str, object]:
     }
 
 
+def _round_500m(value: float) -> float:
+    return round(value * 200.0) / 200.0
+
+
+async def _ensure_broadcast(
+    conn: Any,
+    event_id: int,
+    latitude: float | None,
+    longitude: float | None,
+    eta_at: Any,
+    responder_status: int | None,
+    radius_km: int,
+    created_by: str | None,
+    is_synthetic: bool,
+) -> dict[str, object] | None:
+    if is_synthetic or latitude is None or longitude is None:
+        return None
+    radius = min(50, max(1, int(radius_km or 10)))
+    try:
+        row = await conn.fetchrow(
+            '''
+            INSERT INTO sos_broadcasts
+              (sos_event_id, center_lat, center_lon, radius_km, eta_at,
+               responder_status, state, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)
+            ON CONFLICT (sos_event_id) DO UPDATE SET
+              center_lat = EXCLUDED.center_lat,
+              center_lon = EXCLUDED.center_lon,
+              radius_km = EXCLUDED.radius_km,
+              eta_at = EXCLUDED.eta_at,
+              responder_status = EXCLUDED.responder_status,
+              state = 'active',
+              expired_at = NULL
+            RETURNING id, sos_event_id, center_lat, center_lon, radius_km,
+                      eta_at, responder_status, state
+            ''',
+            event_id,
+            _round_500m(float(latitude)),
+            _round_500m(float(longitude)),
+            radius,
+            eta_at,
+            responder_status,
+            created_by,
+        )
+    except Exception:
+        return None
+    if row is None:
+        return None
+    return {k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in dict(row).items()}
+
+
+async def _expire_broadcast(conn: Any, event_id: int, actor: dict | None = None) -> None:
+    try:
+        row = await conn.fetchrow(
+            '''
+            UPDATE sos_broadcasts
+               SET state = 'expired', expired_at = NOW()
+             WHERE sos_event_id = $1 AND state = 'active'
+            RETURNING id
+            ''',
+            event_id,
+        )
+    except Exception:
+        return
+    if row is None:
+        return
+    try:
+        await record_audit_event(
+            conn,
+            actor=actor,
+            action='sos.broadcast_expire',
+            resource_type='sos_event',
+            resource_id=event_id,
+            outcome='updated',
+            is_demo=False,
+            metadata=None,
+        )
+    except Exception:
+        return
+
+
+async def _reactivate_broadcast(conn: Any, event_id: int) -> None:
+    try:
+        await conn.execute(
+            '''
+            UPDATE sos_broadcasts
+               SET state = 'active', expired_at = NULL
+             WHERE sos_event_id = $1 AND state = 'expired'
+            ''',
+            event_id,
+        )
+    except Exception:
+        return
+
+
 class AcknowledgeIn(BaseModel):
     """Dispatcher response fields; ETA minutes become server-time timestamps."""
 
@@ -445,6 +551,8 @@ class AcknowledgeIn(BaseModel):
     responder_status: int = Field(default=RESPONDER_RECEIVED, ge=1, le=5)
     responder_note: str | None = None
     expected_version: int | None = Field(default=None, ge=0)
+    broadcast_enabled: bool = True
+    broadcast_radius_km: int = Field(default=10, ge=1, le=50)
 
     @field_validator('responder_note')
     @classmethod
@@ -478,7 +586,7 @@ async def acknowledge(
                               ELSE NOW() + ($5::INT * INTERVAL '1 minute')
                             END
              WHERE id = $1 AND ($6::INT IS NULL OR version = $6)
-            RETURNING id, acknowledged_at, acked_by, eta_at,
+            RETURNING id, acknowledged_at, acked_by, eta_at, latitude, longitude,
                       responder_status, responder_note, is_synthetic, version
             ''',
             event_id,
@@ -507,6 +615,30 @@ async def acknowledge(
             is_demo=row['is_synthetic'],
             metadata={'responder_status': row['responder_status']},
         )
+        broadcast = None
+        if body.broadcast_enabled:
+            broadcast = await _ensure_broadcast(
+                conn,
+                event_id=row['id'],
+                latitude=row.get('latitude') if isinstance(row, dict) else row['latitude'],
+                longitude=row.get('longitude') if isinstance(row, dict) else row['longitude'],
+                eta_at=row['eta_at'],
+                responder_status=row['responder_status'],
+                radius_km=body.broadcast_radius_km,
+                created_by=user.get('email') or 'unknown',
+                is_synthetic=bool(row['is_synthetic']),
+            )
+            if broadcast is not None:
+                await record_audit_event(
+                    conn,
+                    actor=user,
+                    action='sos.broadcast',
+                    resource_type='sos_event',
+                    resource_id=row['id'],
+                    outcome='applied',
+                    is_demo=row['is_synthetic'],
+                    metadata={'radius_km': broadcast.get('radius_km')},
+                )
     return {
         'ok': True,
         'id': row['id'],
@@ -517,6 +649,7 @@ async def acknowledge(
         'responder_status_label': RESPONDER_STATUS_LABELS.get(row['responder_status']),
         'responder_note': row['responder_note'],
         'version': row['version'],
+        'broadcast': broadcast,
     }
 
 
@@ -634,6 +767,8 @@ async def resolve_sos(
             outcome='no_change' if was_already_resolved else 'updated',
             is_demo=row['is_synthetic'],
         )
+        if not was_already_resolved:
+            await _expire_broadcast(conn, event_id, actor=user)
     return {
         'ok': True,
         'id': row['id'],
@@ -688,6 +823,7 @@ async def reopen_sos(
             outcome='updated',
             is_demo=row['is_synthetic'],
         )
+        await _reactivate_broadcast(conn, event_id)
     return {'ok': True, 'id': row['id'], 'outcome': 'updated', 'version': row['version']}
 
 

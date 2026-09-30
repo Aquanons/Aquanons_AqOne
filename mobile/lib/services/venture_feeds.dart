@@ -11,6 +11,7 @@ import '../models/buoy_marker.dart';
 import '../models/forecast_outlook.dart';
 import '../models/hazard_alert.dart';
 import '../models/hotspot_cell.dart';
+import '../models/nearby_sos.dart';
 import '../models/sea_condition.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
@@ -208,8 +209,7 @@ class VentureFeeds {
     return SquallWatch.tryParse(decoded) ?? SquallWatch.unavailable;
   }
 
-  Future<List<Advisory>?> advisories() async {
-    final decoded = await _cachedJson(
+  Future<List<Advisory>?> advisories() async {    final decoded = await _cachedJson(
       MapSnapshotStore.feedAdvisories,
       () async {
         final live = await _backend.getJson(AqOneConfig.advisoriesPath) ??
@@ -258,6 +258,26 @@ class VentureFeeds {
       ...Advisory.parseList(decoded),
       WelcomeAdvisory.instance,
     ];
+  }
+
+  Future<List<NearbySos>> nearbySos({
+    required double lat,
+    required double lon,
+    double radiusKm = 10,
+    String? vesselId,
+  }) async {
+    final params = <String, String>{
+      'lat': '$lat',
+      'lon': '$lon',
+      'radius_km': '$radiusKm',
+      if (vesselId != null && vesselId.isNotEmpty) 'vessel_id': vesselId,
+    };
+    final query = params.entries
+        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+    final decoded = await _backend.getJson('${AqOneConfig.publicSosNearbyPath}?$query');
+    if (decoded == null) return const <NearbySos>[];
+    return NearbySos.parseList(decoded);
   }
 
   void close() => _weatherClient.close();

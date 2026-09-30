@@ -156,7 +156,8 @@
       stage: 'DISTRESS CALL — ' + deliveryPath(ev),
       // Read by dashboard-vessels-alerts.js's [data-eta-at] countdown span.
       etaAt: ev.eta_at || null,
-      fisherReply: ev.fisher_reply || null
+      fisherReply: ev.fisher_reply || null,
+      broadcastState: ev.broadcast_state || 'off'
     };
     alert.drawerData = {
       alertType: 'sos',
@@ -197,7 +198,9 @@
       responderStatus: ev.responder_status || null,
       responderStatusLabel: ev.responder_status_label || null,
       responderNote: ev.responder_note || null,
-      fisherReply: ev.fisher_reply || null
+      fisherReply: ev.fisher_reply || null,
+      broadcastState: ev.broadcast_state || 'off',
+      licenseType: ev.license_type || null
     };
     return alert;
   }
