@@ -51,11 +51,9 @@ async def register_vessel_profile(
 ) -> dict[str, object]:
     """Declare/refresh this vessel's owner identity. Idempotent upsert.
 
-    Unenrolled vessels may create a profile or refresh it anonymously, last
-    write wins: the vessel_id is unguessable, so presenting it is ownership
-    on the self-declared tier, the same basis SOS ingest already trusts.
-    A vessel with an active device requires that device's bearer for every
-    write, enforced above.
+    Unenrolled vessels may create a profile or fill blank fields anonymously.
+    A vessel with an active device requires that device's bearer for every write.
+    Anonymous callers cannot change existing non-blank identity fields.
     """
     is_authorized = (
         vessel_device is not None
@@ -82,7 +80,37 @@ async def register_vessel_profile(
                 raise HTTPException(status_code=401, detail='vessel device credential required')
             raise HTTPException(status_code=403, detail='device is paired for another vessel')
 
-        can_overwrite = is_authorized or not has_active_device
+        if existing is not None and not is_authorized:
+            ex_skipper = existing['skipper_name'] or ''
+            ex_lic_num = existing['license_number'] or ''
+            ex_phone = existing['phone'] or ''
+            ex_lic_type = existing['license_type'] or ''
+            if ex_lic_type == 'none':
+                ex_lic_type = ''
+            ex_boat = existing['boat_name'] or ''
+            if ex_boat == existing['id']:
+                ex_boat = ''
+            ex_shore_name = existing.get('shore_contact_name') or ''
+            ex_shore_phone = existing.get('shore_contact_phone') or ''
+
+            if (
+                (ex_skipper and payload.skipper_name and payload.skipper_name != ex_skipper)
+                or (ex_lic_num and payload.license_number and payload.license_number != ex_lic_num)
+                or (ex_phone and payload.phone and payload.phone != ex_phone)
+                or (
+                    ex_lic_type
+                    and payload.license_type
+                    and payload.license_type != 'none'
+                    and payload.license_type != ex_lic_type
+                )
+                or (ex_boat and payload.boat and payload.boat != ex_boat)
+                or (ex_shore_name and payload.shore_contact_name and payload.shore_contact_name != ex_shore_name)
+                or (ex_shore_phone and payload.shore_contact_phone and payload.shore_contact_phone != ex_shore_phone)
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail='modifying existing vessel identity requires vessel device authentication',
+                )
 
         row = await conn.fetchrow(
             """
@@ -152,7 +180,7 @@ async def register_vessel_profile(
             payload.license_type,
             payload.license_number,
             payload.phone,
-            can_overwrite,
+            is_authorized,
             'device' if is_authorized else 'anonymous',
             payload.shore_contact_name,
             payload.shore_contact_phone,
