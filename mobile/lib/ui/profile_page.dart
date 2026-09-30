@@ -155,18 +155,43 @@ class _ProfilePageState extends State<ProfilePage> {
         shoreContactName: _shoreContactName.text,
         shoreContactPhone: _shoreContactPhone.text,
       );
+      ProfilePushResult? pushResult;
       if (widget.backendClient != null) {
-        unawaited(widget.backendClient!.registerVesselProfile(updated));
+        pushResult = await widget.backendClient!.registerVesselProfile(updated);
       }
       if (!mounted) return;
       widget.onIdentityUpdated(updated);
-      setState(() => _editing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.profileUpdated),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      setState(() {
+        _editing = false;
+        _saving = false;
+      });
+      if (pushResult == ProfilePushResult.needsPairing) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.profileSavedOnPhoneOnly),
+            action: SnackBarAction(
+              label: t.profilePairPhone,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => EnrolmentPage(
+                      backendClient: widget.backendClient ?? BackendClient(),
+                      vesselId: updated.vesselId,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.profileUpdated),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);

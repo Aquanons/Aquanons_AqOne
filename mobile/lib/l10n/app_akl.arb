@@ -76,6 +76,8 @@
   "profileTitle": "Akon nga Profile",
   "profileEdit": "Ilisi ro profile",
   "profileUpdated": "Na-update ro profile",
+  "profileSavedOnPhoneOnly": "Nai-save sa telepono nga raya eamang. Gamit gihapon it rescue centre ro daan mo nga mga detalye. I-pair raya nga telepono para ma-update sanda.",
+  "profilePairPhone": "I-pair",
   "profileNoName": "Waeay nakabutang nga ngaran",
   "profileBoatName": "Ngaran it baroto",
   "profileVesselId": "ID it baroto",

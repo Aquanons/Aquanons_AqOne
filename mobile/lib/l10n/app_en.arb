@@ -428,6 +428,14 @@
   "@profileUpdated": {
     "description": "Confirmation shown after saving profile changes."
   },
+  "profileSavedOnPhoneOnly": "Saved on this phone only. The rescue centre still has your old details. Pair this phone to update them.",
+  "@profileSavedOnPhoneOnly": {
+    "description": "Notice shown when the server rejects a profile edit because the vessel requires pairing."
+  },
+  "profilePairPhone": "Pair",
+  "@profilePairPhone": {
+    "description": "Action on the profile-rejected snackbar that opens the phone pairing screen."
+  },
   "profileNoName": "No name set",
   "@profileNoName": {
     "description": "Fallback when the skipper has no saved name."

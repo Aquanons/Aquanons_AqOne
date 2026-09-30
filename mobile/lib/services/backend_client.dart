@@ -89,6 +89,8 @@ class RemoteSos {
   }
 }
 
+enum ProfilePushResult { accepted, needsPairing, failed }
+
 class VesselAuthException implements Exception {
   const VesselAuthException(this.message);
   final String message;
@@ -329,10 +331,10 @@ class BackendClient {
   /// who raised an SOS. Best-effort and never blocking: the profile is
   /// dispatcher context, not part of getting the distress call through, so a
   /// failure here is simply retried on the next app start or profile edit.
-  Future<void> registerVesselProfile(VesselIdentity identity) async {
+  Future<ProfilePushResult> registerVesselProfile(VesselIdentity identity) async {
     final payload = identity.toRegistrationPayload();
     try {
-      await _send(
+      final res = await _send(
         _request(
           'POST',
           EndpointGuard.backend(_baseUrl, '/api/vessel-profile'),
@@ -340,9 +342,15 @@ class BackendClient {
           body: jsonEncode(payload),
         ),
       ).timeout(AqOneConfig.backendTimeout);
+      if (res.statusCode == 200) {
+        return ProfilePushResult.accepted;
+      }
+      if (res.statusCode == 409 || res.statusCode == 401) {
+        return ProfilePushResult.needsPairing;
+      }
+      return ProfilePushResult.failed;
     } catch (_) {
-      // Silent by design - see the docstring. The upsert is idempotent, so a
-      // retried push converges with whatever the backend already holds.
+      return ProfilePushResult.failed;
     }
   }
 

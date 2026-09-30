@@ -76,6 +76,8 @@
   "profileTitle": "Profile",
   "profileEdit": "I-edit ang profile",
   "profileUpdated": "Na-update ang profile",
+  "profileSavedOnPhoneOnly": "Nai-save sa teleponong ito lamang. Hawak pa rin ng rescue centre ang lumang mga detalye. I-pair ang teleponong ito upang i-update ang mga ito.",
+  "profilePairPhone": "I-pair",
   "profileNoName": "Walang nakalagay na pangalan",
   "profileBoatName": "Pangalan ng bangka",
   "profileVesselId": "ID ng sasakyang-dagat",
