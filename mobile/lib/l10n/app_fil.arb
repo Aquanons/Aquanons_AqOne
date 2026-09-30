@@ -162,5 +162,14 @@
   "sosSentByMistake": "Naipadala nang hindi sinasadya?",
   "sosSlideToStandDown": "I-slide para bawiin ang saklolo",
   "locatingLabel": "Hinahanap ang lokasyon…",
-  "safetyWeatherLoadFailed": "Hindi ma-load ang panahon, kaya hindi ito masuri."
+  "safetyWeatherLoadFailed": "Hindi ma-load ang panahon, kaya hindi ito masuri.",
+  "nearbyHelpTitle": "May mangingisdang nangangailangan ng tulong",
+  "nearbyHelpAway": "{distance} ang layo",
+  "nearbyHelpDistanceUnknown": "hindi matukoy ang layo",
+  "nearbyHelpRespond": "Tumulong",
+  "nearbyHelpDismiss": "Isara",
+  "nearbyHelpMore": "+{count} pa - Tingnan lahat",
+  "nearbyHelpNotifTitle": "May mangingisdang nangangailangan ng tulong sa malapit",
+  "nearbyHelpNotifBody": "{distance} - kinumpirma ng MDRRMO, pindutin upang tingnan",
+  "nearbyHelpEta": "Darating {time}"
 }

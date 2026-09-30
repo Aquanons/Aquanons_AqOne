@@ -11,12 +11,15 @@ import '../data/identity_store.dart';
 import '../models/buoy_marker.dart';
 import '../models/hazard_alert.dart';
 import '../models/fisher_sos_situation.dart';
+import '../models/nearby_sos.dart';
 import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
 import '../services/compass_service.dart';
+import '../services/eta_notifier.dart';
 import '../services/location_service.dart';
 import '../services/mbtiles_provider.dart';
+import '../services/nearby_alarm.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
@@ -62,6 +65,7 @@ class VenturePage extends StatefulWidget {
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
     this.sosAlarm,
+    this.nearbyAlarm,
   });
 
   final VesselIdentity identity;
@@ -69,6 +73,7 @@ class VenturePage extends StatefulWidget {
   final VentureFeeds feeds;
   final LocationService location;
   final SosAlarm? sosAlarm;
+  final NearbyAlarm? nearbyAlarm;
 
   /// Space reserved for the shell's floating dock. The map stays full-bleed
   /// behind it; only the controls are lifted clear so they never get covered.
@@ -137,6 +142,12 @@ class _VenturePageState extends State<VenturePage> {
   SosRecord? _latestSos;
   bool _isSendingSos = false;
   late final SosAlarm _sosAlarm;
+  late final NearbyAlarm _nearbyAlarm;
+
+  List<NearbySos> _nearby = const <NearbySos>[];
+  final Set<int> _announcedBroadcasts = <int>{};
+  bool _nearbyDialogOpen = false;
+  final RequestGuard _nearbyGuard = RequestGuard();
 
   /// True while a hazard dialog is on screen, so a second alert arriving from
   /// the same poll cannot stack a dialog on top of the first.
@@ -147,6 +158,7 @@ class _VenturePageState extends State<VenturePage> {
   void initState() {
     super.initState();
     _sosAlarm = widget.sosAlarm ?? SosAlarm();
+    _nearbyAlarm = widget.nearbyAlarm ?? NearbyAlarm();
     widget.location.warmUp();
     _sosSub = widget.sos.changes.listen((_) => _refreshSosStatus());
     _initTileProvider();
@@ -163,11 +175,13 @@ class _VenturePageState extends State<VenturePage> {
       _locate(initial: true);
       _loadBuoys();
       _loadHazards();
+      _loadNearby();
       _refreshSosStatus();
       _refreshSnapshotAges();
       _pollTimer = Timer.periodic(AqOneConfig.hazardPollInterval, (_) {
         _loadBuoys();
         _loadHazards();
+        _loadNearby();
         _refreshSnapshotAges();
       });
     });
@@ -178,14 +192,14 @@ class _VenturePageState extends State<VenturePage> {
     // Polling must stop with the screen. Left running it drains battery and
     // keeps hitting the backend while the phone is in a pocket at sea.
     _pollTimer?.cancel();
-    _sosSub?.cancel();
-    // The magnetometer keeps the SoC awake while subscribed, so it must go
+    _sosSub?.cancel();    // The magnetometer keeps the SoC awake while subscribed, so it must go
     // down with the screen.
     _compassSub?.cancel();
     _tiles.dispose();
     unawaited(_compass.dispose());
     _mapController.dispose();
     unawaited(_sosAlarm.dispose());
+    unawaited(_nearbyAlarm.dispose());
     super.dispose();
   }
 
@@ -260,6 +274,86 @@ class _VenturePageState extends State<VenturePage> {
     }
   }
 
+  Future<void> _loadNearby() async {
+    final version = _nearbyGuard.begin();
+    final point = _userLocation;
+    final lat = point?.latitude ?? AqOneConfig.defaultMapLat;
+    final lon = point?.longitude ?? AqOneConfig.defaultMapLon;
+    final items = await widget.feeds.nearbySos(
+      lat: lat,
+      lon: lon,
+      vesselId: widget.identity.vesselId,
+    );
+    if (!mounted || !_nearbyGuard.isCurrent(version)) return;
+    final fresh = items.take(4).toList();
+    setState(() => _nearby = fresh);
+    final unseen = fresh.where((n) => !_announcedBroadcasts.contains(n.broadcastId)).toList();
+    if (unseen.isNotEmpty) {
+      _announcedBroadcasts.addAll(unseen.map((n) => n.broadcastId));
+      unawaited(_nearbyAlarm.start());
+      final first = unseen.first;
+      final t = AppLocalizations.of(context);
+      final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(first.distanceKm);
+      unawaited(EtaNotifier.showNearbyHelp(
+        title: t.nearbyHelpNotifTitle,
+        body: t.nearbyHelpNotifBody(dist),
+        broadcastId: first.broadcastId,
+      ));
+      _showNearbyDialog(first);
+    }
+    if (fresh.isEmpty) {
+      unawaited(_nearbyAlarm.stop());
+    }
+  }
+
+  void _showNearbyDialog(NearbySos item) {
+    if (!mounted || _nearbyDialogOpen) return;
+    _nearbyDialogOpen = true;
+    final t = AppLocalizations.of(context);
+    final point = _userLocation;
+    final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: _danger, size: 26),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                t.nearbyHelpTitle,
+                style: const TextStyle(color: _danger, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Text('${t.nearbyHelpAway(dist)}${item.etaAt != null ? ' - ${t.nearbyHelpEta(item.etaAt!.toLocal().hour.toString().padLeft(2, '0') + ':' + item.etaAt!.toLocal().minute.toString().padLeft(2, '0'))}' : ''}'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              unawaited(_nearbyAlarm.stop());
+              Navigator.pop(ctx);
+            },
+            child: Text(t.nearbyHelpDismiss),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _danger),
+            onPressed: () {
+              unawaited(_nearbyAlarm.stop());
+              Navigator.pop(ctx);
+              _mapController.move(LatLng(item.centerLat, item.centerLon), 14);
+            },
+            child: Text(t.nearbyHelpRespond),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _nearbyDialogOpen = false;
+    });
+  }
+
   Future<void> _locate({bool initial = false}) async {
     setState(() => _isLocating = true);
     final result = await widget.location.locate();
@@ -281,6 +375,7 @@ class _VenturePageState extends State<VenturePage> {
     final point = LatLng(fix.lat, fix.lon);
     setState(() => _userLocation = point);
     _mapController.move(point, AqOneConfig.locatedMapZoom);
+    unawaited(_loadNearby());
     await _loadWeather(fix.lat, fix.lon);
   }
 
@@ -465,6 +560,10 @@ class _VenturePageState extends State<VenturePage> {
               child: Column(
                 children: <Widget>[
                   _buildWeatherCapsule(isDark),
+                  if (_nearby.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    _buildNearbyHelp(isDark),
+                  ],
                   if (!AqOneConfig.pitchMode &&
                       widget.squall.shouldDisplay) ...<Widget>[
                     const SizedBox(height: 8),
@@ -544,6 +643,21 @@ class _VenturePageState extends State<VenturePage> {
             Icons.circle_rounded,
             size: 14,
             color: buoy.isActive ? _success : const Color(0xFF9CA3AF),
+          ),
+        ),
+      for (final item in _nearby)
+        Marker(
+          point: LatLng(item.centerLat, item.centerLon),
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          child: Container(
+            decoration: BoxDecoration(
+              color: _danger,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
           ),
         ),
       if (_userLocation != null) _buildUserMarker(_userLocation!),
@@ -694,6 +808,70 @@ class _VenturePageState extends State<VenturePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNearbyHelp(bool isDark) {
+    final t = AppLocalizations.of(context);
+    final shown = _nearby.take(3).toList();
+    final extra = _nearby.length - shown.length;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2).withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _danger, width: 2),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          for (final item in shown)
+            InkWell(
+              onTap: () {
+                unawaited(_nearbyAlarm.stop());
+                _mapController.move(LatLng(item.centerLat, item.centerLon), 14);
+                _showNearbyDialog(item);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(color: _danger, shape: BoxShape.circle),
+                      child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            '${t.nearbyHelpTitle} - ${t.nearbyHelpAway(_userLocation == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm))}',
+                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _danger),
+                          ),
+                          if (item.etaAt != null)
+                            Text(
+                              t.nearbyHelpEta(item.etaAt!.toLocal().hour.toString().padLeft(2, '0') + ':' + item.etaAt!.toLocal().minute.toString().padLeft(2, '0')),
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: _danger),
+                  ],
+                ),
+              ),
+            ),
+          if (extra > 0)
+            Text(
+              t.nearbyHelpMore(extra),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _danger),
+            ),
+        ],
       ),
     );
   }

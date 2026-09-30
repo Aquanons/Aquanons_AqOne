@@ -429,7 +429,7 @@ test('Phase 1 - F01: Secure rendering prevents unescaped HTML injection', async 
 });
 
 test('Phase 1 - F05: Unsupported broadcast and check-in actions cannot claim success', async (t) => {
-  await t.test('broadcast and silent check-in buttons are disabled and do not announce delivery', () => {
+  await t.test('nearby broadcast posts to the backend and never claims LoRa delivery; check-in stays unavailable', () => {
     const btnBroadcast = createStubElement('button', 'sos-btn-broadcast');
     const btnCheckin = createStubElement('button', 'sos-btn-checkin');
     const broadcastMsg = createStubElement('div', 'sos-broadcast-msg');
@@ -455,18 +455,19 @@ test('Phase 1 - F05: Unsupported broadcast and check-in actions cannot claim suc
     const context = vm.createContext(Object.assign({}, window, { window, document, AqOneDashboard: ns }));
     vm.runInContext(code, context);
 
-    assert.equal(btnBroadcast.disabled, true, 'broadcast button must be initialized disabled');
     assert.equal(btnCheckin.disabled, true, 'check-in button must be initialized disabled');
 
-    // Simulate click on broadcast button
+    // Broadcast with no incident open must not throw and must never claim
+    // LoRa mesh delivery - the supported path is POST /api/sos/{id}/acknowledge
+    // with broadcast_enabled (docs/73), not a radio claim.
     btnBroadcast.click();
     assert.ok(
       !broadcastMsg.textContent.includes('Broadcast sent to 3 nearby vessels'),
       'broadcast must never claim 3 vessels were messaged over LoRa mesh'
     );
     assert.ok(
-      broadcastMsg.textContent.includes('unavailable'),
-      'broadcast message must honestly state capability is unavailable'
+      !broadcastMsg.textContent.includes('unavailable'),
+      'supported nearby broadcast must not say unavailable'
     );
 
     // Simulate click on check-in button

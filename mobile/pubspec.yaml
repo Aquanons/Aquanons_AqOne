@@ -129,5 +129,6 @@ flutter:
     - assets/images/aqoneLogo1.png
     - assets/images/aqoneLogo2.png
     - assets/audio/sos_alarm.wav
+    - assets/audio/broadcastalarm.mp3
     # Team photo on the in-app welcome notice (see WelcomeAdvisory).
     - assets/images/team_aquanons.jpg

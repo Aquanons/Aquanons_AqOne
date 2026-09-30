@@ -1784,5 +1784,41 @@
   "deliveryFailureBuoyInvalid": "the buoy sent an unreadable reply",
   "@deliveryFailureBuoyInvalid": {
     "description": "Part of the \"Last attempt\" line on a saved SOS."
+  },
+  "nearbyHelpTitle": "Fisher needs help",
+  "@nearbyHelpTitle": {
+    "description": "Venture top container title when another fisher nearby sent an SOS acknowledged by MDRRMO."
+  },
+  "nearbyHelpAway": "{distance} away",
+  "@nearbyHelpAway": {
+    "description": "Distance line under nearby help title, e.g. 2.3 km away."
+  },
+  "nearbyHelpDistanceUnknown": "distance unknown",
+  "@nearbyHelpDistanceUnknown": {
+    "description": "Shown when own GPS is unavailable instead of hiding the emergency."
+  },
+  "nearbyHelpRespond": "Respond",
+  "@nearbyHelpRespond": {
+    "description": "Button opening the map centered on the rounded SOS position."
+  },
+  "nearbyHelpDismiss": "Dismiss",
+  "@nearbyHelpDismiss": {
+    "description": "Button silencing the nearby alarm while keeping the container."
+  },
+  "nearbyHelpMore": "+{count} more - View all",
+  "@nearbyHelpMore": {
+    "description": "Row when more than 3 broadcasts are active."
+  },
+  "nearbyHelpNotifTitle": "Nearby fisher needs help",
+  "@nearbyHelpNotifTitle": {
+    "description": "System notification title for a nearby SOS broadcast."
+  },
+  "nearbyHelpNotifBody": "{distance} - MDRRMO acknowledged, tap to view",
+  "@nearbyHelpNotifBody": {
+    "description": "System notification body for a nearby SOS broadcast."
+  },
+  "nearbyHelpEta": "Arriving {time}",
+  "@nearbyHelpEta": {
+    "description": "ETA line under a nearby help row, time is HH:MM."
   }
 }

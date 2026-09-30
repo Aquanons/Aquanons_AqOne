@@ -187,6 +187,7 @@ class AqOneConfig {
   /// Squall nowcast (AI #1). Public because the handset has no account - see
   /// backend/app/api/public.py.
   static const String publicSquallPath = '/api/public/squall';
+  static const String publicSosNearbyPath = '/api/public/sos-nearby';
 
   /// Fused daily outlook: buoy sensor telemetry combined with a weather
   /// provider, scored server-side. Not implemented yet - the client falls

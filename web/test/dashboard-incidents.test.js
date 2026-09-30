@@ -55,3 +55,12 @@ test('Escape can close the resolve dialog', () => {
   assert.match(incidents, /ns\.resolveOverlay = resolveOverlay;/);
   assert.match(incidents, /ns\.closeResolveModal = closeResolveModal;/);
 });
+
+test('ack carries nearby broadcast choice and radius', () => {
+  assert.match(html, /id="ack-broadcast"/);
+  assert.match(html, /id="ack-radius"/);
+  assert.match(incidents, /broadcast_enabled: broadcastEnabled/);
+  assert.match(incidents, /broadcast_radius_km/);
+  assert.match(incidents, /renderBroadcastButton/);
+  assert.match(incidents, /Nearby Vessels Alerted/);
+});
