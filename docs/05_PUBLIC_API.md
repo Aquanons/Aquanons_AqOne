@@ -248,7 +248,7 @@ display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
 **Added 2026-09-30 (`docs/73`):** each event carries `broadcast_state`, `active` while the incident has an active nearby broadcast and `off` otherwise.
-**Approved 2026-10-01, not built yet (`docs/73` Section 14):** `broadcast_state` becomes the broadcast's own state (`active`, `cancelled` or `expired`) or `off`, and a database error in this lookup is logged, not hidden.
+**Built 2026-10-01 (`30c541e`):** `broadcast_state` becomes the broadcast's own state (`active`, `cancelled` or `expired`) or `off`, and a database error in this lookup is logged, not hidden.
 
 ### `GET /api/sos/recent` - resolved-incident history (dashboard panel)
 
@@ -352,7 +352,7 @@ When enabled, and the incident has a position and is not synthetic, it creates o
 `resolve` expires the broadcast and `reopen` reactivates it.
 Sending `broadcast_enabled: false` does not expire an existing broadcast (`docs/73` G4).
 
-**Approved 2026-10-01, not built yet (`docs/73` Section 14.1):**
+**Built 2026-10-01 (`30c541e`):**
 
 - `broadcast_radius_km` accepts only 5, 10 or 20; anything else is `422`.
 - `broadcast_enabled: false` cancels an active broadcast (state `cancelled`, audited `sos.broadcast_cancel`) and returns it; with no broadcast it returns `broadcast: null`.

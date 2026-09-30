@@ -5,6 +5,31 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-10-01 - 2026-09-30 reconciliation on branch `fix/reconcile-2026-09-30`
+
+Reconciled the two regressions merged in PR #86 and built Plan 74 Phase 1b (tasks T1 through T8).
+
+**Reconciled:**
+- T1: Restored the vessel-profile 409 guard (`docs/05`) while keeping `touch_vessel`.
+- T2: Broadcast backend savepoints, error logging, cancellation (`broadcast_enabled: false`), audit actions, radius validation (5, 10, 20 km), and reopen revive logic (`docs/73` Section 14.1).
+- T3: Dashboard drawer stop button and CANCELLED / ACTIVE state line (`docs/73` G4, G11).
+- T4: Restored the SOS button on Home with dedicated `home_sos_restore_test.dart` (`docs/64` D10).
+- T5: Surfaced refused profile edits with SnackBar prompt to pair phone (`docs/05`).
+- T6: Localized nearby distance in metres below 1 km and km above, and dropped "MDRRMO" from nearby notification in en, fil, akl (`docs/73` G9).
+- T7: Added `SeenBroadcastStore` (db v16), `NearbySosWatcher`, and `NearbyHelpBanner` on Home and Advisories (`docs/73` G2, G3).
+- T8: Added notification payload handling and tap routing to open At sea centred on broadcast (`docs/73` G10).
+
+**Final gate:**
+- Backend ruff: `All checks passed!`
+- Backend pytest: `671 passed, 5 skipped, 1 xfailed in 164.07s`
+- Web node tests: `216 pass, 0 fail`, all `.js` pass `node --check`
+- Mobile analyze: `No issues found!`
+- Mobile test: `425 passed, 0 failed` (`All tests passed!`)
+
+**Not verified:**
+- G10 device check: NOT VERIFIED - no device
+- Nearby broadcast on physical hardware / phones (Plan 74 Phase 4)
+
 ## 2026-09-30 - Nearby broadcast, dashboard presence and handset changes on `master` (PRs #84 to #86)
 
 Merged between `355b520` and `3f07b3b` (deployed on Render, `/health/ready` reports `3f07b3b`); reconciled with the specs on 2026-09-30.

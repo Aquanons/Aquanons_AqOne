@@ -57,16 +57,16 @@ Implementer: Gemini on branch `fix/reconcile-2026-09-30`, briefed by [`reconcili
 The acceptance tests were written first by the spec author and were red on 2026-09-30 for the reasons listed in the brief; the implementer must not edit them.
 G1 and G5 are not in this phase; they wait for Len.
 
-- [ ] G12, G6 Savepoint and log every broadcast statement; feeds log errors (`backend/tests/test_sos_broadcast_pg.py`: `test_broadcast_failure_is_logged_and_the_ack_still_lands`, `test_resolve_still_lands_when_broadcast_expiry_fails`, `test_feed_failures_are_logged_not_hidden`).
-- [ ] G4 Cancel through `broadcast_enabled: false`; reopen never revives a cancelled broadcast (`test_ack_with_broadcast_off_cancels_an_active_broadcast`, `test_ack_with_broadcast_off_and_no_broadcast_creates_nothing`, `test_cancelled_broadcast_can_be_turned_back_on`, `test_reopen_never_revives_a_cancelled_broadcast`).
-- [ ] G7 Audit create, update, cancel, expire and reactivate distinctly (`test_reack_audits_an_update_not_a_second_create`, `test_reopen_revives_an_expired_broadcast_and_audits_it`).
-- [ ] G8 Radius 5, 10 or 20 only (`test_broadcast_radius_is_5_10_or_20`).
-- [ ] G4, G11 Dashboard states and stop button (`web/test/dashboard-broadcast-states.test.js`).
-- [ ] G2 `SeenBroadcastStore`, database version 16 (`mobile/test/seen_broadcast_store_test.dart`).
-- [ ] G2, G3 `NearbySosWatcher` owned by the shell (`mobile/test/nearby_sos_watcher_test.dart`).
-- [ ] G3 `NearbyHelpBanner` on Home and Advisories (`mobile/test/nearby_help_banner_test.dart`).
-- [ ] G9 Localized distance, no "MDRRMO" in the notification (`mobile/test/nearby_sos_test.dart`).
-- [ ] G10 Notification payload and tap routing (`mobile/test/eta_notifier_payload_test.dart`), plus the device check in the brief.
+- [x] G12, G6 Savepoint and log every broadcast statement; feeds log errors (`backend/tests/test_sos_broadcast_pg.py`: `test_broadcast_failure_is_logged_and_the_ack_still_lands`, `test_resolve_still_lands_when_broadcast_expiry_fails`, `test_feed_failures_are_logged_not_hidden`).
+- [x] G4 Cancel through `broadcast_enabled: false`; reopen never revives a cancelled broadcast (`test_ack_with_broadcast_off_cancels_an_active_broadcast`, `test_ack_with_broadcast_off_and_no_broadcast_creates_nothing`, `test_cancelled_broadcast_can_be_turned_back_on`, `test_reopen_never_revives_a_cancelled_broadcast`).
+- [x] G7 Audit create, update, cancel, expire and reactivate distinctly (`test_reack_audits_an_update_not_a_second_create`, `test_reopen_revives_an_expired_broadcast_and_audits_it`).
+- [x] G8 Radius 5, 10 or 20 only (`test_broadcast_radius_is_5_10_or_20`).
+- [x] G4, G11 Dashboard states and stop button (`web/test/dashboard-broadcast-states.test.js`).
+- [x] G2 `SeenBroadcastStore`, database version 16 (`mobile/test/seen_broadcast_store_test.dart`).
+- [x] G2, G3 `NearbySosWatcher` owned by the shell (`mobile/test/nearby_sos_watcher_test.dart`).
+- [x] G3 `NearbyHelpBanner` on Home and Advisories (`mobile/test/nearby_help_banner_test.dart`).
+- [x] G9 Localized distance, no "MDRRMO" in the notification (`mobile/test/nearby_sos_test.dart`).
+- [x] G10 Notification payload and tap routing (`mobile/test/eta_notifier_payload_test.dart`), plus the device check in the brief.
 
 Verify: every command in the brief's final gate, pasted verbatim into `docs/reconciliation/EVIDENCE.md`.
 
