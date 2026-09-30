@@ -151,15 +151,16 @@ class _AppShellState extends State<AppShell> {
     final alarm = NearbyAlarm();
     _nearbyWatcher = widget.nearbyWatcher ??
         NearbySosWatcher(
-          fetch: (lat, lon) => widget.feeds.nearbySos(
-            lat: lat,
-            lon: lon,
-            vesselId: widget.identity.vesselId,
-          ),
-          position: () async {
-            final res = await widget.location.locate();
-            return res.fix;
-          },
+          fetch: (lat, lon) async =>
+              await widget.feeds.nearbySos(
+                lat: lat,
+                lon: lon,
+                vesselId: widget.identity.vesselId,
+              ) ??
+              (throw StateError('nearby SOS feed unreachable')),
+          // Never prompts: the shell runs before the fisher has been told
+          // why the app wants their location (see VenturePage's lazy build).
+          position: widget.location.cachedFixIfPermitted,
           seen: seen,
           alarm: alarm,
           notify: (item) async {
@@ -175,15 +176,17 @@ class _AppShellState extends State<AppShell> {
           },
         );
     _nearbySightingsSub = _nearbyWatcher!.firstSightings.listen(_showNearbyDialog);
+    _nearbyWatcher!.items.addListener(_centrePendingNearbyTap);
     _nearbyTapSub = EtaNotifier.nearbyTaps.listen(_onNearbyNotificationTap);
     unawaited(EtaNotifier.ensureInitialized());
+    // Not gated on pitch mode: the demo APK must still show nearby calls.
+    _nearbyWatcher!.start();
     if (!AqOneConfig.pitchMode) {
       _loadSquall();
       _squallTimer = Timer.periodic(
         AqOneConfig.squallPollInterval,
         (_) => _loadSquall(),
       );
-      _nearbyWatcher!.start();
     }
   }
 
@@ -259,6 +262,7 @@ class _AppShellState extends State<AppShell> {
     _squallAlarm.dispose();
     _nearbySightingsSub?.cancel();
     _nearbyTapSub?.cancel();
+    _nearbyWatcher?.items.removeListener(_centrePendingNearbyTap);
     if (widget.nearbyWatcher == null) {
       _nearbyWatcher?.dispose();
     }
@@ -464,17 +468,34 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
+  /// A tap that cold-starts the app arrives before the first poll, so the
+  /// broadcast is centred once the watcher has fetched it.
+  int? _pendingNearbyTap;
+
   void _onNearbyNotificationTap(int broadcastId) {
     final items = _nearbyWatcher?.items.value ?? const <NearbySos>[];
     final match = items.where((n) => n.broadcastId == broadcastId).firstOrNull;
     if (match != null) {
+      _pendingNearbyTap = null;
       _openAtSeaCentred(match.centerLat, match.centerLon);
     } else {
+      _pendingNearbyTap = broadcastId;
       setState(() {
         _ventureOpened = true;
         _index = 1;
       });
     }
+  }
+
+  void _centrePendingNearbyTap() {
+    final pending = _pendingNearbyTap;
+    if (pending == null || !mounted) return;
+    final match = _nearbyWatcher?.items.value
+        .where((n) => n.broadcastId == pending)
+        .firstOrNull;
+    if (match == null) return;
+    _pendingNearbyTap = null;
+    _openAtSeaCentred(match.centerLat, match.centerLon);
   }
 
   void _showNearbyDialog(NearbySos item) {

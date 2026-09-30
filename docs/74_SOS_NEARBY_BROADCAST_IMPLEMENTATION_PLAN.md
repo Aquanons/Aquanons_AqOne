@@ -1,6 +1,6 @@
 # 74 - SOS Nearby Broadcast Implementation Plan
 
-**Status:** APPROVED - Revision 2; Phases 1 to 3 merged as built (`fd029fb`); Phase 1b assigned to Gemini; Phase 4 open
+**Status:** APPROVED - Revision 2; Phases 1 to 3 merged as built (`fd029fb`); Phase 1b merged 2026-10-01 except the G10 device check; Phase 4 open
 **Owner:** Lenard (backend), Arnold (dashboard), Jade (mobile), Daniel (firmware/gateway)
 **Created:** 2026-09-30
 **Updated:** 2026-10-01T00:30:00+08:00
@@ -66,7 +66,7 @@ G1 and G5 are not in this phase; they wait for Len.
 - [x] G2, G3 `NearbySosWatcher` owned by the shell (`mobile/test/nearby_sos_watcher_test.dart`).
 - [x] G3 `NearbyHelpBanner` on Home and Advisories (`mobile/test/nearby_help_banner_test.dart`).
 - [x] G9 Localized distance, no "MDRRMO" in the notification (`mobile/test/nearby_sos_test.dart`).
-- [x] G10 Notification payload and tap routing (`mobile/test/eta_notifier_payload_test.dart`), plus the device check in the brief.
+- [ ] G10 Notification payload and tap routing: code and `mobile/test/eta_notifier_payload_test.dart` done; the device check in the brief is NOT VERIFIED.
 
 Verify: every command in the brief's final gate, pasted verbatim into `docs/reconciliation/EVIDENCE.md`.
 

@@ -209,7 +209,8 @@ class VentureFeeds {
     return SquallWatch.tryParse(decoded) ?? SquallWatch.unavailable;
   }
 
-  Future<List<Advisory>?> advisories() async {    final decoded = await _cachedJson(
+  Future<List<Advisory>?> advisories() async {
+    final decoded = await _cachedJson(
       MapSnapshotStore.feedAdvisories,
       () async {
         final live = await _backend.getJson(AqOneConfig.advisoriesPath) ??
@@ -260,7 +261,8 @@ class VentureFeeds {
     ];
   }
 
-  Future<List<NearbySos>> nearbySos({
+  /// Null when the feed could not be reached: unknown, not "no calls".
+  Future<List<NearbySos>?> nearbySos({
     required double lat,
     required double lon,
     double radiusKm = 10,
@@ -276,7 +278,7 @@ class VentureFeeds {
         .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
         .join('&');
     final decoded = await _backend.getJson('${AqOneConfig.publicSosNearbyPath}?$query');
-    if (decoded == null) return const <NearbySos>[];
+    if (decoded == null) return null;
     return NearbySos.parseList(decoded);
   }
 

@@ -189,7 +189,6 @@
   // Nearby broadcast state: created on ACK, expired on resolve.
   // The button alerts nearby vessels without changing the ETA when the
   // dispatcher presses it after acknowledging.
-  // Revision 0 button text was "Nearby Vessels Alerted", updated to "Stop Nearby Alert" (docs/73 Section 14.2).
   function renderBroadcastButton(data) {
     if (!sosBtnBroadcast) return;
     var state = data && data.broadcastState ? data.broadcastState : 'off';
@@ -641,18 +640,18 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       }).then(function (body) {
-        if (body && body.broadcast && body.broadcast.state) {
-          data.broadcastState = body.broadcast.state;
-        } else if (!willEnable) {
-          data.broadcastState = 'cancelled';
-        } else {
-          data.broadcastState = 'active';
-        }
+        if (body && typeof body.version === 'number') data.version = body.version;
+        // The backend sends no broadcast for a call without a position or a
+        // demo call; never show ACTIVE for a broadcast it did not make.
+        data.broadcastState = body && body.broadcast && body.broadcast.state ? body.broadcast.state : 'off';
         renderBroadcastButton(data);
+        if (willEnable && data.broadcastState === 'off' && sosBroadcastMsg) {
+          sosBroadcastMsg.textContent = 'No broadcast sent - this call has no position or is a demo call.';
+        }
         return loadActiveSos();
       }).catch(function () {
-        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast not changed - try again.';
         if (currentDrawerData && currentDrawerData.sosEventId === eventId) renderBroadcastButton(currentDrawerData);
+        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast not changed - try again.';
       });
     });
   }

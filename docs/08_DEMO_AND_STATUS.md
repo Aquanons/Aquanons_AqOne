@@ -5,9 +5,9 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
-## 2026-10-01 - 2026-09-30 reconciliation on branch `fix/reconcile-2026-09-30`
+## 2026-10-01 - 2026-09-30 reconciliation merged to `master`
 
-Reconciled the two regressions merged in PR #86 and built Plan 74 Phase 1b (tasks T1 through T8).
+Reconciled the two regressions merged in PR #86 and built Plan 74 Phase 1b (tasks T1 through T8), implemented by Gemini on `fix/reconcile-2026-09-30` and reviewed by Claude Code, who fixed ten review findings before the merge (`docs/reconciliation/EVIDENCE.md`, "Review by Claude Code").
 
 **Reconciled:**
 - T1: Restored the vessel-profile 409 guard (`docs/05`) while keeping `touch_vessel`.
@@ -19,16 +19,18 @@ Reconciled the two regressions merged in PR #86 and built Plan 74 Phase 1b (task
 - T7: Added `SeenBroadcastStore` (db v16), `NearbySosWatcher`, and `NearbyHelpBanner` on Home and Advisories (`docs/73` G2, G3).
 - T8: Added notification payload handling and tap routing to open At sea centred on broadcast (`docs/73` G10).
 
-**Final gate:**
+**Final gate after review (with `AQONE_PROBE_PG_ADMIN_URL` set):**
 - Backend ruff: `All checks passed!`
-- Backend pytest: `671 passed, 5 skipped, 1 xfailed in 164.07s`
-- Web node tests: `216 pass, 0 fail`, all `.js` pass `node --check`
+- Backend pytest: `671 passed, 5 skipped, 1 xfailed`
+- Web node tests: `tests 218`, `pass 218`, `fail 0`; every `.js` passes `node --check`
 - Mobile analyze: `No issues found!`
-- Mobile test: `425 passed, 0 failed` (`All tests passed!`)
+- Mobile test: `+426: All tests passed!`
 
 **Not verified:**
 - G10 device check: NOT VERIFIED - no device
+- Respond and notification-tap map centring: NOT VERIFIED - no device
 - Nearby broadcast on physical hardware / phones (Plan 74 Phase 4)
+- Not deployed yet: Render redeploys `master` on push; confirm `/health/ready` reports the merge commit.
 
 ## 2026-09-30 - Nearby broadcast, dashboard presence and handset changes on `master` (PRs #84 to #86)
 

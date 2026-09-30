@@ -17,7 +17,6 @@ import '../models/weather_snapshot.dart';
 import '../services/compass_service.dart';
 import '../services/location_service.dart';
 import '../services/mbtiles_provider.dart';
-import '../services/nearby_alarm.dart';
 import '../services/nearby_sos_watcher.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
@@ -60,7 +59,6 @@ class VenturePage extends StatefulWidget {
     required this.location,
     this.bottomInset = 0,
     this.sosAlarm,
-    this.nearbyAlarm,
     this.nearby,
     this.targetLocation,
   });
@@ -70,7 +68,6 @@ class VenturePage extends StatefulWidget {
   final VentureFeeds feeds;
   final LocationService location;
   final SosAlarm? sosAlarm;
-  final NearbyAlarm? nearbyAlarm;
   final NearbySosWatcher? nearby;
   final LatLng? targetLocation;
 
@@ -337,7 +334,10 @@ class _VenturePageState extends State<VenturePage> {
 
     final point = LatLng(fix.lat, fix.lon);
     setState(() => _userLocation = point);
-    _mapController.move(point, AqOneConfig.locatedMapZoom);
+    // Opened by Respond or a notification tap: stay on the call, not the boat.
+    if (!(initial && widget.targetLocation != null)) {
+      _mapController.move(point, AqOneConfig.locatedMapZoom);
+    }
     await _loadWeather(fix.lat, fix.lon);
   }
 
@@ -806,7 +806,6 @@ class _VenturePageState extends State<VenturePage> {
             InkWell(
               onTap: () {
                 widget.nearby?.silence();
-                widget.nearbyAlarm?.stop();
                 _mapController.move(LatLng(item.centerLat, item.centerLon), 14);
               },
               child: Padding(

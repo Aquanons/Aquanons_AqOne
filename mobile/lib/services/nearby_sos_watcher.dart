@@ -43,11 +43,19 @@ class NearbySosWatcher {
     if (_polling) return;
     _polling = true;
     try {
-      final fix = await _position();
-      _hasFix = fix != null;
-      final lat = fix?.lat ?? AqOneConfig.defaultMapLat;
-      final lon = fix?.lon ?? AqOneConfig.defaultMapLon;
-      final fetched = await _fetch(lat, lon);
+      final List<NearbySos> fetched;
+      try {
+        final fix = await _position();
+        _hasFix = fix != null;
+        final lat = fix?.lat ?? AqOneConfig.defaultMapLat;
+        final lon = fix?.lon ?? AqOneConfig.defaultMapLon;
+        fetched = await _fetch(lat, lon);
+      } catch (error) {
+        // A lost signal says nothing about emergencies: keep the last list
+        // and any ringing alarm until the feed answers again.
+        debugPrint('nearby SOS poll failed: $error');
+        return;
+      }
       _items.value = fetched;
 
       if (fetched.isEmpty) {

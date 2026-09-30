@@ -300,7 +300,8 @@ async def active_sos(
     try:
         async with pool.acquire() as conn2:
             brows = await conn2.fetch(
-                'SELECT sos_event_id, state FROM sos_broadcasts',
+                'SELECT sos_event_id, state FROM sos_broadcasts WHERE sos_event_id = ANY($1::int[])',
+                [int(event['id']) for event in events],
             )
         bstates = {int(r['sos_event_id']): r['state'] for r in brows}
         for event in events:
@@ -470,7 +471,6 @@ async def _ensure_broadcast(
 ) -> dict[str, object] | None:
     if is_synthetic or latitude is None or longitude is None:
         return None
-    radius = min(50, max(1, int(radius_km or 10)))
     row = await conn.fetchrow(
         '''
         INSERT INTO sos_broadcasts
@@ -491,7 +491,7 @@ async def _ensure_broadcast(
         event_id,
         _round_500m(float(latitude)),
         _round_500m(float(longitude)),
-        radius,
+        radius_km,
         eta_at,
         responder_status,
         created_by,
@@ -627,8 +627,8 @@ async def acknowledge(
                    responder_status = $3,
                    responder_note   = COALESCE($4, responder_note),
                    version          = version + 1,
-                    -- NULL eta_minutes leaves any existing ETA untouched, so a
-                    -- dispatcher can update the status without wiping the time.
+                   -- NULL eta_minutes leaves any existing ETA untouched, so a
+                   -- dispatcher can update the status without wiping the time.
                    eta_at = CASE
                               WHEN $5::INT IS NULL THEN eta_at
                               ELSE NOW() + ($5::INT * INTERVAL '1 minute')

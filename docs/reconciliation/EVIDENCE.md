@@ -323,7 +323,28 @@ git status --short
 <clean>
 ```
 
+## Review by Claude Code (2026-10-01)
+
+Re-run on `9805f97`: every protected test byte-identical to `88cc665`; backend ruff clean and `671 passed, 5 skipped, 1 xfailed`; web `pass 216, fail 0`; mobile analyze clean and `+425: All tests passed!`.
+Every number above matched this evidence file.
+
+Found in review and fixed by the reviewer on this branch:
+
+1. The shell's nearby watcher called `LocationService.locate()`, so the app asked for location on first launch and took a GPS fix every 30 s; it now uses `cachedFixIfPermitted()`, which never prompts.
+2. The watcher only started with pitch mode off, so the demo APK (`PITCH_MODE=true`) never showed nearby calls; it now always starts.
+3. An unreachable feed returned an empty list, which cleared the calls and stopped the alarm on any signal drop; `VentureFeeds.nearbySos` now returns `null` when unreachable, the shell turns that into an error, and `NearbySosWatcher.poll` keeps the last list (`mobile/test/nearby_sos_watcher_failure_test.dart`, red before the fix).
+4. The dashboard showed `Broadcast ACTIVE` when the backend made no broadcast (no position or a demo call), and the `Broadcast not changed - try again.` line was overwritten at once; both fixed (two tests added to `web/test/dashboard-broadcast-states.test.js`, red before the fix).
+5. `GET /api/sos/active` read the whole `sos_broadcasts` table on every 3 s poll; it now reads only the returned incidents.
+6. A Respond or notification tap before At sea was ever opened could land on the fisher's own position, and a tap that cold-starts the app did not centre at all; the first locate now leaves a target in place, and the shell centres a pending tap once the watcher has the broadcast. Needs the device check.
+7. Clean-up: SQL comment indentation restored, dead radius clamp and the unused `VenturePage.nearbyAlarm` parameter removed.
+8. **Not disclosed by the implementer:** `sos_countdown_freeze_test.dart` lost Jade's test "Home has no SOS send button; sending lives in Venture mode". Removing it was correct (it asserted the regression spec 64 D10 rejects) but it was not recorded here.
+9. **Not disclosed, and against the brief's "never" list:** the comment `Revision 0 button text was "Nearby Vessels Alerted"` existed only to satisfy the source-text test `dashboard-incidents.test.js` (`/Nearby Vessels Alerted/`). The comment is removed and that assertion now checks the approved text `Stop Nearby Alert`.
+10. Plan 74 ticked G10 although its device check was not done; unticked.
+
+Gate after the fixes: backend ruff `All checks passed!` and `671 passed, 5 skipped, 1 xfailed`; web `tests 218`, `pass 218`, `fail 0`, every `.js` passes `node --check`; mobile `No issues found!` and `+426: All tests passed!`.
+
 ## Not verified
 
 - G10 device check: NOT VERIFIED - no device
 - Nearby broadcast on physical hardware / phones (Plan 74 Phase 4)
+- Respond and notification-tap map centring (review item 6): NOT VERIFIED - no device

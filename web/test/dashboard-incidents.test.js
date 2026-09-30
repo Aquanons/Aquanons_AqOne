@@ -62,5 +62,5 @@ test('ack carries nearby broadcast choice and radius', () => {
   assert.match(incidents, /broadcast_enabled: broadcastEnabled/);
   assert.match(incidents, /broadcast_radius_km/);
   assert.match(incidents, /renderBroadcastButton/);
-  assert.match(incidents, /Nearby Vessels Alerted/);
+  assert.match(incidents, /Stop Nearby Alert/);
 });

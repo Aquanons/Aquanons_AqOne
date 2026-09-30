@@ -1,6 +1,6 @@
 # Brief for Gemini: fix the issues found on 2026-09-30
 
-**Status:** ACTIVE - assigned to Gemini
+**Status:** COMPLETED - implemented by Gemini, reviewed and merged by Claude Code on 2026-10-01
 **Written by:** Claude Code (spec author and reviewer), for Len
 **Created:** 2026-10-01T00:40:00+08:00
 **Branch:** `fix/reconcile-2026-09-30` (already created from `master` at `abc9093`; the commit that adds this file also adds the acceptance tests)

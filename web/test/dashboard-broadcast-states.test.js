@@ -50,7 +50,7 @@ function createStubElement(tag, id) {
   };
 }
 
-function loadIncidents() {
+function loadIncidents(respond) {
   const elements = new Map();
   const documentStub = {
     activeElement: null,
@@ -71,7 +71,7 @@ function loadIncidents() {
     escapeHtml,
     authFetch(url, opts) {
       calls.push({ url, body: opts && opts.body ? JSON.parse(opts.body) : null });
-      return new Promise(() => {});
+      return respond ? respond() : new Promise(() => {});
     },
     map: { setView() {}, flyTo() {} },
     openActivityDrawer() {},
@@ -170,4 +170,26 @@ test('acknowledged with no broadcast offers to alert with no state line', () => 
   assert.equal(ui.calls[0].body.broadcast_enabled, true);
   assert.equal(ui.calls[0].body.broadcast_radius_km, 10);
   assert.equal('eta_minutes' in ui.calls[0].body, false);
+});
+
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+test('enabling that the backend did not carry out never shows ACTIVE', async () => {
+  const ui = loadIncidents(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ broadcast: null, version: 4 }) }));
+  ui.ns.openIncidentDrawer(sos({ broadcastState: 'off' }));
+  ui.button.click();
+  await settle();
+  assert.doesNotMatch(ui.message.textContent, /ACTIVE/);
+  assert.match(ui.message.textContent, /No broadcast sent/);
+  assert.equal(ui.button.textContent, 'Alert Nearby Vessels');
+});
+
+test('a failed request says so and the message stays visible', async () => {
+  const ui = loadIncidents(() => Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }));
+  ui.ns.openIncidentDrawer(sos({ broadcastState: 'active' }));
+  ui.button.click();
+  await settle();
+  assert.equal(ui.message.textContent, 'Broadcast not changed - try again.');
+  assert.equal(ui.button.textContent, 'Stop Nearby Alert');
+  assert.equal(ui.button.disabled, false);
 });
