@@ -10,6 +10,8 @@ a guide disagrees with a numbered contract, **the numbered contract wins.**
 | Interface contracts (binding) | `docs/0X_*.md` |
 | Supporting guidance (advisory) | `docs/guides/*.md` |
 
+`08_APP_FEATURES.md` is a whole-system feature and data-set overview written on 2026-09-29 (moved from the repository root on 2026-09-30).
+
 ## Known stale content
 
 `guides/05_FLUTTER.md` and `guides/01_CONTRACTS.md` describe an earlier design

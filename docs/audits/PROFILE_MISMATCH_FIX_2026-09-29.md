@@ -1,3 +1,5 @@
+> **Decision 2026-09-30 (Len): fix rejected.** The diagnosis below stands, but the anonymous-overwrite 409 rule in [`05_PUBLIC_API.md`](../05_PUBLIC_API.md) stays the contract. Commit `e32c085`, which applied this fix, is to be reverted and the stale-profile bug fixed another way; see the [Current Register](../README.md#current-register).
+
 # Profile Mismatch Fix (app vs dashboard)
 
 ## Symptom

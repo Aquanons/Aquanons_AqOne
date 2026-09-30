@@ -1,3 +1,5 @@
+> **Archived 2026-09-30.** Plain-language summary of Jade's changes of 2026-09-28 and 2026-09-29, moved from the repository root. The profile last-write-wins change it describes was rejected by Len on 2026-09-30; see [`05_PUBLIC_API.md`](../../05_PUBLIC_API.md) Profile overwrite rule.
+
 # What Changed (Explained Simply)
 
 This is a list of everything new in the AqOne app, written so simply a 7-year-old can follow it.
@@ -60,7 +62,7 @@ The shape of the bay is hand-drawn and approximate, so a spot exactly on the sho
 The phone showed new details (new name, new boat, new number) while the dashboard showed old ones for the same boat.
 That happened because the server rejected name changes from unpaired phones without telling anyone, while the phone showed its own unsent edits.
 Now the newest save wins for boats with no paired device (the long secret boat code already proves ownership, the same trust as SOS messages), while boats with a paired device still require that device.
-Full details live in `PROFILE_MISMATCH_FIX.md`.
+Full details live in [`audits/PROFILE_MISMATCH_FIX_2026-09-29.md`](../../audits/PROFILE_MISMATCH_FIX_2026-09-29.md).
 
 ## The whale logo everywhere
 
@@ -69,5 +71,5 @@ The tab picture is also much smaller to download.
 
 ## Papers that explain things
 
-Three new notes were added: `DASHBOARD_UPDATES.md` (the screen changes in grown-up words), `APP_FEATURES.md` (every feature, how the whole system works, the computers-and-code details, and all 14 data collections), and `PROFILE_MISMATCH_FIX.md` (the phone-vs-dashboard mystery and its fix).
+Three new notes were added: [`DASHBOARD_UPDATES_2026-09-29.md`](DASHBOARD_UPDATES_2026-09-29.md) (the screen changes in grown-up words), [`guides/08_APP_FEATURES.md`](../../guides/08_APP_FEATURES.md) (every feature, how the whole system works, the computers-and-code details, and all 14 data collections), and [`audits/PROFILE_MISMATCH_FIX_2026-09-29.md`](../../audits/PROFILE_MISMATCH_FIX_2026-09-29.md) (the phone-vs-dashboard mystery and its fix).
 This file you are reading is the simple version of all of them.

@@ -1,43 +1,42 @@
 # 73 - SOS Nearby Broadcast Spec (dashboard ACK triggers nearby help alert)
 
-**Status:** DRAFT
+**Status:** APPROVED - Revision 1 (as built, gaps G1 to G11 open)
 **Owner:** Lenard (backend), Arnold (dashboard), Jade (mobile), Daniel (firmware/gateway)
 **Created:** 2026-09-30
-**Updated:** 2026-09-30
-**Related:** `docs/13_RESPONDER_LOOP.md`, `docs/06_DELIVERY_STATES.md`, `docs/05_PUBLIC_API.md`, `docs/04_INGEST_API.md`, `docs/03_PHONE_BUOY_WIFI.md`, `docs/02_LOAM_PACKET_SPEC.md`, `docs/73_MOCKUP_venture-nearby-container.html`
+**Updated:** 2026-09-30T23:15:00+08:00
+**Related:** `docs/74_SOS_NEARBY_BROADCAST_IMPLEMENTATION_PLAN.md`, `docs/13_RESPONDER_LOOP.md`, `docs/06_DELIVERY_STATES.md`, `docs/05_PUBLIC_API.md`, `docs/04_INGEST_API.md`, `docs/03_PHONE_BUOY_WIFI.md`, `docs/02_LOAM_PACKET_SPEC.md`, `docs/73_MOCKUP_venture-nearby-container.html`
 
-## 1. What the user asked
+Revision: 1
+Revision 0 (DRAFT, 2026-09-30) was implemented and merged before approval (`fd029fb`, PR #86) and was live on Render at `3f07b3b`.
+Len's chat approval, 2026-09-30T23:10:00+08:00: approve the as-built Phase 1 and record its gaps.
+Revision 1 records the as-built answers to the Phase 0 questions as decisions (Section 12) and lists every difference from Revision 0 as a gap (Section 13).
+The gaps are work items in plan 74 Phase 1b; they are not approved behaviour.
 
-Yes, your understanding is correct today.
-The fisher presses SOS in the handset app and that SOS lands on the MDRRMO dashboard.
-The dispatcher acknowledges it and sets an ETA.
-What is missing is the next step: once the dashboard has acknowledged, other fishers nearby should be told that someone near them sent an SOS and needs help.
-This spec describes that missing step.
+## 1. Purpose
 
-## 2. Current flow (verified in code)
+A fisher presses SOS in the handset app, the SOS lands on the MDRRMO dashboard, and the dispatcher acknowledges it with an ETA.
+Before this feature nothing happened next for anyone except the caller.
+Once the dashboard has acknowledged a call, other fishers nearby should be told that someone near them needs help, because nearby boats are often the fastest rescuers (`docs/13_RESPONDER_LOOP.md`, responder status `NEAREST_VESSEL`).
+
+## 2. Flow before this feature (verified in code, 2026-09-30, before `fd029fb`)
 
 SOS origin is the handset app only.
 `mobile/lib/services/sos_service.dart:83-113` saves the SOS locally first, then relays it on two routes in parallel.
 Direct HTTPS is `POST https://aqone-backend.onrender.com/api/sos` via `BackendClient.postSos`.
 Buoy WiFi handoff is `POST http://192.168.4.1/v1/sos` via `BuoyClient.handoff`.
-Backend dedupes on `(vessel_id, client_ts)` or `(vessel_id, nonce)` in `backend/app/api/sos.py:523-579`.
+The backend dedupes on `(vessel_id, client_ts)` or `(vessel_id, nonce)` in `backend/app/api/sos.py`.
 
 Backend ingest is unauthenticated by design.
-The dashboard live feed is `GET /api/sos/active` polled every 3 seconds by `web/js/dashboard/dashboard-live-sos.js:262-357`.
-Acknowledge is `POST /api/sos/{id}/acknowledge {eta_minutes, responder_status 1-5, responder_note, expected_version}` in `backend/app/api/sos.py:441-520`.
-Status code 4 is named `Nearest Vessel` or `Nearby boats alerted`, but today it is a label only and triggers nothing.
+The dashboard live feed is `GET /api/sos/active`, polled every 3 seconds by `web/js/dashboard/dashboard-live-sos.js`.
+Acknowledge is `POST /api/sos/{id}/acknowledge {eta_minutes, responder_status 1-5, responder_note, expected_version}`.
+Status code 4 is named `Nearest Vessel` or `Nearby boats alerted`, but it was a label only and triggered nothing.
 
-Return path today is 1:1 to the originator only.
-Backend exposes `GET /api/sos/downlink` for the gateway, and the handset polls `GET /api/sos/ack/{local_id}` or `GET /api/sos/vessel/{vessel_id}` every 15 seconds while an SOS is live.
+The return path was 1:1 to the originator only.
+The backend exposes `GET /api/sos/downlink` for the gateway, and the handset polls `GET /api/sos/ack/{local_id}` or `GET /api/sos/vessel/{vessel_id}` every 15 seconds while an SOS is live.
 The originator sees the ETA card, the countdown, and the local notification via `EtaNotifier`.
-No other vessel is notified.
+No other vessel was notified, and the dashboard's `sos-btn-broadcast` was disabled with `Broadcast to nearby vessels is not supported`.
 
-Nearby broadcast is explicitly disabled today.
-`web/html/dashboard.html:909` has `sos-btn-broadcast` disabled with title `Broadcast to nearby vessels is not supported`.
-`web/js/dashboard/dashboard-incidents.js:583-599` shows `Broadcast unavailable: LoRa downlink to vessels is not supported` on click.
-There is no `GET /nearby` radius query, no push channel, no SOS-linked advisory, and no multi-recipient downlink.
-
-## 3. Proposed flow
+## 3. Flow
 
 ```text
 1. Fisher A presses SOS in app.
@@ -45,153 +44,160 @@ There is no `GET /nearby` radius query, no push channel, no SOS-linked advisory,
 3. Dispatcher opens incident drawer, sets status plus ETA minutes, presses Acknowledge.
 4. Backend stores acknowledged_at plus eta_at and marks incident as ACKED.
 5. Backend creates one nearby-broadcast record linked to that sos_event id.
-6. Nearby fishers B, C poll or receive that broadcast and see NEEDS-HELP alert.
-7. Fisher A still gets the existing 1:1 ETA card as today, unchanged.
-8. On resolve or reopen, broadcast expires or reactivates automatically.
+6. Nearby fishers B, C poll that broadcast and see a NEEDS-HELP alert.
+7. Fisher A still gets the existing 1:1 ETA card, unchanged.
+8. On resolve the broadcast expires; on reopen it reactivates.
 ```
 
-Trigger rule is simple.
-Broadcast is created only after a human acknowledge, never on SOS arrival alone.
-This avoids prank or pocket-dial spam to the whole fleet.
-Re-acknowledge with a new ETA updates the same broadcast rather than creating a second one.
+A broadcast is created only after a human acknowledge, never on SOS arrival alone.
+This avoids prank or pocket-dial alarms across the whole fleet.
+Re-acknowledging with a new ETA updates the same broadcast rather than creating a second one.
 
-## 4. Who counts as nearby
+## 4. Who counts as nearby (decision D1)
 
-Nearby means active vessels with a fresh position within radius R of the SOS position.
-Default R is 10 km, dispatcher-adjustable 5 to 20 km at acknowledge time.
-Fresh means last fix within 60 minutes from `vessels.last_seen_at`, `vessel_trips`, or `buoy_contacts.observed_at`.
-The distressed vessel itself is excluded from its own broadcast audience.
+Nearby is decided by the caller, not by a server-side audience list.
+Each handset sends its own current GPS fix to `GET /api/public/sos-nearby`, and the server returns the active broadcasts whose rounded centre lies within both the broadcast's radius and the radius the phone asked for.
+A phone without a GPS fix sends the default map centre (`AqOneConfig.defaultMapLat`, `defaultMapLon`) and shows `distance unknown`.
+The server therefore never knows how many boats received a broadcast, and there is no recipient count.
+
+The default broadcast radius is 10 km; the dispatcher chooses 5, 10 or 20 km at acknowledge time (decision D3).
+The distressed vessel excludes itself by sending its own `vessel_id`.
 Synthetic or demo incidents never broadcast, matching the existing downlink rule.
-Position for the broadcast is rounded to about 500 m so helpers can find the area without exposing an exact live track.
-
-Open question for Lenard: confirm the canonical fresh-position source.
-`buoy_contacts` plus `vessel_trips` plus `vessels.last_seen_at` all exist but no radius query exists yet.
+The broadcast position is rounded to 0.005 degrees (about 550 m) so helpers can find the area without exposing an exact live track.
 
 ## 5. What nearby users see, hear, and get notified
 
-The nearby handset shows a persistent top container in Venture mode, plus a full-screen or banner alert on first arrival, not a silent list row.
-Title is `Nearby fisher needs help`.
-Body carries distance plus bearing, emergency type if known, MDRRMO ETA if set, and a `Respond` plus `Dismiss` action.
-Tapping Respond opens Venture map centered on the rounded SOS position with the helper route hint.
-Tapping Dismiss silences the looping sound but keeps the top container visible until the broadcast expires, so dismissal never looks like the emergency ended.
-Tapping the top container re-opens the detail dialog and re-centers the map.
-Tapping Dismiss or Respond stops the alarm immediately, matching the existing `SosAlarm.stop` rule that sound never outlives user action.
+The nearby handset shows a persistent container at the top of the At sea (Venture) screen, plus a dialog on first arrival, not a silent list row.
+The dialog title is `Fisher needs help`.
+Its body carries the distance, the MDRRMO ETA if set, and `Respond` plus `Dismiss` actions.
+Respond stops the alarm and centres the Venture map on the rounded SOS position.
+Dismiss stops the alarm and keeps the container visible until the broadcast expires, so dismissal never looks like the emergency ended.
+Sound never outlives a user action, matching the `SosAlarm.stop` rule.
 
-Venture top container placement follows the existing stack in `mobile/lib/ui/venture_page.dart:461-488`.
-Order from top is weather capsule, then nearby-help container, then squall banner, then offline banner, then my-own-SOS status.
-It is pinned under the weather capsule with the same margin plus pill shape as `_buildWeatherCapsule` and `_buildSosStatus`, so it is visible above the map without covering the right-side action rail.
-It stays visible on Home and Advisories as a compact banner, but Venture is the canonical surface.
-One container per active broadcast, nearest first, max 3 shown plus `+N more` row that opens the full list.
-Each row shows red alert icon, `Fisher needs help`, live distance `450 m away` or `2.3 km away`, MDRRMO ETA countdown if set, and chevron.
-Distance is computed on-device from the helper GPS fix to the rounded broadcast position via `latlong2 Distance`, formatted as meters below 1 km and 1-decimal km at or above 1 km, and it updates on every `_locate` plus every feed poll.
-If own GPS is unavailable the row shows `distance unknown` rather than hiding the emergency.
-Map shows a red distress marker for each active broadcast plus the existing blue user dot and buoy circles, so direction is visible at a glance.
+The container sits in the existing Venture stack under the weather capsule, in the pill style of `_buildSosStatus`, so it is visible above the map without covering the right-side action rail.
+It shows the nearest broadcasts first, at most 3 rows plus a `+N more` row, and can be collapsed.
+Each row shows a red alert icon, `Fisher needs help`, the distance, and the MDRRMO ETA if set.
+Distance is formatted as metres below 1 km and one-decimal kilometres at or above 1 km, and it updates on every feed poll.
+Without a GPS fix the row shows `distance unknown` rather than hiding the emergency.
+The map shows a red distress marker for each active broadcast beside the blue user dot and the buoy markers.
+The Revision 0 compact banner on Home and Advisories is not built (G3).
 
-Alarm uses the existing asset `mobile/assets/audio/broadcastalarm.mp3`.
-It loops via `audioplayers` with `ReleaseMode.loop` plus the SOS vibration pattern, following the `mobile/lib/services/sos_alarm.dart` pattern.
-It uses a separate `NearbyAlarm` class so `sos_alarm.wav` stays reserved for my-own-SOS and `broadcastalarm.mp3` stays reserved for someone-else-needs-help.
-Loop is foreground-only by design, same caveat as `SosAlarm` and `SquallAlarm`.
-Second trigger for the same broadcast id while already ringing is a no-op and never restarts the sound from zero.
+The alarm uses `mobile/assets/audio/broadcastalarm.mp3`, looped by a separate `NearbyAlarm` class so `sos_alarm.wav` stays reserved for the fisher's own SOS.
+The loop is foreground-only by design, the same caveat as `SosAlarm` and `SquallAlarm`.
+A second trigger for the same broadcast id while ringing is a no-op.
 
-A system notification fires once per broadcast id alongside the alarm.
-It uses a new channel `nearby_help` with `Importance.high` plus `Priority.high`, following the `mobile/lib/services/eta_notifier.dart` pattern.
-It is deduplicated on broadcast id in SQLite, so re-polls and ETA updates never re-notify.
-Notification tap opens the same Venture map position as Respond.
-If notification permission is denied or the plugin fails, the in-app alarm still rings, so notification failure never blocks the alarm.
-Strings must go in `mobile/lib/l10n/app_en.arb` with `@key` descriptions, read via `AppLocalizations`, with `fil` and `akl` drafts, and no display text on enums per `AGENTS.md`.
+A system notification fires once per broadcast id alongside the alarm, on the channel `nearby_help` with `Importance.high` and `Priority.high` (`EtaNotifier.showNearbyHelp`).
+If notification permission is denied or the plugin fails, the in-app alarm still rings.
+Seen broadcast ids are held in memory only, so an app restart re-rings (G2), and tapping the notification does not yet open the map (G10).
 
-What nearby users do NOT see: owner name, phone number, license number, shore contact, or exact GPS.
-Downlink today deliberately strips identity, and this broadcast keeps that rule.
+Nearby users never see the owner name, phone number, licence number, shore contact, note, or exact GPS.
+The downlink already strips identity, and this broadcast keeps that rule.
 
-## 6. Backend design (minimum change)
+## 6. Backend design (decision D2: a separate feed)
 
-Reuse the advisories pipe rather than inventing a new push system.
-`POST /api/advisories/alert` plus `GET /api/public/advisories` already has multi-recipient delivery plus `warning_delivery_events` receipts.
-Add `source_key = sos:{sos_event_id}` and `kind = sos_nearby` so the phone can parse SOS broadcasts through one code path.
+The broadcast has its own read feed rather than riding on `GET /api/public/advisories`.
 
-New or changed endpoints:
+- `POST /api/sos/{id}/acknowledge` gains `broadcast_enabled` (default `true`) and `broadcast_radius_km` (default 10).
+  When enabled, and the incident has a position and is not synthetic, it creates or updates the incident's broadcast and returns it as `broadcast`.
+- `GET /api/public/sos-nearby?lat&lon&radius_km&vessel_id` returns the active broadcasts near the caller, nearest first, with no identity fields (`docs/05`).
+  It is unauthenticated like the other handset safety feeds (G1).
+- `GET /api/sos/active` rows gain `broadcast_state`: `active`, or `off` when the incident has no active broadcast.
+- `POST /api/sos/{id}/resolve` expires the broadcast; `POST /api/sos/{id}/reopen` reactivates it.
+- The gateway broadcast slot for offline boats is Phase 2 (Section 9).
 
-- `POST /api/sos/{id}/acknowledge` gains optional `broadcast_radius_km` and `broadcast_enabled` flag.
-- New `GET /api/public/sos-nearby?lat&lon&radius_km` returns active broadcasts near the caller, credentialed by vessel-device token, no identity fields.
-- Or extend `GET /api/public/advisories` with `kind=sos_nearby` filter if Lenard prefers one feed.
-- `GET /api/sos/active` response gains `broadcast_id`, `broadcast_count`, and `broadcast_state`.
-- Gateway downlink gains a broadcast slot so offline boats via buoy `GET /v1/warnings` can also poll it.
-
-New table `sos_broadcasts`:
+Table `sos_broadcasts` (migration `040_sos_broadcasts.sql`):
 
 ```text
 sos_broadcasts
-  id UUID PK
-  sos_event_id FK unique
-  center_lat DOUBLE
-  center_lon DOUBLE rounded to 500 m
-  radius_km INT
-  eta_at TIMESTAMPTZ nullable copy
-  responder_status SMALLINT nullable copy
-  state TEXT active|expired|cancelled
-  created_by_user_id FK
-  created_at TIMESTAMPTZ
-  expired_at TIMESTAMPTZ nullable
+  id SERIAL PK
+  sos_event_id INTEGER NOT NULL UNIQUE FK sos_events ON DELETE CASCADE
+  center_lat DOUBLE PRECISION NOT NULL   rounded to 0.005 degrees
+  center_lon DOUBLE PRECISION NOT NULL   rounded to 0.005 degrees
+  radius_km INTEGER NOT NULL DEFAULT 10
+  eta_at TIMESTAMPTZ NULL                copy of the incident ETA
+  responder_status SMALLINT NULL         copy of the incident status
+  state TEXT NOT NULL DEFAULT 'active'   active | expired
+  created_by TEXT NULL                   acknowledging operator's email
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  expired_at TIMESTAMPTZ NULL
 ```
 
-Idempotency: one active row per `sos_event_id`.
-Re-acknowledge does `UPDATE`, resolve does `state=expired`, reopen reactivates.
-Audit every transition as `sos.broadcast`, `sos.broadcast_update`, `sos.broadcast_expire`.
+There is at most one row per `sos_event_id`; re-acknowledge updates it in place.
+Transitions are audited as `sos.broadcast` (create and every update) and `sos.broadcast_expire`; reactivation on reopen is not audited (G7).
 
-Polling intervals reuse existing ones.
-Handset `VentureFeeds` already polls advisories every 30 seconds, and SOS reconcile runs every 15 seconds while live.
-Nearby check rides on those polls, so no new background service is needed for Phase 1.
+The handset reuses its existing 30-second hazard poll (`AqOneConfig.hazardPollInterval`) in the Venture page, which stays mounted in the app shell's `IndexedStack`, so no new background service is needed.
 
-## 7. Dashboard changes
+## 7. Dashboard
 
-Enable the disabled button.
-`sos-btn-broadcast` becomes enabled only after acknowledge, showing `Alert N nearby vessels`.
-The ack modal in `web/html/dashboard.html:942-990` gains a checkbox `Also alert nearby vessels` default ON plus radius select 5, 10, 20 km.
-Incident drawer shows broadcast state: `Broadcast ACTIVE to 4 boats`, `EXPIRED`, or `OFF`.
-Version-conflict handling stays as today with `expected_version` and 409 path.
+The acknowledge modal has an `Also alert nearby vessels that help is needed` checkbox, on by default, and a radius select of 5, 10 or 20 km.
+`sos-btn-broadcast` is disabled until the incident is acknowledged.
+After an acknowledge without a broadcast it reads `Alert Nearby Vessels` and re-sends the acknowledge with `broadcast_enabled: true`, a 10 km radius, and no ETA change.
+While a broadcast is active the button reads `Nearby Vessels Alerted` and the drawer says `Broadcast ACTIVE - nearby boats can see this call.`
+Version-conflict handling stays as today with `expected_version` and the 409 path.
+The dispatcher cannot yet cancel a broadcast without resolving the incident (G4).
 
-## 8. Mobile changes
+## 8. Mobile
 
-Add `NearbySosService` that polls the new nearby feed on the existing `VentureFeeds` tick.
-Store seen broadcast ids in SQLite so the alert plus notification plus alarm fire once.
-Add `_buildNearbyHelpContainer` in `venture_page.dart` reusing the `_buildSosStatus` pill style, wired to `_userLocation` for live distance, with tap to recenter plus dialog.
-Show `NearbyHelpDialog` on first sighting plus Venture map red distress markers, one per active broadcast.
-Play `mobile/assets/audio/broadcastalarm.mp3` in a loop through a new `NearbyAlarm` class cloned from `SosAlarm`, with its own `AudioPlayer` instance so both alarms never share a player.
-Stop on Respond, Dismiss, broadcast expiry, or resolve.
-Background behavior matches existing foreground-service rule: no new always-on service, only poll while app or foreground service is alive.
-Add widget plus unit tests that assert `broadcastalarm.mp3` is the source, loop mode is on, duplicate ids do not re-ring, container shows correct distance text, and stop cancels both sound and vibration.
+- `NearbySos` (`mobile/lib/models/nearby_sos.dart`) parses the feed.
+- `VentureFeeds.nearbySos` calls `GET /api/public/sos-nearby` with the phone's fix and `vessel_id`.
+- `NearbyAlarm` (`mobile/lib/services/nearby_alarm.dart`) loops `broadcastalarm.mp3` on its own player.
+- `venture_page.dart` shows the container, the first-sighting dialog and the map markers.
+- Strings are in `app_en.arb` with `fil` and `akl` drafts, except the distance text (G9).
 
-## 9. Firmware and gateway changes (Phase 2)
+## 9. Firmware and gateway (Phase 2, deferred)
 
-Phase 1 works for boats with internet, which matches the existing direct-path responder loop.
-Phase 2 extends `WARN` downlink so offline boats behind a buoy also get it.
-This needs Daniel plus Arnold: new LoRa frame or extended `WARN` payload with broadcast id, rounded lat/lon, ETA timestamp, and TTL.
-Gateway polls the new broadcast slot alongside ETA and chat downlink.
-Buoy caches it and serves it via `GET /v1/warnings` which the phone already polls.
+Phase 1 works only for boats with internet, which matches the existing direct-path responder loop.
+Phase 2 extends the `WARN` downlink so offline boats behind a buoy also get the broadcast.
+This needs Daniel plus Arnold: a new LoRa frame or an extended `WARN` payload with broadcast id, rounded lat/lon, ETA timestamp and TTL.
+The gateway polls the broadcast slot alongside the ETA and chat downlinks, and the buoy caches it and serves it via `GET /v1/warnings`, which the phone already polls.
 
 ## 10. Safety and abuse rules
 
-Broadcast requires human acknowledge with a valid responder role, same auth as `POST /api/sos/{id}/acknowledge`.
-No auto-broadcast on ingest.
-One broadcast per incident, updated in place, expired on resolve.
-Dispatcher can cancel broadcast without un-acknowledging the incident.
-Rate limit: one create plus three updates per incident per 10 minutes to prevent drawer spam.
-Log all actions in the case timeline and global audit search.
-Prank handling: `closed_unconfirmed` resolve expires the broadcast immediately and phones remove the marker.
+- A broadcast requires a human acknowledge with a responder role, the same auth as `POST /api/sos/{id}/acknowledge`.
+- No auto-broadcast on ingest.
+- One broadcast per incident, updated in place, expired on any resolve, including a `closed_unconfirmed` prank resolve.
+- Synthetic and demo incidents never broadcast.
+- The dispatcher can cancel a broadcast without un-acknowledging the incident (not built, G4).
+- Rate limit: one create plus three updates per incident per 10 minutes (not built, G5).
+- Every action is logged in the case timeline and the global audit search.
 
 ## 11. Acceptance criteria
 
-- Fisher A SOS appears on dashboard within 3 second poll as today.
-- Dispatcher ACK with ETA creates exactly one `sos_broadcasts` row with rounded position and correct radius.
-- Fisher B within radius hears looping `broadcastalarm.mp3` plus vibration, sees Venture top container `Fisher needs help - 2.3 km away` plus `nearby_help` notification within one poll tick, with no owner or phone fields in payload.
-- Venture container distance updates live as helper moves, shows `distance unknown` without GPS, and clears within one poll tick of resolve.
-- Fisher C outside radius sees nothing.
-- Re-ACK updates ETA in place with no duplicate alert, only an updated countdown.
-- Resolve expires broadcast and removes marker on nearby phones within one poll tick.
-- Synthetic or demo SOS never creates a broadcast.
+- Fisher A's SOS appears on the dashboard within the 3-second poll as today.
+- Dispatcher ACK with ETA creates exactly one `sos_broadcasts` row with a rounded position and the chosen radius.
+- Fisher B within the radius hears the looping `broadcastalarm.mp3`, sees the Venture container `Fisher needs help - 2.3 km away` and a `nearby_help` notification within one poll tick, with no owner or phone fields in the payload.
+- The container distance updates as the helper moves, shows `distance unknown` without GPS, and clears within one poll tick of resolve.
+- Fisher C outside the radius sees nothing.
+- Re-ACK updates the ETA in place with no duplicate alert.
+- Resolve expires the broadcast and removes the marker on nearby phones within one poll tick.
+- A synthetic or demo SOS never creates a broadcast.
 - Backend pytest plus ruff, web node tests, and `flutter analyze` plus `flutter test` stay green.
 
-## 12. Next step after this spec
+None of these has been verified on a device yet; plan 74 Phase 4 records the evidence.
 
-Approve this spec, then break it into an implementation plan with Phase 1 (backend plus dashboard plus online mobile) and Phase 2 (gateway plus buoy plus offline mobile).
-Do not code until the nearby-source question in Section 4 and the one-feed versus two-feed question in Section 6 are decided by Lenard.
+## 12. Decisions (Len, 2026-09-30T23:10:00+08:00, approving the as-built answers)
+
+| ID | Question (plan 74 Phase 0) | Decision |
+|---|---|---|
+| D1 | Fresh-position source for the nearby query | The phone's own reported fix; no server-side audience query and no recipient count (Section 4). |
+| D2 | One feed or two | Two: a separate `GET /api/public/sos-nearby` (Section 6). |
+| D3 | Radius | Default 10 km; the dashboard offers 5, 10 and 20 km. |
+| D4 | Mockup `73_MOCKUP_venture-nearby-container.html` | Approved as the reference for the Venture container. |
+
+## 13. Gaps between Revision 0 and the as-built code
+
+Each gap is a plan 74 Phase 1b item.
+
+| ID | Gap | Owner |
+|---|---|---|
+| G1 | `GET /api/public/sos-nearby` is unauthenticated, so anyone can list the rounded positions of active broadcasts around any point within 50 km. Revision 0 required a vessel-device token, but most handsets are not paired and would then get no alerts. Decide: token, token or rate limit, or public with the rounded position. | Lenard |
+| G2 | Seen broadcast ids are kept in memory (`_announcedBroadcasts`), not SQLite, so an app restart re-rings and re-notifies every active broadcast. | Jade |
+| G3 | No compact nearby banner on Home and Advisories. The alarm, dialog and notification do fire there, because Venture stays mounted. | Jade |
+| G4 | No dispatcher cancel. An acknowledge with the checkbox off leaves an existing broadcast active. | Lenard, Arnold |
+| G5 | No rate limit on broadcast create and update. | Lenard |
+| G6 | Broadcast errors are swallowed without a log (`except Exception` in `_ensure_broadcast`, `_expire_broadcast`, `_reactivate_broadcast`, the `active_sos` join and `public_sos_nearby`), so a missing table looks exactly like "no broadcast". | Lenard |
+| G7 | Audit: re-ACK logs `sos.broadcast` again instead of `sos.broadcast_update`, and reactivation on reopen is not audited. | Lenard |
+| G8 | The API accepts `broadcast_radius_km` 1 to 50 while D3 is 5, 10 or 20; only the dashboard clamps. | Lenard |
+| G9 | `NearbySos.distanceText` returns hard-coded English (`2.3 km away`) that is passed into `nearbyHelpAway` (`{distance} away`), so English shows `2.3 km away away` and Aklanon mixes English into the line. The notification body also says `MDRRMO`, which `docs/64` P6 keeps off the fisher's core path. | Jade |
+| G10 | Tapping the `nearby_help` notification does not open the Venture map at the broadcast. | Jade |
+| G11 | The drawer shows `ACTIVE` or nothing; an expired broadcast is indistinguishable from no broadcast. | Arnold |

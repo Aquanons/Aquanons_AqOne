@@ -12,6 +12,7 @@ Feature spec and revision: `docs/64_FISHER_FRICTION_REDUCTION_SPEC.md` Revision 
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`
 Len's chat approval, 2026-09-25T17:00:00+08:00: recommendations accepted for D2, D3, D5 and D6; the team picks the terms itself (D1); joining the pod Wi-Fi happens inside the app (D4); the field session with fishermen and the MDRRMO is after the RSTW pitch, date to be set by Len.
 Len, 2026-09-25T23:40:00+08:00: replace the four At sea top banners with one summary card (spec 64 Section 2.6, FFR-14, D7); added as Phase 4b so no later phase number changes.
+Spec 64 Revision 5, Len 2026-09-30T23:10:00+08:00: the dock has three items and Profile opens from the Home avatar (D9, FFR-08 amended), which supersedes the Phase 3 dock task below; `546a38c` removed the Home SOS button, a regression against FFR-07 that is fixed ahead of Phase 4 (D10, spec 64 Section 3.2).
 Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may push phases straight to `master`)
 Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed per phase (archived briefs: `docs/archive/history/HANDOFF-luna-phase-1.md`, `HANDOFF-luna-countdown-freeze.md`, `HANDOFF-luna-phase-3.md`) (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
 
@@ -193,7 +194,7 @@ State: Complete - merged to `master` 2026-09-26 (`186e231`); implemented by Luna
 - [x] The SOS countdown and the post-SOS sheet fit a 360 x 640 phone at 200% text (today the sheet overflows by 164 px at the bottom).
 - [x] Raise every `fontSize` below 12 in `mobile/lib/ui` to at least 12; body text 16.
 - [x] Active SOS status card on Home (At sea shows the same situation inside the Phase 4b summary card) built from `FisherSosSituation`: title at least 20 sp, description wraps, no `maxLines: 1` on either.
-- [x] Dock: four labelled items (Home, At sea, News, Me), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
+- [x] Dock: four labelled items (Home, At sea, News, Me) (superseded 2026-09-30 by spec 64 D9: three items, Profile from the avatar, `dbc4b75`), label at least 12 sp in a 4.5:1 colour, visible label under the raised At sea button, active item marked by weight and an indicator, not colour alone; Profile becomes a dock item and keeps the avatar shortcut.
 - [x] Replace fixed heights that clip at large text (`ActionPill` 176 x 50, dock `barHeight`) with minimum sizes.
 
 ### Verification
@@ -201,7 +202,7 @@ State: Complete - merged to `master` 2026-09-26 (`186e231`); implemented by Luna
 - [x] Token test: every text token is at least 4.5:1 on `canvas` and `surface` in both themes, `primaryText` is at least 7:1 on `surface` (the SOS status title), and every situation icon colour is at least 3:1 on `surface`.
 - [x] `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing.
 - [x] Widget tests at `TextScaler.linear(2.0)` on 360 x 640: Home, the status card, the dock and the countdown raise no overflow errors and show the full status text.
-- [x] Dock widget test finds four visible labels.
+- [x] Dock widget test finds four visible labels (three since `dbc4b75`, spec 64 D9).
 - [x] Emulator screenshots, light and dark, largest system font, in `docs/fisher-ux/PHASE_3_VERIFICATION.md`.
 - [x] Standard mobile gate passes.
 

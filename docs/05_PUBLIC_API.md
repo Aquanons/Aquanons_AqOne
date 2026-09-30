@@ -247,6 +247,7 @@ Clients must derive
 display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
+**Added 2026-09-30 (`docs/73`):** each event carries `broadcast_state`, `active` while the incident has an active nearby broadcast and `off` otherwise.
 
 ### `GET /api/sos/recent` - resolved-incident history (dashboard panel)
 
@@ -282,6 +283,11 @@ However, modifying any existing non-blank identity field (`skipper_name`, `licen
 bearer token bound to that `vessel_id`.
 If an unauthenticated caller attempts to overwrite non-blank identity fields, the server
 rejects the request with `409 Conflict` and discards all changes.
+
+**Contract confirmed 2026-09-30 (Len):** this rule stands.
+Commit `e32c085` (2026-09-29) removed the 409 check from `backend/app/api/vessel_profile.py` without a contract change, so the deployed backend lets an unpaired caller overwrite any identity field; that code is to be reverted.
+Its motive is a real bug: an unpaired fisher's profile edits are rejected with 409, the handset swallows the error, and the dashboard keeps the first values while the phone shows the edit ([`audits/PROFILE_MISMATCH_FIX_2026-09-29.md`](audits/PROFILE_MISMATCH_FIX_2026-09-29.md)).
+That bug is to be fixed on the handset side (surface the rejection and offer pairing), not by relaxing this rule.
 
 ```
 POST /api/vessel-profile
@@ -331,6 +337,19 @@ acknowledger with the resolver). Both are idempotent — re-calling either
 after it already applied returns the same result rather than erroring;
 `acknowledge` is additionally re-callable with a new `responder_status` to
 report progress, which is a real transition each time, not a duplicate.
+
+**Added 2026-09-30 (`docs/73`):** `acknowledge` also accepts `broadcast_enabled` (default `true`) and `broadcast_radius_km` (default 10; the dashboard sends 5, 10 or 20).
+When enabled, and the incident has a position and is not synthetic, it creates or updates the incident's one nearby broadcast and returns it as `broadcast` (`null` otherwise):
+
+```json
+"broadcast": {
+  "id": 7, "sos_event_id": 412, "center_lat": 11.695, "center_lon": 122.44,
+  "radius_km": 10, "eta_at": "2026-09-30T10:40:00+00:00", "responder_status": 4, "state": "active"
+}
+```
+
+`resolve` expires the broadcast and `reopen` reactivates it.
+Sending `broadcast_enabled: false` does not expire an existing broadcast (`docs/73` G4).
 
 ### `GET /api/v1/sos/stream` — SSE live feed
 
@@ -529,6 +548,46 @@ buoy firmware does not forward a stable message ID, so at-least-once
 delivery (a line possibly appearing twice across hub broadcast and cloud
 relay) is a known, accepted limitation, not a bug to mask with a text/time
 heuristic that could hide a real repeated distress call.
+
+## SOS nearby broadcast - **implemented 2026-09-30** (`docs/73`)
+
+### `GET /api/public/sos-nearby`
+
+Active nearby-help broadcasts around the caller, for other fishers who may be able to help.
+Unauthenticated like the other handset safety feeds (the access rule is open, `docs/73` G1).
+Query parameters:
+
+| Parameter | Rule |
+|---|---|
+| `lat`, `lon` | Required. The caller's own position; the handset sends its GPS fix, or the default map centre when it has none. |
+| `radius_km` | 1 to 50, default 10. A broadcast is returned only when it is within both this radius and its own `radius_km`. |
+| `vessel_id` | Optional, at most 32 characters. The caller's own vessel, excluded from the result. |
+
+Response `200`, nearest first, at most 50 broadcasts considered:
+
+```json
+{
+  "broadcasts": [
+    {
+      "broadcast_id": 7,
+      "sos_event_id": 412,
+      "center_lat": 11.695,
+      "center_lon": 122.44,
+      "distance_km": 2.31,
+      "radius_km": 10,
+      "eta_at": "2026-09-30T10:40:00+00:00",
+      "responder_status": 4,
+      "created_at": "2026-09-30T10:05:12+00:00"
+    }
+  ]
+}
+```
+
+- `center_lat` and `center_lon` are rounded to 0.005 degrees (about 550 m); the exact SOS position is never returned.
+- No owner, phone, licence, shore contact, note or boat field is returned.
+- Only broadcasts in state `active` on an unresolved, non-synthetic incident appear.
+- `distance_km` is measured from the caller's `lat`, `lon`.
+- A database error returns `{"broadcasts": []}` rather than an error status (`docs/73` G6).
 
 ## Official advisories — **implemented**
 
@@ -1643,6 +1702,20 @@ Without one it returns 401.
   `relayed_share` (0 to 1), `checkin_warnings` (list of plain sentences:
   more than 70 slots assigned, relayed share above 20%), and
   `scheduler_last_run` keys `fleet_watch` and `checkin_retention`.
+
+**`GET /api/ops/presence`** (added 2026-09-28, dashboard APP USERS card): operator-authenticated, any operator role.
+Each call stamps the caller's `users.last_seen_at` (migration `038`), so the dashboard's 30 s poll doubles as the operator heartbeat.
+
+```json
+{ "total_users": 3, "active_operators_2m": 1, "active_vessels_15m": 0, "active_total": 1 }
+```
+
+- `active_operators_2m` counts operator accounts seen in the last 2 minutes.
+- `active_vessels_15m` counts vessels with any backend contact in the last 15 minutes: a live paired device, `vessels.last_seen_at` (migration `039`, stamped by SOS ingest, profile registration, trip create and update, catch logs and device enrolment), an SOS, a live buoy contact, or a catch log.
+
+**`GET /api/ops/roster`** (added 2026-09-28, `web/html/users.html`): operator-authenticated, any operator role.
+Returns `{"vessels": [...]}` ordered by boat name, each with `vessel_id`, `boat_name`, `skipper_name`, `license_type`, `license_number`, `phone`, `vessel_active` (the 15-minute rule above), `last_trip_status`, and the newest known fix: `last_lat`, `last_lon`, `last_fix_at`, `last_fix_source` (`sos`, `buoy`, `catch` or `spot`) and `last_fix_on_water` (`app/geo.py` water polygon; `null` without a fix).
+It carries owner identity and positions, so it stays behind operator auth.
 
 **Anomaly (B7, EC-H6 to EC-H9, EC-H16).**
 

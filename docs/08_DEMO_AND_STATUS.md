@@ -5,6 +5,24 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-09-30 - Nearby broadcast, dashboard presence and handset changes on `master` (PRs #84 to #86)
+
+Merged between `355b520` and `3f07b3b` (deployed on Render, `/health/ready` reports `3f07b3b`); reconciled with the specs on 2026-09-30.
+
+**On `master`:**
+- SOS nearby broadcast, Phases 1-3 of plan [`74`](74_SOS_NEARBY_BROADCAST_IMPLEMENTATION_PLAN.md): an acknowledge creates one broadcast, nearby online phones get a Venture container, a looping alarm and a notification (`docs/73` Rev 1, approved as built; gaps G1-G11 open).
+- Dashboard: APP USERS card and roster page (`GET /api/ops/presence`, `GET /api/ops/roster`, `docs/05` E5.7), map fullscreen, resolved list capped at 5, ON LAND status from the water polygon.
+- Migrations `038` and `039` (`last_seen_at` on users and vessels) and `040` (`sos_broadcasts`).
+- Handset: Profile opens from the Home avatar (accepted, spec 64 D9); the SOS button was removed from Home (regression, spec 64 D10); the squall card left Venture; info banners collapse.
+- Hardware schematics and 3D models in `schematics/`; DOST budget and Year 1 deliverables in `docs/funding/`.
+
+**Gates on `3f07b3b` (2026-09-30):**
+- Backend: ruff clean; pytest **5 failed**, 595 passed, 63 skipped, all in `tests/test_vessel_profile.py`, caused by `e32c085` removing the 409 profile guard that `docs/05` keeps (Current Register).
+- Web: 211 passed, every `.js` file passes `node --check`.
+- Mobile: `flutter analyze` clean and `flutter test` 400 passed, after `flutter gen-l10n` regenerated the ignored localization files.
+
+**Not verified:** the nearby broadcast on any device (plan 74 Phase 4).
+
 ## 2026-09-27 - Dashboard tutorial mode and live buoy honesty: plan 72 on `master`
 
 Plan [`72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md`](72_DASHBOARD_DEMO_MODE_IMPLEMENTATION_PLAN.md) (Revision 2, Len's answers of 2026-09-27) is built; evidence and screenshots in [`demo-mode/`](demo-mode/).

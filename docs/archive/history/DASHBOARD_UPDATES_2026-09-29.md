@@ -1,3 +1,5 @@
+> **Archived 2026-09-30.** Record of Jade's dashboard changes of 2026-09-28 and 2026-09-29, moved from the repository root. It is history, not current state.
+
 # Dashboard Updates Summary (Jade-backup)
 
 All changes below are on branch `Jade-backup`, which Render deploys as `aqone-backend`.

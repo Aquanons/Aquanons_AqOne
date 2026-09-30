@@ -1,12 +1,12 @@
 # 64 - Fisher friction reduction (handset UX) spec
 
-**Status:** APPROVED - Revision 4
+**Status:** APPROVED - Revision 5
 **Owner:** Lenard (spec), Doreen Kay (UX and field test), Jade (Flutter)
 **Created:** 2026-09-25
-**Updated:** 2026-09-26
+**Updated:** 2026-09-30T23:15:00+08:00
 **Related:** `docs/65_FISHER_FRICTION_REDUCTION_IMPLEMENTATION_PLAN.md`, `docs/06_DELIVERY_STATES.md`, `docs/22_LOCALIZATION_PLAN.md`, `docs/47_VISUAL_DESIGN_GUIDE.md`
 
-Revision: 4
+Revision: 5
 Len's chat approval, 2026-09-25T17:00:00+08:00: go with the recommendations for D2, D3, D5 and D6; the team picks the terms itself (D1); add an in-app way to join the pod Wi-Fi (D4).
 Revision 2 applies exactly those answers (Section 7) and records that the field session with fishermen and the MDRRMO waits until after the RSTW pitch, on a date Len sets.
 Sequencing, Len, 2026-09-25T18:00:00+08:00: `docs/66_CRITICAL_EDGE_CASES_IMPLEMENTATION_PLAN.md` (the 14 Critical edge cases, approved Revision 2) runs before this plan.
@@ -14,6 +14,7 @@ The D2 dates below are superseded by that order; plan 65 carries the current ord
 Revision 3, Len 2026-09-25T23:40:00+08:00: the At sea screen gets one summary card in place of its four top banners (Section 2.6, FFR-14, D7), shaped by a council review recorded in Section 2.6.
 Revision 4, 2026-09-26: finding status after plan 65 Phases 1 and 3 (Section 3.1), and open decision D8 on the silent SOS gesture that Phase 1 removed.
 Len, 2026-09-26: D8 decided - a visible "Silence" button on the SOS countdown (FFR-15, plan 65 Phase 4).
+Revision 5, Len's chat approval 2026-09-30T23:10:00+08:00: accept the three-item dock with Profile opened from the Home avatar (D9, FFR-08 amended); the removal of the SOS button from Home is a regression and P1 and FFR-07 stand unchanged (D10). Status in Section 3.2.
 
 ## 1. Purpose and success
 
@@ -218,6 +219,15 @@ Severity is by effect on J1 to J5.
 Found while working on Phase 1 and fixed with it (`dd9fc7d`): the SOS countdown could freeze at "1" and send nothing, either because it closed a screen opened above it instead of itself, or because a quick double tap opened two countdowns (`docs/edge-remediation/EVIDENCE-critical.md`).
 Its on-device double-tap check is still open (`docs/fisher-ux/COUNTDOWN_FREEZE_VERIFICATION.md`).
 
+### 3.2 Status on 2026-09-30
+
+Two handset changes merged in PR #86 without a spec revision were reconciled on 2026-09-30 (D9, D10).
+
+| Change | Commit | Status |
+|---|---|---|
+| Profile tab removed from the dock; Profile opens from the Home avatar | `dbc4b75` | Accepted by Revision 5 (D9, FFR-08 amended). |
+| SOS button removed from Home; SOS can only be sent from At sea | `546a38c` | **Regression** against P1 and FFR-07; the Home SOS control is to be restored (Current Register). |
+
 ## 4. Design principles
 
 Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: accessible, flat, high contrast), tightened for this audience.
@@ -243,7 +253,7 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | FFR-05 | Every user-facing string in `mobile/lib/ui` comes from `AppLocalizations`, except the brand "AqOne" and "SOS". | `grep -rnE "Text\('[A-Za-z]" mobile/lib/ui` and the check in plan Phase 2 return nothing; emergency types use a `...L10n` extension. | F4 |
 | FFR-06 | Fisher wording (Sections 2.3 and 2.4) in `app_en.arb`; `docs/06` gains a "Fisher handset wording" column; responder wording unchanged. | `delivery_state_test.dart` asserts the ARB against the new `docs/06` column; `fil` and `akl` drafts exist and are marked unreviewed. | F12 |
 | FFR-07 | Home order: SOS button or active SOS status, then one pod line, then one "safe to go out today?" answer, then one advisory line; weather detail and SOS history behind one tap each. | Widget test finds the SOS control above the first weather widget; SOS button at least 96 dp tall and full width. | F6 |
-| FFR-08 | Dock: four labelled destinations (Home, At sea, News, Me), labels at least 12 sp and 4.5:1 contrast, active item marked by more than colour. | Widget test finds four visible labels; contrast of label tokens checked in the test. | F7 |
+| FFR-08 | Dock: three labelled destinations (Home, At sea, News), labels at least 12 sp and 4.5:1 contrast, active item marked by more than colour. Profile (Me) opens from the avatar on Home (Revision 5, D9). | Widget test finds three visible labels; contrast of label tokens checked in the test; tapping the Home avatar opens Profile. | F7 |
 | FFR-09 | A "Connect to boat pod" screen joins the pod's open Wi-Fi (SSID `Aquan`, `docs/03`) from inside the app, with no trip to Android settings and no new dependency (Section 2.5). | Device test on one Android 10+ phone in airplane mode with Wi-Fi on and a powered pod: one tap on "Connect", one tap on the system "Connect" prompt, then "Connected to boat pod" and a pod status poll succeeds, without leaving the app. Widget test covers not connected, connecting, connected, declined and not found. | F3 |
 | FFR-10 | Countdown gets a large "Cancel - do not send" button beside the slide; calling off uses a normal button plus the existing confirm dialog, no slide. | Widget tests: tapping the cancel button sends nothing; calling off needs button then confirm. | F9 |
 | FFR-11 | Tokens: light `dimText` at least 4.5:1 on its surfaces; no `fontSize` below 12 in `mobile/lib/ui`; body 16 sp. | Token contrast test; `grep -rnE "fontSize: ([0-9]|1[01])(\.[0-9]+)?[,)]" mobile/lib/ui` returns nothing. | F8 |
@@ -274,8 +284,11 @@ Derived from the ui-ux-pro-max rules (Emergency SOS and Safety product profile: 
 | D6 | Remove "Remember me" from enrolment. | Yes: always remember; logout stays in Me behind a confirm. |
 | D7 | Four banners at the top of At sea. | One summary card (Len, 2026-09-25T23:40:00+08:00), designed in Section 2.6 after a council review. The 15-minute linger for a closed or cancelled SOS is a proposed default; Len may change it. |
 | D8 | Phase 1 removed the 3 s hold on SOS (FFR-02). That hold was also the quick silent SOS that `docs/61` D11.4 designed for a robbery at sea (finding H22); only the settings toggle was left, which a fisher under threat cannot reach in time. | Decided by Len, 2026-09-26: a visible "Silence" button on the SOS countdown that stops the siren and vibration without cancelling (FFR-15), built in plan 65 Phase 4 with the other countdown controls. The red countdown screen itself stays visible, and a duress cancel is still roadmap (docs/61 D11.4). |
+| D9 | Jade's `dbc4b75` removed the Me item from the dock and opens Profile from the Home avatar. | Accepted by Len, 2026-09-30T23:10:00+08:00: the dock has three items and Profile opens from the avatar (FFR-08 amended). |
+| D10 | Jade's `546a38c` removed the SOS button from Home, leaving SOS only on At sea. | Rejected by Len, 2026-09-30T23:10:00+08:00: P1 and FFR-07 stand; restore the Home SOS control. |
 
 ## 8. Open questions and readiness
 
 - The field session needs five fishermen from New Washington, an MDRRMO contact, and one Tagalog and one Aklanon reader; Len sets the date when schedules align after RSTW.
 - Until then every J1 to J5 target is unmeasured, and the Phase 0a terms are team-chosen.
+- The Home avatar is now the only way into Profile and is an icon without a word, which P2 and P9 warn against; the field session should check that fishermen find it (D9).

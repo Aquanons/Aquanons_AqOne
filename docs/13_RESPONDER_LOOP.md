@@ -74,6 +74,10 @@ on the handset.
 nearest-responder broadcast, and off Basilan it was nearby fishing boats that
 actually pulled people out.
 
+**Update 2026-09-30:** the broadcast now exists for boats with internet (`docs/73_SOS_NEARBY_BROADCAST_SPEC.md`, Revision 1).
+An acknowledge creates one nearby broadcast by default, independent of the status code chosen; `NEAREST_VESSEL` remains the label the caller sees.
+The offline LoRa leg is `docs/74` Phase 5.
+
 ### The fisher can answer
 
 One tap, one byte back:
