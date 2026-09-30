@@ -408,12 +408,6 @@ class _AppShellState extends State<AppShell> {
 
   Widget _buildVenture(double bottomInset) {
     return VenturePage(
-      // Venture is the screen a fisher is actually looking at offshore, so the
-      // watch-level banner belongs here too. RETURN NOW takes the whole
-      // screen from the shell regardless of the tab.
-      squall: _squall,
-      squallAcknowledged: _squallAlarm.isAcknowledged(_squall.identity),
-      onAcknowledgeSquall: _acknowledgeSquall,
       identity: widget.identity,
       sos: widget.sos,
       feeds: widget.feeds,

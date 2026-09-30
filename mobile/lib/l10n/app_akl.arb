@@ -378,5 +378,7 @@
   "nearbyHelpMore": "+{count} pa - Tan-awa tanan",
   "nearbyHelpNotifTitle": "May mangingisda sa malapit nga nagakinahanglan it bulig",
   "nearbyHelpNotifBody": "{distance} - gin-acknowledge it MDRRMO, pinduta agud tan-awon",
-  "nearbyHelpEta": "Maabot {time}"
+  "nearbyHelpEta": "Maabot {time}",
+  "bannerCollapse": "Isara ro panel",
+  "bannerExpand": "Buksan ro panel"
 }

@@ -148,7 +148,6 @@ void main() {
         sos: _FakeSosService(<SosRecord>[_openSos()]),
         feeds: _FakeVentureFeeds(),
         location: _FakeLocationService(),
-        squall: _watch,
       )));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

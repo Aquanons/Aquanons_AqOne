@@ -13,7 +13,6 @@ import '../models/hazard_alert.dart';
 import '../models/fisher_sos_situation.dart';
 import '../models/nearby_sos.dart';
 import '../models/sos_record.dart';
-import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
 import '../services/compass_service.dart';
 import '../services/eta_notifier.dart';
@@ -29,7 +28,6 @@ import 'sos_flow.dart';
 import 'widgets/action_pill.dart';
 import 'widgets/compass_dial.dart';
 import 'widgets/offline_map_banner.dart';
-import 'widgets/squall_banner.dart';
 
 const Color _brandPrimary = Color(0xFF0F69C9);
 const Color _brandDeep = Color(0xFF0B4C8C);
@@ -61,9 +59,6 @@ class VenturePage extends StatefulWidget {
     required this.feeds,
     required this.location,
     this.bottomInset = 0,
-    this.squall = SquallWatch.unavailable,
-    this.squallAcknowledged = false,
-    this.onAcknowledgeSquall,
     this.sosAlarm,
     this.nearbyAlarm,
   });
@@ -78,13 +73,6 @@ class VenturePage extends StatefulWidget {
   /// Space reserved for the shell's floating dock. The map stays full-bleed
   /// behind it; only the controls are lifted clear so they never get covered.
   final double bottomInset;
-
-  /// Polled by AppShell so one squall means one alarm no matter which tab is
-  /// open. RETURN NOW takes the whole screen from there; this is the
-  /// watch-level banner, on the screen a fisher is most likely looking at.
-  final SquallWatch squall;
-  final bool squallAcknowledged;
-  final VoidCallback? onAcknowledgeSquall;
 
   @override
   State<VenturePage> createState() => _VenturePageState();
@@ -149,6 +137,13 @@ class _VenturePageState extends State<VenturePage> {
   bool _nearbyDialogOpen = false;
   final RequestGuard _nearbyGuard = RequestGuard();
 
+  bool _offlineCollapsed = false;
+  bool _sosCollapsed = false;
+  bool _nearbyCollapsed = false;
+  String? _seenSosId;
+  Set<int> _seenBroadcastIds = <int>{};
+  Set<String> _seenFeedKeys = <String>{};
+
   /// True while a hazard dialog is on screen, so a second alert arriving from
   /// the same poll cannot stack a dialog on top of the first.
   bool _hazardDialogOpen = false;
@@ -208,7 +203,15 @@ class _VenturePageState extends State<VenturePage> {
     if (!mounted) {
       return;
     }
-    setState(() => _latestSos = history.isEmpty ? null : history.first);
+    final latest = history.isEmpty ? null : history.first;
+    final latestId = latest?.localId;
+    setState(() {
+      _latestSos = latest;
+      if (latestId != _seenSosId) {
+        _seenSosId = latestId;
+        _sosCollapsed = false;
+      }
+    });
   }
 
   Future<void> _loadWeather(double lat, double lon) async {
@@ -252,7 +255,15 @@ class _VenturePageState extends State<VenturePage> {
     if (!mounted) {
       return;
     }
-    setState(() => _snapshotAges = ages);
+    final keys = ages.keys.toSet();
+    setState(() {
+      _snapshotAges = ages;
+      if (keys.length != _seenFeedKeys.length ||
+          !keys.containsAll(_seenFeedKeys)) {
+        _seenFeedKeys = keys;
+        _offlineCollapsed = false;
+      }
+    });
   }
 
   Future<void> _loadHazards() async {
@@ -286,7 +297,15 @@ class _VenturePageState extends State<VenturePage> {
     );
     if (!mounted || !_nearbyGuard.isCurrent(version)) return;
     final fresh = items.take(4).toList();
-    setState(() => _nearby = fresh);
+    final ids = fresh.map((n) => n.broadcastId).toSet();
+    setState(() {
+      _nearby = fresh;
+      if (ids.length != _seenBroadcastIds.length ||
+          !ids.containsAll(_seenBroadcastIds)) {
+        _seenBroadcastIds = ids;
+        _nearbyCollapsed = false;
+      }
+    });
     final unseen = fresh.where((n) => !_announcedBroadcasts.contains(n.broadcastId)).toList();
     if (unseen.isNotEmpty) {
       _announcedBroadcasts.addAll(unseen.map((n) => n.broadcastId));
@@ -562,25 +581,37 @@ class _VenturePageState extends State<VenturePage> {
                   _buildWeatherCapsule(isDark),
                   if (_nearby.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 8),
-                    _buildNearbyHelp(isDark),
-                  ],
-                  if (!AqOneConfig.pitchMode &&
-                      widget.squall.shouldDisplay) ...<Widget>[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: SquallBanner(
-                        watch: widget.squall,
-                        acknowledged: widget.squallAcknowledged,
-                        onAcknowledge: widget.onAcknowledgeSquall,
-                      ),
+                    _collapsible(
+                      collapsed: _nearbyCollapsed,
+                      onToggle: () =>
+                          setState(() => _nearbyCollapsed = !_nearbyCollapsed),
+                      icon: Icons.warning_amber_rounded,
+                      color: _danger,
+                      child: _buildNearbyHelp(isDark),
                     ),
                   ],
                   const SizedBox(height: 8),
-                  OfflineMapBanner(ages: _snapshotAges, isDark: isDark),
+                  if (_offlineStale()) ...<Widget>[
+                    _collapsible(
+                      collapsed: _offlineCollapsed,
+                      onToggle: () => setState(
+                          () => _offlineCollapsed = !_offlineCollapsed),
+                      icon: Icons.history_rounded,
+                      color: const Color(0xFF8A5A12),
+                      child: OfflineMapBanner(
+                          ages: _snapshotAges, isDark: isDark),
+                    ),
+                  ],
                   if (_latestSos != null) ...<Widget>[
                     const SizedBox(height: 8),
-                    _buildSosStatus(isDark, _latestSos!),
+                    _collapsible(
+                      collapsed: _sosCollapsed,
+                      onToggle: () =>
+                          setState(() => _sosCollapsed = !_sosCollapsed),
+                      icon: Icons.mark_email_read_rounded,
+                      color: _brandPrimary,
+                      child: _buildSosStatus(isDark, _latestSos!),
+                    ),
                   ],
                 ],
               ),
@@ -873,6 +904,77 @@ class _VenturePageState extends State<VenturePage> {
             ),
         ],
       ),
+    );
+  }
+
+  bool _offlineStale() {
+    if (_snapshotAges.isEmpty) return false;
+    final now = DateTime.now();
+    return _snapshotAges.values.any(
+        (at) => now.difference(at) >= const Duration(minutes: 2));
+  }
+
+  Widget _collapsible({
+    required bool collapsed,
+    required VoidCallback onToggle,
+    required IconData icon,
+    required Color color,
+    required Widget child,
+  }) {
+    final t = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (collapsed) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Semantics(
+          button: true,
+          label: t.bannerExpand,
+          child: GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(right: 18),
+              decoration: BoxDecoration(
+                color: (isDark ? _surfaceDark : Colors.white)
+                    .withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 1.5),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+          ),
+        ),
+      );
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        child,
+        Positioned(
+          top: -10,
+          right: 8,
+          child: Semantics(
+            button: true,
+            label: t.bannerCollapse,
+            child: GestureDetector(
+              onTap: onToggle,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: (isDark ? _surfaceDark : Colors.white)
+                      .withValues(alpha: 0.95),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 1.5),
+                ),
+                child: Icon(Icons.keyboard_arrow_up_rounded,
+                    size: 18, color: color),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

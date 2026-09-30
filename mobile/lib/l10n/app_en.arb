@@ -1820,5 +1820,13 @@
   "nearbyHelpEta": "Arriving {time}",
   "@nearbyHelpEta": {
     "description": "ETA line under a nearby help row, time is HH:MM."
+  },
+  "bannerCollapse": "Collapse panel",
+  "@bannerCollapse": {
+    "description": "Screen-reader label for the hide button on Venture info banners."
+  },
+  "bannerExpand": "Expand panel",
+  "@bannerExpand": {
+    "description": "Screen-reader label for the collapsed show button on Venture info banners."
   }
 }
