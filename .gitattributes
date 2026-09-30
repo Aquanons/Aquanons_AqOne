@@ -27,3 +27,4 @@
 *.ico binary
 *.jar binary
 *.keystore binary
+*.glb binary

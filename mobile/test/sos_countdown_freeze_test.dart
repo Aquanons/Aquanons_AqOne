@@ -12,6 +12,7 @@ import 'package:aqone/services/sos_service.dart';
 import 'package:aqone/services/venture_feeds.dart';
 import 'package:aqone/ui/home_page.dart';
 import 'package:aqone/ui/sos_flow.dart';
+import 'package:aqone/ui/venture_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,13 +86,19 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'silent_sos': false,
     });
-    await tester.pumpWidget(_app(HomePage(
-      service: _DummySosService(),
+    await tester.pumpWidget(_app(VenturePage(
+      sos: _DummySosService(),
       identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
       feeds: VentureFeeds(backend: BackendClient()),
-      location: LocationService(),
+      location: _FakeLocationService(),
       sosAlarm: _SilentAlarm(),
     )));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextButton),
+    ));
     await tester.pump();
 
     // A nervous double tap: both taps land before the app gets a turn to
@@ -107,6 +114,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(SosCountdownScreen), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Home has no SOS send button; sending lives in Venture mode',
+      (tester) async {
+    await tester.pumpWidget(_app(HomePage(
+      service: _DummySosService(),
+      identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
+      feeds: VentureFeeds(backend: BackendClient()),
+      location: LocationService(),
+    )));
+    await tester.pump();
+    expect(find.text('SOS'), findsNothing);
   });
 }
 
@@ -119,6 +139,26 @@ class _SilentAlarm extends SosAlarm {
 
   @override
   Future<void> dispose() async {}
+}
+
+class _FakeLocationService extends LocationService {
+  @override
+  Future<Fix?> cachedFixIfPermitted() async => Fix(
+        lat: 11.70,
+        lon: 122.44,
+        accuracy: 5,
+        at: DateTime.now().toUtc(),
+      );
+
+  @override
+  Future<LocationResult> locate() async => LocationResult.success(
+        Fix(
+          lat: 11.70,
+          lon: 122.44,
+          accuracy: 5,
+          at: DateTime.now().toUtc(),
+        ),
+      );
 }
 
 class _DummySosService extends SosService {

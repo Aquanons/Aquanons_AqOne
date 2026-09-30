@@ -369,5 +369,16 @@
   "deliveryFailureBuoyNotConnected": "owa konektado sa buoy",
   "deliveryFailureNoBuoy": "waeay buoy nga malapit",
   "deliveryFailureBuoyRejected": "owa ginbaton it buoy",
-  "deliveryFailureBuoyInvalid": "indi mabasa ro sabat it buoy"
+  "deliveryFailureBuoyInvalid": "indi mabasa ro sabat it buoy",
+  "nearbyHelpTitle": "May mangingisda nga nagakinahanglan it bulig",
+  "nearbyHelpAway": "{distance} ro rayo",
+  "nearbyHelpDistanceUnknown": "owa masayran ro rayo",
+  "nearbyHelpRespond": "Buligan",
+  "nearbyHelpDismiss": "Isara",
+  "nearbyHelpMore": "+{count} pa - Tan-awa tanan",
+  "nearbyHelpNotifTitle": "May mangingisda sa malapit nga nagakinahanglan it bulig",
+  "nearbyHelpNotifBody": "{distance} - gin-acknowledge it MDRRMO, pinduta agud tan-awon",
+  "nearbyHelpEta": "Maabot {time}",
+  "bannerCollapse": "Isara ro panel",
+  "bannerExpand": "Buksan ro panel"
 }

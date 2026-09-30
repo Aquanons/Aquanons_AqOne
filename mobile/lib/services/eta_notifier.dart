@@ -60,4 +60,27 @@ class EtaNotifier {
       await _plugin.show(1, title, body, details);
     } catch (_) {}
   }
+
+  static Future<void> showNearbyHelp({
+    required String title,
+    required String body,
+    required int broadcastId,
+  }) async {
+    await ensureInitialized();
+    if (!_ready) {
+      return;
+    }
+    try {
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'nearby_help',
+          'Nearby help alerts',
+          channelDescription: 'SOS calls near you that need help',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      );
+      await _plugin.show(100000 + (broadcastId % 100000), title, body, details);
+    } catch (_) {}
+  }
 }
