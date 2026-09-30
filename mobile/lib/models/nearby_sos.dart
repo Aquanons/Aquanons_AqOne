@@ -1,3 +1,5 @@
+import '../l10n/app_localizations.dart';
+
 class NearbySos {
   const NearbySos({
     required this.broadcastId,
@@ -75,9 +77,9 @@ class NearbySos {
     return out;
   }
 
-  static String distanceText(double? km) {
-    if (km == null) return 'distance unknown';
-    if (km < 1) return '${(km * 1000).round()} m away';
-    return '${km.toStringAsFixed(1)} km away';
+  static String distanceText(double? km, AppLocalizations t) {
+    if (km == null) return t.nearbyHelpDistanceUnknown;
+    if (km < 1) return t.distanceMetres((km * 1000).round());
+    return t.distanceKilometres(km.toStringAsFixed(1));
   }
 }

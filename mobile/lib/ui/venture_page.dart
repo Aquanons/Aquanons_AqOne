@@ -312,7 +312,7 @@ class _VenturePageState extends State<VenturePage> {
       unawaited(_nearbyAlarm.start());
       final first = unseen.first;
       final t = AppLocalizations.of(context);
-      final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(first.distanceKm);
+      final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(first.distanceKm, t);
       unawaited(EtaNotifier.showNearbyHelp(
         title: t.nearbyHelpNotifTitle,
         body: t.nearbyHelpNotifBody(dist),
@@ -330,7 +330,7 @@ class _VenturePageState extends State<VenturePage> {
     _nearbyDialogOpen = true;
     final t = AppLocalizations.of(context);
     final point = _userLocation;
-    final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm);
+    final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm, t);
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -881,7 +881,7 @@ class _VenturePageState extends State<VenturePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            '${t.nearbyHelpTitle} - ${t.nearbyHelpAway(_userLocation == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm))}',
+                            '${t.nearbyHelpTitle} - ${t.nearbyHelpAway(_userLocation == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm, t))}',
                             style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _danger),
                           ),
                           if (item.etaAt != null)

@@ -1817,11 +1817,29 @@
   "@nearbyHelpMore": {
     "description": "Row when more than 3 broadcasts are active."
   },
+  "distanceMetres": "{metres} m",
+  "@distanceMetres": {
+    "description": "Distance in metres for nearby SOS.",
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKilometres": "{km} km",
+  "@distanceKilometres": {
+    "description": "Distance in kilometres for nearby SOS.",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "nearbyHelpNotifTitle": "Nearby fisher needs help",
   "@nearbyHelpNotifTitle": {
     "description": "System notification title for a nearby SOS broadcast."
   },
-  "nearbyHelpNotifBody": "{distance} - MDRRMO acknowledged, tap to view",
+  "nearbyHelpNotifBody": "{distance} - rescue centre acknowledged, tap to view",
   "@nearbyHelpNotifBody": {
     "description": "System notification body for a nearby SOS broadcast."
   },

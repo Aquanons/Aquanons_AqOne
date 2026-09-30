@@ -378,8 +378,10 @@
   "nearbyHelpRespond": "Buligan",
   "nearbyHelpDismiss": "Isara",
   "nearbyHelpMore": "+{count} pa - Tan-awa tanan",
+  "distanceMetres": "{metres} m",
+  "distanceKilometres": "{km} km",
   "nearbyHelpNotifTitle": "May mangingisda sa malapit nga nagakinahanglan it bulig",
-  "nearbyHelpNotifBody": "{distance} - gin-acknowledge it MDRRMO, pinduta agud tan-awon",
+  "nearbyHelpNotifBody": "{distance} - gin-acknowledge it rescue centre, pinduta agud tan-awon",
   "nearbyHelpEta": "Maabot {time}",
   "bannerCollapse": "Isara ro panel",
   "bannerExpand": "Buksan ro panel"

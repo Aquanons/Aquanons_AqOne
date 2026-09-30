@@ -171,8 +171,10 @@
   "nearbyHelpRespond": "Tumulong",
   "nearbyHelpDismiss": "Isara",
   "nearbyHelpMore": "+{count} pa - Tingnan lahat",
+  "distanceMetres": "{metres} m",
+  "distanceKilometres": "{km} km",
   "nearbyHelpNotifTitle": "May mangingisdang nangangailangan ng tulong sa malapit",
-  "nearbyHelpNotifBody": "{distance} - kinumpirma ng MDRRMO, pindutin upang tingnan",
+  "nearbyHelpNotifBody": "{distance} - kinumpirma ng rescue centre, pindutin upang tingnan",
   "nearbyHelpEta": "Darating {time}",
   "bannerCollapse": "Isara ang panel",
   "bannerExpand": "Buksan ang panel"
