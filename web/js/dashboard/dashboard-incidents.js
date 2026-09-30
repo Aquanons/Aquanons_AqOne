@@ -138,7 +138,6 @@
     }
     renderResponderSection(data);
     renderBroadcastButton(data);
-    sosBroadcastMsg.textContent = '';
 
     sosDrawer.classList.add('open');
 
@@ -190,22 +189,24 @@
   // Nearby broadcast state: created on ACK, expired on resolve.
   // The button alerts nearby vessels without changing the ETA when the
   // dispatcher presses it after acknowledging.
+  // Revision 0 button text was "Nearby Vessels Alerted", updated to "Stop Nearby Alert" (docs/73 Section 14.2).
   function renderBroadcastButton(data) {
     if (!sosBtnBroadcast) return;
     var state = data && data.broadcastState ? data.broadcastState : 'off';
-    if (!data || data.alertType !== 'sos') {
-      sosBtnBroadcast.disabled = true;
-      sosBtnBroadcast.textContent = 'Broadcast to Nearby Vessels';
-      return;
-    }
-    if (state === 'active') {
-      sosBtnBroadcast.disabled = true;
-      sosBtnBroadcast.textContent = 'Nearby Vessels Alerted';
-      if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast ACTIVE - nearby boats can see this call.';
-    } else if (!data.acknowledgedAt) {
+    if (!data || data.alertType !== 'sos' || !data.acknowledgedAt) {
       sosBtnBroadcast.disabled = true;
       sosBtnBroadcast.textContent = 'Broadcast to Nearby Vessels';
       if (sosBroadcastMsg) sosBroadcastMsg.textContent = '';
+      return;
+    }
+    if (state === 'active') {
+      sosBtnBroadcast.disabled = false;
+      sosBtnBroadcast.textContent = 'Stop Nearby Alert';
+      if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast ACTIVE - nearby boats can see this call.';
+    } else if (state === 'cancelled') {
+      sosBtnBroadcast.disabled = false;
+      sosBtnBroadcast.textContent = 'Alert Nearby Vessels';
+      if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast CANCELLED - nearby boats no longer see this call.';
     } else {
       sosBtnBroadcast.disabled = false;
       sosBtnBroadcast.textContent = 'Alert Nearby Vessels';
@@ -620,25 +621,37 @@
       var data = currentDrawerData;
       var eventId = data && data.sosEventId;
       if (!eventId || sosBtnBroadcast.disabled) return;
+      var state = (data && data.broadcastState) || 'off';
+      var willEnable = state !== 'active';
       sosBtnBroadcast.disabled = true;
-      sosBtnBroadcast.textContent = 'Alerting…';
+      sosBtnBroadcast.textContent = willEnable ? 'Alerting...' : 'Stopping...';
+      var reqBody = {
+        broadcast_enabled: willEnable,
+        responder_status: data.responderStatus,
+        expected_version: data.version
+      };
+      if (willEnable) {
+        reqBody.broadcast_radius_km = 10;
+      }
       authFetch('/api/sos/' + encodeURIComponent(eventId) + '/acknowledge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          responder_status: (data && data.responderStatus) || 4,
-          broadcast_enabled: true,
-          broadcast_radius_km: 10,
-          expected_version: data.version
-        })
+        body: JSON.stringify(reqBody)
       }).then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
-      }).then(function () {
-        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast ACTIVE - nearby boats can see this call.';
+      }).then(function (body) {
+        if (body && body.broadcast && body.broadcast.state) {
+          data.broadcastState = body.broadcast.state;
+        } else if (!willEnable) {
+          data.broadcastState = 'cancelled';
+        } else {
+          data.broadcastState = 'active';
+        }
+        renderBroadcastButton(data);
         return loadActiveSos();
       }).catch(function () {
-        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast not delivered - try again.';
+        if (sosBroadcastMsg) sosBroadcastMsg.textContent = 'Broadcast not changed - try again.';
         if (currentDrawerData && currentDrawerData.sosEventId === eventId) renderBroadcastButton(currentDrawerData);
       });
     });
