@@ -18,6 +18,7 @@ credentials the person at risk cannot hold.
 
 from __future__ import annotations
 
+import logging
 import math
 from datetime import UTC, datetime, timedelta
 
@@ -33,6 +34,8 @@ from app.api.squall import (
 )
 from app.db import get_pool
 from app.geo import SHORE_STATIONS
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/api/public', tags=['public'])
 
@@ -508,6 +511,7 @@ async def public_sos_nearby(
                 ''',
             )
         except Exception:
+            logger.exception('Failed to fetch nearby broadcasts')
             return {'broadcasts': []}
     out: list[dict[str, object]] = []
     for row in rows:

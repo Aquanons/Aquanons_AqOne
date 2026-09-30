@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -26,6 +27,8 @@ from app.incidents.plausibility import flags as plausibility_flags
 from app.incidents.text import truncate_utf8
 from app.incidents.triage import flood_status, triage_key
 from app.incidents.trust import SosProvenance, sos_provenance, vessel_verified
+
+logger = logging.getLogger(__name__)
 
 # Responder status vocabulary. One byte, so it survives a 64-byte LoRa frame in
 # phase 2 and stays consistent between dispatchers under pressure. The canonical
@@ -297,12 +300,13 @@ async def active_sos(
     try:
         async with pool.acquire() as conn2:
             brows = await conn2.fetch(
-                'SELECT sos_event_id, state FROM sos_broadcasts WHERE state = \'active\'',
+                'SELECT sos_event_id, state FROM sos_broadcasts',
             )
         bstates = {int(r['sos_event_id']): r['state'] for r in brows}
         for event in events:
             event['broadcast_state'] = bstates.get(int(event['id']), 'off')
     except Exception:
+        logger.exception('Failed to fetch broadcast states for active SOS')
         for event in events:
             event.setdefault('broadcast_state', 'off')
     flood = flood_status(events, now)
@@ -467,81 +471,125 @@ async def _ensure_broadcast(
     if is_synthetic or latitude is None or longitude is None:
         return None
     radius = min(50, max(1, int(radius_km or 10)))
-    try:
-        row = await conn.fetchrow(
-            '''
-            INSERT INTO sos_broadcasts
-              (sos_event_id, center_lat, center_lon, radius_km, eta_at,
-               responder_status, state, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)
-            ON CONFLICT (sos_event_id) DO UPDATE SET
-              center_lat = EXCLUDED.center_lat,
-              center_lon = EXCLUDED.center_lon,
-              radius_km = EXCLUDED.radius_km,
-              eta_at = EXCLUDED.eta_at,
-              responder_status = EXCLUDED.responder_status,
-              state = 'active',
-              expired_at = NULL
-            RETURNING id, sos_event_id, center_lat, center_lon, radius_km,
-                      eta_at, responder_status, state
-            ''',
-            event_id,
-            _round_500m(float(latitude)),
-            _round_500m(float(longitude)),
-            radius,
-            eta_at,
-            responder_status,
-            created_by,
-        )
-    except Exception:
-        return None
+    row = await conn.fetchrow(
+        '''
+        INSERT INTO sos_broadcasts
+          (sos_event_id, center_lat, center_lon, radius_km, eta_at,
+           responder_status, state, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)
+        ON CONFLICT (sos_event_id) DO UPDATE SET
+          center_lat = EXCLUDED.center_lat,
+          center_lon = EXCLUDED.center_lon,
+          radius_km = EXCLUDED.radius_km,
+          eta_at = EXCLUDED.eta_at,
+          responder_status = EXCLUDED.responder_status,
+          state = 'active',
+          expired_at = NULL
+        RETURNING id, sos_event_id, center_lat, center_lon, radius_km,
+                  eta_at, responder_status, state
+        ''',
+        event_id,
+        _round_500m(float(latitude)),
+        _round_500m(float(longitude)),
+        radius,
+        eta_at,
+        responder_status,
+        created_by,
+    )
     if row is None:
         return None
     return {k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in dict(row).items()}
 
 
-async def _expire_broadcast(conn: Any, event_id: int, actor: dict | None = None) -> None:
-    try:
-        row = await conn.fetchrow(
-            '''
-            UPDATE sos_broadcasts
-               SET state = 'expired', expired_at = NOW()
-             WHERE sos_event_id = $1 AND state = 'active'
-            RETURNING id
-            ''',
-            event_id,
-        )
-    except Exception:
-        return
-    if row is None:
-        return
-    try:
+async def _cancel_broadcast(conn: Any, event_id: int, actor: dict | None = None) -> dict[str, object] | None:
+    row = await conn.fetchrow(
+        '''
+        UPDATE sos_broadcasts
+           SET state = 'cancelled', expired_at = NOW()
+         WHERE sos_event_id = $1 AND state = 'active'
+        RETURNING id, sos_event_id, center_lat, center_lon, radius_km,
+                  eta_at, responder_status, state, expired_at
+        ''',
+        event_id,
+    )
+    if row is not None:
         await record_audit_event(
             conn,
             actor=actor,
-            action='sos.broadcast_expire',
+            action='sos.broadcast_cancel',
             resource_type='sos_event',
             resource_id=event_id,
             outcome='updated',
             is_demo=False,
             metadata=None,
         )
-    except Exception:
-        return
+        return {k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in dict(row).items()}
+    existing = await conn.fetchrow(
+        '''
+        SELECT id, sos_event_id, center_lat, center_lon, radius_km,
+               eta_at, responder_status, state, expired_at
+          FROM sos_broadcasts
+         WHERE sos_event_id = $1
+        ''',
+        event_id,
+    )
+    if existing is not None:
+        return {k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in dict(existing).items()}
+    return None
 
 
-async def _reactivate_broadcast(conn: Any, event_id: int) -> None:
+async def _expire_broadcast(conn: Any, event_id: int, actor: dict | None = None) -> None:
     try:
-        await conn.execute(
-            '''
-            UPDATE sos_broadcasts
-               SET state = 'active', expired_at = NULL
-             WHERE sos_event_id = $1 AND state = 'expired'
-            ''',
-            event_id,
-        )
+        async with conn.transaction():
+            row = await conn.fetchrow(
+                '''
+                UPDATE sos_broadcasts
+                   SET state = 'expired', expired_at = NOW()
+                 WHERE sos_event_id = $1 AND state = 'active'
+                RETURNING id
+                ''',
+                event_id,
+            )
+            if row is not None:
+                await record_audit_event(
+                    conn,
+                    actor=actor,
+                    action='sos.broadcast_expire',
+                    resource_type='sos_event',
+                    resource_id=event_id,
+                    outcome='updated',
+                    is_demo=False,
+                    metadata=None,
+                )
     except Exception:
-        return
+        logger.exception('Failed to expire broadcast for sos_event %s', event_id)
+
+
+async def _reactivate_broadcast(conn: Any, event_id: int, actor: dict | None = None) -> None:
+    try:
+        async with conn.transaction():
+            row = await conn.fetchrow(
+                '''
+                UPDATE sos_broadcasts
+                   SET state = 'active', expired_at = NULL
+                 WHERE sos_event_id = $1 AND state = 'expired'
+                RETURNING id
+                ''',
+                event_id,
+            )
+            if row is not None:
+                await record_audit_event(
+                    conn,
+                    actor=actor,
+                    action='sos.broadcast_reactivate',
+                    resource_type='sos_event',
+                    resource_id=event_id,
+                    outcome='updated',
+                    is_demo=False,
+                    metadata=None,
+                )
+    except Exception:
+        logger.exception('Failed to reactivate broadcast for sos_event %s', event_id)
 
 
 class AcknowledgeIn(BaseModel):
@@ -552,7 +600,7 @@ class AcknowledgeIn(BaseModel):
     responder_note: str | None = None
     expected_version: int | None = Field(default=None, ge=0)
     broadcast_enabled: bool = True
-    broadcast_radius_km: int = Field(default=10, ge=1, le=50)
+    broadcast_radius_km: Literal[5, 10, 20] = 10
 
     @field_validator('responder_note')
     @classmethod
@@ -579,8 +627,8 @@ async def acknowledge(
                    responder_status = $3,
                    responder_note   = COALESCE($4, responder_note),
                    version          = version + 1,
-                   -- NULL eta_minutes leaves any existing ETA untouched, so a
-                   -- dispatcher can update the status without wiping the time.
+                    -- NULL eta_minutes leaves any existing ETA untouched, so a
+                    -- dispatcher can update the status without wiping the time.
                    eta_at = CASE
                               WHEN $5::INT IS NULL THEN eta_at
                               ELSE NOW() + ($5::INT * INTERVAL '1 minute')
@@ -617,28 +665,49 @@ async def acknowledge(
         )
         broadcast = None
         if body.broadcast_enabled:
-            broadcast = await _ensure_broadcast(
-                conn,
-                event_id=row['id'],
-                latitude=row.get('latitude') if isinstance(row, dict) else row['latitude'],
-                longitude=row.get('longitude') if isinstance(row, dict) else row['longitude'],
-                eta_at=row['eta_at'],
-                responder_status=row['responder_status'],
-                radius_km=body.broadcast_radius_km,
-                created_by=user.get('email') or 'unknown',
-                is_synthetic=bool(row['is_synthetic']),
-            )
-            if broadcast is not None:
-                await record_audit_event(
-                    conn,
-                    actor=user,
-                    action='sos.broadcast',
-                    resource_type='sos_event',
-                    resource_id=row['id'],
-                    outcome='applied',
-                    is_demo=row['is_synthetic'],
-                    metadata={'radius_km': broadcast.get('radius_km')},
-                )
+            try:
+                async with conn.transaction():
+                    prior = await conn.fetchrow(
+                        'SELECT id, state FROM sos_broadcasts WHERE sos_event_id = $1',
+                        row['id'],
+                    )
+                    broadcast = await _ensure_broadcast(
+                        conn,
+                        event_id=row['id'],
+                        latitude=row.get('latitude') if isinstance(row, dict) else row['latitude'],
+                        longitude=row.get('longitude') if isinstance(row, dict) else row['longitude'],
+                        eta_at=row['eta_at'],
+                        responder_status=row['responder_status'],
+                        radius_km=body.broadcast_radius_km,
+                        created_by=user.get('email') or 'unknown',
+                        is_synthetic=bool(row['is_synthetic']),
+                    )
+                    if broadcast is not None:
+                        action = 'sos.broadcast' if prior is None else 'sos.broadcast_update'
+                        await record_audit_event(
+                            conn,
+                            actor=user,
+                            action=action,
+                            resource_type='sos_event',
+                            resource_id=row['id'],
+                            outcome='applied',
+                            is_demo=row['is_synthetic'],
+                            metadata={'radius_km': broadcast.get('radius_km')},
+                        )
+            except Exception:
+                logger.exception('Failed to broadcast for sos_event %s', row['id'])
+                broadcast = None
+        else:
+            try:
+                async with conn.transaction():
+                    broadcast = await _cancel_broadcast(
+                        conn,
+                        event_id=row['id'],
+                        actor=user,
+                    )
+            except Exception:
+                logger.exception('Failed to cancel broadcast for sos_event %s', row['id'])
+                broadcast = None
     return {
         'ok': True,
         'id': row['id'],
@@ -823,7 +892,7 @@ async def reopen_sos(
             outcome='updated',
             is_demo=row['is_synthetic'],
         )
-        await _reactivate_broadcast(conn, event_id)
+        await _reactivate_broadcast(conn, event_id, actor=user)
     return {'ok': True, 'id': row['id'], 'outcome': 'updated', 'version': row['version']}
 
 
