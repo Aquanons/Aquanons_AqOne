@@ -275,7 +275,7 @@ void main() {
   });
 
   group('labelled dock (FFR-08)', () {
-    testWidgets('four visible labels, 12 sp or more, 4.5:1 on the dock',
+    testWidgets('three visible labels, 12 sp or more, 4.5:1 on the dock',
         (tester) async {
       _phone(tester, const Size(390, 844));
       final t = await AppLocalizations.delegate.load(const Locale('en'));
@@ -297,7 +297,6 @@ void main() {
         t.navHome,
         t.navVenture,
         t.navAdvisories,
-        t.navProfile,
       ]) {
         final text = _richTextWith(tester, label);
         final style = text.text.style;

@@ -434,6 +434,25 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProfilePage(
+          identityStore: widget.identityStore,
+          identity: widget.identity,
+          backendClient: widget.feeds.backend,
+          themeMode: widget.themeMode,
+          onThemeModeChanged: widget.onThemeModeChanged,
+          localeController: widget.localeController,
+          onLogout: widget.onLogout,
+          onIdentityUpdated: widget.onIdentityUpdated,
+          onOpenHome: () => Navigator.of(context).pop(),
+          bottomInset: 0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= kDesktopBreakpoint;
@@ -454,7 +473,7 @@ class _AppShellState extends State<AppShell> {
           location: widget.location,
           bottomInset: inset,
           onOpenAdvisories: () => _select(2),
-          onOpenProfile: () => _select(3),
+          onOpenProfile: _openProfile,
           squall: _squall,
           squallAcknowledged: _squallAlarm.isAcknowledged(_squall.identity),
           onAcknowledgeSquall: _acknowledgeSquall,
@@ -462,18 +481,6 @@ class _AppShellState extends State<AppShell> {
         // Only built once the user has actually opened Venture.
         _ventureOpened ? _buildVenture(inset) : const SizedBox.shrink(),
         AdvisoriesPage(feeds: widget.feeds, bottomInset: inset),
-        ProfilePage(
-          identityStore: widget.identityStore,
-          identity: widget.identity,
-          backendClient: widget.feeds.backend,
-          themeMode: widget.themeMode,
-          onThemeModeChanged: widget.onThemeModeChanged,
-          localeController: widget.localeController,
-          onLogout: widget.onLogout,
-          onIdentityUpdated: widget.onIdentityUpdated,
-          onOpenHome: () => _select(0),
-          bottomInset: inset,
-        ),
       ],
     );
 
@@ -561,13 +568,6 @@ class _Sidebar extends StatelessWidget {
               isActive: index == 2,
               isDark: isDark,
               onTap: () => onSelect(2),
-            ),
-            _SidebarItem(
-              icon: Icons.person_rounded,
-              label: AppLocalizations.of(context).navProfile,
-              isActive: index == 3,
-              isDark: isDark,
-              onTap: () => onSelect(3),
             ),
             const Spacer(),
           ],
@@ -672,7 +672,7 @@ class _MobileDock extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final ventureCenter = constraints.maxWidth * 3 / 8;
+        final ventureCenter = constraints.maxWidth / 2;
         return SizedBox(
           height: fullBarHeight + overhang,
           child: Stack(
@@ -722,15 +722,6 @@ class _MobileDock extends StatelessWidget {
                         isActive: index == 2,
                         isDark: isDark,
                         onTap: () => onSelect(2),
-                      ),
-                    ),
-                    Expanded(
-                      child: _DockItem(
-                        icon: Icons.person_rounded,
-                        label: AppLocalizations.of(context).navProfile,
-                        isActive: index == 3,
-                        isDark: isDark,
-                        onTap: () => onSelect(3),
                       ),
                     ),
                   ],

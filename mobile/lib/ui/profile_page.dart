@@ -323,11 +323,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     // onOpenHome is checked FIRST, before Navigator.pop().
     //
-    // Profile is a tab inside AppShell's IndexedStack, and AppShell itself sits
-    // on a route - so Navigator.canPop() is true here. Popping first therefore
-    // tore down the whole shell instead of switching tabs, which read to the
-    // user as the back button doing nothing useful. Inside a tabbed shell,
-    // "back" means "go to Home".
+    // Profile is a pushed route over the shell, so onOpenHome pops back to
+    // the tab the fisher came from. The fallback below covers hosts that
+    // build ProfilePage outside the shell.
     if (widget.onOpenHome != null) {
       widget.onOpenHome!();
       return;
