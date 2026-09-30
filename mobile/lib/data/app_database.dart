@@ -23,7 +23,7 @@ class AppDatabase {
     final path = _overridePath ?? await defaultDatabasePath('aqone_outbox.db');
     return openDatabase(
       path,
-      version: 15,
+      version: 16,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onUpgrade: (db, oldVersion, newVersion) async {
         // Each step is wrapped in try/catch so a partially-applied migration
@@ -115,6 +115,9 @@ if (oldVersion < 12) {
             );
           } catch (_) {}
         }
+        if (oldVersion < 16) {
+          await _createSeenBroadcasts(db);
+        }
       },
       onCreate: (db, version) async {
         await db.execute('''
@@ -169,6 +172,7 @@ if (oldVersion < 12) {
         );
         await _createChecklistItems(db);
         await _createMapSnapshot(db);
+        await _createSeenBroadcasts(db);
       },
     );
   }
@@ -230,6 +234,15 @@ if (oldVersion < 12) {
         feed       TEXT PRIMARY KEY,
         payload    TEXT NOT NULL,
         fetched_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  static Future<void> _createSeenBroadcasts(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS seen_broadcasts (
+        broadcast_id INTEGER PRIMARY KEY,
+        seen_at      INTEGER NOT NULL
       )
     ''');
   }

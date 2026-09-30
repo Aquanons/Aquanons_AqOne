@@ -23,6 +23,9 @@ import '../services/location_service.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/venture_feeds.dart';
+import '../services/nearby_sos_watcher.dart';
+import '../models/nearby_sos.dart';
+import 'widgets/nearby_help_banner.dart';
 
 import 'sos_flow.dart';
 import 'widgets/action_pill.dart';
@@ -48,6 +51,8 @@ class HomePage extends StatefulWidget {
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
     this.sosAlarm,
+    this.nearby,
+    this.onOpenNearby,
   });
 
   final SosService service;
@@ -55,6 +60,8 @@ class HomePage extends StatefulWidget {
   final VentureFeeds feeds;
   final LocationService location;
   final SosAlarm? sosAlarm;
+  final NearbySosWatcher? nearby;
+  final VoidCallback? onOpenNearby;
 
   /// Space reserved for the shell's floating dock, so the last card is not
   /// hidden underneath it.
@@ -410,6 +417,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ],
               ),
               const SizedBox(height: AqSpace.lg),
+              if (widget.nearby != null) ...<Widget>[
+                ValueListenableBuilder<List<NearbySos>>(
+                  valueListenable: widget.nearby!.items,
+                  builder: (context, items, _) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      NearbyHelpBanner(
+                        items: items,
+                        hasFix: widget.nearby!.hasFix,
+                        onTap: widget.onOpenNearby ?? () {},
+                      ),
+                      if (items.isNotEmpty) const SizedBox(height: AqSpace.base),
+                    ],
+                  ),
+                ),
+              ],
               // Squall nowcast sits ABOVE the sea condition. The MDRRMO's
               // declaration is a standing judgement about the day; a squall is
               // happening now and has minutes of lead time, so it must be the

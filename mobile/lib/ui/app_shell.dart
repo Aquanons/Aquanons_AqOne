@@ -2,17 +2,23 @@ import 'dart:async';
 
 import 'package:aqone/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../core/config.dart';
 import '../core/locale_controller.dart';
 import '../core/tokens.dart';
+import '../data/app_database.dart';
 import '../data/identity_store.dart';
+import '../data/seen_broadcast_store.dart';
 import '../models/delivery_policy.dart';
 import '../models/delivery_state.dart';
+import '../models/nearby_sos.dart';
 import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
 import '../services/location_service.dart';
 import '../services/eta_notifier.dart';
+import '../services/nearby_alarm.dart';
+import '../services/nearby_sos_watcher.dart';
 import '../services/sos_service.dart';
 import '../services/squall_alarm.dart';
 import '../services/venture_feeds.dart';
@@ -48,12 +54,14 @@ class AppShell extends StatefulWidget {
     this.localeController,
     required this.onLogout,
     required this.onIdentityUpdated,
+    this.nearbyWatcher,
   });
 
   final VesselIdentity identity;
   final SosService sos;
   final VentureFeeds feeds;
   final LocationService location;
+  final NearbySosWatcher? nearbyWatcher;
 
   // Profile needs the store to save edits, and the theme handles so its
   // light/dark switch can reach MaterialApp at the app root.
@@ -127,18 +135,52 @@ class _AppShellState extends State<AppShell> {
   /// cannot stack a second copy on top of it.
   bool _squallAlertOpen = false;
 
+  NearbySosWatcher? _nearbyWatcher;
+  StreamSubscription<NearbySos>? _nearbySightingsSub;
+  LatLng? _targetLocation;
+  bool _nearbyDialogOpen = false;
+
   @override
   void initState() {
     super.initState();
     _sosChanges = widget.sos.changes.listen((_) => _checkForAcknowledgement());
     _checkForAcknowledgement();
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkStaleSos());
+    final seen = SeenBroadcastStore(AppDatabase());
+    final alarm = NearbyAlarm();
+    _nearbyWatcher = widget.nearbyWatcher ??
+        NearbySosWatcher(
+          fetch: (lat, lon) => widget.feeds.nearbySos(
+            lat: lat,
+            lon: lon,
+            vesselId: widget.identity.vesselId,
+          ),
+          position: () async {
+            final res = await widget.location.locate();
+            return res.fix;
+          },
+          seen: seen,
+          alarm: alarm,
+          notify: (item) async {
+            final t = AppLocalizations.of(context);
+            final dist = _nearbyWatcher?.hasFix == true
+                ? NearbySos.distanceText(item.distanceKm, t)
+                : t.nearbyHelpDistanceUnknown;
+            await EtaNotifier.showNearbyHelp(
+              title: t.nearbyHelpNotifTitle,
+              body: t.nearbyHelpNotifBody(dist),
+              broadcastId: item.broadcastId,
+            );
+          },
+        );
+    _nearbySightingsSub = _nearbyWatcher!.firstSightings.listen(_showNearbyDialog);
     if (!AqOneConfig.pitchMode) {
       _loadSquall();
       _squallTimer = Timer.periodic(
         AqOneConfig.squallPollInterval,
         (_) => _loadSquall(),
       );
+      _nearbyWatcher!.start();
     }
   }
 
@@ -212,6 +254,10 @@ class _AppShellState extends State<AppShell> {
     _squallTimer?.cancel();
     _staleSosTimer?.cancel();
     _squallAlarm.dispose();
+    _nearbySightingsSub?.cancel();
+    if (widget.nearbyWatcher == null) {
+      _nearbyWatcher?.dispose();
+    }
     super.dispose();
   }
 
@@ -406,6 +452,69 @@ class _AppShellState extends State<AppShell> {
   /// reuses the existing State and the map camera survives.
   bool _ventureOpened = false;
 
+  void _openAtSeaCentred(double lat, double lon) {
+    setState(() {
+      _targetLocation = LatLng(lat, lon);
+      _ventureOpened = true;
+      _index = 1;
+    });
+  }
+
+  void _showNearbyDialog(NearbySos item) {
+    if (!mounted || _nearbyDialogOpen) return;
+    _nearbyDialogOpen = true;
+    final t = AppLocalizations.of(context);
+    final dist = _nearbyWatcher?.hasFix == true
+        ? NearbySos.distanceText(item.distanceKm, t)
+        : t.nearbyHelpDistanceUnknown;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 26),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                t.nearbyHelpTitle,
+                style: const TextStyle(
+                  color: Color(0xFFDC2626),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '${t.nearbyHelpAway(dist)}${item.etaAt != null ? ' - ${t.nearbyHelpEta('${item.etaAt!.toLocal().hour.toString().padLeft(2, '0')}:${item.etaAt!.toLocal().minute.toString().padLeft(2, '0')}')}' : ''}',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              unawaited(_nearbyWatcher?.silence());
+              Navigator.pop(ctx);
+            },
+            child: Text(t.nearbyHelpDismiss),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () {
+              unawaited(_nearbyWatcher?.silence());
+              Navigator.pop(ctx);
+              _openAtSeaCentred(item.centerLat, item.centerLon);
+            },
+            child: Text(t.nearbyHelpRespond),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _nearbyDialogOpen = false;
+    });
+  }
+
   Widget _buildVenture(double bottomInset) {
     return VenturePage(
       identity: widget.identity,
@@ -413,6 +522,8 @@ class _AppShellState extends State<AppShell> {
       feeds: widget.feeds,
       location: widget.location,
       bottomInset: bottomInset,
+      nearby: _nearbyWatcher,
+      targetLocation: _targetLocation,
     );
   }
 
@@ -471,10 +582,17 @@ class _AppShellState extends State<AppShell> {
           squall: _squall,
           squallAcknowledged: _squallAlarm.isAcknowledged(_squall.identity),
           onAcknowledgeSquall: _acknowledgeSquall,
+          nearby: _nearbyWatcher,
+          onOpenNearby: () => _select(1),
         ),
         // Only built once the user has actually opened Venture.
         _ventureOpened ? _buildVenture(inset) : const SizedBox.shrink(),
-        AdvisoriesPage(feeds: widget.feeds, bottomInset: inset),
+        AdvisoriesPage(
+          feeds: widget.feeds,
+          bottomInset: inset,
+          nearby: _nearbyWatcher,
+          onOpenNearby: () => _select(1),
+        ),
       ],
     );
 

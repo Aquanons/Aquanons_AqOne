@@ -15,10 +15,10 @@ import '../models/nearby_sos.dart';
 import '../models/sos_record.dart';
 import '../models/weather_snapshot.dart';
 import '../services/compass_service.dart';
-import '../services/eta_notifier.dart';
 import '../services/location_service.dart';
 import '../services/mbtiles_provider.dart';
 import '../services/nearby_alarm.dart';
+import '../services/nearby_sos_watcher.dart';
 import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/tile_cache.dart';
@@ -61,6 +61,8 @@ class VenturePage extends StatefulWidget {
     this.bottomInset = 0,
     this.sosAlarm,
     this.nearbyAlarm,
+    this.nearby,
+    this.targetLocation,
   });
 
   final VesselIdentity identity;
@@ -69,6 +71,8 @@ class VenturePage extends StatefulWidget {
   final LocationService location;
   final SosAlarm? sosAlarm;
   final NearbyAlarm? nearbyAlarm;
+  final NearbySosWatcher? nearby;
+  final LatLng? targetLocation;
 
   /// Space reserved for the shell's floating dock. The map stays full-bleed
   /// behind it; only the controls are lifted clear so they never get covered.
@@ -130,12 +134,8 @@ class _VenturePageState extends State<VenturePage> {
   SosRecord? _latestSos;
   bool _isSendingSos = false;
   late final SosAlarm _sosAlarm;
-  late final NearbyAlarm _nearbyAlarm;
 
   List<NearbySos> _nearby = const <NearbySos>[];
-  final Set<int> _announcedBroadcasts = <int>{};
-  bool _nearbyDialogOpen = false;
-  final RequestGuard _nearbyGuard = RequestGuard();
 
   bool _offlineCollapsed = false;
   bool _sosCollapsed = false;
@@ -153,7 +153,10 @@ class _VenturePageState extends State<VenturePage> {
   void initState() {
     super.initState();
     _sosAlarm = widget.sosAlarm ?? SosAlarm();
-    _nearbyAlarm = widget.nearbyAlarm ?? NearbyAlarm();
+    if (widget.nearby != null) {
+      _onNearbyWatcherChanged();
+      widget.nearby!.items.addListener(_onNearbyWatcherChanged);
+    }
     widget.location.warmUp();
     _sosSub = widget.sos.changes.listen((_) => _refreshSosStatus());
     _initTileProvider();
@@ -170,16 +173,43 @@ class _VenturePageState extends State<VenturePage> {
       _locate(initial: true);
       _loadBuoys();
       _loadHazards();
-      _loadNearby();
       _refreshSosStatus();
       _refreshSnapshotAges();
       _pollTimer = Timer.periodic(AqOneConfig.hazardPollInterval, (_) {
         _loadBuoys();
         _loadHazards();
-        _loadNearby();
         _refreshSnapshotAges();
       });
     });
+  }
+
+  void _onNearbyWatcherChanged() {
+    if (!mounted) return;
+    final items = widget.nearby?.items.value ?? const <NearbySos>[];
+    final fresh = items.take(4).toList();
+    final ids = fresh.map((n) => n.broadcastId).toSet();
+    setState(() {
+      _nearby = fresh;
+      if (ids.length != _seenBroadcastIds.length ||
+          !ids.containsAll(_seenBroadcastIds)) {
+        _seenBroadcastIds = ids;
+        _nearbyCollapsed = false;
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(VenturePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.nearby != oldWidget.nearby) {
+      oldWidget.nearby?.items.removeListener(_onNearbyWatcherChanged);
+      widget.nearby?.items.addListener(_onNearbyWatcherChanged);
+      _onNearbyWatcherChanged();
+    }
+    if (widget.targetLocation != null &&
+        widget.targetLocation != oldWidget.targetLocation) {
+      _mapController.move(widget.targetLocation!, 14);
+    }
   }
 
   @override
@@ -187,14 +217,15 @@ class _VenturePageState extends State<VenturePage> {
     // Polling must stop with the screen. Left running it drains battery and
     // keeps hitting the backend while the phone is in a pocket at sea.
     _pollTimer?.cancel();
-    _sosSub?.cancel();    // The magnetometer keeps the SoC awake while subscribed, so it must go
+    _sosSub?.cancel();
+    widget.nearby?.items.removeListener(_onNearbyWatcherChanged);
+    // The magnetometer keeps the SoC awake while subscribed, so it must go
     // down with the screen.
     _compassSub?.cancel();
     _tiles.dispose();
     unawaited(_compass.dispose());
     _mapController.dispose();
     unawaited(_sosAlarm.dispose());
-    unawaited(_nearbyAlarm.dispose());
     super.dispose();
   }
 
@@ -285,93 +316,6 @@ class _VenturePageState extends State<VenturePage> {
     }
   }
 
-  Future<void> _loadNearby() async {
-    final version = _nearbyGuard.begin();
-    final point = _userLocation;
-    final lat = point?.latitude ?? AqOneConfig.defaultMapLat;
-    final lon = point?.longitude ?? AqOneConfig.defaultMapLon;
-    final items = await widget.feeds.nearbySos(
-      lat: lat,
-      lon: lon,
-      vesselId: widget.identity.vesselId,
-    );
-    if (!mounted || !_nearbyGuard.isCurrent(version)) return;
-    final fresh = items.take(4).toList();
-    final ids = fresh.map((n) => n.broadcastId).toSet();
-    setState(() {
-      _nearby = fresh;
-      if (ids.length != _seenBroadcastIds.length ||
-          !ids.containsAll(_seenBroadcastIds)) {
-        _seenBroadcastIds = ids;
-        _nearbyCollapsed = false;
-      }
-    });
-    final unseen = fresh.where((n) => !_announcedBroadcasts.contains(n.broadcastId)).toList();
-    if (unseen.isNotEmpty) {
-      _announcedBroadcasts.addAll(unseen.map((n) => n.broadcastId));
-      unawaited(_nearbyAlarm.start());
-      final first = unseen.first;
-      final t = AppLocalizations.of(context);
-      final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(first.distanceKm, t);
-      unawaited(EtaNotifier.showNearbyHelp(
-        title: t.nearbyHelpNotifTitle,
-        body: t.nearbyHelpNotifBody(dist),
-        broadcastId: first.broadcastId,
-      ));
-      _showNearbyDialog(first);
-    }
-    if (fresh.isEmpty) {
-      unawaited(_nearbyAlarm.stop());
-    }
-  }
-
-  void _showNearbyDialog(NearbySos item) {
-    if (!mounted || _nearbyDialogOpen) return;
-    _nearbyDialogOpen = true;
-    final t = AppLocalizations.of(context);
-    final point = _userLocation;
-    final dist = point == null ? t.nearbyHelpDistanceUnknown : NearbySos.distanceText(item.distanceKm, t);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: <Widget>[
-            const Icon(Icons.warning_amber_rounded, color: _danger, size: 26),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                t.nearbyHelpTitle,
-                style: const TextStyle(color: _danger, fontWeight: FontWeight.w900, fontSize: 18),
-              ),
-            ),
-          ],
-        ),
-        content: Text('${t.nearbyHelpAway(dist)}${item.etaAt != null ? ' - ${t.nearbyHelpEta('${item.etaAt!.toLocal().hour.toString().padLeft(2, '0')}:${item.etaAt!.toLocal().minute.toString().padLeft(2, '0')}')}' : ''}'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              unawaited(_nearbyAlarm.stop());
-              Navigator.pop(ctx);
-            },
-            child: Text(t.nearbyHelpDismiss),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _danger),
-            onPressed: () {
-              unawaited(_nearbyAlarm.stop());
-              Navigator.pop(ctx);
-              _mapController.move(LatLng(item.centerLat, item.centerLon), 14);
-            },
-            child: Text(t.nearbyHelpRespond),
-          ),
-        ],
-      ),
-    ).then((_) {
-      _nearbyDialogOpen = false;
-    });
-  }
 
   Future<void> _locate({bool initial = false}) async {
     setState(() => _isLocating = true);
@@ -394,7 +338,6 @@ class _VenturePageState extends State<VenturePage> {
     final point = LatLng(fix.lat, fix.lon);
     setState(() => _userLocation = point);
     _mapController.move(point, AqOneConfig.locatedMapZoom);
-    unawaited(_loadNearby());
     await _loadWeather(fix.lat, fix.lon);
   }
 
@@ -710,7 +653,8 @@ class _VenturePageState extends State<VenturePage> {
       mapController: _mapController,
       options: MapOptions(
         // Camera-only default. Never submitted as the user's position.
-        initialCenter: _userLocation ??
+        initialCenter: widget.targetLocation ??
+            _userLocation ??
             const LatLng(AqOneConfig.defaultMapLat, AqOneConfig.defaultMapLon),
         initialZoom: 12.8,
         minZoom: 3,
@@ -861,9 +805,9 @@ class _VenturePageState extends State<VenturePage> {
           for (final item in shown)
             InkWell(
               onTap: () {
-                unawaited(_nearbyAlarm.stop());
+                widget.nearby?.silence();
+                widget.nearbyAlarm?.stop();
                 _mapController.move(LatLng(item.centerLat, item.centerLon), 14);
-                _showNearbyDialog(item);
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),

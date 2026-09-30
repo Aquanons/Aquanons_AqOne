@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/advisory.dart';
+import '../models/nearby_sos.dart';
+import '../services/nearby_sos_watcher.dart';
 import '../services/venture_feeds.dart';
 import 'widgets/advisory_card.dart';
+import 'widgets/nearby_help_banner.dart';
 
 /// Published advisories from the MDRRMO and LGU.
 ///
@@ -14,10 +17,14 @@ class AdvisoriesPage extends StatefulWidget {
     super.key,
     required this.feeds,
     this.bottomInset = 0,
+    this.nearby,
+    this.onOpenNearby,
   });
 
   final VentureFeeds feeds;
   final double bottomInset;
+  final NearbySosWatcher? nearby;
+  final VoidCallback? onOpenNearby;
 
   @override
   State<AdvisoriesPage> createState() => _AdvisoriesPageState();
@@ -79,6 +86,22 @@ class _AdvisoriesPageState extends State<AdvisoriesPage> {
     return ListView(
       padding: EdgeInsets.fromLTRB(20, 20, 20, 32 + widget.bottomInset),
       children: <Widget>[
+        if (widget.nearby != null) ...<Widget>[
+          ValueListenableBuilder<List<NearbySos>>(
+            valueListenable: widget.nearby!.items,
+            builder: (context, items, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                NearbyHelpBanner(
+                  items: items,
+                  hasFix: widget.nearby!.hasFix,
+                  onTap: widget.onOpenNearby ?? () {},
+                ),
+                if (items.isNotEmpty) const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ],
         Text(
           t.navAdvisories,
           style: TextStyle(
