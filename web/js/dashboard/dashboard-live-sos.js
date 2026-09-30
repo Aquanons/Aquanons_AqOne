@@ -197,7 +197,8 @@
       responderStatus: ev.responder_status || null,
       responderStatusLabel: ev.responder_status_label || null,
       responderNote: ev.responder_note || null,
-      fisherReply: ev.fisher_reply || null
+      fisherReply: ev.fisher_reply || null,
+      licenseType: ev.license_type || null
     };
     return alert;
   }
