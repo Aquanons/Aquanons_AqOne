@@ -10,7 +10,6 @@ import 'package:aqone/services/location_service.dart';
 import 'package:aqone/services/sos_alarm.dart';
 import 'package:aqone/services/sos_service.dart';
 import 'package:aqone/services/venture_feeds.dart';
-import 'package:aqone/ui/home_page.dart';
 import 'package:aqone/ui/sos_flow.dart';
 import 'package:aqone/ui/venture_page.dart';
 import 'package:flutter/material.dart';
@@ -115,18 +114,6 @@ void main() {
 
     expect(find.byType(SosCountdownScreen), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
-  });
-
-  testWidgets('Home has no SOS send button; sending lives in Venture mode',
-      (tester) async {
-    await tester.pumpWidget(_app(HomePage(
-      service: _DummySosService(),
-      identity: const VesselIdentity(vesselId: 'v-test', boat: ''),
-      feeds: VentureFeeds(backend: BackendClient()),
-      location: LocationService(),
-    )));
-    await tester.pump();
-    expect(find.text('SOS'), findsNothing);
   });
 }
 

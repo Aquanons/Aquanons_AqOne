@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Puts the MDRRMO's acknowledgement into the system notification shade.
@@ -19,6 +21,26 @@ class EtaNotifier {
   static bool _attempted = false;
   static bool _ready = false;
 
+  static final StreamController<int> _nearbyTaps =
+      StreamController<int>.broadcast();
+  static Stream<int> get nearbyTaps => _nearbyTaps.stream;
+
+  static String nearbyPayload(int id) => 'nearby:$id';
+
+  static int? broadcastIdFromPayload(String? payload) {
+    if (payload == null || !payload.startsWith('nearby:')) {
+      return null;
+    }
+    return int.tryParse(payload.substring('nearby:'.length));
+  }
+
+  static void handleNotificationPayload(String? payload) {
+    final id = broadcastIdFromPayload(payload);
+    if (id != null) {
+      _nearbyTaps.add(id);
+    }
+  }
+
   static Future<void> ensureInitialized() async {
     if (_attempted) {
       return;
@@ -28,11 +50,20 @@ class EtaNotifier {
       const settings = InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       );
-      await _plugin.initialize(settings);
+      await _plugin.initialize(
+        settings,
+        onDidReceiveNotificationResponse: (response) {
+          handleNotificationPayload(response.payload);
+        },
+      );
       await _plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        handleNotificationPayload(launchDetails?.notificationResponse?.payload);
+      }
       _ready = true;
     } catch (_) {
       _ready = false;
@@ -80,7 +111,13 @@ class EtaNotifier {
           priority: Priority.high,
         ),
       );
-      await _plugin.show(100000 + (broadcastId % 100000), title, body, details);
+      await _plugin.show(
+        100000 + (broadcastId % 100000),
+        title,
+        body,
+        details,
+        payload: nearbyPayload(broadcastId),
+      );
     } catch (_) {}
   }
 }

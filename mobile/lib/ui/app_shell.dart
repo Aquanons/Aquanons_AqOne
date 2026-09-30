@@ -137,6 +137,7 @@ class _AppShellState extends State<AppShell> {
 
   NearbySosWatcher? _nearbyWatcher;
   StreamSubscription<NearbySos>? _nearbySightingsSub;
+  StreamSubscription<int>? _nearbyTapSub;
   LatLng? _targetLocation;
   bool _nearbyDialogOpen = false;
 
@@ -174,6 +175,8 @@ class _AppShellState extends State<AppShell> {
           },
         );
     _nearbySightingsSub = _nearbyWatcher!.firstSightings.listen(_showNearbyDialog);
+    _nearbyTapSub = EtaNotifier.nearbyTaps.listen(_onNearbyNotificationTap);
+    unawaited(EtaNotifier.ensureInitialized());
     if (!AqOneConfig.pitchMode) {
       _loadSquall();
       _squallTimer = Timer.periodic(
@@ -255,6 +258,7 @@ class _AppShellState extends State<AppShell> {
     _staleSosTimer?.cancel();
     _squallAlarm.dispose();
     _nearbySightingsSub?.cancel();
+    _nearbyTapSub?.cancel();
     if (widget.nearbyWatcher == null) {
       _nearbyWatcher?.dispose();
     }
@@ -458,6 +462,19 @@ class _AppShellState extends State<AppShell> {
       _ventureOpened = true;
       _index = 1;
     });
+  }
+
+  void _onNearbyNotificationTap(int broadcastId) {
+    final items = _nearbyWatcher?.items.value ?? const <NearbySos>[];
+    final match = items.where((n) => n.broadcastId == broadcastId).firstOrNull;
+    if (match != null) {
+      _openAtSeaCentred(match.centerLat, match.centerLon);
+    } else {
+      setState(() {
+        _ventureOpened = true;
+        _index = 1;
+      });
+    }
   }
 
   void _showNearbyDialog(NearbySos item) {
