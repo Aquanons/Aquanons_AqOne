@@ -69,6 +69,10 @@ def test_register_upserts_into_vessels(monkeypatch):
                 'profile_updated_at': None,
             }
 
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
+
         def acquire(self):
             return self
 
@@ -109,6 +113,10 @@ def test_register_rejects_overwrite_of_non_blank_identity_without_auth(monkeypat
                     'license_number': 'NWB-2026-08412', 'phone': '+639171234567',
                 }
             return None
+
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
 
         def acquire(self):
             return self
@@ -152,6 +160,10 @@ def test_register_allows_overwrite_with_vessel_auth(monkeypatch):
                 'license_number': args[4], 'phone': args[5],
                 'profile_updated_at': None,
             }
+
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
 
         def acquire(self):
             return self
@@ -199,6 +211,10 @@ def test_register_allows_filling_blanks_without_auth(monkeypatch):
                 'profile_updated_at': None,
             }
 
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
+
         def acquire(self):
             return self
 
@@ -234,6 +250,10 @@ def test_active_feed_carries_the_vessel_profile(monkeypatch):
             assert 'LEFT JOIN vessels' in query, 'active_sos must join the vessel profile'
             assert 'skipper_name' in query, 'active_sos must select the vessel profile'
             return self.events
+
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
 
         def acquire(self):
             return self
@@ -294,6 +314,10 @@ def test_register_normalises_unknown_license_type_to_none(monkeypatch):
                 'license_number': args[4], 'phone': args[5],
                 'profile_updated_at': None,
             }
+
+        async def execute(self, query, *args):
+            # touch_vessel stamps vessels.last_seen_at after a write.
+            return 'UPDATE 1'
 
         def acquire(self):
             return self

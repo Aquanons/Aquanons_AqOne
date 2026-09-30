@@ -1,16 +1,19 @@
 # 73 - SOS Nearby Broadcast Spec (dashboard ACK triggers nearby help alert)
 
-**Status:** APPROVED - Revision 1 (as built, gaps G1 to G11 open)
+**Status:** APPROVED - Revision 2 (Phase 1b designed in Section 14; G1 and G5 wait for Len)
 **Owner:** Lenard (backend), Arnold (dashboard), Jade (mobile), Daniel (firmware/gateway)
 **Created:** 2026-09-30
-**Updated:** 2026-09-30T23:15:00+08:00
+**Updated:** 2026-10-01T00:30:00+08:00
 **Related:** `docs/74_SOS_NEARBY_BROADCAST_IMPLEMENTATION_PLAN.md`, `docs/13_RESPONDER_LOOP.md`, `docs/06_DELIVERY_STATES.md`, `docs/05_PUBLIC_API.md`, `docs/04_INGEST_API.md`, `docs/03_PHONE_BUOY_WIFI.md`, `docs/02_LOAM_PACKET_SPEC.md`, `docs/73_MOCKUP_venture-nearby-container.html`
 
-Revision: 1
+Revision: 2
 Revision 0 (DRAFT, 2026-09-30) was implemented and merged before approval (`fd029fb`, PR #86) and was live on Render at `3f07b3b`.
 Len's chat approval, 2026-09-30T23:10:00+08:00: approve the as-built Phase 1 and record its gaps.
 Revision 1 records the as-built answers to the Phase 0 questions as decisions (Section 12) and lists every difference from Revision 0 as a gap (Section 13).
 The gaps are work items in plan 74 Phase 1b; they are not approved behaviour.
+Revision 2, Len's instruction 2026-10-01T00:00:00+08:00 to fix the issues found: Section 14 sets the Phase 1b behaviour for G2 to G4 and G6 to G12, with acceptance tests written before the code.
+G12 was found by those tests.
+G1 (access rule of the nearby feed) and G5 (rate limit) are not in Revision 2 and wait for Len.
 
 ## 1. Purpose
 
@@ -201,3 +204,73 @@ Each gap is a plan 74 Phase 1b item.
 | G9 | `NearbySos.distanceText` returns hard-coded English (`2.3 km away`) that is passed into `nearbyHelpAway` (`{distance} away`), so English shows `2.3 km away away` and Aklanon mixes English into the line. The notification body also says `MDRRMO`, which `docs/64` P6 keeps off the fisher's core path. | Jade |
 | G10 | Tapping the `nearby_help` notification does not open the Venture map at the broadcast. | Jade |
 | G11 | The drawer shows `ACTIVE` or nothing; an expired broadcast is indistinguishable from no broadcast. | Arnold |
+| G12 | Found 2026-09-30 by the Phase 1b acceptance tests: a failing broadcast statement aborts the Postgres transaction of the acknowledge or resolve it runs in; the exception is swallowed, the endpoint answers 200, and Postgres rolls the acknowledge or resolve back. The dispatcher sees "Acknowledged" or "Resolved" while nothing was saved. | Lenard |
+
+## 14. Phase 1b behaviour (Revision 2)
+
+Designed by the spec author on Len's instruction of 2026-10-01; each rule below has an acceptance test named in plan 74 Phase 1b.
+Anything this section does not state stays as Sections 4 to 10 describe.
+
+### 14.1 Backend
+
+- **Cancel (G4).** `POST /api/sos/{id}/acknowledge` with `broadcast_enabled: false` sets the incident's `active` broadcast to `cancelled`, stamps `expired_at`, audits `sos.broadcast_cancel`, and returns the row as `broadcast`.
+  It does not change the ETA, note or acknowledgement.
+  With no broadcast it creates nothing and returns `broadcast: null`.
+  A later acknowledge with `broadcast_enabled: true` makes the same row `active` again.
+- **States.** `sos_broadcasts.state` is `active`, `expired` (ended by resolve) or `cancelled` (ended by the dispatcher).
+  `GET /api/sos/active` reports each incident's `broadcast_state` as its broadcast's state, or `off` when it has none.
+- **Reopen.** Reopening an incident revives an `expired` broadcast and never a `cancelled` one.
+- **Audit (G7).** `sos.broadcast` on the first create only; `sos.broadcast_update` on every later acknowledge that keeps it on; `sos.broadcast_cancel`, `sos.broadcast_expire` and `sos.broadcast_reactivate` for the three transitions.
+- **Radius (G8).** `broadcast_radius_km` accepts only 5, 10 or 20; anything else is `422` before any write.
+- **Failures (G6, G12).** Every broadcast statement runs in its own savepoint (a nested `conn.transaction()`), so a broadcast failure can never roll back the acknowledge, resolve or reopen it rides on.
+  The failure is logged at `ERROR` with its traceback through the module's `logging.getLogger(__name__)`.
+  The two feeds that read `sos_broadcasts` (`GET /api/sos/active` and `GET /api/public/sos-nearby`) log the same way and still answer `200`, with `off` and `[]` respectively.
+
+### 14.2 Dashboard (G4, G11)
+
+The drawer's broadcast button and state line (`sos-btn-broadcast`, `sos-broadcast-msg`) follow the incident's `broadcast_state`, and opening or refreshing the drawer must not blank the state line.
+
+| Incident | Button | Enabled | State line | Click sends |
+|---|---|---|---|---|
+| Not acknowledged | `Broadcast to Nearby Vessels` | No | empty | nothing |
+| Acknowledged, `off` | `Alert Nearby Vessels` | Yes | empty | acknowledge with `broadcast_enabled: true`, `broadcast_radius_km: 10`, the current `responder_status` and `expected_version`, no `eta_minutes` |
+| `active` | `Stop Nearby Alert` | Yes | `Broadcast ACTIVE - nearby boats can see this call.` | acknowledge with `broadcast_enabled: false`, the current `responder_status` and `expected_version`, no `eta_minutes` |
+| `cancelled` | `Alert Nearby Vessels` | Yes | `Broadcast CANCELLED - nearby boats no longer see this call.` | as for `off` |
+
+A failed request says `Broadcast not changed - try again.` and restores the button for the current state.
+
+### 14.3 Handset
+
+- **Seen store (G2).** `SeenBroadcastStore` (`mobile/lib/data/seen_broadcast_store.dart`) wraps `AppDatabase`; `Future<bool> markSeen(int broadcastId)` is `true` only the first time this phone ever sees that id.
+  Its table `seen_broadcasts` arrives with database version 16, in both `onCreate` and `onUpgrade`.
+- **App-wide watcher (G2, G3).** `NearbySosWatcher` (`mobile/lib/services/nearby_sos_watcher.dart`) replaces the polling inside `venture_page.dart`:
+
+  ```dart
+  NearbySosWatcher({
+    required Future<List<NearbySos>> Function(double lat, double lon) fetch,
+    required Future<Fix?> Function() position,
+    required SeenBroadcastStore seen,
+    required NearbyAlarm alarm,
+    required Future<void> Function(NearbySos item) notify,
+  });
+  ValueListenable<List<NearbySos>> get items;
+  bool get hasFix;
+  Stream<NearbySos> get firstSightings;
+  Future<void> poll();
+  void start();           // polls now, then every AqOneConfig.hazardPollInterval
+  Future<void> silence(); // stops the alarm, keeps the list
+  void dispose();
+  ```
+
+  A poll asks around the phone's fix, or around `AqOneConfig.defaultMapLat`, `defaultMapLon` with `hasFix` false, publishes the list, and for each id that `markSeen` reports new: starts the alarm once, calls `notify`, and emits it on `firstSightings`.
+  An empty list stops the alarm.
+  The app shell creates, starts and disposes the watcher, so nearby calls ring whether or not At sea has been opened (At sea is built lazily, see `_ventureOpened` in `app_shell.dart`).
+  `notify` is `EtaNotifier.showNearbyHelp` with the localized title and body, and `fetch` is `VentureFeeds.nearbySos` with the phone's `vessel_id`.
+  The shell shows the first-sighting dialog from `firstSightings` on whichever tab is open; Respond switches to At sea and centres the map on the broadcast; Dismiss calls `silence()`.
+  At sea draws its container and markers from the watcher and no longer polls on its own.
+- **Banner (G3).** `NearbyHelpBanner({required List<NearbySos> items, required bool hasFix, required VoidCallback onTap})` (`mobile/lib/ui/widgets/nearby_help_banner.dart`) shows the nearest call as `Fisher needs help - <distance> away`, `distance unknown` without a fix, and `+N more` when there are more; it renders nothing for an empty list.
+  `HomePage` and `AdvisoriesPage` take `NearbySosWatcher? nearby` and `VoidCallback? onOpenNearby` and show the banner at the top; the shell passes `onOpenNearby` as "select At sea".
+- **Wording (G9).** `NearbySos.distanceText(double? km, AppLocalizations t)` returns the localized distance without "away" (`450 m`, `2.3 km`, or `nearbyHelpDistanceUnknown`); callers wrap it in `nearbyHelpAway`.
+  `nearbyHelpNotifTitle` and `nearbyHelpNotifBody` say "rescue centre" (the `docs/64` placeholder term) and never "MDRRMO", in `en`, `fil` and `akl`.
+- **Notification tap (G10).** `EtaNotifier.nearbyPayload(int id)` is `nearby:<id>`; `broadcastIdFromPayload(String?)` parses it back or returns `null`; `handleNotificationPayload(String?)` publishes a parsed id on the broadcast stream `nearbyTaps`.
+  `showNearbyHelp` sets the payload; the plugin's `onDidReceiveNotificationResponse` and, for a tap that starts the app, `getNotificationAppLaunchDetails` call `handleNotificationPayload`; the shell opens At sea centred on that broadcast.

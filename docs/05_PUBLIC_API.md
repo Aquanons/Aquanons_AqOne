@@ -248,6 +248,7 @@ display provenance (e.g. DEMO vs LIVE badges) from `is_synthetic` rather than
 assuming every event returned by `/api/sos/active` is live, while keeping operational
 acknowledgement and resolution actions available against real event IDs.
 **Added 2026-09-30 (`docs/73`):** each event carries `broadcast_state`, `active` while the incident has an active nearby broadcast and `off` otherwise.
+**Approved 2026-10-01, not built yet (`docs/73` Section 14):** `broadcast_state` becomes the broadcast's own state (`active`, `cancelled` or `expired`) or `off`, and a database error in this lookup is logged, not hidden.
 
 ### `GET /api/sos/recent` - resolved-incident history (dashboard panel)
 
@@ -350,6 +351,13 @@ When enabled, and the incident has a position and is not synthetic, it creates o
 
 `resolve` expires the broadcast and `reopen` reactivates it.
 Sending `broadcast_enabled: false` does not expire an existing broadcast (`docs/73` G4).
+
+**Approved 2026-10-01, not built yet (`docs/73` Section 14.1):**
+
+- `broadcast_radius_km` accepts only 5, 10 or 20; anything else is `422`.
+- `broadcast_enabled: false` cancels an active broadcast (state `cancelled`, audited `sos.broadcast_cancel`) and returns it; with no broadcast it returns `broadcast: null`.
+- `reopen` revives an `expired` broadcast, never a `cancelled` one.
+- A broadcast failure never rolls back or fails the acknowledge, resolve or reopen; it is logged.
 
 ### `GET /api/v1/sos/stream` — SSE live feed
 
@@ -587,7 +595,7 @@ Response `200`, nearest first, at most 50 broadcasts considered:
 - No owner, phone, licence, shore contact, note or boat field is returned.
 - Only broadcasts in state `active` on an unresolved, non-synthetic incident appear.
 - `distance_km` is measured from the caller's `lat`, `lon`.
-- A database error returns `{"broadcasts": []}` rather than an error status (`docs/73` G6).
+- A database error returns `{"broadcasts": []}` rather than an error status (`docs/73` G6); from Phase 1b it is also logged at `ERROR`.
 
 ## Official advisories — **implemented**
 

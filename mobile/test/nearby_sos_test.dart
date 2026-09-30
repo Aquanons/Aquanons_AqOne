@@ -1,6 +1,8 @@
+import 'package:aqone/l10n/app_localizations.dart';
 import 'package:aqone/models/nearby_sos.dart';
 import 'package:aqone/services/nearby_alarm.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -32,10 +34,26 @@ void main() {
     expect(items.first.responderStatus, 2);
   });
 
-  test('distance text uses meters below 1 km and unknown when null', () {
-    expect(NearbySos.distanceText(0.45), '450 m away');
-    expect(NearbySos.distanceText(2.34), '2.3 km away');
-    expect(NearbySos.distanceText(null), 'distance unknown');
+  // docs/73 Rev 2 G9: the distance is localized and "away" appears once.
+  test('distance text is localized, metres below 1 km, and says away once', () async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    expect(NearbySos.distanceText(0.45, en), '450 m');
+    expect(NearbySos.distanceText(2.34, en), '2.3 km');
+    expect(NearbySos.distanceText(null, en), en.nearbyHelpDistanceUnknown);
+    expect(en.nearbyHelpAway(NearbySos.distanceText(2.34, en)), '2.3 km away');
+
+    final akl = await AppLocalizations.delegate.load(const Locale('akl'));
+    expect(akl.nearbyHelpAway(NearbySos.distanceText(2.34, akl)), isNot(contains('away')));
+    expect(NearbySos.distanceText(null, akl), akl.nearbyHelpDistanceUnknown);
+  });
+
+  // docs/64 P6: the fisher's core path never names the MDRRMO.
+  test('the nearby-help notification never says MDRRMO', () async {
+    for (final code in <String>['en', 'fil', 'akl']) {
+      final t = await AppLocalizations.delegate.load(Locale(code));
+      expect(t.nearbyHelpNotifBody('2.3 km'), isNot(contains('MDRRMO')), reason: code);
+      expect(t.nearbyHelpNotifTitle, isNot(contains('MDRRMO')), reason: code);
+    }
   });
 
   test('nearby alarm uses broadcastalarm.mp3 with alarm usage', () {
