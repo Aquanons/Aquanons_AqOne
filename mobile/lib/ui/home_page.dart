@@ -20,12 +20,9 @@ import '../models/sos_record.dart';
 import '../models/squall_watch.dart';
 import '../models/weather_snapshot.dart';
 import '../services/location_service.dart';
-import '../services/sos_alarm.dart';
 import '../services/sos_service.dart';
 import '../services/venture_feeds.dart';
 
-import 'sos_flow.dart';
-import 'widgets/action_pill.dart';
 import 'widgets/advisory_card.dart';
 import 'widgets/buoy_status_card.dart';
 import 'widgets/delivery_state_tile.dart';
@@ -47,14 +44,12 @@ class HomePage extends StatefulWidget {
     this.squall = SquallWatch.unavailable,
     this.squallAcknowledged = false,
     this.onAcknowledgeSquall,
-    this.sosAlarm,
   });
 
   final SosService service;
   final VesselIdentity identity;
   final VentureFeeds feeds;
   final LocationService location;
-  final SosAlarm? sosAlarm;
 
   /// Space reserved for the shell's floating dock, so the last card is not
   /// hidden underneath it.
@@ -104,17 +99,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// Retrieval timestamp for the forecast on screen.
   DateTime? _forecastFetchedAt;
 
-  bool _isSendingSos = false;
-  late final SosAlarm _sosAlarm;
-  static const Duration _sosCountdown = Duration(seconds: 5);
-
   @visibleForTesting
   ForecastOutlook? get forecastOutlook => _forecastOutlook;
 
   @override
   void initState() {
     super.initState();
-    _sosAlarm = widget.sosAlarm ?? SosAlarm();
     WidgetsBinding.instance.addObserver(this);
     _changes = widget.service.changes.listen((_) => _loadRecords());
     widget.service.start();
@@ -164,7 +154,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _seaTimer?.cancel();
     _forecastTimer?.cancel();
     _changes?.cancel();
-    unawaited(_sosAlarm.dispose());
     super.dispose();
   }
 
@@ -296,28 +285,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         : latestSos;
     return Scaffold(
       backgroundColor: palette.canvas,
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: widget.bottomInset),
-        child: ActionPill(
-          icon: Icons.warning_rounded,
-          label: 'SOS',
-          color: const Color(0xFFDC2626),
-          isDark: Theme.of(context).brightness == Brightness.dark,
-          onTap: _isSendingSos
-              ? null
-              : () => handleSosTap(
-                    context: context,
-                    service: widget.service,
-                    alarm: _sosAlarm,
-                    countdown: _sosCountdown,
-                    isSending: _isSendingSos,
-                    setSending: (value) {
-                      if (mounted) setState(() => _isSendingSos = value);
-                    },
-                    onRaised: (_) => _loadRecords(),
-                  ),
-        ),
-      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

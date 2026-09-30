@@ -329,7 +329,7 @@ class _VenturePageState extends State<VenturePage> {
             ),
           ],
         ),
-        content: Text('${t.nearbyHelpAway(dist)}${item.etaAt != null ? ' - ${t.nearbyHelpEta(item.etaAt!.toLocal().hour.toString().padLeft(2, '0') + ':' + item.etaAt!.toLocal().minute.toString().padLeft(2, '0'))}' : ''}'),
+        content: Text('${t.nearbyHelpAway(dist)}${item.etaAt != null ? ' - ${t.nearbyHelpEta('${item.etaAt!.toLocal().hour.toString().padLeft(2, '0')}:${item.etaAt!.toLocal().minute.toString().padLeft(2, '0')}')}' : ''}'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -855,7 +855,7 @@ class _VenturePageState extends State<VenturePage> {
                           ),
                           if (item.etaAt != null)
                             Text(
-                              t.nearbyHelpEta(item.etaAt!.toLocal().hour.toString().padLeft(2, '0') + ':' + item.etaAt!.toLocal().minute.toString().padLeft(2, '0')),
+                              t.nearbyHelpEta('${item.etaAt!.toLocal().hour.toString().padLeft(2, '0')}:${item.etaAt!.toLocal().minute.toString().padLeft(2, '0')}'),
                               style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
                             ),
                         ],
