@@ -93,7 +93,8 @@ static const char* BACKEND_HOST = "https://aqone-backend.onrender.com";
 
 // ===========================================================================
 
-bool   uplinkUp = false;
+bool          uplinkWasUp = false;   // link state uplinkService() last saw
+unsigned long lastWifiTry = 0;
 // Last HTTP status from the downlink poll. 0 = not polled yet. Surfaced on
 // the OLED so a board that cannot read acknowledgements says so on its face,
 // instead of looking identical to one with nothing to report.
@@ -106,33 +107,73 @@ int    lastChatId = 0;      // since_id cursor into GET /api/mesh/chat
 // a queued SOS waits behind it.
 bool   chatPrimed = false;
 
-void setupWiFi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(UPLINK_SSID, UPLINK_PASS);
-  Serial.print("[wifi] uplink");
-  for (int i = 0; i < 30 && WiFi.status() != WL_CONNECTED; i++) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
+bool online() { return WiFi.status() == WL_CONNECTED; }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    uplinkUp = true;
+// Acts on the CHANGE of link state, so the clock is synced on every connect
+// and not only on one made during the boot wait. HTTPS verifies the backend's
+// certificate, which needs a valid clock: a board that joined WiFi late was
+// online and still failed every request.
+void uplinkService() {
+  bool up = online();
+  unsigned long now = millis();
+
+  if (up && !uplinkWasUp) {
     Serial.printf("[wifi] uplink ok  ip=%s\n", WiFi.localIP().toString().c_str());
     // UTC, no offset. This board's clock is the whole mesh's clock: every
     // frame it sends carries `now`, and that is how buoys with no internet
     // learn what time it is.
     configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  } else {
-    // Not fatal. LoRa still runs and frames are still received - they simply
-    // are not acknowledged, so the buoys keep them queued and keep retrying,
-    // which is exactly the right behaviour when the gateway is deaf to the
-    // internet.
-    Serial.println("[wifi] no uplink - mesh traffic will be held");
+  } else if (!up && uplinkWasUp) {
+    Serial.println("[wifi] uplink lost - mesh traffic will be held");
+  }
+  uplinkWasUp = up;
+
+  if (!up && now - lastWifiTry > 30000) {
+    lastWifiTry = now;
+    // The status is the only clue to WHY: 1 means the network name was not
+    // seen (wrong name, router off, or a 5 GHz-only network), 4 or 6 with the
+    // network in range usually means a wrong password.
+    Serial.printf("[wifi] still no uplink to \"%s\" (status %d) - retrying\n",
+                  UPLINK_SSID, (int)WiFi.status());
+    // begin() is refused while the previous attempt is still running.
+    WiFi.disconnect();
+    WiFi.begin(UPLINK_SSID, UPLINK_PASS);
   }
 }
 
-bool online() { return uplinkUp && WiFi.status() == WL_CONNECTED; }
+void setupWiFi() {
+  // A board flashed with the example values looks exactly like one whose
+  // router is switched off: the radio leg works and nothing reaches the
+  // backend. Named here because that cost a bench session to find.
+  if (strcmp(UPLINK_SSID, "YOUR_WIFI_SSID") == 0) {
+    Serial.println("[wifi] UPLINK_SSID in AqOneSecrets.h is still the example "
+                   "value - this board CANNOT join WiFi. Set it and reflash.");
+  }
+  if (strcmp(GATEWAY_API_KEY, "YOUR_BACKEND_GATEWAY_API_KEY") == 0) {
+    Serial.println("[ack] GATEWAY_API_KEY in AqOneSecrets.h is still the example "
+                   "value - the dispatcher's ETA CANNOT reach the boats. Set it "
+                   "and reflash.");
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(UPLINK_SSID, UPLINK_PASS);
+  lastWifiTry = millis();
+  Serial.print("[wifi] uplink");
+  for (int i = 0; i < 30 && !online(); i++) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  uplinkService();
+  if (!online()) {
+    // Not fatal. LoRa still runs and frames are still received - they simply
+    // are not acknowledged, so the buoys keep them queued and keep retrying,
+    // which is exactly the right behaviour when the gateway is deaf to the
+    // internet. uplinkService() keeps trying from loop().
+    Serial.println("[wifi] no uplink - mesh traffic will be held");
+  }
+}
 
 // Trusted Root CA certificates for aqone-backend.onrender.com
 // 1. GTS Root R4 (Expires: 2036-06-22) - Primary for Google Trust Services WE1 (Render)
@@ -1035,9 +1076,5 @@ void loop() {
     pollWarnings();
   }
 
-  // Reconnect the uplink if it drops.
-  if (WiFi.status() != WL_CONNECTED && now % 30000 < 50) {
-    WiFi.begin(UPLINK_SSID, UPLINK_PASS);
-  }
-  if (WiFi.status() == WL_CONNECTED) uplinkUp = true;
+  uplinkService();
 }
