@@ -12,7 +12,7 @@ Feature spec and revision: Len's chat request, 2026-09-26: "Need to improve akla
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/22_LOCALIZATION_PLAN.md` (amended in Phase 1)
 Len's chat approval, 2026-09-26T13:45:00+08:00, of Revision 1: "D1 yes update that doc and move that task here, Im an aklanon myself ill proofread it after your done, D2 Yes the app is tailored for the fishermen out of the box, D3 Load tagalog if you dont have proper aklanon term, D4 Yes, return now means \"ULI EON KAMO\" in aklanon, D5 yes keep the compass, D6 sure."
 Revision 2 records those answers in the decision table, names Len as the Aklanon proofreader (AKL-08), and sets the execution mode to `auto` because Len proofreads after the whole plan is done; nothing else changed.
-Target branch: `feat/aklanon-first` in its own worktree `../AqOne-aklanon` with its own `HANDOFF.md` (`docs/58`); each verified phase merged to `master` and pushed (Len: push verified work straight to `master`)
+Target branch: `feat/aklanon-first` in its own worktree `../AqOne-aklanon` with its own `HANDOFF.md` (`docs/58`); each verified phase merged through `staging` (amended 2026-10-01: no direct pushes to `master`; see the checklist in `docs/75_STAGING_AND_MERGE_RULES_DECISION.md`)
 Roles: Claude writes each phase's red tests first, implements, and reruns the gate; Len proofreads every Aklanon string once the plan is done.
 
 The default rule would give `hard-stop` (product code, more than 3 phases); Len's approval asks for the whole plan before his proofread, so it runs `auto` and still stops on any failed gate.

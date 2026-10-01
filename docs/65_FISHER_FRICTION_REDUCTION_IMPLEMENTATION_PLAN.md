@@ -13,7 +13,7 @@ Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `doc
 Len's chat approval, 2026-09-25T17:00:00+08:00: recommendations accepted for D2, D3, D5 and D6; the team picks the terms itself (D1); joining the pod Wi-Fi happens inside the app (D4); the field session with fishermen and the MDRRMO is after the RSTW pitch, date to be set by Len.
 Len, 2026-09-25T23:40:00+08:00: replace the four At sea top banners with one summary card (spec 64 Section 2.6, FFR-14, D7); added as Phase 4b so no later phase number changes.
 Spec 64 Revision 5, Len 2026-09-30T23:10:00+08:00: the dock has three items and Profile opens from the Home avatar (D9, FFR-08 amended), which supersedes the Phase 3 dock task below; `546a38c` removed the Home SOS button, a regression against FFR-07 that is fixed ahead of Phase 4 (D10, spec 64 Section 3.2).
-Target branch: `ux/fisher-friction` from `master`, one commit per phase (Len may push phases straight to `master`)
+Target branch: `ux/fisher-friction` from `master`, one commit per phase (amended 2026-10-01: no direct pushes to `master`; phases reach `master` through `staging` and the checklist in `docs/75_STAGING_AND_MERGE_RULES_DECISION.md`)
 Implementer: GPT 5.6 Luna in worktree `../AqOne-fisher-ux` on `ux/fisher-friction`, briefed per phase (archived briefs: `docs/archive/history/HANDOFF-luna-phase-1.md`, `HANDOFF-luna-countdown-freeze.md`, `HANDOFF-luna-phase-3.md`) (Len, 2026-09-25T22:56:00+08:00); reviewer: Claude Code.
 
 Success condition: the five jobs in spec 64 Section 1 meet their targets in the field session (Phase 0b).

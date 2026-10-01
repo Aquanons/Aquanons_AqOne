@@ -49,6 +49,31 @@ Multiple plans may be active at once only when their path ownership is disjoint 
 Update the register when work starts, ownership or state changes, a phase gate passes or blocks, or work completes.
 Record observed completion in the plan and relevant evidence document; the register summarizes that evidence and does not replace it.
 
+## Merging to master
+
+The full rule and checklist are in [`docs/75_STAGING_AND_MERGE_RULES_DECISION.md`](docs/75_STAGING_AND_MERGE_RULES_DECISION.md).
+`master` is production: every merge deploys to Render and runs the migrations on the live database.
+Nobody pushes to `master` directly, and this replaces the earlier "push verified work straight to `master`" practice.
+Before starting any fix, check the open pull requests; if someone already has the problem, do not start a second fix.
+Branch from `staging` and push the branch at once; the person opens a draft pull request into `staging` as the visible claim.
+`master` changes only through a release pull request from `staging`, after a person who is not the author has tested on real devices and ticked the checklist.
+AI agents never merge into or push to `staging` or `master`, and never tick a physical-test box.
+A pull request is never AI generated: do not open one, and do not write, draft, rewrite, or polish a pull request title or description, even when asked.
+The person opens it and writes it in the format in [`docs/76_PULL_REQUEST_WRITING_GUIDE.md`](docs/76_PULL_REQUEST_WRITING_GUIDE.md).
+If asked to write one, decline, point to that guide, and offer to explain the code or quiz the person instead.
+You may tell the person which statements in their own draft do not match the diff; they fix the wording themselves.
+An item recorded as "NOT VERIFIED - no device" blocks the release until a person verifies it.
+
+Before you push a change for review or mark a pull request ready, run the understanding check in Section 4A of that document with the person you are working for.
+Ask at least three questions about the actual diff: what it does and why, where it sits in the SOS path and what depends on it and could break, and how it is tested on a real device and undone.
+If an answer shows a gap in how the system works, not only in the change, say so and point the person to the matching document in Section 4B.
+Wait for the person's answers in their own words, and do not give the answer first.
+Compare each answer with the code; if one is wrong or vague, explain that part and ask a new question about it.
+Do not push for review until the answers are right; the person then writes the pull request description themselves.
+Pushing a draft branch to claim the work does not need the check.
+Len verifies his own pull requests with an agent: when working for Len, run the same check on him, then compare the description he wrote with the diff and tell him every statement that does not match.
+Hold him to the same standard as everyone else, and never write the description for him.
+
 ## Skill routing
 
 Repository skills live in `.agents/skills/`.

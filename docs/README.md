@@ -12,6 +12,8 @@ page for source precedence, current work ownership, naming, status, and authorin
 |---|---|
 | Current product priorities | [`../README.md`](../README.md) |
 | Current work, owners, agents, worktrees, and next actions | [Current Register](#current-register) |
+| Rules and checklist for merging to `master` | [`75_STAGING_AND_MERGE_RULES_DECISION.md`](75_STAGING_AND_MERGE_RULES_DECISION.md) |
+| How to write a pull request (format and example) | [`76_PULL_REQUEST_WRITING_GUIDE.md`](76_PULL_REQUEST_WRITING_GUIDE.md) |
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) |
 | Current hybrid transport decision | [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md) |
@@ -101,10 +103,11 @@ Never record secret values.
 This is the committed source of truth for who owns current work and what each workstream needs next.
 Plan documents remain the source of detailed requirements and acceptance criteria; `docs/08_DEMO_AND_STATUS.md` remains the evidence ledger.
 
-Last checked: 2026-10-01 07:30 +08:00.
+Last checked: 2026-10-01 07:30 +08:00; the staging and merge rules row was added later on 2026-10-01.
 
 | Workstream and approved source | Current state and completed work | Human owner, active agent, workspace, and owned paths | Next action and gate |
 |---|---|---|---|
+| Staging branch and merge-to-master rules, decision [`75`](75_STAGING_AND_MERGE_RULES_DECISION.md) | **IN PROGRESS**. Requested by Len on 2026-10-01 after three people fixed the logout bug in parallel and a feature push broke the LoRa path unnoticed. The eleven rules, the release checklist, the pull request guide [`76_PULL_REQUEST_WRITING_GUIDE.md`](76_PULL_REQUEST_WRITING_GUIDE.md) and the pull request template are written; nothing is enforced on GitHub yet and no `staging` branch or staging environment exists. | Len owns the decision and the setup. Written by Claude Code in `../AqOne-merge-rules` (`docs/staging-merge-rules`). Owned paths: `docs/75_*`, `docs/76_*`, `.github/pull_request_template.md`, and the Merging to master sections of `AGENTS.md` and `CLAUDE.md`. | Len reads decision 75 and guide 76, the team reads both and signs Section 13 of 75, and Len completes Section 9: create `staging` once `master` is healthy, protect both branches, and choose the staging environment. |
 | 2026-09-30 reconciliation: two regressions merged in PR #86 | **COMPLETE**, merged to `master` 2026-10-01 after review. (1) `e32c085` reverted; vessel-profile 409 guard restored while keeping `touch_vessel` (T1); stale profile push surfaces pairing prompt SnackBar on handset (T5). (2) Home SOS button restored with `home_sos_restore_test.dart` (T4). All gates green. | Len owns both decisions. Implemented 2026-10-01 by Gemini on branch `fix/reconcile-2026-09-30` (main worktree), brief [`reconciliation/HANDOFF-gemini-2026-09-30.md`](reconciliation/HANDOFF-gemini-2026-09-30.md); reviewer Claude Code. Owned paths: `backend/app/api/vessel_profile.py`, `mobile/lib/ui/home_page.dart`, `mobile/lib/ui/profile_page.dart`, `mobile/lib/services/backend_client.dart`, `mobile/lib/l10n/`. | None; Jade (handset owner) should read the restored Home SOS and the pairing prompt. |
 | [Plan 74: SOS nearby broadcast](74_SOS_NEARBY_BROADCAST_IMPLEMENTATION_PLAN.md), Rev 2, with [spec 73](73_SOS_NEARBY_BROADCAST_SPEC.md) Rev 2 | **PHASE 1b MERGED** to `master` 2026-10-01 after review (G10 device check not verified). Tasks T2, T3, T6, T7, T8 implemented: backend savepoints, error logging, cancel, audit, radius validation, dashboard cancel/active states, localized distance and app-wide watcher/banner/payload routing. All Phase 1b tests passing. | Len owns approval, G1 and G5. Implemented by Gemini on `fix/reconcile-2026-09-30`, brief tasks T2, T3 and T6 to T9; reviewer Claude Code. Owned paths: `backend/app/api/sos.py`, `backend/app/api/public.py`, `web/js/dashboard/dashboard-incidents.js`, `mobile/lib/ui/venture_page.dart`, `mobile/lib/ui/app_shell.dart`, `mobile/lib/ui/advisories_page.dart`, `mobile/lib/ui/widgets/nearby_help_banner.dart`, `mobile/lib/models/nearby_sos.dart`, `mobile/lib/services/`, `mobile/lib/data/`. Code owners Lenard, Arnold and Jade review the merged result. | Len decides G1 (access rule of `GET /api/public/sos-nearby`); then Phase 4 on Render with two Android phones, evidence to `docs/08`. |
 | [Plan 70: Aklanon first](70_AKLANON_FIRST_IMPLEMENTATION_PLAN.md), Rev 2 | **CODE MERGED** to `master` on 2026-09-26 (Phases 1-5, `6aa01d5` to `da9e6ab`, merge `8236351`); `flutter analyze` clean, `flutter test` 393 passed on the merged code. Open: the emulator walkthrough (the emulator was stopped for low memory) and Len's proofread of [`aklanon/REVIEW.md`](aklanon/REVIEW.md). | Len approves and proofreads. Implementer: Claude Code. Worktree `../AqOne-aklanon` (`feat/aklanon-first`) holds the local `HANDOFF.md`; owned paths `mobile/**`, `docs/aklanon/`, `docs/70_*`. | Emulator walkthrough on a fresh install with an English device, screenshots to `docs/aklanon/`; apply Len's REVIEW.md corrections to `app_akl.arb`. Plan 65 Phase 2 may start after the walkthrough. |
@@ -134,6 +137,7 @@ Use those records to confirm the current state of the full phone-to-dashboard pa
 | Reference guides | [`guides/`](guides/) |
 | Hybrid transport decision and technical architecture spec | `55`, `56` |
 | SOS nearby broadcast | `73` spec (with its Venture mockup), `74` plan |
+| Staging branch and merge-to-master rules, pull request writing guide | `75`, `76` |
 | Draft plans not yet started | `67` (stagnant mode) |
 | Design references and competition materials | [`design-reference/`](design-reference/), [`competitions/`](competitions/) |
 | DOST budget, Year 1 deliverables calendar, investor model and funding handoffs | [`funding/`](funding/) |

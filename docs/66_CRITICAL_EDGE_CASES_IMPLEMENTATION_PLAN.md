@@ -13,7 +13,7 @@ Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `doc
 Len's chat decisions, 2026-09-25T18:03:00+08:00, on Revision 1: D1 second byte-identical header; D2 yes, handed to Gemini; D3 no pod password, reduce friction; D4 yes; D6 yes, `TinyGPSPlus`; D7 deal with the database when it expires, not a top concern (RSTW is 2026-10-01 to 03, Enactus 2026-10-09 to 10). D5 not answered yet.
 Revision 2 records those answers, drops the database rotation from Phase 1, and replaces Phase 6's pod password with a check the fisher never sees.
 Len's chat approval: Revision 2 Phases 1-5 and 7 treated as approved by the decisions above; Phase 6 needs explicit approval.
-Target branch: `edge/critical` from `master`, one commit per phase; Len may push verified phases straight to `master`
+Target branch: `edge/critical` from `master`, one commit per phase (amended 2026-10-01: no direct pushes to `master`; phases reach `master` through `staging` and the checklist in `docs/75_STAGING_AND_MERGE_RULES_DECISION.md`)
 Implementer: the agent named in the root `HANDOFF.md`; reviewer: Claude Code; every bench and field step: Daniel; every flash and Render step: Len.
 
 Execution mode is `hard-stop` by the default rule: the plan changes firmware, shared contracts (`docs/02`, `docs/03`), backend code and deployment, and has more than 3 phases.

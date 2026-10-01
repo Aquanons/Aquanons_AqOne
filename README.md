@@ -82,6 +82,8 @@ The app must never display a later state without observing evidence for it.
 |---|---|
 | Find current work, owners, active agents, worktrees, and next actions | [`docs/README.md#current-register`](docs/README.md#current-register) |
 | Read the spec-first coding rules and installed skill guidance | [`AGENTS.md`](AGENTS.md) |
+| Merge anything to `master` (staging first, tested on real devices, checklist) | [`docs/75_STAGING_AND_MERGE_RULES_DECISION.md`](docs/75_STAGING_AND_MERGE_RULES_DECISION.md) |
+| Write a pull request (required format, written by you, never by an AI) | [`docs/76_PULL_REQUEST_WRITING_GUIDE.md`](docs/76_PULL_REQUEST_WRITING_GUIDE.md) |
 | Understand current priorities and limitations | This README |
 | Inspect dated verification evidence | [`docs/08_DEMO_AND_STATUS.md`](docs/08_DEMO_AND_STATUS.md) |
 | Understand the target topology | [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md), while treating its old scope exclusions as historical |

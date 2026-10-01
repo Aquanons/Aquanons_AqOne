@@ -10,6 +10,8 @@ The detailed naming, status, and authoring rules live in [`README.md`](README.md
 | Current product priorities and setup | [`../README.md`](../README.md) | Active |
 | Current work, owners, agents, worktrees, and next actions | [`README.md#current-register`](README.md#current-register) | Team-wide source of truth |
 | Spec-first workflow and skill routing | [`../AGENTS.md`](../AGENTS.md) | Required before implementation |
+| Rules and checklist for merging to `master` | [`75_STAGING_AND_MERGE_RULES_DECISION.md`](75_STAGING_AND_MERGE_RULES_DECISION.md) | Active decision (2026-10-01); required before any merge; GitHub setup open |
+| How to write a pull request | [`76_PULL_REQUEST_WRITING_GUIDE.md`](76_PULL_REQUEST_WRITING_GUIDE.md) | Active guide (2026-10-01); every pull request is written by its author, never by an AI |
 | Project brief and build order | [`00_START_HERE.md`](00_START_HERE.md) | Foundation |
 | Product scope and roadmap | [`Aqone_PRD (2).md`](Aqone_PRD%20(2).md) | Canonical product scope |
 | Scope exclusions and amendments | [`07_SCOPE_OUT.md`](07_SCOPE_OUT.md) | Foundation |

@@ -17,6 +17,13 @@ Read `docs/SPEC_INDEX.md`, the [Current Register](docs/README.md#current-registe
 Check the worktree and confirm that the register assigns your work and owned paths before editing.
 Use the repository skills in `.agents/skills/` according to the skill-routing table in `AGENTS.md`.
 
+## Merging to master
+
+Follow the Merging to master section in `AGENTS.md` and the checklist in `docs/75_STAGING_AND_MERGE_RULES_DECISION.md`.
+Never push or merge to `master` or `staging`; leave the physical tests and the merge to a person.
+Never open a pull request or write, draft, or polish its title or description: the person writes it, following `docs/76_PULL_REQUEST_WRITING_GUIDE.md`.
+Before pushing a change for review, run the understanding check with the person you are working for: ask questions about the actual diff and do not push until they can explain it in their own words.
+
 ## Build order — strictly sequential
 
 Do NOT start a step until the previous one demonstrably works. Do NOT skip steps.

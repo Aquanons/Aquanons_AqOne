@@ -1,0 +1,3 @@
+# Len reviews every pull request (docs/75_STAGING_AND_MERGE_RULES_DECISION.md, Section 10).
+# GitHub requests his review automatically. Only he can merge (Section 9A).
+* @len-build-it
