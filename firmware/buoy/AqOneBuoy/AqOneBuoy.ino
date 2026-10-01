@@ -264,7 +264,10 @@ size_t buildSosPayload(const SosItem& it, char* out, size_t cap) {
 // running older firmware still can.
 // ---------------------------------------------------------------------------
 
-static const int MAX_TRACKED = 8;
+// The backend's DOWNLINK_MAX and the gateway's MAX_VESSELS. At 8 the feed's
+// last four answers were dropped, and nothing was ever evicted, so a pod that
+// had filled up on other boats' answers refused its own fisher's.
+static const int MAX_TRACKED = 12;
 
 static const int RESPONDER_STATUS_MIN = 1;
 static const int RESPONDER_STATUS_MAX = 5;
@@ -299,6 +302,7 @@ struct Tracked {
   int8_t   responderStatus;
   char     ackedBy[24];
   char     note[49];
+  uint32_t touchedAt;      // millis() of the last SOS or ETA for this vessel
 };
 
 Tracked tracked[MAX_TRACKED];
@@ -310,18 +314,25 @@ Tracked* trackFind(const char* vesselId) {
   return nullptr;
 }
 
+// Never refuses: when the table is full the vessel heard from longest ago
+// gives up its slot. The gateway repeats every open call's answer, so a
+// vessel evicted while still open is simply cached again on the next repeat.
 Tracked* trackVessel(const char* vesselId) {
+  uint32_t now = millis();
   Tracked* t = trackFind(vesselId);
-  if (t) return t;
-  for (int i = 0; i < MAX_TRACKED; i++) {
-    if (tracked[i].used) continue;
-    memset(&tracked[i], 0, sizeof(Tracked));
-    strncpy(tracked[i].vesselId, vesselId, 32);
-    tracked[i].responderStatus = -1;
-    tracked[i].used = true;
-    return &tracked[i];
+  if (!t) {
+    t = &tracked[0];
+    for (int i = 0; i < MAX_TRACKED; i++) {
+      if (!tracked[i].used) { t = &tracked[i]; break; }
+      if (now - tracked[i].touchedAt > now - t->touchedAt) t = &tracked[i];
+    }
+    memset(t, 0, sizeof(Tracked));
+    strncpy(t->vesselId, vesselId, 32);
+    t->responderStatus = -1;
+    t->used = true;
   }
-  return nullptr;
+  t->touchedAt = now;
+  return t;
 }
 
 // ---------------------------------------------------------------------------

@@ -400,10 +400,22 @@ bool postChat(const char* sender, const char* text) {
 
 static const int MAX_VESSELS = 12;
 
+// An ETA frame is a broadcast nobody acknowledges, so a single send is a
+// single chance: a pod that was relaying, rebooted or out of range at that
+// instant never hears it, and the fisher's screen never changes. An answer is
+// therefore repeated - on each of the first ETA_BURST polls after it changes,
+// then every ETA_REPEAT_POLLS polls (4.5 min) for as long as the call is open.
+// A closed call gets the burst only. Worst case is 12 open calls: 12 frames of
+// about 2 s each per 270 s.
+static const uint8_t ETA_BURST        = 3;
+static const uint8_t ETA_REPEAT_POLLS = 6;
+
 struct VesselWatch {
   char     vesselId[33];
   bool     used;
   uint32_t signature;
+  uint8_t  sends;   // of the current signature
+  uint8_t  quiet;   // polls since the last send
 };
 
 VesselWatch watched[MAX_VESSELS];
@@ -428,7 +440,11 @@ void watchLoad() {
   prefs.end();
   // Signatures are deliberately NOT trusted across a reboot: re-sending one
   // ETA per open incident on the first poll is cheap, and silence is not.
-  for (int i = 0; i < MAX_VESSELS; i++) watched[i].signature = 0;
+  for (int i = 0; i < MAX_VESSELS; i++) {
+    watched[i].signature = 0;
+    watched[i].sends = 0;
+    watched[i].quiet = 0;
+  }
 }
 
 void watchVessel(const char* vesselId) {
@@ -581,7 +597,7 @@ void pollAcks() {
     return;
   }
 
-  int events = 0, sent = 0, unchanged = 0, superseded = 0;
+  int events = 0, sent = 0, repeated = 0, unchanged = 0, superseded = 0;
 
   // One incident per vessel: the newest, and only the newest.
   //
@@ -649,7 +665,15 @@ void pollAcks() {
     sig = fnv1a(sig, ev["resolved_at"] | "");
     sig = fnv1a(sig, ev["responder_note"] | "");
     sig = fnv1a(sig, String((int)(ev["responder_status"] | 0)).c_str());
-    if (sig == w->signature) { unchanged++; continue; }
+    bool changed = sig != w->signature;
+    if (!changed) {
+      const char* resolvedAt = ev["resolved_at"] | "";
+      uint8_t every = w->sends < ETA_BURST ? 1 : ETA_REPEAT_POLLS;
+      if ((resolvedAt[0] && w->sends >= ETA_BURST) || ++w->quiet < every) {
+        unchanged++;
+        continue;
+      }
+    }
 
     char payload[LOAM_MAX_PAYLOAD + 1];
     size_t n = buildEtaPayload(ev, state, payload, sizeof(payload));
@@ -665,15 +689,18 @@ void pollAcks() {
     }
 
     w->signature = sig;
-    sent++;
-    Serial.printf("[ack] downlink %s -> %s (%u bytes)\n", vid, state, (unsigned)n);
+    w->sends = changed ? 1 : (w->sends < 255 ? w->sends + 1 : 255);
+    w->quiet = 0;
+    if (changed) sent++; else repeated++;
+    Serial.printf("[ack] downlink %s -> %s (%u bytes)%s\n", vid, state, (unsigned)n,
+                  changed ? "" : " repeat");
   }
 
   // Said every poll, because "nothing happened" and "nothing could happen"
   // looked identical from the outside before this, and that cost real hours.
   Serial.printf("[ack] poll ok: %d open incident(s) for %d vessel(s), "
-                "%d sent, %d unchanged, %d superseded\n",
-                events, nHandled, sent, unchanged, superseded);
+                "%d sent, %d repeated, %d unchanged, %d superseded\n",
+                events, nHandled, sent, repeated, unchanged, superseded);
 }
 
 // GET /api/mesh/chat?since_id= — everything said on the dashboard or by a boat

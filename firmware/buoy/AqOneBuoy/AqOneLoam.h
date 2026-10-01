@@ -408,6 +408,17 @@ static const int TX_MAX = 10;
 TxItem   txRing[TX_MAX];
 uint32_t txBusyUntil = 0;
 
+// A relay re-transmits what it just heard after RELAY_BACKOFF_MIN_MS plus up
+// to RELAY_BACKOFF_SPAN_MS, and is deaf for that frame's whole airtime while
+// it does. A node that sends two frames back to back therefore loses the
+// second at every relay in earshot - which is how a dispatcher's ETA, queued
+// behind a beacon or another boat's ETA, never reached the pod. After each
+// transmission the sender stays quiet for the relay window: the longest
+// backoff plus the airtime of the frame that is being relayed.
+static const uint32_t RELAY_BACKOFF_MIN_MS  = 200;
+static const uint32_t RELAY_BACKOFF_SPAN_MS = 400;
+uint32_t txRelayWindowMs = 0;
+
 // Mesh sequence counter. Two bytes on the wire, so it wraps — that is fine,
 // the seen-set window is far shorter than 65536 frames. Bumped by 100 and
 // persisted once per boot so a brown-out mid-flood cannot reuse a sequence
@@ -487,7 +498,7 @@ void meshRelay(const uint8_t* raw, size_t total, const LoamFrame& f) {
 
   // Random backoff. Without it, two relays that heard the same frame answer in
   // the same millisecond and cancel each other at every listener.
-  txEnqueue(buf, total, 200 + random(400));
+  txEnqueue(buf, total, RELAY_BACKOFF_MIN_MS + random(RELAY_BACKOFF_SPAN_MS));
 }
 
 bool radioSetup() {
@@ -543,6 +554,7 @@ void radioService() {
       radio.finishTransmit();
       radioSending = false;
       radio.startReceive();
+      txBusyUntil = millis() + txRelayWindowMs;
     } else {
       uint8_t buf[LOAM_MAX_FRAME];
       size_t  len = radio.getPacketLength();
@@ -570,10 +582,10 @@ void radioService() {
     int st = radio.startTransmit(txRing[i].bytes, txRing[i].len);
     if (st == RADIOLIB_ERR_NONE) {
       radioSending = true;
-      // Airtime at SF10/125 kHz is roughly a second for a full frame. Holding
-      // the radio for a beat afterwards keeps a burst of queued frames from
-      // stepping on each other and on anyone answering them.
-      txBusyUntil = now + 400;
+      // getTimeOnAir() is in microseconds. About 0.7 s for a beacon and 2 s
+      // for a full ETA at SF10/125 kHz.
+      txRelayWindowMs = RELAY_BACKOFF_MIN_MS + RELAY_BACKOFF_SPAN_MS + 100 +
+                        (uint32_t)(radio.getTimeOnAir(txRing[i].len) / 1000);
     } else {
       Serial.printf("[lora] startTransmit failed: %d\n", st);
     }
