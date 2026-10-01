@@ -438,7 +438,10 @@ class _AppShellState extends State<AppShell> {
           themeMode: widget.themeMode,
           onThemeModeChanged: widget.onThemeModeChanged,
           localeController: widget.localeController,
-          onLogout: widget.onLogout,
+          onLogout: () {
+            Navigator.of(context).pop();
+            widget.onLogout();
+          },
           onIdentityUpdated: widget.onIdentityUpdated,
           onOpenHome: () => Navigator.of(context).pop(),
           bottomInset: 0,
