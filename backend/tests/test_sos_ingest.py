@@ -273,8 +273,7 @@ def test_active_sos_returns_is_synthetic_provenance(monkeypatch):
     assert res.status_code == 200
     events = res.json()['events']
     assert len(events) == 2
-    assert events[0]['id'] == 1 and events[0]['is_synthetic'] is False
-    assert events[1]['id'] == 2 and events[1]['is_synthetic'] is True
+    assert {event['id']: event['is_synthetic'] for event in events} == {1: False, 2: True}
 
 
 def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
@@ -292,6 +291,8 @@ def test_buoy_sos_registers_an_unknown_buoy_first(monkeypatch):
             self.statements = []
         async def execute(self, query, *args):
             self.statements.append((query, args))
+        async def fetchval(self, query, *args):
+            return None
         async def fetchrow(self, query, *args):
             self.statements.append((query, args))
             return {

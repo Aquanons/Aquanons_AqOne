@@ -142,6 +142,57 @@ def test_legacy_without_nonce_still_merges_on_client_ts(probe_db):
     assert first.json()['id'] == second.json()['id']
 
 
+def _pod_without_nonce(client, seq):
+    return client.post(
+        '/api/sos',
+        headers={'X-Api-Key': 'probe-gateway'},
+        json={
+            'vessel_id': 'VNONCE', 'client_ts': 1_900_000_000,
+            'source': 'buoy', 'buoy_id': 'BUOY01', 'seq': seq,
+        },
+    )
+
+
+def test_pod_without_nonce_joins_the_nonce_call_and_downlinks_its_ack(probe_db, monkeypatch):
+    monkeypatch.setenv('GATEWAY_API_KEY', 'probe-gateway')
+    with TestClient(app, raise_server_exceptions=False) as client:
+        direct = _request(client, nonce=500, local_id='nonce-then-pod')
+        pod = _pod_without_nonce(client, 9)
+        ack = client.post(
+            f'/api/sos/{direct.json()["id"]}/acknowledge',
+            headers=_operator_headers(),
+            json={'eta_minutes': 30},
+        )
+        downlink = client.get('/api/sos/downlink', headers={'X-Api-Key': 'probe-gateway'})
+    assert direct.json()['id'] == pod.json()['id']
+    assert ack.status_code == 200
+    events = [e for e in downlink.json()['events'] if e['vessel_id'] == 'VNONCE']
+    assert [(e['delivery_state'], e['seq'], e['nonce']) for e in events] == [('acknowledged', 9, 500)]
+
+
+def test_nonce_call_adopts_the_pod_row_that_arrived_first(probe_db, monkeypatch):
+    monkeypatch.setenv('GATEWAY_API_KEY', 'probe-gateway')
+    with TestClient(app, raise_server_exceptions=False) as client:
+        pod = _pod_without_nonce(client, 10)
+        direct = _request(client, nonce=600, local_id='pod-then-nonce')
+        other_press = _request(client, nonce=601, local_id='second-press')
+    assert pod.json()['id'] == direct.json()['id']
+    assert direct.json()['nonce'] == 600
+    assert other_press.json()['id'] != direct.json()['id']
+
+
+def test_anonymous_row_without_nonce_never_joins_a_nonce_call(probe_db):
+    with TestClient(app, raise_server_exceptions=False) as client:
+        real = _request(client, nonce=700, local_id='real')
+        forged = client.post(
+            '/api/sos',
+            json={'vessel_id': 'VNONCE', 'client_ts': 1_900_000_000, 'source': 'buoy', 'seq': 1},
+        )
+        late_real = _request(client, nonce=701, local_id='late-real', client_ts=1_900_000_000)
+    assert forged.json()['id'] != real.json()['id']
+    assert late_real.json()['id'] not in {real.json()['id'], forged.json()['id']}
+
+
 def test_vessel_feed_returns_all_unresolved_and_only_recent_resolved(probe_db):
     async def seed_rows():
         conn = await asyncpg.connect(probe_db)

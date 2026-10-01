@@ -737,6 +737,32 @@ async def record_sos(conn: Any, payload: SosIn, provenance: SosProvenance) -> An
             provenance.buoy_id,
         )
 
+    # A pod without `nc` (docs/02 E2.1) forwards a nonce phone's call with no
+    # nonce, so the two transports missed each other's merge key and one
+    # emergency became two incidents: the dispatcher acknowledged one and the
+    # downlink carried the other. Only a gateway-keyed delivery may bridge the
+    # keys - an anonymous no-nonce row must still never capture a nonce call.
+    await conn.execute('SELECT pg_advisory_xact_lock(hashtext($1))', payload.vessel_id)
+    if payload.nonce is not None:
+        await conn.execute(
+            '''
+            UPDATE sos_events SET nonce = $3
+             WHERE vessel_id = $1 AND client_ts = $2 AND nonce IS NULL AND delivered_via_buoy
+               AND NOT EXISTS (SELECT 1 FROM sos_events WHERE vessel_id = $1 AND nonce = $3)
+            ''',
+            payload.vessel_id, payload.client_ts, payload.nonce,
+        )
+    elif provenance.delivered_via_buoy:
+        nonce = await conn.fetchval(
+            '''
+            SELECT nonce FROM sos_events
+             WHERE vessel_id = $1 AND client_ts = $2 AND nonce IS NOT NULL
+             ORDER BY id LIMIT 1
+            ''',
+            payload.vessel_id, payload.client_ts,
+        )
+        payload = payload.model_copy(update={'nonce': nonce})
+
     conflict = (
         'ON CONFLICT (vessel_id, nonce) WHERE nonce IS NOT NULL'
         if payload.nonce is not None
