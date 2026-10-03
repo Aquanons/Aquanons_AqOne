@@ -1,9 +1,9 @@
 # Implementation Plan: Edge case remediation (master)
 
 Created: 2026-09-24T10:00:00+08:00
-Updated: 2026-09-25T13:00:00+08:00
+Updated: 2026-10-03T19:10:00+08:00
 Revision: 1
-Status: ACTIVE - tracks B (B1-B7), M (M1-M6) and W (W1-W4) plus the review fixes (`docs/archive/plans/63_EDGE_REVIEW_FIXES.md`) merged to `master` in PR #79 (`9630553`, 2026-09-25) and live on Render. Open: Phase I integration walkthrough, Phase 0a (UptimeRobot, NTC inquiry), and the gated B8, M7 and Track F.
+Status: ACTIVE - tracks B (B1-B7), M (M1-M6) and W (W1-W4) plus the review fixes (`docs/archive/plans/63_EDGE_REVIEW_FIXES.md`) merged to `master` in PR #79 (`9630553`, 2026-09-25) and live on Render. Phase I local walkthrough and suite gates recorded 2026-10-03 (`docs/edge-remediation/EVIDENCE-integration.md`). Open: the Phase I device and deployed checks that need Len, Phase 0a (UptimeRobot, NTC inquiry), and the gated B8, M7 and Track F.
 **Execution mode:** auto (tracks B, M and W; Section 4.1)
 Feature spec and revision: `docs/61_EDGE_CASE_REMEDIATION_DESIGN.md` (approved 2026-09-24, with Len's decisions in its header), findings in `docs/60_EXTREME_EDGE_CASE_REPORT.md`
 Approved baseline and architecture revisions: `docs/Aqone_PRD (2).md` v3.0, `docs/56_TECHNICAL_ARCHITECTURE_AND_DATA_FLOW_SPEC.md`, `docs/55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`
@@ -472,31 +472,36 @@ Checkpoint message: `docs(contracts): freeze edge-case remediation contracts`
 ## 7. Phase I: Integration and field readiness (Claude and Len, after B7, M6 and W4 merge)
 
 Requirements: end-to-end confirmation of every P1 row
-State: Not started - unblocked 2026-09-25 (B7, M6 and W4 merged in PR #79)
+State: In progress - local walkthrough and suite gates recorded 2026-10-03; waiting on Len for the phone, deployed and SMS checks
+Evidence: `docs/edge-remediation/EVIDENCE-integration.md`; steps C3, C6, C7 and C9 moved to plan 66 and are in `docs/edge-remediation/EVIDENCE-critical.md`.
 
 ### Tasks
 
 - [ ] Run end to end on a local stack: backend plus local Postgres, the dashboard in a browser, and the phone on an emulator in airplane mode where relevant.
   Walk through:
-  - C3: pod accepts then goes silent; the phone keeps trying the direct path
-  - C6: page load with a waiting SOS rings
-  - C7: resolve needs a reason; undo reopens
-  - M8: two tabs acknowledge; the second gets a 409 prompt
-  - M9: fisher undo reopens and re-alarms
-  - H15: a late badge appears
-  - H18: 500 anonymous calls; a known vessel stays on top
-  - C9: a "MDRRMO" post is refused
+  - C3: pod accepts then goes silent; the phone keeps trying the direct path - done under plan 66 (2026-09-25)
+  - C6: page load with a waiting SOS rings - done under plan 66 (2026-09-25)
+  - C7: resolve needs a reason; undo reopens - done under plan 66 (2026-09-25)
+  - M8: two tabs acknowledge; the second gets a 409 prompt - pass (2026-10-03)
+  - M9: fisher undo reopens and re-alarms - pass for the backend and dashboard (2026-10-03); the tap on a phone is `Pending - Len`, which keeps this box open
+  - H15: a late badge appears - pass (2026-10-03)
+  - H18: 500 anonymous calls; a known vessel stays on top - pass (2026-10-03)
+  - C9: a "MDRRMO" post is refused - deployed half done under plan 66 (2026-09-25); the shore reflash is open there
 - [ ] Deploy to Render.
   Repeat C6, C7 and C9 against the deployed URL.
   Confirm that `/api/ops/status` shows `db_days_left` and SMS status.
-- [ ] Send one real escalation SMS to the duty phone (if credits exist), or record that SMS is not configured.
+  C6, C7 and C9 were repeated on the deployed URL under plan 66; the `/api/ops/status` read is `Pending - Len` (it needs an operator session).
+- [x] Send one real escalation SMS to the duty phone (if credits exist), or record that SMS is not configured.
+  Recorded as not configured (`EVIDENCE-critical.md`, 2026-09-25; `sms_configured: false` again on 2026-10-03).
 - [ ] Build a release APK and run the M2 foreground-service device test.
-- [ ] Update `docs/08_DEMO_AND_STATUS.md` with a dated entry linking each track's evidence file.
+  `Pending - Len`: it needs a real phone.
+- [x] Update `docs/08_DEMO_AND_STATUS.md` with a dated entry linking each track's evidence file.
 
 ### Verification
 
-- [ ] All four suite gates are green on `master`: backend ruff and pytest (including the Postgres-backed tests with `AQONE_PROBE_PG_ADMIN_URL` set), mobile analyze and test, and web tests and syntax.
-- [ ] Each walkthrough step is recorded with its observed result in `docs/edge-remediation/EVIDENCE-integration.md`.
+- [x] All four suite gates are green: backend ruff and pytest (including the Postgres-backed tests with `AQONE_PROBE_PG_ADMIN_URL` set), mobile analyze and test, and web tests and syntax.
+  Run on `staging` at `b7bf4a8` on 2026-10-03, not on `master`: under `docs/75` every change now goes to `staging` first.
+- [x] Each walkthrough step is recorded with its observed result in `docs/edge-remediation/EVIDENCE-integration.md`.
 
 Checkpoint message: `docs(status): edge-case remediation integration evidence`
 

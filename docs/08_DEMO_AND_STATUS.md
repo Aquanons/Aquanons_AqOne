@@ -5,6 +5,34 @@
 > The current transport decision and current demo path are recorded in the
 > newest entry below and in [`55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md`](55_HYBRID_TRANSPORT_ARCHITECTURE_DECISION.md).
 
+## 2026-10-03 - Plan 62 Phase I: integration walkthrough on a local stack
+
+Claude Code ran what is left of plan 62 Phase I on `docs/edge-integration-evidence`, branched from `staging` at `b7bf4a8`.
+This entry changes no product code and is not on `master` or deployed.
+Full results: [`edge-remediation/EVIDENCE-integration.md`](edge-remediation/EVIDENCE-integration.md).
+Track evidence: [`EVIDENCE-backend.md`](edge-remediation/EVIDENCE-backend.md), [`EVIDENCE-mobile.md`](edge-remediation/EVIDENCE-mobile.md), [`EVIDENCE-web.md`](edge-remediation/EVIDENCE-web.md), [`EVIDENCE-fixes.md`](edge-remediation/EVIDENCE-fixes.md), [`EVIDENCE-ops.md`](edge-remediation/EVIDENCE-ops.md) and [`EVIDENCE-critical.md`](edge-remediation/EVIDENCE-critical.md) (steps C3, C6, C7 and C9, under plan 66).
+
+**Observed (local backend, disposable database, dashboard in headless Edge):**
+- M8: a second tab acknowledging a stale version gets 409 and a "Confirm again" prompt; the first answer is kept.
+- M9: `STILL_IN_DANGER` after a mistaken `SAFE_NOW` reopens the incident, and the dashboard siren starts again.
+- H15: an SOS pressed 3 days 4 hours earlier shows "LATE - pressed 3 d 4 h ago" and is not dropped.
+- H18: with 500 anonymous calls in 1.5 s, the vessel with trip history stays first, and the dashboard shows the flood banner and "+304 more".
+
+**Gates on `staging` at `b7bf4a8` (with `AQONE_PROBE_PG_ADMIN_URL` set):**
+- Backend ruff: `All checks passed!`
+- Backend pytest: `674 passed, 5 skipped, 1 xfailed`
+- Web node tests: `tests 218`, `pass 218`, `fail 0`; every `.js` passes `node --check`
+- Mobile analyze: `No issues found!`
+- Mobile test: `+426: All tests passed!`
+
+**Not verified:**
+- M9 on a handset: NOT VERIFIED - no device (the fisher's replies were sent as HTTP requests).
+- M2 foreground-service test on a release APK: NOT VERIFIED - no device.
+- `/api/ops/status` on the deployed backend: not read, it needs an operator session.
+- SMS escalation: not configured.
+
+**Dashboard defects found (owner Arnold):** the Live SOS count stops at 200 during a flood, the M8 conflict prompt prints raw UTC timestamps, and the "SOS received" toast is green.
+
 ## 2026-10-01 - 2026-09-30 reconciliation merged to `master`
 
 Reconciled the two regressions merged in PR #86 and built Plan 74 Phase 1b (tasks T1 through T8), implemented by Gemini on `fix/reconcile-2026-09-30` and reviewed by Claude Code, who fixed ten review findings before the merge (`docs/reconciliation/EVIDENCE.md`, "Review by Claude Code").
