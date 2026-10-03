@@ -396,7 +396,8 @@ Phases with no row can merge in any order.
 ## 5. Phase 0a: Free-tier database safety (not gated)
 
 Requirements: EC-C5, EC-M14, EC-M11
-State: In progress - runbook written, expiry confirmed, rehearsal passed; waiting on Len's UptimeRobot monitor and NTC inquiry
+State: In progress - runbook written, expiry confirmed, rehearsal passed; NTC inquiry sent with no reply as of 2026-10-03; UptimeRobot monitor open
+Decision (Len, chat, 2026-10-03): the team will pay for Render monthly, which reverses the "no spend" decision in Section 1.1 and triggers Section 8 once the paid plan is active. Which services move to a paid plan, and from what date, is not recorded yet.
 Owner: Claude writes; Len executes the Render steps.
 
 ### Tasks
@@ -416,6 +417,8 @@ Owner: Claude writes; Len executes the Render steps.
 - [x] Len: confirm the real expiry date (confirmed in chat 2026-09-24: around 2026-10-15).
 - [x] Dry run of the dump and restore against a local Postgres (Claude, 2026-09-24, throwaway cluster).
 - [ ] Len: set up UptimeRobot and send the NTC inquiry.
+  NTC inquiry sent (Len, chat, 2026-10-03); no reply yet, and the answer goes in `docs/08` when it arrives.
+  UptimeRobot is still open; a paid web instance does not sleep, so the monitor would then be only an outage alert.
 
 ### Verification
 

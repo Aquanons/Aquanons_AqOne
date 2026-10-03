@@ -210,7 +210,9 @@ Record the counts (numbers only) in `docs/edge-remediation/EVIDENCE-ops.md`.
 - [x] Run the rehearsal (Section 4) and record the counts (passed 2026-09-24, see `docs/edge-remediation/EVIDENCE-ops.md`).
 - [ ] Set up the UptimeRobot monitor (Section 5).
 - [ ] Do the first real rotation by 2026-10-08 (Section 3).
-- [ ] Send the NTC inquiry (EC-M11):
+  Deferred by Len until after the October events (`docs/66`, C5).
+  On 2026-10-03 Len decided to pay for Render monthly; if the database moves to a paid plan before the expiry around 2026-10-15, this rotation is not needed and Section 7 applies.
+- [ ] Send the NTC inquiry (EC-M11) - sent, no reply as of 2026-10-03 (Len, chat); this box closes when the answer is recorded:
   - Which band and power limits apply to low-power LoRa radios in the Philippines: 915 MHz, or 920 to 925 MHz (AS923)?
   - What is the maximum EIRP?
   - Do the devices need type approval?
